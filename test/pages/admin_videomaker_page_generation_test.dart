@@ -35,7 +35,7 @@ void main() {
     required Future<void> Function(Map<String, Object?>) generator,
     VideoMakerImagePicker? picker,
   }) async {
-    tester.view.physicalSize = const Size(1000, 2400);
+    tester.view.physicalSize = const Size(1000, 6000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -82,7 +82,7 @@ void main() {
       generator: (value) async => parameters.add(value),
     );
 
-    await tester.tap(find.text('Ajouter une image de départ (facultatif)'));
+    await tester.tap(find.text('Choisir plusieurs images'));
     await pumpUntilFound(tester, find.text('depart.png'));
     expect(find.text('depart.png'), findsOneWidget);
 
@@ -93,18 +93,24 @@ void main() {
     );
     await tester.tap(find.text('16:9 Paysage'));
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Générer'));
+    await tester.tap(
+      find.widgetWithText(FilledButton, 'Générer et enregistrer'),
+    );
     await pumpUntilFound(tester, find.text('Nouvelle vidéo VEO'));
 
     expect(parameters, hasLength(1));
     expect(parameters.single['prompt'], 'Un portail bleu peint en accéléré');
     expect(parameters.single['aspectRatio'], '16:9');
     expect(parameters.single['apiKey'], 'temporary-value');
-    expect(parameters.single['imageMimeType'], 'image/png');
-    expect(parameters.single['imageBase64'], base64Encode(imageBytes));
+    final references = parameters.single['referenceImages'] as List;
+    expect(references, hasLength(1));
+    final firstReference = Map<String, Object?>.from(references.first as Map);
+    expect(firstReference['mimeType'], 'image/png');
+    expect(firstReference['base64'], base64Encode(imageBytes));
+    expect(firstReference['name'], 'depart.png');
     expect(loads, 2);
     expect(
-      find.text('Vidéo VEO générée et ajoutée à la bibliothèque.'),
+      find.text('Vidéo VEO générée et enregistrée dans la bibliothèque.'),
       findsOneWidget,
     );
     expect(
@@ -112,9 +118,9 @@ void main() {
       isEmpty,
     );
 
-    await tester.tap(find.byTooltip('Retirer l’image'));
+    await tester.tap(find.byTooltip('Retirer depart.png'));
     await tester.pump();
-    expect(find.text('Ajouter une image de départ (facultatif)'), findsOneWidget);
+    expect(find.text('Choisir plusieurs images'), findsOneWidget);
   });
 
   testWidgets('bloque les doubles générations pendant le traitement',
@@ -131,7 +137,9 @@ void main() {
     );
     await tester.enterText(find.byType(TextField).at(1), 'Prompt en cours');
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Générer'));
+    await tester.tap(
+      find.widgetWithText(FilledButton, 'Générer et enregistrer'),
+    );
     await tester.pump();
     expect(calls, 1);
     expect(find.text('Génération VEO en cours…'), findsOneWidget);
@@ -160,7 +168,9 @@ void main() {
     );
 
     await tester.enterText(find.byType(TextField).at(1), 'Première tentative');
-    await tester.tap(find.widgetWithText(FilledButton, 'Générer'));
+    await tester.tap(
+      find.widgetWithText(FilledButton, 'Générer et enregistrer'),
+    );
     await pumpUntilFound(
       tester,
       find.text('Cette fonction est réservée aux administrateurs.'),
@@ -175,7 +185,9 @@ void main() {
     );
 
     await tester.enterText(find.byType(TextField).at(1), 'Deuxième tentative');
-    await tester.tap(find.widgetWithText(FilledButton, 'Générer'));
+    await tester.tap(
+      find.widgetWithText(FilledButton, 'Générer et enregistrer'),
+    );
     await pumpUntilFound(
       tester,
       find.text('La génération a échoué. Vérifiez la clé API et réessayez.'),
