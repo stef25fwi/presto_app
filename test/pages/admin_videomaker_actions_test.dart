@@ -62,7 +62,7 @@ void main() {
         ),
       ),
     );
-    final target = expected ?? find.text('Télécharger');
+    final target = expected ?? find.text('Ouvrir');
     await pumpUntil(
       tester,
       () => target.evaluate().isNotEmpty,
@@ -81,7 +81,7 @@ void main() {
       },
     );
 
-    await tester.tap(find.text('Télécharger'));
+    await tester.tap(find.text('Ouvrir'));
     await pumpUntil(tester, () => openedUri != null);
 
     expect(openedUri, Uri.parse('https://example.test/video.mp4'));
@@ -95,7 +95,7 @@ void main() {
       openVideo: (_) async => false,
     );
 
-    await tester.tap(find.text('Télécharger'));
+    await tester.tap(find.text('Ouvrir'));
     await pumpUntil(
       tester,
       () => find.text('Impossible d’ouvrir cette vidéo.').evaluate().isNotEmpty,
@@ -169,11 +169,11 @@ void main() {
       expected: find.text('Aucune vidéo générée'),
     );
 
-    await tester.tap(find.text('Ajouter une image de départ (facultatif)'));
+    await tester.tap(find.text('Choisir plusieurs images'));
     await pumpUntil(tester, () => pickerCalled);
 
     expect(find.text('Image de départ'), findsNothing);
-    expect(find.text('Impossible de sélectionner cette image.'), findsNothing);
+    expect(find.text('Impossible de sélectionner ces images.'), findsNothing);
   });
 
   testWidgets('refuse une image dépassant cinq mégaoctets', (tester) async {
@@ -190,17 +190,17 @@ void main() {
       expected: find.text('Aucune vidéo générée'),
     );
 
-    await tester.tap(find.text('Ajouter une image de départ (facultatif)'));
+    await tester.tap(find.text('Choisir plusieurs images'));
     await pumpUntil(
       tester,
       () => find
-          .text('L’image doit être valide et peser moins de 5 Mo.')
+          .text('trop-lourde.png doit être valide et peser moins de 5 Mo.')
           .evaluate()
           .isNotEmpty,
     );
 
     expect(
-      find.text('L’image doit être valide et peser moins de 5 Mo.'),
+      find.text('trop-lourde.png doit être valide et peser moins de 5 Mo.'),
       findsOneWidget,
     );
   });
