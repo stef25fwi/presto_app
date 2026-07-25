@@ -1,0 +1,108 @@
+name: Temporary PR validation aggregation fix
+
+on:
+  push:
+    branches:
+      - coverage/w1-auth-social-final-20260724
+    paths:
+      - .github/workflows/temp-fix-pr-validation-aggregation.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temp-fix-pr-validation-aggregation
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: coverage/w1-auth-social-final-20260724
+          fetch-depth: 0
+
+      - name: Fix final validation aggregation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/pr-validation.yml')
+          text = path.read_text()
+          old = """      - name: Enforce validation result
+        if: always()
+        run: |
+          outcomes='${{ steps.generated_check.outcome }} ${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.quality_gate.outcome }} ${{ steps.critical_coverage.outcome }} ${{ steps.functions_deps.outcome }} ${{ steps.functions_build.outcome }} ${{ steps.functions_test.outcome }} ${{ steps.firebase_cli.outcome }} ${{ steps.firestore_rules.outcome }} ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}'
+          if echo "$outcomes" | grep -Eq 'failure|cancelled'; then
+            echo "Validation failed: $outcomes"
+            exit 1
+          fi
+          echo "Validation succeeded: $outcomes"
+"""
+          new = """      - name: Enforce validation result
+        if: always()
+        env:
+          REQUIRED_OUTCOMES: >-
+            ${{ steps.generated_check.outcome }}
+            ${{ steps.flutter_deps.outcome }}
+            ${{ steps.flutter_analyze.outcome }}
+            ${{ steps.flutter_test.outcome }}
+            ${{ steps.quality_gate.outcome }}
+            ${{ steps.critical_coverage.outcome }}
+          FUNCTIONS_REQUIRED: ${{ steps.scope.outputs.functions }}
+          FUNCTIONS_OUTCOMES: >-
+            ${{ steps.functions_deps.outcome }}
+            ${{ steps.functions_build.outcome }}
+            ${{ steps.functions_test.outcome }}
+          FIRESTORE_REQUIRED: ${{ steps.scope.outputs.firestore }}
+          FIRESTORE_OUTCOMES: >-
+            ${{ steps.firebase_cli.outcome }}
+            ${{ steps.firestore_rules.outcome }}
+          WEB_REQUIRED: ${{ steps.scope.outputs.web }}
+          WEB_OUTCOMES: >-
+            ${{ steps.web_build.outcome }}
+            ${{ steps.bundle_budget.outcome }}
+        run: |
+          set -euo pipefail
+          failed=false
+          check_required() {
+            local label="$1"
+            local outcomes="$2"
+            if echo "$outcomes" | grep -Eq 'failure|cancelled'; then
+              echo "$label failed: $outcomes"
+              failed=true
+            else
+              echo "$label succeeded: $outcomes"
+            fi
+          }
+          check_required "Core validation" "$REQUIRED_OUTCOMES"
+          if [ "$FUNCTIONS_REQUIRED" = true ]; then
+            check_required "Functions validation" "$FUNCTIONS_OUTCOMES"
+          fi
+          if [ "$FIRESTORE_REQUIRED" = true ]; then
+            check_required "Firestore validation" "$FIRESTORE_OUTCOMES"
+          fi
+          if [ "$WEB_REQUIRED" = true ]; then
+            check_required "Web validation" "$WEB_OUTCOMES"
+          fi
+          if [ "$failed" = true ]; then
+            exit 1
+          fi
+"""
+          if old not in text:
+              raise SystemExit('validation aggregation anchor missing')
+          path.write_text(text.replace(old, new, 1))
+          PY
+
+          rm -f .github/workflows/temp-fix-pr-validation-aggregation.yml
+          git diff --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/workflows/pr-validation.yml .github/workflows/temp-fix-pr-validation-aggregation.yml
+          git commit -m 'ci: enforce only required validation scopes'
+          git push origin HEAD:coverage/w1-auth-social-final-20260724
