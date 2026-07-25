@@ -84,4 +84,4 @@ jobs:
           git commit -m 'ci: enforce only required validation outcomes'
           git push origin HEAD:coverage/w1-auth-social-final-20260724
 
-# retrigger: 2026-07-25
+# retrigger: 2026-07-25T06:47Z
