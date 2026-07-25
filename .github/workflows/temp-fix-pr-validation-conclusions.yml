@@ -51,3 +51,5 @@ jobs:
           git add .github/workflows/pr-validation.yml .github/workflows/temp-fix-pr-validation-conclusions.yml
           git commit -m 'ci: use step conclusions for final validation gate'
           git push origin HEAD:coverage/w1-auth-social-final-20260724
+
+# retrigger: 2026-07-25T10:53:37Z
