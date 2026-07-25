@@ -115,3 +115,5 @@ jobs:
           git add -A
           git commit -m 'test(coverage): make Apple profile persistence deterministic'
           git push origin HEAD:coverage/w1-auth-social-final-20260724
+
+# retrigger 2026-07-25
