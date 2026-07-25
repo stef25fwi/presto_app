@@ -40,6 +40,11 @@ class _ProfileAppleUserPlatform extends UserPlatform {
   @override
   Future<void> updateProfile(Map<String, String?> profile) async {
     updatedDisplayName = profile['displayName'];
+    throw FirebaseException(
+      plugin: 'firebase_auth',
+      code: 'permission-denied',
+      message: 'profile persistence intentionally stopped before Firestore',
+    );
   }
 
   @override
@@ -140,7 +145,7 @@ void main() {
   });
 
   testWidgets(
-    'Apple utilise le nom de famille seul et tente sa persistance',
+    'Apple utilise le nom de famille seul sans acces Firestore reel',
     (tester) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       addTearDown(() => debugDefaultTargetPlatformOverride = null);
