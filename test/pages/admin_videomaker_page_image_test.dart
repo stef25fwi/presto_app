@@ -34,8 +34,7 @@ void main() {
     fail('Widget attendu introuvable après traitement asynchrone: $finder');
   }
 
-  Finder pickButton() =>
-      find.text('Ajouter une image de départ (facultatif)');
+  Finder pickButton() => find.text('Choisir plusieurs images');
 
   testWidgets('refuse une image vide', (tester) async {
     await pumpPage(
@@ -52,7 +51,7 @@ void main() {
     await tester.tap(pickButton());
     await pumpUntilFound(
       tester,
-      find.text('L’image doit être valide et peser moins de 5 Mo.'),
+      find.text('vide.png doit être valide et peser moins de 5 Mo.'),
     );
   });
 
@@ -71,7 +70,7 @@ void main() {
     await tester.tap(pickButton());
     await pumpUntilFound(
       tester,
-      find.text('Utilisez une image JPG, PNG, WEBP, HEIC ou HEIF.'),
+      find.text('animation.gif : utilisez JPG, PNG, WEBP, HEIC ou HEIF.'),
     );
   });
 
@@ -84,7 +83,7 @@ void main() {
     await tester.tap(pickButton());
     await pumpUntilFound(
       tester,
-      find.text('Impossible de sélectionner cette image.'),
+      find.text('Impossible de sélectionner ces images.'),
     );
   });
 }

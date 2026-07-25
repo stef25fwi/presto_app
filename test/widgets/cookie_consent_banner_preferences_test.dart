@@ -10,6 +10,11 @@ void main() {
   testWidgets('personnaliser enregistre séparément analytics et marketing', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(1440, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     CookieConsentService.instance.resetForTesting();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await CookieConsentService.instance.load();

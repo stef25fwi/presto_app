@@ -80,7 +80,7 @@ void main() {
     completer.complete(const <GeneratedVideo>[]);
     await pumpUntilFound(tester, find.text('Aucune vidéo générée'));
     expect(
-      find.text('Votre première création VEO apparaîtra ici.'),
+      find.text('Votre première création VEO apparaîtra ici automatiquement.'),
       findsOneWidget,
     );
     expect(tester.widget<IconButton>(refreshButton()).onPressed, isNotNull);
@@ -108,7 +108,7 @@ void main() {
     expect(find.text('En cours'), findsOneWidget);
     expect(find.text('Échec'), findsOneWidget);
     expect(find.text('Quota VEO atteint'), findsOneWidget);
-    expect(find.text('Télécharger'), findsOneWidget);
+    expect(find.text('Ouvrir'), findsOneWidget);
     expect(find.text('Partager'), findsOneWidget);
   });
 
@@ -158,7 +158,9 @@ void main() {
     );
     await flush(tester);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Générer'));
+    await tester.tap(
+      find.widgetWithText(FilledButton, 'Générer et enregistrer'),
+    );
     await pumpUntilFound(tester, find.text('Ajoutez un prompt avant de générer.'));
     expect(generated, isFalse);
   });
