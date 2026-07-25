@@ -34,46 +34,48 @@ jobs:
           path = Path('.github/workflows/pr-validation.yml')
           text = path.read_text()
           old = """      - name: Enforce validation result
-        if: always()
-        run: |
-          outcomes='${{ steps.generated_check.outcome }} ${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.quality_gate.outcome }} ${{ steps.critical_coverage.outcome }} ${{ steps.functions_deps.outcome }} ${{ steps.functions_build.outcome }} ${{ steps.functions_test.outcome }} ${{ steps.firebase_cli.outcome }} ${{ steps.firestore_rules.outcome }} ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}'
-          if echo \"$outcomes\" | grep -Eq 'failure|cancelled'; then
-            echo \"Validation failed: $outcomes\"
-            exit 1
-          fi
-          echo \"Validation succeeded: $outcomes\"
+         if: always()
+         run: |
+           outcomes='${{ steps.generated_check.outcome }} ${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.quality_gate.outcome }} ${{ steps.critical_coverage.outcome }} ${{ steps.functions_deps.outcome }} ${{ steps.functions_build.outcome }} ${{ steps.functions_test.outcome }} ${{ steps.firebase_cli.outcome }} ${{ steps.firestore_rules.outcome }} ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}'
+           if echo \"$outcomes\" | grep -Eq 'failure|cancelled'; then
+             echo \"Validation failed: $outcomes\"
+             exit 1
+           fi
+           echo \"Validation succeeded: $outcomes\"
 """
           new = """      - name: Enforce validation result
-        if: always()
-        env:
-          CORE_OUTCOMES: ${{ steps.generated_check.outcome }} ${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.quality_gate.outcome }} ${{ steps.critical_coverage.outcome }}
-          FUNCTIONS_REQUIRED: ${{ steps.scope.outputs.functions }}
-          FUNCTIONS_OUTCOMES: ${{ steps.functions_deps.outcome }} ${{ steps.functions_build.outcome }} ${{ steps.functions_test.outcome }}
-          FIRESTORE_REQUIRED: ${{ steps.scope.outputs.firestore }}
-          FIRESTORE_OUTCOMES: ${{ steps.firebase_cli.outcome }} ${{ steps.firestore_rules.outcome }}
-          WEB_REQUIRED: ${{ steps.scope.outputs.web }}
-          WEB_OUTCOMES: ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}
-        run: |
-          set -euo pipefail
-          outcomes=\"$CORE_OUTCOMES\"
-          if [ \"$FUNCTIONS_REQUIRED\" = 'true' ]; then
-            outcomes=\"$outcomes $FUNCTIONS_OUTCOMES\"
-          fi
-          if [ \"$FIRESTORE_REQUIRED\" = 'true' ]; then
-            outcomes=\"$outcomes $FIRESTORE_OUTCOMES\"
-          fi
-          if [ \"$WEB_REQUIRED\" = 'true' ]; then
-            outcomes=\"$outcomes $WEB_OUTCOMES\"
-          fi
-          if echo \"$outcomes\" | grep -Eq 'failure|cancelled'; then
-            echo \"Validation failed: $outcomes\"
-            exit 1
-          fi
-          echo \"Validation succeeded: $outcomes\"
+         if: always()
+         env:
+           CORE_OUTCOMES: ${{ steps.generated_check.outcome }} ${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.quality_gate.outcome }} ${{ steps.critical_coverage.outcome }}
+           FUNCTIONS_REQUIRED: ${{ steps.scope.outputs.functions }}
+           FUNCTIONS_OUTCOMES: ${{ steps.functions_deps.outcome }} ${{ steps.functions_build.outcome }} ${{ steps.functions_test.outcome }}
+           FIRESTORE_REQUIRED: ${{ steps.scope.outputs.firestore }}
+           FIRESTORE_OUTCOMES: ${{ steps.firebase_cli.outcome }} ${{ steps.firestore_rules.outcome }}
+           WEB_REQUIRED: ${{ steps.scope.outputs.web }}
+           WEB_OUTCOMES: ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}
+         run: |
+           set -euo pipefail
+           outcomes=\"$CORE_OUTCOMES\"
+           if [ \"$FUNCTIONS_REQUIRED\" = 'true' ]; then
+             outcomes=\"$outcomes $FUNCTIONS_OUTCOMES\"
+           fi
+           if [ \"$FIRESTORE_REQUIRED\" = 'true' ]; then
+             outcomes=\"$outcomes $FIRESTORE_OUTCOMES\"
+           fi
+           if [ \"$WEB_REQUIRED\" = 'true' ]; then
+             outcomes=\"$outcomes $WEB_OUTCOMES\"
+           fi
+           if echo \"$outcomes\" | grep -Eq 'failure|cancelled'; then
+             echo \"Validation failed: $outcomes\"
+             exit 1
+           fi
+           echo \"Validation succeeded: $outcomes\"
 """
           if old not in text:
-              raise SystemExit('validation aggregation block not found')
-          path.write_text(text.replace(old, new, 1))
+              if 'CORE_OUTCOMES:' not in text:
+                  raise SystemExit('validation aggregation block not found')
+          else:
+              path.write_text(text.replace(old, new, 1))
           PY
 
           rm -f .github/workflows/temp-fix-pr-validation-outcomes.yml
@@ -84,4 +86,4 @@ jobs:
           git commit -m 'ci: enforce only required validation outcomes'
           git push origin HEAD:coverage/w1-auth-social-final-20260724
 
-# retrigger: 2026-07-25T06:47Z
+# retrigger: 2026-07-25T09:47Z
