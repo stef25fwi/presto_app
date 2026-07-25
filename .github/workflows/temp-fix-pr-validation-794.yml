@@ -78,4 +78,4 @@ jobs:
           git commit -m 'ci: enforce only required validation scopes'
           git push origin HEAD:coverage/apple-profile-clean-20260725
 
-# retrigger 2026-07-25
+# retrigger 2026-07-25T16:50Z
