@@ -114,9 +114,7 @@ void main() {
       tester.widget<TextField>(find.byType(TextField).at(0)).controller!.text,
       isEmpty,
     );
-
-    await tester.tap(find.byTooltip('Retirer depart.png'));
-    await tester.pump();
+    expect(find.byTooltip('Retirer depart.png'), findsNothing);
     expect(find.text('Choisir plusieurs images'), findsOneWidget);
   });
 
