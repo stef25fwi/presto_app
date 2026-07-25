@@ -107,6 +107,7 @@ class _ProfileAppleAuthPlatform extends FirebaseAuthPlatform {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  late FirebaseAuthPlatform originalAuthPlatform;
   late _ProfileAppleAuthPlatform platform;
   late FirebaseAuth auth;
   late TestDefaultBinaryMessenger messenger;
@@ -114,11 +115,16 @@ void main() {
   setUpAll(() async {
     setupFirebaseCoreMocks();
     await Firebase.initializeApp();
+    originalAuthPlatform = FirebaseAuthPlatform.instance;
     platform = _ProfileAppleAuthPlatform();
     FirebaseAuthPlatform.instance = platform;
     auth = FirebaseAuth.instance;
     messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  });
+
+  tearDownAll(() {
+    FirebaseAuthPlatform.instance = originalAuthPlatform;
   });
 
   setUp(() {
