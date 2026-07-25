@@ -16,7 +16,7 @@ void main() {
     VideoMakerVideoOpener? openVideo,
     VideoMakerVideoSharer? shareVideo,
   }) async {
-    tester.view.physicalSize = const Size(1200, 1800);
+    tester.view.physicalSize = const Size(1200, 6000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -60,7 +60,7 @@ void main() {
     );
 
     expect(loadCalls, 1);
-    await tester.tap(find.text('Ajouter une image de départ (facultatif)'));
+    await tester.tap(find.text('Choisir plusieurs images'));
     await tester.pumpAndSettle();
     expect(find.text('source.png'), findsOneWidget);
 
@@ -71,7 +71,7 @@ void main() {
     await tester.tap(find.text('16:9 Paysage'));
     await tester.pump();
 
-    await tester.tap(find.text('Générer'));
+    await tester.tap(find.text('Générer et enregistrer'));
     await tester.pumpAndSettle();
 
     expect(loadCalls, 2);
@@ -82,10 +82,14 @@ void main() {
     expect(generatedParameters?['durationSeconds'], '8');
     expect(generatedParameters?['resolution'], '720p');
     expect(generatedParameters?['apiKey'], 'api-key-test');
-    expect(generatedParameters?['imageBase64'], base64Encode(imageBytes));
-    expect(generatedParameters?['imageMimeType'], 'image/png');
+    final referenceImages = generatedParameters?['referenceImages'] as List?;
+    expect(referenceImages, hasLength(1));
+    final firstImage = Map<String, Object?>.from(referenceImages!.first as Map);
+    expect(firstImage['base64'], base64Encode(imageBytes));
+    expect(firstImage['mimeType'], 'image/png');
+    expect(firstImage['name'], 'source.png');
     expect(
-      find.text('Vidéo VEO générée et ajoutée à la bibliothèque.'),
+      find.text('Vidéo VEO générée et enregistrée dans la bibliothèque.'),
       findsOneWidget,
     );
 
@@ -104,7 +108,7 @@ void main() {
       },
     );
 
-    await tester.tap(find.text('Générer'));
+    await tester.tap(find.text('Générer et enregistrer'));
     await tester.pump();
     expect(find.text('Ajoutez un prompt avant de générer.'), findsOneWidget);
     expect(generateCalls, 0);
@@ -113,10 +117,14 @@ void main() {
     final promptField = tester.widget<TextField>(find.byType(TextField).at(1));
     promptField.controller!.text = List<String>.filled(4001, 'x').join();
     await tester.pump();
-    await tester.tap(find.text('Générer'));
+    await tester.tap(find.text('Générer et enregistrer'));
     await tester.pump();
 
     expect(promptField.controller?.text.length, 4001);
+    expect(
+      find.text('Le prompt ne doit pas dépasser 4 000 caractères.'),
+      findsOneWidget,
+    );
     expect(generateCalls, 0);
   });
 
@@ -186,7 +194,6 @@ void main() {
     expect(shareButtons, findsNWidgets(2));
     expect(downloadButtons, findsNWidgets(2));
 
-    await tester.ensureVisible(shareButtons.at(0));
     await tester.tap(shareButtons.at(0));
     await tester.pump();
     expect(
@@ -195,20 +202,18 @@ void main() {
     );
 
     await tester.pumpAndSettle();
-    await tester.ensureVisible(downloadButtons.at(1));
     await tester.tap(downloadButtons.at(1));
     await tester.pump();
     expect(openedUri, Uri.parse('https://cdn.test/video.mp4'));
 
     await tester.pumpAndSettle();
-    await tester.ensureVisible(shareButtons.at(1));
     await tester.tap(shareButtons.at(1));
     await tester.pump();
     expect(sharedVideo?.id, 'ready-video');
     expect(sharedOrigin, isNotNull);
 
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Actualiser'));
+    await tester.tap(find.byTooltip('Actualiser la bibliothèque'));
     await tester.pumpAndSettle();
     expect(loadCalls, 2);
   });
