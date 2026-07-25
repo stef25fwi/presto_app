@@ -236,13 +236,29 @@ jobs:
 
       - name: Enforce validation result
         if: always()
+        env:
+          FUNCTIONS_CHANGED: ${{ steps.scope.outputs.functions }}
+          FIRESTORE_CHANGED: ${{ steps.scope.outputs.firestore }}
+          WEB_CHANGED: ${{ steps.scope.outputs.web }}
         run: |
-          outcomes='${{ steps.generated_check.outcome }} ${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.quality_gate.outcome }} ${{ steps.critical_coverage.outcome }} ${{ steps.functions_deps.outcome }} ${{ steps.functions_build.outcome }} ${{ steps.functions_test.outcome }} ${{ steps.firebase_cli.outcome }} ${{ steps.firestore_rules.outcome }} ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}'
-          if echo "$outcomes" | grep -Eq 'failure|cancelled'; then
-            echo "Validation failed: $outcomes"
+          set -euo pipefail
+          required_outcomes='${{ steps.generated_check.outcome }} ${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.quality_gate.outcome }} ${{ steps.critical_coverage.outcome }}'
+
+          if [ "$FUNCTIONS_CHANGED" = 'true' ]; then
+            required_outcomes="$required_outcomes ${{ steps.functions_deps.outcome }} ${{ steps.functions_build.outcome }} ${{ steps.functions_test.outcome }}"
+          fi
+          if [ "$FIRESTORE_CHANGED" = 'true' ]; then
+            required_outcomes="$required_outcomes ${{ steps.firebase_cli.outcome }} ${{ steps.firestore_rules.outcome }}"
+          fi
+          if [ "$WEB_CHANGED" = 'true' ]; then
+            required_outcomes="$required_outcomes ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}"
+          fi
+
+          if echo "$required_outcomes" | grep -Eq 'failure|cancelled|skipped'; then
+            echo "Validation failed: $required_outcomes"
             exit 1
           fi
-          echo "Validation succeeded: $outcomes"
+          echo "Validation succeeded: $required_outcomes"
 
   preview:
     name: Firebase Hosting preview
