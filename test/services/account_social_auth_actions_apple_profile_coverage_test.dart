@@ -148,51 +148,55 @@ void main() {
 
   tearDown(() {
     messenger.setMockMethodCallHandler(SignInWithApple.channel, null);
+    debugDefaultTargetPlatformOverride = null;
   });
 
   testWidgets(
     'Apple utilise le nom de famille seul sans acces Firestore reel',
     (tester) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-      addTearDown(() => debugDefaultTargetPlatformOverride = null);
 
-      final completed = Completer<void>();
-      String? trackedMethod;
-      bool? trackedNewUser;
+      try {
+        final completed = Completer<void>();
+        String? trackedMethod;
+        bool? trackedNewUser;
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (context) => Scaffold(
-              body: ElevatedButton(
-                onPressed: () async {
-                  await AccountSocialAuthActions.signInWithApple(
-                    context: context,
-                    auth: auth,
-                    trackLogin: ({authMethod, isNewUser = false}) async {
-                      trackedMethod = authMethod;
-                      trackedNewUser = isNewUser;
-                    },
-                  );
-                  completed.complete();
-                },
-                child: const Text('Connexion Apple'),
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: ElevatedButton(
+                  onPressed: () async {
+                    await AccountSocialAuthActions.signInWithApple(
+                      context: context,
+                      auth: auth,
+                      trackLogin: ({authMethod, isNewUser = false}) async {
+                        trackedMethod = authMethod;
+                        trackedNewUser = isNewUser;
+                      },
+                    );
+                    completed.complete();
+                  },
+                  child: const Text('Connexion Apple'),
+                ),
               ),
             ),
           ),
-        ),
-      );
+        );
 
-      await tester.tap(find.text('Connexion Apple'));
-      await tester.pump();
-      await completed.future.timeout(const Duration(seconds: 10));
-      await tester.pump();
+        await tester.tap(find.text('Connexion Apple'));
+        await tester.pump();
+        await completed.future.timeout(const Duration(seconds: 10));
+        await tester.pump();
 
-      expect(platform.credentialCalls, 1);
-      expect(platform.user.updatedDisplayName, 'Martin');
-      expect(trackedMethod, 'apple');
-      expect(trackedNewUser, isTrue);
-      expect(find.text('Connecte avec Apple ✓'), findsOneWidget);
+        expect(platform.credentialCalls, 1);
+        expect(platform.user.updatedDisplayName, 'Martin');
+        expect(trackedMethod, 'apple');
+        expect(trackedNewUser, isTrue);
+        expect(find.text('Connecte avec Apple ✓'), findsOneWidget);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
     },
   );
 }
