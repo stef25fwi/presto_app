@@ -96,7 +96,7 @@ void main() {
     expect(apiField.controller?.text, isEmpty);
   });
 
-  testWidgets('refuse un prompt vide puis un prompt supérieur à 4000 caractères',
+  testWidgets('refuse un prompt vide et limite la saisie à 4000 caractères',
       (tester) async {
     var generateCalls = 0;
     await pumpPage(
@@ -113,17 +113,12 @@ void main() {
     expect(generateCalls, 0);
 
     await tester.pumpAndSettle();
-    final promptField = tester.widget<TextField>(find.byType(TextField).at(1));
-    promptField.controller!.text = List<String>.filled(4001, 'x').join();
-    await tester.pump();
-    await tester.tap(find.text('Générer et enregistrer'));
+    final promptFinder = find.byType(TextField).at(1);
+    await tester.enterText(promptFinder, List<String>.filled(4001, 'x').join());
     await tester.pump();
 
-    expect(promptField.controller?.text.length, 4001);
-    expect(
-      find.text('Le prompt ne doit pas dépasser 4 000 caractères.'),
-      findsOneWidget,
-    );
+    final promptField = tester.widget<TextField>(promptFinder);
+    expect(promptField.controller?.text.length, 4000);
     expect(generateCalls, 0);
   });
 
@@ -188,20 +183,22 @@ void main() {
     );
 
     expect(loadCalls, 1);
-    final shareButtons = find.text('Partager');
-    final openButtons = find.text('Ouvrir');
-    expect(shareButtons, findsOneWidget);
-    expect(openButtons, findsOneWidget);
+    final shareButtons = find.widgetWithText(FilledButton, 'Partager');
+    final openButtons = find.widgetWithText(OutlinedButton, 'Ouvrir');
+    expect(shareButtons, findsNWidgets(2));
+    expect(openButtons, findsNWidgets(2));
 
-    await tester.ensureVisible(openButtons);
-    await tester.tap(openButtons);
+    final readyOpenButton = openButtons.last;
+    await tester.ensureVisible(readyOpenButton);
+    await tester.tap(readyOpenButton);
     await tester.pump();
     expect(openedUri, Uri.parse('https://cdn.test/video.mp4'));
     expect(find.text('Impossible d’ouvrir cette vidéo.'), findsOneWidget);
 
     await tester.pumpAndSettle();
-    await tester.ensureVisible(shareButtons);
-    await tester.tap(shareButtons);
+    final readyShareButton = shareButtons.last;
+    await tester.ensureVisible(readyShareButton);
+    await tester.tap(readyShareButton);
     await tester.pump();
     expect(sharedVideo?.id, 'ready-video');
     expect(sharedOrigin, isNotNull);
