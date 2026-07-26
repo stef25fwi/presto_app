@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:presto_app/features/guided_journey/guided_journey_models.dart';
+import 'package:presto_app/features/guided_journey/guided_journey_visible_content.dart';
 
 import 'guided_journey_callout.dart';
 import 'guided_journey_common_widgets.dart';
@@ -25,7 +26,8 @@ class GuidedJourneyStageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final completed = stage.checklist
+    final visible = GuidedJourneyVisibleContent.fromStage(stage);
+    final completed = visible.checklist
         .where((item) => checkedIds.contains(item.id))
         .length;
     return ListView(
@@ -61,13 +63,13 @@ class GuidedJourneyStageView extends StatelessWidget {
                 text: stage.personalizedSummary,
                 icon: Icons.person_pin_circle_outlined,
               ),
-              if (stage.warnings.isNotEmpty) ...[
+              if (visible.warnings.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 GuidedJourneyCallout(
                   title: stage.isBlocking
                       ? 'À vérifier avant de continuer'
                       : 'Points de vigilance',
-                  text: stage.warnings.join('\n\n'),
+                  text: visible.warnings.join('\n\n'),
                   icon: Icons.warning_amber_rounded,
                   tone: const Color(0xFFD97706),
                 ),
@@ -78,12 +80,12 @@ class GuidedJourneyStageView extends StatelessWidget {
         const SizedBox(height: 12),
         GuidedJourneySectionCard(
           title:
-              'Ce que vous devez faire maintenant — $completed/${stage.checklist.length}',
+              'Ce que vous devez faire maintenant — $completed/${visible.checklist.length}',
           subtitle: 'Cochez chaque action lorsque vous l’avez réellement vérifiée.',
           icon: Icons.checklist_rounded,
           accent: const Color(0xFF0F766E),
           child: Column(
-            children: stage.checklist
+            children: visible.checklist
                 .map(
                   (item) => CheckboxListTile(
                     value: checkedIds.contains(item.id),
@@ -109,7 +111,7 @@ class GuidedJourneyStageView extends StatelessWidget {
         const SizedBox(height: 12),
         GuidedJourneySectionCard(
           title: 'Documents et informations à préparer',
-          subtitle: '${stage.documents.length} élément(s) à réunir',
+          subtitle: '${visible.documents.length} élément(s) à réunir',
           icon: Icons.folder_copy_outlined,
           child: ExpansionTile(
             tilePadding: EdgeInsets.zero,
@@ -118,13 +120,14 @@ class GuidedJourneyStageView extends StatelessWidget {
               'Afficher la liste',
               style: TextStyle(fontWeight: FontWeight.w800),
             ),
-            children: [GuidedJourneyInfoList(items: stage.documents)],
+            children: [GuidedJourneyInfoList(items: visible.documents)],
           ),
         ),
         const SizedBox(height: 12),
         GuidedJourneySectionCard(
           title: 'Comprendre cette étape en détail',
-          subtitle: 'Toutes les informations de votre fiche restent disponibles.',
+          subtitle:
+              'Les précisions complémentaires sont affichées sans répéter les actions ou documents déjà visibles.',
           icon: Icons.menu_book_outlined,
           child: ExpansionTile(
             tilePadding: EdgeInsets.zero,
@@ -133,18 +136,19 @@ class GuidedJourneyStageView extends StatelessWidget {
               'En savoir plus',
               style: TextStyle(fontWeight: FontWeight.w800),
             ),
-            children: [GuidedJourneyInfoList(items: stage.details)],
+            children: [GuidedJourneyInfoList(items: visible.details)],
           ),
         ),
         const SizedBox(height: 12),
         GuidedJourneySectionCard(
-          title: 'Liens et organismes utiles — ${stage.resources.length} ressources',
+          title:
+              'Liens et organismes utiles — ${visible.resources.length} ressources',
           subtitle:
               'Les ressources prioritaires sont affichées en premier. Touchez une tuile pour ouvrir le site.',
           icon: Icons.link_rounded,
           accent: kGuidedJourneyBlue,
           child: GuidedJourneyResourceList(
-            resources: stage.resources,
+            resources: visible.resources,
             onOpen: onOpenResource,
           ),
         ),
