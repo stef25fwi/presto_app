@@ -184,7 +184,7 @@ class _GuidedJourneyPageState extends State<GuidedJourneyPage> {
 
   void _openStage(int index) {
     setState(() {
-      _activeIndex = index.clamp(0, _stages.length - 1);
+      _activeIndex = index.clamp(0, _stages.length - 1).toInt();
       _showOverview = false;
     });
     _persistProgress();
