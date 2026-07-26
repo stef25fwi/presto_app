@@ -6,6 +6,7 @@ import 'guided_journey_models.dart';
 /// champs (titre, tâche, détail, document ou ressource). Cette projection garde
 /// toutes les précisions utiles, mais retire les répétitions visibles :
 /// - doublons stricts dans une même section ;
+/// - texte identique répété entre checklist, vigilance et documents ;
 /// - titre déjà affiché dans la checklist répété au début d'un détail ;
 /// - segments identiques répétés dans un même détail ;
 /// - ressources pointant vers la même URL.
@@ -26,13 +27,34 @@ class GuidedJourneyVisibleContent {
 
   factory GuidedJourneyVisibleContent.fromStage(JourneyStage stage) {
     final checklist = _uniqueChecklist(stage.checklist);
-    final warnings = _uniqueStrings(stage.warnings);
-    final documents = _uniqueStrings(stage.documents);
+    final checklistKeys = checklist
+        .map((item) => _normalize(item.label))
+        .where((item) => item.isNotEmpty)
+        .toSet();
+
+    final warnings = _uniqueStrings(
+      stage.warnings,
+      excludedKeys: checklistKeys,
+    );
+    final warningKeys = warnings
+        .map(_normalize)
+        .where((item) => item.isNotEmpty)
+        .toSet();
+
+    final documents = _uniqueStrings(
+      stage.documents,
+      excludedKeys: <String>{...checklistKeys, ...warningKeys},
+    );
+    final documentKeys = documents
+        .map(_normalize)
+        .where((item) => item.isNotEmpty)
+        .toSet();
+
     final alreadyVisible = <String>{
-      ...checklist.map((item) => _normalize(item.label)),
-      ...warnings.map(_normalize),
-      ...documents.map(_normalize),
-    }..removeWhere((item) => item.isEmpty);
+      ...checklistKeys,
+      ...warningKeys,
+      ...documentKeys,
+    };
 
     return GuidedJourneyVisibleContent(
       checklist: checklist,
@@ -56,8 +78,11 @@ class GuidedJourneyVisibleContent {
     return result;
   }
 
-  static List<String> _uniqueStrings(List<String> values) {
-    final seen = <String>{};
+  static List<String> _uniqueStrings(
+    List<String> values, {
+    Set<String> excludedKeys = const <String>{},
+  }) {
+    final seen = <String>{...excludedKeys};
     final result = <String>[];
     for (final value in values) {
       final cleaned = value.trim();
@@ -81,7 +106,9 @@ class GuidedJourneyVisibleContent {
       for (final segment in raw.split(RegExp(r'\s+—\s+'))) {
         final cleaned = segment.trim();
         final key = _normalize(cleaned);
-        if (key.isEmpty || alreadyVisible.contains(key) || !segmentKeys.add(key)) {
+        if (key.isEmpty ||
+            alreadyVisible.contains(key) ||
+            !segmentKeys.add(key)) {
           continue;
         }
         keptSegments.add(cleaned);
@@ -106,7 +133,8 @@ class GuidedJourneyVisibleContent {
           .trim()
           .toLowerCase()
           .replaceFirst(RegExp(r'/+$'), '');
-      final fallbackKey = '${_normalize(resource.label)}|${_normalize(resource.description)}';
+      final fallbackKey =
+          '${_normalize(resource.label)}|${_normalize(resource.description)}';
       final key = normalizedUrl.isEmpty ? fallbackKey : normalizedUrl;
       if (key.isEmpty || !seen.add(key)) continue;
       result.add(resource);
