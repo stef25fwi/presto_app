@@ -1,4 +1,4 @@
-// toolbox_je_me_lance_page.dart
+// ignore_for_file: unused_element
 //
 // Dépendances :
 //   firebase_auth: ^x.x.x
@@ -15,7 +15,6 @@
 // - L'anti-copie / anti-capture sera ajouté plus tard.
 //
 // © You can freely adapt.
-
 import 'dart:async';
 import 'dart:ui' as ui;
 
@@ -37,8 +36,6 @@ import '../app_core.dart';
 import '../data/city_postal_data.dart';
 import '../services/je_me_lance_parcours_fiches_service.dart';
 import '../services/region_resources_service.dart';
-
-const Type _legacyJourneySummaryRendererType = _JourneySummaryPage;
 
 /// Construit l'instantané JSON-compatible d'un parcours personnalisé,
 /// utilisé à la fois pour la sauvegarde locale explicite
@@ -1928,7 +1925,6 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       ),
     );
 
-    assert(_legacyJourneySummaryRendererType == _JourneySummaryPage);
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => GuidedJourneyPage(
