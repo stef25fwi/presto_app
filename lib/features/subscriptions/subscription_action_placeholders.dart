@@ -26,7 +26,9 @@ void resetSubscriptionActionOverrides() {
 
 Future<bool> _isCommercialMode() async {
   final override = subscriptionCommercialModeResolverOverride;
-  if (override != null) return override();
+  if (override != null) {
+    return override();
+  }
   try {
     return (await AppOperatingModeService().getState()).mode.isCommercial;
   } catch (_) {
