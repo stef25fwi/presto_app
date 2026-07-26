@@ -52,7 +52,7 @@ void main() {
     final visible = GuidedJourneyVisibleContent.fromStage(stage);
 
     expect(visible.checklist, hasLength(1));
-    expect(visible.warnings, hasLength(1));
+    expect(visible.warnings, isEmpty);
     expect(visible.documents, hasLength(1));
     expect(visible.details, equals(const ['Comparer les garanties proposées']));
     expect(visible.resources, hasLength(1));
@@ -86,5 +86,36 @@ void main() {
         'Une qualification peut être obligatoire selon le métier',
       ]),
     );
+  });
+
+  test('compare les textes sans être trompé par les accents ou la ponctuation', () {
+    final stage = JourneyStage(
+      id: 'prepare-file',
+      order: 4,
+      title: 'Préparer mon dossier',
+      objective: 'Préparer.',
+      estimatedMinutes: 5,
+      explanation: 'Explication.',
+      personalizedSummary: 'Résumé.',
+      checklist: const [
+        JourneyChecklistItem(
+          id: 'prepare-1',
+          label: 'Préparer une pièce d’identité',
+        ),
+      ],
+      warnings: const [
+        'Preparer une piece d identite !',
+      ],
+      documents: const [
+        'Préparer une pièce d’identité.',
+        'Justificatif de domicile',
+      ],
+    );
+
+    final visible = GuidedJourneyVisibleContent.fromStage(stage);
+
+    expect(visible.checklist, hasLength(1));
+    expect(visible.warnings, isEmpty);
+    expect(visible.documents, equals(const ['Justificatif de domicile']));
   });
 }
