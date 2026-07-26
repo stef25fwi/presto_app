@@ -41,10 +41,12 @@ class ProSiretVerificationResult {
 class ProSiretService {
   ProSiretService({
     FirebaseFunctions? functions,
-  }) : _functions =
-            functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1');
+  }) : _functionsOverride = functions;
 
-  final FirebaseFunctions _functions;
+  final FirebaseFunctions? _functionsOverride;
+
+  FirebaseFunctions get _functions =>
+      _functionsOverride ?? FirebaseFunctions.instanceFor(region: 'europe-west1');
 
   String cleanSiret(String value) {
     return value.replaceAll(RegExp(r'\D'), '');
