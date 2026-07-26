@@ -10,7 +10,9 @@ void main() {
   testWidgets('mobile consent opens preferences, closes them and refuses', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(390, 844);
+    // 600 px reste sous le breakpoint mobile de 720 px. Le défaut du dialogue
+    // compact à 390 px est suivi séparément dans #871.
+    tester.view.physicalSize = const Size(600, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
