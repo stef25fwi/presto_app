@@ -92,14 +92,17 @@ void main() {
 
     final result = await publish(
       service(repository),
-      title: '12345678',
-      description: '12345678901234567890',
+      title: '1234567890',
+      description: '123456789012345678901234567890',
     );
 
     expect(result.listingId, 'boundary-listing');
     expect(repository.drafts, hasLength(1));
-    expect(repository.drafts.single.title, '12345678');
-    expect(repository.drafts.single.description, '12345678901234567890');
+    expect(repository.drafts.single.title, '1234567890');
+    expect(
+      repository.drafts.single.description,
+      '123456789012345678901234567890',
+    );
   });
 
   test('la validation utilise les valeurs nettoyées sans modifier le brouillon',
