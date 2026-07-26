@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:presto_app/features/guided_journey/guided_journey_models.dart';
 
+import 'guided_journey_callout.dart';
 import 'guided_journey_common_widgets.dart';
 import 'guided_journey_resource_list.dart';
 
