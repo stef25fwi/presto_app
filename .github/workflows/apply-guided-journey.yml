@@ -1,0 +1,47 @@
+name: Apply guided journey refactor
+
+on:
+  push:
+    branches:
+      - feat/guided-personal-journey
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-guided-personal-journey
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[guided-journey-applied]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/guided-personal-journey
+          fetch-depth: 0
+
+      - name: Generate guided journey implementation
+        run: python3 tools/apply_guided_journey_refactor.py
+
+      - name: Verify generated changes
+        run: |
+          test -f lib/pages/account/guided_journey_page.dart
+          test -f test/guided_journey_page_test.dart
+          test -f docs/toolbox_guided_journey_implementation.md
+          grep -q "GuidedJourneyPage" lib/pages/toolbox_je_me_lance_page.dart
+          grep -q "guidedProgress" lib/services/journey_pdf_export_service.dart
+
+      - name: Commit implementation
+        run: |
+          if git diff --quiet; then
+            echo "Already applied."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "[guided-journey-applied] feat(toolbox): guided personalized journey"
+          git push origin HEAD:feat/guided-personal-journey
