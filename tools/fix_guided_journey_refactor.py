@@ -1,30 +1,14 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+TARGET = ROOT / 'lib/pages/account/guided_journey_page.dart'
 
-
-def replace(path: str, old: str, new: str) -> None:
-    target = ROOT / path
-    content = target.read_text(encoding='utf-8')
-    if old not in content:
-        raise RuntimeError(f'Pattern not found in {path}: {old}')
-    target.write_text(content.replace(old, new), encoding='utf-8')
-
-
-replace(
-    'lib/pages/account/guided_journey_page.dart',
-    '_activeIndex = index.clamp(0, _stages.length - 1);',
-    '_activeIndex = index.clamp(0, _stages.length - 1).toInt();',
-)
-replace(
-    'lib/features/guided_journey/widgets/guided_journey_overview.dart',
-    'final safeIndex = nextStageIndex.clamp(0, stages.length - 1);',
-    'final safeIndex = nextStageIndex.clamp(0, stages.length - 1).toInt();',
-)
-replace(
-    'lib/features/guided_journey/widgets/guided_journey_common_widgets.dart',
-    'value: progress.clamp(0, 1),',
-    'value: progress.clamp(0.0, 1.0).toDouble(),',
-)
+content = TARGET.read_text(encoding='utf-8')
+old = '_activeIndex = index.clamp(0, _stages.length - 1);'
+new = '_activeIndex = index.clamp(0, _stages.length - 1).toInt();'
+if old in content:
+    TARGET.write_text(content.replace(old, new), encoding='utf-8')
+elif new not in content:
+    raise RuntimeError('Unable to normalize the active guided stage index')
 
 Path(__file__).unlink()
