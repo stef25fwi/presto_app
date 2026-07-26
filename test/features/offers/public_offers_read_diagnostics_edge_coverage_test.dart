@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/features/offers/public_offers_read_diagnostics.dart';
 
