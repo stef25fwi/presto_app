@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-import 'admin_space_hub_page.dart';
+import 'admin_space_page.dart';
 
-/// Point d’entrée stable vers l’espace admin.
+/// Point d’entrée stable vers l’espace administrateur complet.
 ///
-/// Le hub organise les domaines de pilotage sous forme de tuiles cliquables,
-/// tout en conservant l’accès au tableau admin complet et à ses outils.
+/// L’accès depuis le compte ouvre directement le dashboard admin, sans passer
+/// par le hub intermédiaire de pilotage.
 class AdminSpaceLoader extends StatelessWidget {
   const AdminSpaceLoader({super.key});
 
   @override
-  Widget build(BuildContext context) => const AdminSpaceHubPage();
+  Widget build(BuildContext context) => const AdminSpacePage();
 }
