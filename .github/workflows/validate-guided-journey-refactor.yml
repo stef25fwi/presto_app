@@ -1,0 +1,70 @@
+name: Validate guided journey refactor
+
+on:
+  push:
+    branches:
+      - feat/guided-personal-journey
+
+permissions:
+  contents: write
+
+concurrency:
+  group: validate-guided-personal-journey
+  cancel-in-progress: false
+
+jobs:
+  validate-and-commit:
+    if: ${{ !contains(github.event.head_commit.message, '[guided-refactor-validated]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/guided-personal-journey
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Apply final type fixes
+        run: python3 tools/fix_guided_journey_refactor.py
+
+      - name: Format guided journey files
+        run: |
+          dart format \
+            lib/pages/account/guided_journey_page.dart \
+            lib/pages/account/saved_journey_summary_page.dart \
+            lib/features/guided_journey \
+            test/guided_journey_page_test.dart
+
+      - name: Enforce architecture budgets
+        run: |
+          python3 tools/quality/check_flutter_architecture_size.py \
+            --changed-only \
+            --base-ref main \
+            --enforce
+
+      - name: Analyze guided journey
+        run: |
+          flutter analyze --fatal-infos \
+            lib/pages/account/guided_journey_page.dart \
+            lib/pages/account/saved_journey_summary_page.dart \
+            lib/features/guided_journey \
+            test/guided_journey_page_test.dart
+
+      - name: Run guided journey widget tests
+        run: flutter test test/guided_journey_page_test.dart --reporter expanded
+
+      - name: Commit validated refactor
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "[guided-refactor-validated] refactor(toolbox): split guided journey architecture"
+          git push origin HEAD:feat/guided-personal-journey
