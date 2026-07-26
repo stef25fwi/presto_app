@@ -2987,8 +2987,10 @@ class _AccountPageState extends State<AccountPage> {
               width: double.infinity,
               gaplessPlayback: true,
               errorBuilder: (_, __, ___) => fallback(),
-              loadingBuilder: (context, child, progress) =>
-                  progress == null ? child : fallback(),
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+                return const ColoredBox(color: Color(0xFFE8F0FE));
+              },
             );
           },
         ),
