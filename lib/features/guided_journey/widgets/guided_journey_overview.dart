@@ -26,7 +26,7 @@ class GuidedJourneyOverview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final safeIndex = nextStageIndex.clamp(0, stages.length - 1);
+    final safeIndex = nextStageIndex.clamp(0, stages.length - 1).toInt();
     final nextStage = stages[safeIndex];
     final completed = completedStageIds.length;
     final progress = stages.isEmpty ? 0.0 : completed / stages.length;
