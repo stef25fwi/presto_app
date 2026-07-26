@@ -30,10 +30,14 @@ void main() {
           label: 'Atelier dessert',
           keywords: <String>['patisserie'],
         ),
+        SuggestionItem(
+          label: 'Correspondance exacte à 0,90',
+          keywords: <String>['abcdefghij'],
+        ),
       ];
 
-      final earlyBreakResults = KeywordSuggester.compute(
-        query: 'patisseri',
+      final exactBreakResults = KeywordSuggester.compute(
+        query: 'abcdxfghij',
         items: items,
       );
       final completedLoopResults = KeywordSuggester.compute(
@@ -41,8 +45,9 @@ void main() {
         items: items,
       );
 
-      expect(earlyBreakResults.single.label, 'Atelier dessert');
-      expect(completedLoopResults.single.label, 'Atelier dessert');
+      expect(KeywordSuggester.similarity('abcdxfghij', 'abcdefghij'), 0.9);
+      expect(exactBreakResults.first.label, 'Correspondance exacte à 0,90');
+      expect(completedLoopResults.first.label, 'Atelier dessert');
     });
 
     test('déclenche réellement le fallback et filtre le contexte', () {
