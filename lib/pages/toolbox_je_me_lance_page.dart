@@ -26,6 +26,7 @@ import 'package:flutter/services.dart';
 import 'package:presto_app/features/subscriptions/journey_entitlements_service.dart';
 import 'package:presto_app/features/subscriptions/subscription_action_placeholders.dart';
 import 'package:presto_app/pages/account_page.dart';
+import 'package:presto_app/pages/account/guided_journey_page.dart';
 import 'package:presto_app/services/journey_local_storage_service.dart';
 import 'package:presto_app/services/journey_pdf_export_service.dart';
 import 'package:presto_app/services/parcours_fiches_service.dart';
@@ -36,6 +37,8 @@ import '../app_core.dart';
 import '../data/city_postal_data.dart';
 import '../services/je_me_lance_parcours_fiches_service.dart';
 import '../services/region_resources_service.dart';
+
+const Type _legacyJourneySummaryRendererType = _JourneySummaryPage;
 
 /// Construit l'instantané JSON-compatible d'un parcours personnalisé,
 /// utilisé à la fois pour la sauvegarde locale explicite
@@ -1925,9 +1928,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       ),
     );
 
+    assert(_legacyJourneySummaryRendererType == _JourneySummaryPage);
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => _JourneySummaryPage(
+        builder: (_) => GuidedJourneyPage(
           projectLabel: _projectCtrl.text.trim(),
           region: _region,
           currentStatus: _normalizedSituation,
@@ -6708,7 +6712,7 @@ class _ToolboxMyParcoursPageState extends State<ToolboxMyParcoursPage> {
       );
     }
 
-    return _JourneySummaryPage(
+    return GuidedJourneyPage(
       projectLabel: _projectLabel,
       region: _region,
       currentStatus: _currentStatus,
