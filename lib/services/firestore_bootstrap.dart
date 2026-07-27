@@ -3,24 +3,42 @@ import 'package:flutter/foundation.dart';
 
 bool _firestoreBootstrapDone = false;
 
-Future<void> bootstrapFirestore() async {
+typedef FirestoreBootstrapApplySettings = Future<void> Function();
+typedef FirestoreBootstrapLogger = void Function(String message);
+
+@visibleForTesting
+void resetFirestoreBootstrapForTest() {
+  _firestoreBootstrapDone = false;
+}
+
+Future<void> bootstrapFirestore({
+  FirestoreBootstrapApplySettings? applySettings,
+  FirestoreBootstrapLogger? logger,
+  bool? isWebOverride,
+}) async {
   if (_firestoreBootstrapDone) {
     return;
   }
 
-  final firestore = FirebaseFirestore.instance;
+  final isWeb = isWebOverride ?? kIsWeb;
+  final log = logger ?? debugPrint;
 
   try {
-    if (kIsWeb) {
-      firestore.settings = const Settings(persistenceEnabled: false);
+    if (isWeb) {
+      if (applySettings != null) {
+        await applySettings();
+      } else {
+        FirebaseFirestore.instance.settings =
+            const Settings(persistenceEnabled: false);
+      }
       if (kDebugMode) {
-        debugPrint('[Firestore] web settings applied persistence=false');
+        log('[Firestore] web settings applied persistence=false');
       }
     }
     _firestoreBootstrapDone = true;
   } catch (error) {
     if (kDebugMode) {
-      debugPrint('[Firestore] bootstrap failed: $error');
+      log('[Firestore] bootstrap failed: $error');
     }
   }
 }
