@@ -52,14 +52,25 @@ class CacheMonitoringService {
   static final CacheMonitoringService _instance =
       CacheMonitoringService._internal();
 
+  CacheMonitoringService._internal({FirebaseFirestore? firestore})
+      : _firestoreOverride = firestore;
+
+  @visibleForTesting
+  factory CacheMonitoringService.forTest({
+    required FirebaseFirestore firestore,
+  }) {
+    return CacheMonitoringService._internal(firestore: firestore);
+  }
+
   final CacheMetrics metrics = CacheMetrics();
-  final _db = FirebaseFirestore.instance;
+  final FirebaseFirestore? _firestoreOverride;
+
+  FirebaseFirestore get _db =>
+      _firestoreOverride ?? FirebaseFirestore.instance;
 
   // Stockage des infos pour calcul avgAccessTime
   final List<Duration> _accessTimes = [];
   static const int _maxStoredTimes = 100;
-
-  CacheMonitoringService._internal();
 
   factory CacheMonitoringService() {
     return _instance;
