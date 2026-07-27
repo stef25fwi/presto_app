@@ -5,6 +5,11 @@ import 'package:recaptcha_enterprise_flutter/recaptcha.dart';
 import 'package:recaptcha_enterprise_flutter/recaptcha_action.dart';
 import 'package:recaptcha_enterprise_flutter/recaptcha_client.dart';
 
+typedef MarketplaceMobileTokenExecutor = Future<String> Function(
+  String siteKey,
+  String action,
+);
+
 RecaptchaClient? _client;
 Future<RecaptchaClient>? _clientFuture;
 String _siteKeyInUse = '';
@@ -23,27 +28,40 @@ Future<RecaptchaClient> _fetchClient(String siteKey) {
   return _clientFuture!;
 }
 
+Future<String> _executeMarketplaceMobileToken(
+  String siteKey,
+  String action,
+) async {
+  final client = await _fetchClient(siteKey);
+  return client.execute(
+    RecaptchaAction.custom(action),
+    timeout: 10000,
+  );
+}
+
 Future<String> requestMarketplaceHumanVerificationToken({
   required String action,
   required String androidSiteKey,
   required String iosSiteKey,
   required String webSiteKey,
+  bool? isAndroidOverride,
+  bool? isIosOverride,
+  MarketplaceMobileTokenExecutor? executor,
 }) async {
-  if (!Platform.isAndroid && !Platform.isIOS) {
+  final isAndroid = isAndroidOverride ?? Platform.isAndroid;
+  final isIos = isIosOverride ?? Platform.isIOS;
+  if (!isAndroid && !isIos) {
     return '';
   }
 
-  final siteKey = Platform.isAndroid ? androidSiteKey : iosSiteKey;
+  final siteKey = isAndroid ? androidSiteKey : iosSiteKey;
   if (siteKey.trim().isEmpty) {
     return '';
   }
 
   try {
-    final client = await _fetchClient(siteKey.trim());
-    final token = await client.execute(
-      RecaptchaAction.custom(action),
-      timeout: 10000,
-    );
+    final execute = executor ?? _executeMarketplaceMobileToken;
+    final token = await execute(siteKey.trim(), action);
     return token.trim();
   } catch (error) {
     debugPrint('[Marketplace reCAPTCHA] mobile execution failed: $error');
