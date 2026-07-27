@@ -8,29 +8,41 @@ import 'widgets/admin_risk_score_badge.dart';
 import 'widgets/admin_user_messaging_status_badge.dart';
 
 class AdminMessagingRiskPage extends StatelessWidget {
-  const AdminMessagingRiskPage({super.key});
+  final Stream<List<AdminConversationModel>>? conversationsStream;
+  final Stream<List<AdminMessagingUserModel>>? usersStream;
+
+  const AdminMessagingRiskPage({
+    super.key,
+    this.conversationsStream,
+    this.usersStream,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
       body: StreamBuilder<List<AdminConversationModel>>(
-        stream: AdminMessagingService().watchConversations(limit: 200),
+        stream: conversationsStream ??
+            AdminMessagingService().watchConversations(limit: 200),
         builder: (context, conversationsSnapshot) {
           return StreamBuilder<List<AdminMessagingUserModel>>(
-            stream: AdminMessagingService().watchUsers(limit: 200),
+            stream:
+                usersStream ?? AdminMessagingService().watchUsers(limit: 200),
             builder: (context, usersSnapshot) {
               final highRiskConversations = (conversationsSnapshot.data ??
                       const <AdminConversationModel>[])
                   .where(
-                      (item) => item.riskScore >= 70 || item.adminWatchlisted)
+                    (item) => item.riskScore >= 70 || item.adminWatchlisted,
+                  )
                   .toList(growable: false);
               final highRiskUsers = (usersSnapshot.data ??
                       const <AdminMessagingUserModel>[])
-                  .where((item) =>
-                      item.riskScore >= 70 ||
-                      item.messagingStatus.toLowerCase().contains('blo') ||
-                      item.messagingStatus.toLowerCase().contains('suspend'))
+                  .where(
+                    (item) =>
+                        item.riskScore >= 70 ||
+                        item.messagingStatus.toLowerCase().contains('blo') ||
+                        item.messagingStatus.toLowerCase().contains('suspend'),
+                  )
                   .toList(growable: false);
               return ListView(
                 padding: const EdgeInsets.all(16),
@@ -98,7 +110,8 @@ class AdminMessagingRiskPage extends StatelessWidget {
                                     runSpacing: 8,
                                     children: [
                                       AdminRiskScoreBadge(
-                                          score: user.riskScore),
+                                        score: user.riskScore,
+                                      ),
                                       AdminUserMessagingStatusBadge(
                                         status: user.messagingStatus,
                                       ),
