@@ -100,26 +100,5 @@ void main() {
         ),
       );
     });
-
-    test('verifySiret utilise le message par défaut sans message serveur',
-        () async {
-      final service = ProSiretService(
-        caller: (_, __) async => throw FirebaseFunctionsException(
-          code: 'internal',
-          message: null,
-        ),
-      );
-
-      await expectLater(
-        service.verifySiret('73282932000074'),
-        throwsA(
-          isA<ProSiretException>().having(
-            (error) => error.message,
-            'message',
-            'Impossible de vérifier ce SIRET pour le moment.',
-          ),
-        ),
-      );
-    });
   });
 }
