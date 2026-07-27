@@ -61,19 +61,16 @@ AdminMessagingUserModel messagingUser({
   );
 }
 
+void configureViewport(WidgetTester tester) {
+  tester.view.physicalSize = const Size(1200, 1600);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUp(() async {
-    await TestWidgetsFlutterBinding.ensureInitialized()
-        .setSurfaceSize(const Size(1200, 1600));
-  });
-
-  tearDown(() async {
-    await TestWidgetsFlutterBinding.ensureInitialized().setSurfaceSize(null);
-  });
-
   testWidgets('affiche les deux états vides', (tester) async {
+    configureViewport(tester);
     await tester.pumpWidget(
       MaterialApp(
         home: AdminMessagingRiskPage(
@@ -98,6 +95,7 @@ void main() {
 
   testWidgets('filtre et présente les conversations et utilisateurs sensibles',
       (tester) async {
+    configureViewport(tester);
     final conversations = <AdminConversationModel>[
       conversation(
         id: 'risk',
