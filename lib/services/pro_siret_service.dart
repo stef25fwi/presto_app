@@ -1,5 +1,10 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
+typedef ProSiretCaller = Future<Object?> Function(
+  String name,
+  Map<String, dynamic> parameters,
+);
+
 class ProSiretVerificationResult {
   const ProSiretVerificationResult({
     required this.ok,
@@ -41,10 +46,13 @@ class ProSiretVerificationResult {
 class ProSiretService {
   ProSiretService({
     FirebaseFunctions? functions,
-  }) : _functions =
-            functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1');
+    ProSiretCaller? caller,
+  })  : _functions =
+            functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1'),
+        _caller = caller;
 
   final FirebaseFunctions _functions;
+  final ProSiretCaller? _caller;
 
   String cleanSiret(String value) {
     return value.replaceAll(RegExp(r'\D'), '');
@@ -87,6 +95,19 @@ class ProSiretService {
     return false;
   }
 
+  Future<Object?> _call(
+    String name,
+    Map<String, dynamic> parameters,
+  ) async {
+    final caller = _caller;
+    if (caller != null) {
+      return caller(name, parameters);
+    }
+    final callable = _functions.httpsCallable(name);
+    final response = await callable.call<dynamic>(parameters);
+    return response.data;
+  }
+
   Future<ProSiretVerificationResult> preVerifySiret(String rawSiret) async {
     final cleaned = cleanSiret(rawSiret);
 
@@ -98,12 +119,9 @@ class ProSiretService {
       throw Exception('Le numéro SIRET n’est pas valide.');
     }
 
-    final callable = _functions.httpsCallable('preVerifySiret');
-    final response = await callable.call(<String, dynamic>{
+    final rawData = await _call('preVerifySiret', <String, dynamic>{
       'siret': cleaned,
     });
-
-    final rawData = response.data;
     if (rawData is! Map) {
       throw Exception('Réponse SIRET invalide.');
     }
@@ -128,12 +146,10 @@ class ProSiretService {
     }
 
     try {
-      final callable = _functions.httpsCallable('verifySiret');
-      final response = await callable.call<Map<dynamic, dynamic>>({
+      final rawData = await _call('verifySiret', <String, dynamic>{
         'siret': siret,
       });
-
-      final data = Map<String, dynamic>.from(response.data);
+      final data = Map<String, dynamic>.from(rawData as Map);
 
       return ProSiretVerificationResult.fromMap(data);
     } on FirebaseFunctionsException catch (e) {
