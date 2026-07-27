@@ -101,10 +101,12 @@ void main() {
       );
     });
 
-    test('verifySiret utilise le message par défaut sans message serveur', () async {
+    test('verifySiret utilise le message par défaut sans message serveur',
+        () async {
       final service = ProSiretService(
         caller: (_, __) async => throw FirebaseFunctionsException(
           code: 'internal',
+          message: null,
         ),
       );
 
