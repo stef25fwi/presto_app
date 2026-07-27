@@ -32,6 +32,15 @@ Future<FirebaseApp> ensureFirebaseInitialized({
       '[FirebaseInit] source=$source initialized app=${app.name} platform=$platform',
     );
     return app;
+  } on FirebaseException catch (error) {
+    if (error.code == 'duplicate-app' && Firebase.apps.isNotEmpty) {
+      debugPrint(
+        '[FirebaseInit] source=$source duplicate app race; reusing ${Firebase.app().name}',
+      );
+      return Firebase.app();
+    }
+    debugPrint('[FirebaseInit] source=$source failed: $error');
+    rethrow;
   } catch (error) {
     debugPrint('[FirebaseInit] source=$source failed: $error');
     rethrow;
