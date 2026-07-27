@@ -6,13 +6,15 @@ import '../../app_core.dart' show kPrestoOrange;
 import '../../main.dart' show prestoOverlayStyleFor;
 
 class MesAvisPage extends StatelessWidget {
-  const MesAvisPage({super.key});
+  const MesAvisPage({super.key, this.uidOverride});
 
   static const routeName = '/account/mes-avis';
 
+  final String? uidOverride;
+
   @override
   Widget build(BuildContext context) {
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final uid = uidOverride ?? FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
