@@ -10,16 +10,33 @@ const String kLocalSavedJourneyPrefsKey = 'toolbox.saved_journey.latest';
 /// Historique local du dernier parcours généré, toujours écrasé.
 const String kLocalHistoryJourneyPrefsKey = 'toolbox.saved_journey.history';
 
+typedef JourneySaveCaller = Future<String> Function(
+  Map<String, dynamic> snapshot, {
+  String? journeyId,
+});
+typedef JourneyListCaller = Future<List<SavedJourneyRecord>> Function();
+typedef JourneyDeleteCaller = Future<void> Function(String journeyId);
+
 /// Bibliothèque de parcours synchronisée dans Firestore.
 ///
 /// Le dernier parcours reste mis en cache pour conserver la reprise immédiate
 /// et la compatibilité avec les écrans historiques. La source de vérité des
 /// sauvegardes explicites est toutefois `users/{uid}/savedJourneys`.
 class JourneyLocalStorageService {
-  const JourneyLocalStorageService();
+  const JourneyLocalStorageService({
+    JourneySaveCaller? saveJourneyCaller,
+    JourneyListCaller? listJourneysCaller,
+    JourneyDeleteCaller? deleteJourneyCaller,
+  })  : _saveJourneyCaller = saveJourneyCaller,
+        _listJourneysCaller = listJourneysCaller,
+        _deleteJourneyCaller = deleteJourneyCaller;
 
   static final SubscriptionCreditService _credits =
       SubscriptionCreditService();
+
+  final JourneySaveCaller? _saveJourneyCaller;
+  final JourneyListCaller? _listJourneysCaller;
+  final JourneyDeleteCaller? _deleteJourneyCaller;
 
   Future<void> saveSnapshot(Map<String, dynamic> snapshot) async {
     final prefs = await SharedPreferences.getInstance();
@@ -31,7 +48,8 @@ class JourneyLocalStorageService {
         ? cachedCloudId
         : null;
 
-    final cloudId = await _credits.saveJourney(
+    final saveJourney = _saveJourneyCaller ?? _credits.saveJourney;
+    final cloudId = await saveJourney(
       _withoutLocalMetadata(snapshot),
       journeyId: journeyId,
     );
@@ -54,10 +72,14 @@ class JourneyLocalStorageService {
     await prefs.remove(kLocalSavedJourneyPrefsKey);
   }
 
-  Future<List<SavedJourneyRecord>> loadLibrary() => _credits.listJourneys();
+  Future<List<SavedJourneyRecord>> loadLibrary() {
+    final listJourneys = _listJourneysCaller ?? _credits.listJourneys;
+    return listJourneys();
+  }
 
   Future<void> deleteLibraryJourney(String journeyId) async {
-    await _credits.deleteJourney(journeyId);
+    final deleteJourney = _deleteJourneyCaller ?? _credits.deleteJourney;
+    await deleteJourney(journeyId);
     final cached = await loadSnapshot();
     if ('${cached?['_cloudJourneyId'] ?? ''}' == journeyId) {
       await clearSnapshot();
