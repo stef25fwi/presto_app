@@ -3,13 +3,19 @@ import 'package:flutter/services.dart';
 
 import 'package:presto_app/services/pro_siret_service.dart';
 
+typedef ProSiretVerifier = Future<ProSiretVerificationResult> Function(
+  String value,
+);
+
 class ProSiretVerificationCard extends StatefulWidget {
   const ProSiretVerificationCard({
     super.key,
     this.onVerified,
+    this.verifier,
   });
 
   final ValueChanged<ProSiretVerificationResult>? onVerified;
+  final ProSiretVerifier? verifier;
 
   @override
   State<ProSiretVerificationCard> createState() =>
@@ -18,7 +24,6 @@ class ProSiretVerificationCard extends StatefulWidget {
 
 class _ProSiretVerificationCardState extends State<ProSiretVerificationCard> {
   final _controller = TextEditingController();
-  final _service = ProSiretService();
 
   bool _loading = false;
   String? _error;
@@ -40,7 +45,8 @@ class _ProSiretVerificationCardState extends State<ProSiretVerificationCard> {
     });
 
     try {
-      final result = await _service.verifySiret(_controller.text);
+      final verifier = widget.verifier ?? ProSiretService().verifySiret;
+      final result = await verifier(_controller.text);
 
       if (!mounted) return;
 
