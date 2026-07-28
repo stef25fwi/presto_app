@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../constants.dart';
 import 'entrepreneur_pricing_models.dart';
 import 'entrepreneur_pricing_pdf.dart';
+import 'entrepreneur_pricing_results_widgets.dart';
 import 'entrepreneur_pricing_storage.dart';
-
-const _orange = Color(0xFFFF6600);
-const _blue = Color(0xFF1A73E8);
-const _expertBlue = Color(0xFF0F4C81);
 
 class EntrepreneurPricingResultsPage extends StatefulWidget {
   const EntrepreneurPricingResultsPage({
@@ -37,8 +33,8 @@ class _EntrepreneurPricingResultsPageState
     final calculation = widget.calculation;
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6F8),
-      appBar: _PricingAppBar(
-        color: _expert ? _expertBlue : _blue,
+      appBar: PricingAppBar(
+        color: _expert ? pricingExpertBlue : pricingBlue,
         onBack: () => Navigator.of(context).pop(),
       ),
       body: SafeArea(
@@ -59,27 +55,30 @@ class _EntrepreneurPricingResultsPageState
               ),
             ),
             const SizedBox(height: 12),
-            _DecisionCard(calculation: calculation),
+            PricingDecisionCard(calculation: calculation),
             const SizedBox(height: 12),
-            _Panel(
+            PricingPanel(
               title: 'Synthèse du prix',
               icon: Icons.price_check_rounded,
               children: [
-                _ResultRow('Coût de revient', '${_money(calculation.costPrice)} €'),
-                _ResultRow(
-                  'Prix minimum rentable TTC',
-                  '${_money(calculation.minimumPriceTtc)} €',
+                PricingResultRow(
+                  'Coût de revient',
+                  '${pricingMoney(calculation.costPrice)} €',
                 ),
-                _ResultRow(
+                PricingResultRow(
+                  'Prix minimum rentable TTC',
+                  '${pricingMoney(calculation.minimumPriceTtc)} €',
+                ),
+                PricingResultRow(
                   'Prix conseillé TTC',
-                  '${_money(calculation.suggestedPriceTtc)} €',
+                  '${pricingMoney(calculation.suggestedPriceTtc)} €',
                   emphasized: true,
                 ),
-                _ResultRow(
+                PricingResultRow(
                   'Marge au prix conseillé',
-                  '${_money(calculation.suggestedUnitProfit)} €',
+                  '${pricingMoney(calculation.suggestedUnitProfit)} €',
                 ),
-                _ResultRow(
+                PricingResultRow(
                   'Seuil de rentabilité',
                   calculation.breakEvenUnits == 0
                       ? 'Non calculable'
@@ -88,55 +87,24 @@ class _EntrepreneurPricingResultsPageState
               ],
             ),
             const SizedBox(height: 12),
-            _Panel(
+            PricingPanel(
               title: 'Coût exact de production',
               icon: Icons.account_tree_outlined,
-              children: [
-                _ResultRow(
-                  'Matières et consommables',
-                  '${_money(calculation.materialCost)} €',
-                ),
-                if (_expert) ...[
-                  _ResultRow(
-                    'Accessoires',
-                    '${_money(calculation.accessoryCost)} €',
-                  ),
-                  _ResultRow(
-                    'Machines (${_number(calculation.machineKwh, 4)} kWh)',
-                    '${_money(calculation.machineElectricityCost)} €',
-                  ),
-                  _ResultRow('Eau', '${_money(calculation.waterCost)} €'),
-                  _ResultRow(
-                    'Transport et autres',
-                    '${_money(calculation.transportAndOtherCost)} €',
-                  ),
-                ],
-                _ResultRow(
-                  'Main-d’œuvre',
-                  '${_money(calculation.laborCost)} €',
-                ),
-                _ResultRow(
-                  'Charges fixes',
-                  '${_money(calculation.fixedCostPerUnit)} €',
-                ),
-                _ResultRow(
-                  'Amortissement',
-                  '${_money(calculation.amortizationPerUnit)} €',
-                ),
-              ],
+              children: _costRows(calculation),
             ),
             if (_expert && widget.draft.machines.isNotEmpty) ...[
               const SizedBox(height: 12),
-              _Panel(
+              PricingPanel(
                 title: 'Machines prises en compte',
                 icon: Icons.precision_manufacturing_outlined,
                 children: widget.draft.machines
                     .map(
-                      (machine) => _ResultRow(
-                        '${machine.name} • ${_number(machine.watts, 0)} W × '
-                        '${_number(machine.minutesPerUnit, 1)} min × '
+                      (machine) => PricingResultRow(
+                        '${machine.name} • '
+                        '${pricingNumber(machine.watts, 0)} W × '
+                        '${pricingNumber(machine.minutesPerUnit, 1)} min × '
                         '${machine.quantity}',
-                        '${_money(machine.costPerUnit(widget.draft.electricityRate))} €',
+                        '${pricingMoney(machine.costPerUnit(widget.draft.electricityRate))} €',
                       ),
                     )
                     .toList(),
@@ -144,16 +112,16 @@ class _EntrepreneurPricingResultsPageState
             ],
             if (_expert && widget.draft.accessories.isNotEmpty) ...[
               const SizedBox(height: 12),
-              _Panel(
+              PricingPanel(
                 title: 'Accessoires pris en compte',
                 icon: Icons.construction_outlined,
                 children: widget.draft.accessories
                     .map(
-                      (accessory) => _ResultRow(
+                      (accessory) => PricingResultRow(
                         '${accessory.name} • '
-                        '${_number(accessory.quantityPerUnit, 2)} × '
-                        '${_money(accessory.unitPrice)} €',
-                        '${_money(accessory.costPerUnit)} €',
+                        '${pricingNumber(accessory.quantityPerUnit, 2)} × '
+                        '${pricingMoney(accessory.unitPrice)} €',
+                        '${pricingMoney(accessory.costPerUnit)} €',
                       ),
                     )
                     .toList(),
@@ -163,35 +131,71 @@ class _EntrepreneurPricingResultsPageState
               const SizedBox(height: 12),
               _ScenarioPanel(draft: widget.draft),
               const SizedBox(height: 14),
-              _ActionButton(
+              PricingActionButton(
                 text: _saving
                     ? 'Sauvegarde et vérification…'
                     : 'Sauvegarder cette analyse',
                 icon: Icons.save_outlined,
-                color: _blue,
+                color: pricingBlue,
                 onPressed: _saving ? null : _save,
               ),
               const SizedBox(height: 10),
-              _ActionButton(
+              PricingActionButton(
                 text: _exporting
                     ? 'Génération de la fiche PDF…'
                     : 'Générer la fiche PDF',
                 icon: Icons.picture_as_pdf_outlined,
-                color: _expertBlue,
+                color: pricingExpertBlue,
                 onPressed: _exporting ? null : _exportPdf,
               ),
             ],
             const SizedBox(height: 10),
-            _ActionButton(
+            PricingActionButton(
               text: 'Ajuster mes hypothèses',
               icon: Icons.tune_rounded,
-              color: _orange,
+              color: pricingOrange,
               onPressed: () => Navigator.of(context).pop(),
             ),
           ],
         ),
       ),
     );
+  }
+
+  List<Widget> _costRows(EntrepreneurPricingCalculation calculation) {
+    return [
+      PricingResultRow(
+        'Matières et consommables',
+        '${pricingMoney(calculation.materialCost)} €',
+      ),
+      if (_expert) ...[
+        PricingResultRow(
+          'Accessoires',
+          '${pricingMoney(calculation.accessoryCost)} €',
+        ),
+        PricingResultRow(
+          'Machines (${pricingNumber(calculation.machineKwh, 4)} kWh)',
+          '${pricingMoney(calculation.machineElectricityCost)} €',
+        ),
+        PricingResultRow('Eau', '${pricingMoney(calculation.waterCost)} €'),
+        PricingResultRow(
+          'Transport et autres',
+          '${pricingMoney(calculation.transportAndOtherCost)} €',
+        ),
+      ],
+      PricingResultRow(
+        'Main-d’œuvre',
+        '${pricingMoney(calculation.laborCost)} €',
+      ),
+      PricingResultRow(
+        'Charges fixes',
+        '${pricingMoney(calculation.fixedCostPerUnit)} €',
+      ),
+      PricingResultRow(
+        'Amortissement',
+        '${pricingMoney(calculation.amortizationPerUnit)} €',
+      ),
+    ];
   }
 
   Future<void> _save() async {
@@ -261,136 +265,6 @@ class _EntrepreneurPricingResultsPageState
   }
 }
 
-class EntrepreneurPricingHistoryPage extends StatefulWidget {
-  const EntrepreneurPricingHistoryPage({super.key});
-
-  @override
-  State<EntrepreneurPricingHistoryPage> createState() =>
-      _EntrepreneurPricingHistoryPageState();
-}
-
-class _EntrepreneurPricingHistoryPageState
-    extends State<EntrepreneurPricingHistoryPage> {
-  late Future<List<EntrepreneurPricingRecord>> _future;
-
-  @override
-  void initState() {
-    super.initState();
-    _future = EntrepreneurPricingStorage.load();
-  }
-
-  void _reload() => setState(() => _future = EntrepreneurPricingStorage.load());
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F6F8),
-      appBar: _PricingAppBar(
-        color: _orange,
-        onBack: () => Navigator.of(context).pop(),
-      ),
-      body: FutureBuilder<List<EntrepreneurPricingRecord>>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final records = snapshot.data ?? const [];
-          if (records.isEmpty) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'Aucun calcul enregistré. Les analyses Expert sauvegardées '
-                  'apparaîtront ici.',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(10),
-            itemCount: records.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final record = records[index];
-              return Card(
-                child: ListTile(
-                  leading: const Icon(Icons.calculate_outlined, color: _blue),
-                  title: Text(
-                    record.draft.projectName,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  subtitle: Text(
-                    '${_date(record.createdAt)} • '
-                    '${_money(record.calculation.suggestedPriceTtc)} € conseillé',
-                  ),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => EntrepreneurPricingResultsPage(
-                        draft: record.draft,
-                        calculation: record.calculation,
-                      ),
-                    ),
-                  ),
-                  trailing: IconButton(
-                    tooltip: 'Supprimer',
-                    onPressed: () async {
-                      await EntrepreneurPricingStorage.delete(record.id);
-                      if (mounted) _reload();
-                    },
-                    icon: const Icon(Icons.delete_outline_rounded),
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _DecisionCard extends StatelessWidget {
-  const _DecisionCard({required this.calculation});
-
-  final EntrepreneurPricingCalculation calculation;
-
-  @override
-  Widget build(BuildContext context) {
-    final profitable = calculation.expectedPriceIsProfitable;
-    final color = profitable ? const Color(0xFF15803D) : const Color(0xFFC62828);
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: color.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            profitable ? Icons.check_circle_rounded : Icons.warning_amber_rounded,
-            color: color,
-            size: 30,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              profitable
-                  ? 'Ton prix envisagé est rentable\n'
-                      'Résultat : ${_money(calculation.expectedUnitProfit)} € / unité'
-                  : 'À ce prix, tu perds de l’argent\n'
-                      'Résultat : ${_money(calculation.expectedUnitProfit)} € / unité',
-              style: TextStyle(color: color, fontWeight: FontWeight.w900),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ScenarioPanel extends StatelessWidget {
   const _ScenarioPanel({required this.draft});
 
@@ -415,178 +289,18 @@ class _ScenarioPanel extends StatelessWidget {
         volume: draft.highVolume,
       ),
     ];
-    return _Panel(
+    return PricingPanel(
       title: 'Scénarios mensuels',
       icon: Icons.insights_outlined,
       children: scenarios
           .map(
-            (item) => _ResultRow(
+            (item) => PricingResultRow(
               '${item.label} • ${item.volume} unités',
-              '${_money(item.monthlyProfit)} €',
+              '${pricingMoney(item.monthlyProfit)} €',
               emphasized: item.label == 'Cible',
             ),
           )
           .toList(),
     );
   }
-}
-
-class _Panel extends StatelessWidget {
-  const _Panel({
-    required this.title,
-    required this.icon,
-    required this.children,
-  });
-
-  final String title;
-  final IconData icon;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(17),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x10000000),
-            blurRadius: 15,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: _blue),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const Divider(height: 22),
-          ...children,
-        ],
-      ),
-    );
-  }
-}
-
-class _ResultRow extends StatelessWidget {
-  const _ResultRow(this.label, this.value, {this.emphasized = false});
-
-  final String label;
-  final String value;
-  final bool emphasized;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: emphasized ? FontWeight.w800 : FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            value,
-            textAlign: TextAlign.right,
-            style: TextStyle(
-              color: emphasized ? _blue : Colors.black87,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.text,
-    required this.icon,
-    required this.color,
-    required this.onPressed,
-  });
-
-  final String text;
-  final IconData icon;
-  final Color color;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 54,
-      child: FilledButton.icon(
-        style: FilledButton.styleFrom(
-          backgroundColor: color,
-          disabledBackgroundColor: color.withValues(alpha: 0.35),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(17),
-          ),
-        ),
-        onPressed: onPressed,
-        icon: Icon(icon),
-        label: Text(text, style: const TextStyle(fontWeight: FontWeight.w900)),
-      ),
-    );
-  }
-}
-
-class _PricingAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const _PricingAppBar({required this.color, required this.onBack});
-
-  final Color color;
-  final VoidCallback onBack;
-
-  @override
-  Size get preferredSize => const Size.fromHeight(58);
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      automaticallyImplyLeading: false,
-      backgroundColor: color,
-      foregroundColor: Colors.white,
-      leading: IconButton(
-        onPressed: onBack,
-        icon: const Icon(Icons.arrow_back_ios_new_rounded),
-      ),
-      title: Text(
-        'iliprestō',
-        style: kPrestoAppBarTitleStyle.copyWith(color: Colors.white),
-      ),
-    );
-  }
-}
-
-String _money(double value) => _number(value, 2);
-
-String _number(double value, int digits) =>
-    (value.isFinite ? value : 0).toStringAsFixed(digits).replaceAll('.', ',');
-
-String _date(DateTime value) {
-  String two(int number) => number.toString().padLeft(2, '0');
-  return '${two(value.day)}/${two(value.month)}/${value.year} '
-      '${two(value.hour)}:${two(value.minute)}';
 }
