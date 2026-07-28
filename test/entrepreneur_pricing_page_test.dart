@@ -34,11 +34,11 @@ void main() {
       const MaterialApp(home: EntrepreneurPricingPage()),
     );
 
-    await tester.tap(find.text('Mode Expert'));
+    await tester.tap(find.text('Mode Expert').first);
     await tester.tap(find.text('Commencer'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.text('6. Machines et accessoires utilisés'),
+      find.text('6. Machines et accessoires utilisés').first,
       500,
     );
 
