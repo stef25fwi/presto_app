@@ -312,7 +312,7 @@ void main() {
     await _openMode(tester, PricingMode.standard);
 
     await tester.scrollUntilVisible(
-      find.text('3. Temps & main-d’œuvre'),
+      find.text("3. Temps & main-d'œuvre"),
       450,
       scrollable: find.byType(Scrollable).first,
     );
