@@ -9,7 +9,20 @@ void main() {
 
   setUpAll(() async {
     setupFirebaseCoreMocks();
-    await Firebase.initializeApp();
+    if (Firebase.apps.isEmpty) {
+      try {
+        await Firebase.initializeApp(
+          options: const FirebaseOptions(
+            apiKey: 'test-api-key',
+            appId: '1:1234567890:web:notifications-monitor-test',
+            messagingSenderId: '1234567890',
+            projectId: 'presto-test',
+          ),
+        );
+      } on FirebaseException catch (error) {
+        if (error.code != 'duplicate-app') rethrow;
+      }
+    }
   });
 
   Future<void> pumpPage(
