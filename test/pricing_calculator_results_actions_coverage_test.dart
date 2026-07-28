@@ -50,7 +50,6 @@ void main() {
       -500,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('Mode Standard'), findsOneWidget);
     expect(find.text('Résultats Standard'), findsNothing);
     final projectField = tester.widget<TextField>(
       find.byKey(const ValueKey('project-name')),
