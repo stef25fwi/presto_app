@@ -1,7 +1,9 @@
 import admin from "firebase-admin";
 import OpenAI from "openai";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { COST_POLICY } from "../../config/cost_policy";
 import { ENFORCE_APP_CHECK, OPENAI_API_KEY, PROJECT_REGION } from "../../config/env";
+import { reserveMonthlyUsage } from "../../shared/cost_quota";
 import { extractRolesFromAuthToken, requireAnyRole } from "../marketplace/services/roles";
 
 const AUDIO_STORAGE_PATH = "audio/payment_info_popup_fr.mp3";
@@ -47,6 +49,11 @@ export const generatePaymentInfoAudio = onCall(
 
     const openai = new OpenAI({ apiKey });
 
+    await reserveMonthlyUsage({
+      metric: "openai_requests",
+      units: 1,
+      limit: COST_POLICY.openAiMonthlyRequestLimit,
+    });
     const response = await openai.audio.speech.create({
       model: "tts-1",
       voice: "nova",
