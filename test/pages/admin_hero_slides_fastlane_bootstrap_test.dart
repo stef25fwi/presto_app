@@ -9,23 +9,16 @@ void main() {
 
   setUpAll(() async {
     setupFirebaseCoreMocks();
-    for (final app in List<FirebaseApp>.from(Firebase.apps)) {
-      await app.delete();
-    }
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: 'test-api-key',
-        appId: '1:1234567890:web:admin-hero-test',
-        messagingSenderId: '1234567890',
-        projectId: 'presto-test',
-        storageBucket: 'presto-test.appspot.com',
-      ),
-    );
-  });
-
-  tearDownAll(() async {
-    for (final app in List<FirebaseApp>.from(Firebase.apps)) {
-      await app.delete();
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          apiKey: 'test-api-key',
+          appId: '1:1234567890:web:admin-hero-test',
+          messagingSenderId: '1234567890',
+          projectId: 'presto-test',
+          storageBucket: 'presto-test.appspot.com',
+        ),
+      );
     }
   });
 
