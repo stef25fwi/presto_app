@@ -14,10 +14,6 @@ export { syncMyEmailVerification } from "./modules/auth/email_verification_sync"
 export {
   placesAutocomplete,
   placesDetails,
-  generateOfferDraft,
-  openAiExtractListingFields,
-  openAiTranscribeListingAudio,
-  openAiExtractListingFieldsFromAudio,
   adminGetAccessStatus,
   getMyAdminAccessStatus,
   adminGetUserStats,
@@ -26,6 +22,12 @@ export {
   adminGetMicroIaConfig,
   adminSetMicroIaConfig,
 } from "./legacy/callables_compat";
+export {
+  generateOfferDraft,
+  openAiExtractListingFields,
+  openAiTranscribeListingAudio,
+  openAiExtractListingFieldsFromAudio,
+} from "./modules/ai/callables";
 export {
   requestPasswordResetEmail,
   requestEmailVerificationEmail,
