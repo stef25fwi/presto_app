@@ -18,10 +18,10 @@ Map<String, dynamic> _asMap(Object? value) {
 bool _shouldRetryCallable(Object error) {
   if (error is TimeoutException) return true;
   if (error is FirebaseFunctionsException) {
+    // Le backend possède désormais sa propre politique OpenAI et une clé
+    // d'idempotence. On ne répète côté client que les pannes de transport sûres.
     return error.code == 'unavailable' ||
-        error.code == 'deadline-exceeded' ||
-        error.code == 'internal' ||
-        error.code == 'resource-exhausted';
+        error.code == 'deadline-exceeded';
   }
   return false;
 }
