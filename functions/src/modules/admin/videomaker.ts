@@ -22,7 +22,9 @@ import {
   normalizeVideoPrompt,
 } from "./videomaker_utils";
 
-const VEO_API_KEY = COST_POLICY.veoGenerationEnabled\n  ? defineSecret("VEO_API_KEY")\n  : null;
+const VEO_API_KEY = COST_POLICY.veoGenerationEnabled
+  ? defineSecret("VEO_API_KEY")
+  : null;
 const VEO_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 const VIDEO_JOBS_COLLECTION = "_admin_video_maker_jobs";
 const VIDEO_STORAGE_ROOT = "admin/videomaker/videos";
