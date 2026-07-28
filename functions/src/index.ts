@@ -49,6 +49,7 @@ export { adminBulkDeleteListings } from "./modules/marketplace/callables/admin_b
 export { processOfferPhoto } from "./modules/marketplace/callables/media";
 export { classifyServicePhoto } from "./modules/marketplace/callables/classify_service_photo";
 export { reportListing, reportConversationMessage } from "./modules/marketplace/callables/reports";
+export { exportMyData } from "./modules/marketplace/callables/account_data_export";
 export {
   getEligibleRespondersForReview,
   submitVerifiedReview,
