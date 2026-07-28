@@ -82,28 +82,37 @@ class _ManagedAdPlaceholderTickerState
   void _watchRemoteImages() {
     _remoteSubscription?.cancel();
 
-    _remoteSubscription =
-        AdPlaceholderImageService.watchVisible(target: widget.target).listen(
-      (images) {
-        if (!mounted) return;
+    try {
+      _remoteSubscription =
+          AdPlaceholderImageService.watchVisible(target: widget.target).listen(
+        (images) {
+          if (!mounted) return;
 
-        setState(() {
-          _remoteImages = images
-              .where((image) => image.imageUrl.trim().isNotEmpty)
-              .map(
-                (image) => _BannerImageSource.network(
-                  image.imageUrl.trim(),
-                ),
-              )
-              .toList();
-          _index = 0;
-          _aspectRatio = null;
-        });
+          setState(() {
+            _remoteImages = images
+                .where((image) => image.imageUrl.trim().isNotEmpty)
+                .map(
+                  (image) => _BannerImageSource.network(
+                    image.imageUrl.trim(),
+                  ),
+                )
+                .toList();
+            _index = 0;
+            _aspectRatio = null;
+          });
 
-        _resolveCurrentImageRatio();
-        _startTimer();
-      },
-    );
+          _resolveCurrentImageRatio();
+          _startTimer();
+        },
+        onError: (_) {
+          if (!mounted) return;
+          setState(() => _remoteImages = <_BannerImageSource>[]);
+        },
+      );
+    } catch (_) {
+      _remoteSubscription = null;
+      _remoteImages = <_BannerImageSource>[];
+    }
   }
 
   Future<void> _loadFallbackAssets() async {
