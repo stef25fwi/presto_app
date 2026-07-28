@@ -28,6 +28,12 @@ export {
   openAiTranscribeListingAudio,
   openAiExtractListingFieldsFromAudio,
 } from "./modules/ai/callables";
+export { microIaProcessAudioV2 } from "./modules/ai/micro_ia_callable";
+export { adminGetAiMetrics } from "./modules/ai/ai_metrics";
+export {
+  purgeExpiredAiAudio,
+  purgeExpiredAiOperationalData,
+} from "./modules/ai/operational_cleanup";
 export {
   requestPasswordResetEmail,
   requestEmailVerificationEmail,
