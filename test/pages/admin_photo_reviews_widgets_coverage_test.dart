@@ -60,7 +60,10 @@ void main() {
     expect(find.text('adult: unlikely'), findsOneWidget);
     expect(find.byIcon(Icons.image_not_supported_outlined), findsOneWidget);
 
-    await tester.tap(find.text('Accepter'));
+    final acceptButton = find.text('Accepter');
+    await tester.ensureVisible(acceptButton);
+    await tester.pumpAndSettle();
+    await tester.tap(acceptButton);
     await tester.pumpAndSettle();
 
     expect(decisions, <Map<String, Object?>>[
