@@ -4,6 +4,7 @@ import { posix as pathPosix } from "node:path";
 import admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import sharp from "sharp";
+import { COST_POLICY } from "../../config/cost_policy";
 import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { db } from "../../core/firestore";
 import { logger } from "../../core/logger";
@@ -46,13 +47,11 @@ const MESSAGING_CALLABLE_OPTIONS = {
   enforceAppCheck: ENFORCE_APP_CHECK,
 } as const;
 
-// Chemin chaud de la messagerie : on garde 1 instance au chaud pour éliminer
-// le cold start (sinon le 1er message après inactivité met ~2-5 s à partir).
-// Appliqué uniquement aux callables critiques (envoi + marquage lu) pour
-// limiter le coût (1 instance toujours active par fonction).
-const HOT_MESSAGING_CALLABLE_OPTIONS = {
+// En bêta gratuite, ces callables reviennent à zéro instance quand ils sont
+// inactifs. Le léger cold start éventuel évite deux instances facturées 24/7.
+const SCALABLE_MESSAGING_CALLABLE_OPTIONS = {
   ...MESSAGING_CALLABLE_OPTIONS,
-  minInstances: 1,
+  minInstances: COST_POLICY.minInstances,
 } as const;
 
 async function findConversationSnapshotsForParticipant(
@@ -1115,7 +1114,7 @@ export const ensureOfferConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async 
   };
 });
 
-export const sendConversationMessage = onCall(HOT_MESSAGING_CALLABLE_OPTIONS, async (request) => {
+export const sendConversationMessage = onCall(SCALABLE_MESSAGING_CALLABLE_OPTIONS, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
   const text = sanitizeMessageText(request.data?.text);
@@ -1402,7 +1401,7 @@ export const sendConversationMessage = onCall(HOT_MESSAGING_CALLABLE_OPTIONS, as
   };
 });
 
-export const markConversationRead = onCall(HOT_MESSAGING_CALLABLE_OPTIONS, async (request) => {
+export const markConversationRead = onCall(SCALABLE_MESSAGING_CALLABLE_OPTIONS, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
 
