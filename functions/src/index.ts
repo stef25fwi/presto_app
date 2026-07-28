@@ -6,6 +6,11 @@ setGlobalOptions({
   secrets: EMAIL_PROVIDER_SECRETS,
 });
 
+export {
+  runCostOptimizedMinuteTasks,
+  runCostOptimizedQuarterHourTasks,
+} from "./modules/operations/cost_optimized_schedules";
+
 export { onUserCreated, onUserUpdated } from "./modules/auth/triggers";
 export { onAuthUserCreated } from "./modules/auth/on_auth_user_created";
 export { onUserRolesChanged } from "./modules/auth/role_claims_sync";
@@ -35,7 +40,6 @@ export {
 } from "./modules/auth/callables";
 
 export { onListingPublished, onOfferCreated, onOfferUpdated } from "./modules/listings/triggers";
-export { enqueueExpiringListingEmails, enqueueFirstListingNotPublishedReminders, enqueueFourHourExpiryPushNotifications } from "./modules/listings/scheduled";
 export {
   createListingDraft,
   updateListingDraftMedia,
@@ -61,7 +65,6 @@ export {
   getUserTrustScoreV2,
   reportReviewV2,
   replyToReviewV2,
-  publishMaturedReviewsV2,
 } from "./modules/marketplace/callables/reviews_v2";
 export { adminModerateReviewV2 } from "./modules/marketplace/callables/reviews_admin_v2";
 export { toggleFavorite } from "./modules/marketplace/callables/favorites";
@@ -78,19 +81,8 @@ export {
   notifyListingApproved,
   notifyListingRejected,
 } from "./modules/marketplace/triggers/notifications";
-export {
-  expireOldListings,
-  publishApprovedListings,
-} from "./modules/marketplace/scheduled/listings";
-export { purgeOrphanedStorageFiles, purgeAbandonedListingDrafts } from "./modules/marketplace/scheduled/storage_cleanup";
 export { onLegalTermsSettingsUpdated, onLegalPrivacySettingsUpdated } from "./modules/legal/triggers";
 export { getPublicLegalConfig } from "./modules/legal/public_legal_config";
-export {
-  enqueueMarketingOnboardingEmails,
-  enqueueNearbyNewListingsEmails,
-  enqueueProfileIncompleteReminderEmails,
-  enqueueReactivation30DaysEmails,
-} from "./modules/marketing/scheduled";
 export { sendReferralInviteEmail } from "./modules/marketing/callables";
 export { onNewsletterCampaignCreated, onNewsletterCampaignUpdated } from "./modules/marketing/triggers";
 
@@ -99,7 +91,6 @@ export {
   onAgentAuthorizationRequested,
   onAgentAuthorizationDecision,
 } from "./modules/agents/authorization_messaging";
-export { enqueueUnreadMessageReminders, syncMessagingAnalytics } from "./modules/messaging/scheduled";
 export {
   ensureOfferConversation,
   sendConversationMessage,
@@ -133,7 +124,6 @@ export {
 export {
   getSubscriptionCheckoutStatus,
   createSubscriptionPortalSession,
-  auditStripeCatalog,
 } from "./modules/billing/callables";
 
 /*
@@ -165,14 +155,10 @@ export { handleStripeWebhook } from "./modules/billing/stripe_webhook";
 export {
   enqueueEmailJobsFromEventTrigger,
   processEmailJobTrigger,
-  processScheduledEmailDigests,
-  retryFailedEmailJobs,
-  cleanupExpiredEmailJobs,
 } from "./modules/email/queue/triggers";
 
 export { handleEmailProviderWebhook } from "./modules/email/webhooks/handler";
 
-export { purgeOldEmailWebhooks, purgeOldEmailLogs, syncEmailAnalytics } from "./modules/email/scheduled";
 
 export { verifySiret } from "./modules/pro/verifySiret";
 export { preVerifySiret } from "./modules/pro/preVerifySiret";
