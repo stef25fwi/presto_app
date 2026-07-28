@@ -9,6 +9,9 @@ void main() {
 
   setUpAll(() async {
     setupFirebaseCoreMocks();
+    for (final app in List<FirebaseApp>.from(Firebase.apps)) {
+      await app.delete();
+    }
     await Firebase.initializeApp(
       options: const FirebaseOptions(
         apiKey: 'test-api-key',
@@ -18,6 +21,12 @@ void main() {
         storageBucket: 'presto-test.appspot.com',
       ),
     );
+  });
+
+  tearDownAll(() async {
+    for (final app in List<FirebaseApp>.from(Firebase.apps)) {
+      await app.delete();
+    }
   });
 
   testWidgets('affiche la structure admin hero sans blocage au démarrage',
