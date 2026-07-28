@@ -37,10 +37,8 @@ void main() {
     await tester.tap(find.text('Mode Expert').first);
     await tester.tap(find.text('Commencer'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('6. Machines et accessoires utilisés').first,
-      500,
-    );
+    await tester.drag(find.byType(ListView), const Offset(0, -1800));
+    await tester.pumpAndSettle();
 
     expect(find.text('Ajouter une machine'), findsOneWidget);
     expect(find.text('Ajouter un accessoire'), findsOneWidget);
