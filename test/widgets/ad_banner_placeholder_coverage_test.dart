@@ -46,7 +46,10 @@ void main() {
       ),
     );
 
-    expect(find.byKey(const ValueKey<String>('captured-placeholder')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('captured-placeholder')),
+      findsOneWidget,
+    );
     expect(capture.folder, 'assets/test_ads/');
     expect(capture.radius, BorderRadius.circular(6));
     expect(capture.interval, const Duration(seconds: 4));
@@ -73,7 +76,10 @@ void main() {
       ),
     );
 
-    expect(find.byKey(const ValueKey<String>('captured-placeholder')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('captured-placeholder')),
+      findsOneWidget,
+    );
     expect(capture.folder, 'assets/carousel_home/');
     expect(capture.radius, BorderRadius.circular(18));
     expect(capture.interval, const Duration(seconds: 4));
