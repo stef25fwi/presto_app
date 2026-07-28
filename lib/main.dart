@@ -48,6 +48,8 @@ import 'services/cookie_consent_service.dart';
 import 'widgets/cookie_consent_banner.dart';
 import 'core/connectivity/connectivity_status.dart';
 import 'widgets/offline_banner.dart';
+import 'core/localization/locale_controller.dart';
+import 'l10n/app_localizations.dart';
 
 export 'pages/publish_offer_page.dart' show PublishOfferPage;
 
@@ -815,6 +817,7 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     ConnectivityStatus.instance.start();
+    unawaited(LocaleController.instance.initialize());
   }
 
   @override
@@ -979,10 +982,21 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: LocaleController.instance,
+      builder: (context, _) => _buildMaterialApp(context),
+    );
+  }
+
+  Widget _buildMaterialApp(BuildContext context) {
     return MaterialApp(
       title: 'iliprestō',
       debugShowCheckedModeBanner: false,
       navigatorKey: appNavigatorKey,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localeResolutionCallback: (deviceLocale, supportedLocales) =>
+          LocaleController.instance.resolveDeviceLocale(deviceLocale),
       builder: (context, child) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;

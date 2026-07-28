@@ -32,6 +32,8 @@ import '../utils/friendly_snackbar.dart';
 import '../widgets/account_notifications_tile.dart';
 import '../widgets/account_profile_sections.dart';
 import '../services/app_check_bootstrap.dart';
+import '../core/localization/locale_controller.dart';
+import '../l10n/app_localizations.dart';
 
 import '../main.dart'
     show
@@ -4093,6 +4095,12 @@ class _AccountPageState extends State<AccountPage> {
         ),
         const Divider(height: 1, thickness: 1, indent: 72),
         _buildBlueMenuItem(
+          icon: Icons.language_rounded,
+          label: 'Langue de l\'application',
+          onTap: () => _showLanguagePicker(context),
+        ),
+        const Divider(height: 1, thickness: 1, indent: 72),
+        _buildBlueMenuItem(
           icon: Icons.gavel_rounded,
           label: 'Mentions légales',
           onTap: () => Navigator.of(
@@ -4117,6 +4125,78 @@ class _AccountPageState extends State<AccountPage> {
         ),
       ],
     );
+  }
+
+  void _showLanguagePicker(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return ListenableBuilder(
+          listenable: LocaleController.instance,
+          builder: (builderContext, _) {
+            final current = LocaleController.instance.locale;
+            return SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        l10n.languageTitle,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  RadioListTile<Locale?>(
+                    value: null,
+                    groupValue: current,
+                    title: Text(l10n.languageSystem),
+                    onChanged: (_) => _applyLocale(builderContext, null),
+                  ),
+                  RadioListTile<Locale?>(
+                    value: const Locale('fr'),
+                    groupValue: current,
+                    title: Text(l10n.languageFrench),
+                    onChanged: (value) => _applyLocale(builderContext, value),
+                  ),
+                  RadioListTile<Locale?>(
+                    value: const Locale('en'),
+                    groupValue: current,
+                    title: Text(l10n.languageEnglish),
+                    onChanged: (value) => _applyLocale(builderContext, value),
+                  ),
+                  RadioListTile<Locale?>(
+                    value: const Locale('es'),
+                    groupValue: current,
+                    title: Text(l10n.languageSpanish),
+                    onChanged: (value) => _applyLocale(builderContext, value),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _applyLocale(BuildContext context, Locale? locale) async {
+    if (locale == null) {
+      await LocaleController.instance.useSystemLocale();
+    } else {
+      await LocaleController.instance.setLocale(locale);
+    }
+    if (!context.mounted) return;
+    Navigator.of(context).pop();
+    showPrestoSnackBar(context, AppLocalizations.of(context).languageChanged);
   }
 
   Widget _buildBlueMenuItem({
