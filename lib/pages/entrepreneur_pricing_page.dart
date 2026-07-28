@@ -71,10 +71,7 @@ class _EntrepreneurPricingPageState extends State<EntrepreneurPricingPage> {
               ),
             ),
             const SizedBox(height: 18),
-            PricingPrimaryButton(
-              text: 'Commencer',
-              icon: Icons.play_arrow_rounded,
-              color: formOrange,
+            PricingStartButton(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => EntrepreneurPricingFormPage(mode: _mode),
