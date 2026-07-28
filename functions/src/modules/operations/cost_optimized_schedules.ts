@@ -48,8 +48,10 @@ import {
   syncMessagingAnalytics,
 } from "../messaging/scheduled";
 
+type ScheduledRunEvent = Parameters<typeof processScheduledEmailDigests.run>[0];
+
 interface RunnableSchedule {
-  run: (event: unknown) => void | Promise<void>;
+  run: (event: ScheduledRunEvent) => void | Promise<void>;
 }
 
 const TASKS: Record<CostScheduledTaskName, RunnableSchedule> = {
@@ -77,7 +79,7 @@ const TASKS: Record<CostScheduledTaskName, RunnableSchedule> = {
 
 async function runTasks(
   names: CostScheduledTaskName[],
-  event: unknown,
+  event: ScheduledRunEvent,
 ): Promise<void> {
   const failures: Array<{ task: string; error: string }> = [];
 
