@@ -46,6 +46,8 @@ import 'pages/account/delete_account_page.dart';
 import 'services/app_monitoring_service.dart';
 import 'services/cookie_consent_service.dart';
 import 'widgets/cookie_consent_banner.dart';
+import 'core/connectivity/connectivity_status.dart';
+import 'widgets/offline_banner.dart';
 
 export 'pages/publish_offer_page.dart' show PublishOfferPage;
 
@@ -812,6 +814,7 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    ConnectivityStatus.instance.start();
   }
 
   @override
@@ -1022,6 +1025,17 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
                       child: Align(
                         alignment: Alignment.bottomCenter,
                         child: CookieConsentBanner(),
+                      ),
+                    ),
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: ListenableBuilder(
+                        listenable: ConnectivityStatus.instance,
+                        builder: (_, __) => OfflineBanner(
+                          isVisible: !ConnectivityStatus.instance.isOnline,
+                        ),
                       ),
                     ),
                   ],
