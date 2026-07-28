@@ -29,12 +29,9 @@ class EntrepreneurPricingRecord {
       id: json['id']?.toString() ?? '',
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
-      draft: EntrepreneurPricingDraft.fromJson(
-        Map<String, dynamic>.from(json['draft'] as Map? ?? const {}),
-      ),
-      calculation: EntrepreneurPricingCalculation.fromJson(
-        Map<String, dynamic>.from(json['calculation'] as Map? ?? const {}),
-      ),
+      draft: EntrepreneurPricingModelCodec.decodeDraft(json['draft']),
+      calculation:
+          EntrepreneurPricingModelCodec.decodeCalculation(json['calculation']),
     );
   }
 }
