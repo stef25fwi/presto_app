@@ -3,23 +3,16 @@ import 'package:flutter/services.dart';
 
 import 'package:presto_app/pages/toolbox_hub_page.dart';
 
-const Color kOrangeStart = Color(0xFFFF7A00);
-const Color kOrangeEnd = Color(0xFFFF3D00);
-
 const Color kBlueStart = Color(0xFF16A7FF);
 const Color kBlueEnd = Color(0xFF002BD9);
-
 const Color kTextDark = Color(0xFF050B1E);
 const Color kTextGrey = Color(0xFF3E4554);
 const Color kBlueText = Color(0xFF0872E8);
-
 const Color kGreenCheck = Color(0xFF18B66A);
-
 const Color kPageBackground = Color(0xFFF5F6F8);
 const Color kCardBackground = Color(0xFFFFFFFF);
 const Color kIconOrangeBg = Color(0xFFFFEEE6);
 const Color kIconBlueBg = Color(0xFFEAF3FF);
-const double kToolboxOuterPadding = 8;
 const Color kToolboxAppBarColor = Color(0xFFFF6600);
 
 class ToolboxPage extends StatelessWidget {
@@ -36,7 +29,7 @@ class _ToolboxView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
+    final width = MediaQuery.sizeOf(context).width;
     final shouldConstrain = width > 420;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -64,124 +57,105 @@ class _ToolboxView extends StatelessWidget {
         ),
         body: SafeArea(
           top: false,
-          child: Column(
-            children: [
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isShort = constraints.maxHeight < 760;
-                    final isVeryShort = constraints.maxHeight < 710;
-                    final isUltraShort = constraints.maxHeight < 650;
-                    final cardSpacing =
-                        isUltraShort ? 10.0 : (isVeryShort ? 12.0 : 16.0);
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isShort = constraints.maxHeight < 760;
+              final isVeryShort = constraints.maxHeight < 710;
+              final isUltraShort = constraints.maxHeight < 650;
+              final horizontalPadding = width < 370 ? 4.0 : 6.0;
+              final verticalPadding = isUltraShort ? 6.0 : 8.0;
+              final cardSpacing =
+                  isUltraShort ? 8.0 : (isVeryShort ? 10.0 : 12.0);
+              final cardHeight =
+                  (constraints.maxHeight -
+                      (verticalPadding * 2) -
+                      cardSpacing) /
+                  2;
 
-                    Widget buildCards({double? forcedHeight}) {
-                      final card1 = _ToolboxCard(
-                        icon: Icon(
-                          Icons.rocket_launch_rounded,
-                          size: isVeryShort ? 30 : 38,
-                          color: const Color(0xFFFF5A00),
-                        ),
-                        iconBackground: kIconOrangeBg,
-                        title: 'JE CRÉE MON\nACTIVITÉ',
-                        subtitle: 'Un parcours simple pour me lancer.',
-                        description:
-                            'Comprends la réglementation, les démarches et les aides utiles selon ta région, ton statut et ton activité.',
-                        benefits: const [
-                          'Statut juridique\nconseillé',
-                          'Coûts & démarches\nexactes',
-                          'Aides, subventions &\norganismes',
-                          'Plan d’action sur 30\njours',
-                        ],
-                        buttonLabel: 'Commencer mon parcours',
-                        buttonGradient: const LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [
-                            kBlueStart,
-                            kBlueEnd,
-                          ],
-                        ),
-                        onTap: _openCreateBusiness,
-                        compact: isShort,
-                        tight: isVeryShort,
-                        ultraTight: isUltraShort,
-                      );
-
-                      final card2 = _ToolboxCard(
-                        icon: Icon(
-                          Icons.calculate_rounded,
-                          size: isVeryShort ? 32 : 40,
-                          color: const Color(0xFF096FE8),
-                        ),
-                        iconBackground: kIconBlueBg,
-                        title: 'FIXER MON PRIX\nDE VENTE',
-                        subtitle: 'Je calcule un prix rentable.',
-                        description:
-                            'En quelques clics, j’estime mon coût de revient, mes charges et mon positionnement marché.',
-                        benefits: const [
-                          'Matières premières',
-                          'Temps de travail',
-                          'Charges & frais réels',
-                          'Positionnement face à\nla concurrence',
-                        ],
-                        buttonLabel: 'Calculer mon prix',
-                        buttonGradient: const LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [
-                            Color(0xFFFF9800),
-                            Color(0xFFFF2F00),
-                          ],
-                        ),
-                        onTap: _openPriceCalculator,
-                        compact: isShort,
-                        tight: isVeryShort,
-                        ultraTight: isUltraShort,
-                      );
-
-                      if (forcedHeight != null) {
-                        return Column(
-                          children: [
-                            SizedBox(height: forcedHeight, child: card1),
-                            SizedBox(height: cardSpacing),
-                            SizedBox(height: forcedHeight, child: card2),
-                          ],
-                        );
-                      }
-
-                      return Column(
-                        children: [
-                          card1,
-                          SizedBox(height: cardSpacing),
-                          card2,
-                        ],
-                      );
-                    }
-
-                    return Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        kToolboxOuterPadding,
-                        10,
-                        kToolboxOuterPadding,
-                        10,
-                      ),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: shouldConstrain ? 430 : double.infinity,
-                          ),
-                          child: buildCards(
-                            forcedHeight:
-                                (constraints.maxHeight - 20 - cardSpacing) / 2,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+              return Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: verticalPadding,
                 ),
-              ),
-            ],
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: shouldConstrain ? 430 : double.infinity,
+                    ),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: cardHeight,
+                          child: _ToolboxCard(
+                            icon: Icon(
+                              Icons.rocket_launch_rounded,
+                              size: isVeryShort ? 30 : 38,
+                              color: const Color(0xFFFF5A00),
+                            ),
+                            iconBackground: kIconOrangeBg,
+                            title: 'JE CRÉE MON\nACTIVITÉ',
+                            subtitle: 'Un parcours simple pour me lancer.',
+                            description:
+                                'Comprends la réglementation, les démarches et les aides utiles selon ta région, ton statut et ton activité.',
+                            benefits: const [
+                              'Statut juridique\nconseillé',
+                              'Coûts & démarches\nexactes',
+                              'Aides, subventions &\norganismes',
+                              'Plan d’action sur 30\njours',
+                            ],
+                            buttonLabel: 'Commencer mon parcours',
+                            buttonGradient: const LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: [kBlueStart, kBlueEnd],
+                            ),
+                            onTap: _openCreateBusiness,
+                            compact: isShort,
+                            tight: isVeryShort,
+                            ultraTight: isUltraShort,
+                          ),
+                        ),
+                        SizedBox(height: cardSpacing),
+                        SizedBox(
+                          height: cardHeight,
+                          child: _ToolboxCard(
+                            icon: Icon(
+                              Icons.calculate_rounded,
+                              size: isVeryShort ? 32 : 40,
+                              color: const Color(0xFF096FE8),
+                            ),
+                            iconBackground: kIconBlueBg,
+                            title: 'FIXER MON PRIX\nDE VENTE',
+                            subtitle: 'Je calcule un prix rentable.',
+                            description:
+                                'En quelques clics, j’estime mon coût de revient, mes charges et mon positionnement marché.',
+                            benefits: const [
+                              'Matières premières',
+                              'Temps de travail',
+                              'Charges & frais réels',
+                              'Positionnement face à\nla concurrence',
+                            ],
+                            buttonLabel: 'Calculer mon prix',
+                            buttonGradient: const LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: [
+                                Color(0xFFFF9800),
+                                Color(0xFFFF2F00),
+                              ],
+                            ),
+                            onTap: _openPriceCalculator,
+                            compact: isShort,
+                            tight: isVeryShort,
+                            ultraTight: isUltraShort,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -202,19 +176,6 @@ void _openPriceCalculator(BuildContext context) {
 }
 
 class _ToolboxCard extends StatelessWidget {
-  final Widget icon;
-  final Color iconBackground;
-  final String title;
-  final String subtitle;
-  final String description;
-  final List<String> benefits;
-  final String buttonLabel;
-  final Gradient buttonGradient;
-  final ValueChanged<BuildContext>? onTap;
-  final bool compact;
-  final bool tight;
-  final bool ultraTight;
-
   const _ToolboxCard({
     required this.icon,
     required this.iconBackground,
@@ -224,31 +185,46 @@ class _ToolboxCard extends StatelessWidget {
     required this.benefits,
     required this.buttonLabel,
     required this.buttonGradient,
-    this.onTap,
-    this.compact = false,
-    this.tight = false,
-    this.ultraTight = false,
+    required this.onTap,
+    required this.compact,
+    required this.tight,
+    required this.ultraTight,
   });
+
+  final Widget icon;
+  final Color iconBackground;
+  final String title;
+  final String subtitle;
+  final String description;
+  final List<String> benefits;
+  final String buttonLabel;
+  final Gradient buttonGradient;
+  final ValueChanged<BuildContext> onTap;
+  final bool compact;
+  final bool tight;
+  final bool ultraTight;
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final isCompact = width < 370;
-    final useCompact = isCompact || compact || tight || ultraTight;
+    final width = MediaQuery.sizeOf(context).width;
+    final isNarrow = width < 370;
+    final useCompact = isNarrow || compact || tight || ultraTight;
     final horizontalPadding =
         ultraTight ? 12.0 : (tight ? 14.0 : (useCompact ? 16.0 : 20.0));
+    final verticalPadding =
+        ultraTight ? 10.0 : (tight ? 12.0 : (useCompact ? 14.0 : 18.0));
     final topGap =
-        ultraTight ? 8.0 : (tight ? 10.0 : (useCompact ? 16.0 : 24.0));
-    final bottomGap =
-        ultraTight ? 8.0 : (tight ? 10.0 : (useCompact ? 14.0 : 22.0));
+        ultraTight ? 6.0 : (tight ? 8.0 : (useCompact ? 12.0 : 18.0));
+    final buttonGap =
+        ultraTight ? 6.0 : (tight ? 8.0 : (useCompact ? 10.0 : 14.0));
 
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
         horizontalPadding,
-        ultraTight ? 12 : (tight ? 14 : (useCompact ? 18 : 22)),
+        verticalPadding,
         horizontalPadding,
-        ultraTight ? 10 : (tight ? 12 : (useCompact ? 14 : 18)),
+        verticalPadding,
       ),
       decoration: BoxDecoration(
         color: kCardBackground,
@@ -267,6 +243,7 @@ class _ToolboxCard extends StatelessWidget {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.max,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _CardTopBlock(
@@ -286,7 +263,8 @@ class _ToolboxCard extends StatelessWidget {
             tight: tight,
             ultraTight: ultraTight,
           ),
-          SizedBox(height: bottomGap),
+          const Spacer(),
+          SizedBox(height: buttonGap),
           _GradientActionButton(
             label: buttonLabel,
             gradient: buttonGradient,
@@ -302,15 +280,6 @@ class _ToolboxCard extends StatelessWidget {
 }
 
 class _CardTopBlock extends StatelessWidget {
-  final Widget icon;
-  final Color iconBackground;
-  final String title;
-  final String subtitle;
-  final String description;
-  final bool compact;
-  final bool tight;
-  final bool ultraTight;
-
   const _CardTopBlock({
     required this.icon,
     required this.iconBackground,
@@ -322,11 +291,19 @@ class _CardTopBlock extends StatelessWidget {
     required this.ultraTight,
   });
 
+  final Widget icon;
+  final Color iconBackground;
+  final String title;
+  final String subtitle;
+  final String description;
+  final bool compact;
+  final bool tight;
+  final bool ultraTight;
+
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final isCompact = width < 370;
-    final useCompact = isCompact || compact || tight || ultraTight;
+    final width = MediaQuery.sizeOf(context).width;
+    final useCompact = width < 370 || compact || tight || ultraTight;
     final titleSize =
         ultraTight ? 18.0 : (tight ? 22.0 : (useCompact ? 26.0 : 32.0));
     final subtitleSize =
@@ -335,20 +312,24 @@ class _CardTopBlock extends StatelessWidget {
         ultraTight ? 10.0 : (tight ? 11.5 : (useCompact ? 12.5 : 15.0));
     final titleGap =
         ultraTight ? 3.0 : (tight ? 4.0 : (useCompact ? 6.0 : 10.0));
+    final iconSize =
+        ultraTight ? 48.0 : (tight ? 56.0 : (useCompact ? 62.0 : 72.0));
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: ultraTight ? 48 : (tight ? 56 : (useCompact ? 62 : 72)),
-          height: ultraTight ? 48 : (tight ? 56 : (useCompact ? 62 : 72)),
+          width: iconSize,
+          height: iconSize,
           decoration: BoxDecoration(
             color: iconBackground,
             borderRadius: BorderRadius.circular(19),
           ),
           child: Center(child: icon),
         ),
-        SizedBox(width: ultraTight ? 8 : (tight ? 10 : (useCompact ? 12 : 16))),
+        SizedBox(
+          width: ultraTight ? 8 : (tight ? 10 : (useCompact ? 12 : 16)),
+        ),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(top: 2),
@@ -398,11 +379,6 @@ class _CardTopBlock extends StatelessWidget {
 }
 
 class _BenefitsGrid extends StatelessWidget {
-  final List<String> items;
-  final bool compact;
-  final bool tight;
-  final bool ultraTight;
-
   const _BenefitsGrid({
     required this.items,
     required this.compact,
@@ -410,9 +386,17 @@ class _BenefitsGrid extends StatelessWidget {
     required this.ultraTight,
   });
 
+  final List<String> items;
+  final bool compact;
+  final bool tight;
+  final bool ultraTight;
+
   @override
   Widget build(BuildContext context) {
     assert(items.length == 4);
+    final horizontalGap = ultraTight ? 8.0 : (tight ? 10.0 : 16.0);
+    final verticalGap =
+        ultraTight ? 6.0 : (tight ? 8.0 : (compact ? 10.0 : 16.0));
 
     return Column(
       children: [
@@ -426,7 +410,7 @@ class _BenefitsGrid extends StatelessWidget {
                 ultraTight: ultraTight,
               ),
             ),
-            SizedBox(width: ultraTight ? 8 : (tight ? 10 : 16)),
+            SizedBox(width: horizontalGap),
             Expanded(
               child: _BenefitItem(
                 text: items[1],
@@ -437,7 +421,7 @@ class _BenefitsGrid extends StatelessWidget {
             ),
           ],
         ),
-        SizedBox(height: ultraTight ? 8 : (tight ? 10 : (compact ? 14 : 22))),
+        SizedBox(height: verticalGap),
         Row(
           children: [
             Expanded(
@@ -448,7 +432,7 @@ class _BenefitsGrid extends StatelessWidget {
                 ultraTight: ultraTight,
               ),
             ),
-            SizedBox(width: ultraTight ? 8 : (tight ? 10 : 16)),
+            SizedBox(width: horizontalGap),
             Expanded(
               child: _BenefitItem(
                 text: items[3],
@@ -465,11 +449,6 @@ class _BenefitsGrid extends StatelessWidget {
 }
 
 class _BenefitItem extends StatelessWidget {
-  final String text;
-  final bool compact;
-  final bool tight;
-  final bool ultraTight;
-
   const _BenefitItem({
     required this.text,
     required this.compact,
@@ -477,20 +456,26 @@ class _BenefitItem extends StatelessWidget {
     required this.ultraTight,
   });
 
+  final String text;
+  final bool compact;
+  final bool tight;
+  final bool ultraTight;
+
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final isCompact = width < 370;
+    final isNarrow = MediaQuery.sizeOf(context).width < 370;
     final fontSize = ultraTight
         ? 9.8
-        : (tight ? 11.5 : ((isCompact || compact) ? 12.5 : 15.0));
+        : (tight ? 11.5 : ((isNarrow || compact) ? 12.5 : 15.0));
+    final checkSize =
+        ultraTight ? 18.0 : (tight ? 20.0 : (compact ? 22.0 : 24.0));
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: ultraTight ? 18 : (tight ? 20 : (compact ? 22 : 24)),
-          height: ultraTight ? 18 : (tight ? 20 : (compact ? 22 : 24)),
+          width: checkSize,
+          height: checkSize,
           margin: const EdgeInsets.only(top: 1),
           decoration: const BoxDecoration(
             color: kGreenCheck,
@@ -521,32 +506,37 @@ class _BenefitItem extends StatelessWidget {
 }
 
 class _GradientActionButton extends StatelessWidget {
-  final String label;
-  final Gradient gradient;
-  final ValueChanged<BuildContext>? onTap;
-  final bool compact;
-  final bool tight;
-  final bool ultraTight;
-
   const _GradientActionButton({
     required this.label,
     required this.gradient,
-    this.onTap,
+    required this.onTap,
     required this.compact,
     required this.tight,
     required this.ultraTight,
   });
 
+  final String label;
+  final Gradient gradient;
+  final ValueChanged<BuildContext> onTap;
+  final bool compact;
+  final bool tight;
+  final bool ultraTight;
+
   @override
   Widget build(BuildContext context) {
+    final buttonHeight =
+        ultraTight ? 48.0 : (tight ? 52.0 : (compact ? 58.0 : 62.0));
+    final fontSize =
+        ultraTight ? 14.0 : (tight ? 16.0 : (compact ? 18.0 : 21.0));
+
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(31),
       child: InkWell(
         borderRadius: BorderRadius.circular(31),
-        onTap: onTap != null ? () => onTap!(context) : null,
+        onTap: () => onTap(context),
         child: Ink(
-          height: ultraTight ? 36 : (tight ? 44 : (compact ? 50 : 56)),
+          height: buttonHeight,
           width: double.infinity,
           decoration: BoxDecoration(
             gradient: gradient,
@@ -562,62 +552,13 @@ class _GradientActionButton extends StatelessWidget {
           child: Center(
             child: Text(
               label,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
-                fontSize:
-                    ultraTight ? 12.5 : (tight ? 15 : (compact ? 17 : 20)),
+                fontSize: fontSize,
                 fontWeight: FontWeight.w800,
                 height: 1,
                 letterSpacing: -0.25,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SolidActionButton extends StatelessWidget {
-  final String label;
-  final Color color;
-  final ValueChanged<BuildContext> onTap;
-  final bool compact;
-  final bool tight;
-  final bool ultraTight;
-
-  const _SolidActionButton({
-    required this.label,
-    required this.color,
-    required this.onTap,
-    required this.compact,
-    required this.tight,
-    required this.ultraTight,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(28),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(28),
-        onTap: () => onTap(context),
-        child: Ink(
-          height: ultraTight ? 34 : (tight ? 40 : (compact ? 44 : 48)),
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(28),
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: ultraTight ? 12 : (tight ? 14 : (compact ? 15 : 17)),
-                fontWeight: FontWeight.w800,
-                height: 1,
               ),
             ),
           ),
