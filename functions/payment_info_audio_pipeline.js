@@ -8,6 +8,9 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
+const { COST_POLICY } = require("./lib/config/cost_policy");
+const { reserveMonthlyUsage } = require("./lib/shared/cost_quota");
+
 const REGION = "europe-west1";
 const PUBLIC_CONFIG_DOC = "public_config/payment_info_audio";
 const ADMIN_SETTINGS_DOC = "admin_settings/payment_info_audio";
@@ -127,6 +130,11 @@ async function generateMp3BufferWithOpenAI(text, voice) {
 
   for (const model of modelCandidates) {
     for (let attempt = 1; attempt <= 4; attempt += 1) {
+      await reserveMonthlyUsage({
+        metric: "openai_requests",
+        units: 1,
+        limit: COST_POLICY.openAiMonthlyRequestLimit,
+      });
       const response = await fetch("https://api.openai.com/v1/audio/speech", {
         method: "POST",
         headers: {
