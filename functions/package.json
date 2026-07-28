@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
-    "ci": "npm run build && npm test",
+    "ci": "npm run cost:audit && npm run build && npm test",
     "marketplace:audit:collections": "node --experimental-strip-types scripts/auditFirestoreCollections.ts",
     "marketplace:seed": "node scripts/seed_marketplace_bootstrap.mjs",
     "marketplace:seed:dry-run": "node scripts/seed_marketplace_bootstrap.mjs --dry-run",
@@ -45,7 +45,8 @@
     "admin:claims:dry-run": "node scripts/migrate_admin_claims.mjs",
     "admin:claims:apply": "node scripts/migrate_admin_claims.mjs --apply",
     "admin:claims:apply:revoke": "node scripts/migrate_admin_claims.mjs --apply --revoke-tokens",
-    "admin:claims:verify": "node scripts/migrate_admin_claims.mjs --verify"
+    "admin:claims:verify": "node scripts/migrate_admin_claims.mjs --verify",
+    "cost:audit": "node scripts/check_minimum_cost_mode.mjs"
   },
   "dependencies": {
     "@google-cloud/speech": "^7.5.0",
