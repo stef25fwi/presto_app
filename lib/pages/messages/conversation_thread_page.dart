@@ -3289,6 +3289,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                       top: 8,
                       right: 8,
                       child: IconButton(
+                        tooltip: 'Fermer',
                         icon: const Icon(Icons.close, color: Colors.white),
                         onPressed: () => Navigator.of(ctx).pop(),
                       ),

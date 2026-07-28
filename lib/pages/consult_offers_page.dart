@@ -382,6 +382,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
         if (user == null) {
           return IconButton(
+            tooltip: 'Notifications',
             onPressed: () {
               showSuccessSnackBar(
                 context,
@@ -401,6 +402,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         return UnreadInboxBell(
           userId: user.uid,
           builder: (context, badgeCount) => IconButton(
+            tooltip: 'Messages',
             onPressed: () {
               Navigator.of(context).pushNamed(buildMessagesRoute());
             },
@@ -2667,6 +2669,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
             suffixIcon: textCtrl.text.isEmpty
                 ? null
                 : IconButton(
+                    tooltip: 'Effacer la ville',
                     icon: const Icon(Icons.clear),
                     onPressed: () {
                       setState(() {

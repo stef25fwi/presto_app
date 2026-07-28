@@ -430,6 +430,7 @@ class _FicheProPageState extends State<FicheProPage> {
               ),
               const SizedBox(width: 8),
               IconButton(
+                tooltip: 'Ajouter',
                 onPressed: () {
                   final v = ctrl.text.trim();
                   if (v.isNotEmpty) {
@@ -500,6 +501,7 @@ class _FicheProPageState extends State<FicheProPage> {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Supprimer cette disponibilité',
                     onPressed: () => setModal(() => dispos.remove(d)),
                     icon: const Icon(
                       Icons.delete_outline_rounded,
@@ -529,6 +531,7 @@ class _FicheProPageState extends State<FicheProPage> {
               ),
               const SizedBox(width: 4),
               IconButton(
+                tooltip: 'Ajouter cette disponibilité',
                 onPressed: () {
                   final day = dayCtrl.text.trim();
                   if (day.isNotEmpty) {

@@ -103,6 +103,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   labelText: 'Mot de passe actuel',
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
+                    tooltip: _hideCurrent
+                        ? 'Afficher le mot de passe'
+                        : 'Masquer le mot de passe',
                     icon: Icon(
                       _hideCurrent ? Icons.visibility : Icons.visibility_off,
                     ),
@@ -125,6 +128,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   labelText: 'Nouveau mot de passe',
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
+                    tooltip: _hideNew
+                        ? 'Afficher le mot de passe'
+                        : 'Masquer le mot de passe',
                     icon: Icon(_hideNew ? Icons.visibility : Icons.visibility_off),
                     onPressed: () => setState(() => _hideNew = !_hideNew),
                   ),

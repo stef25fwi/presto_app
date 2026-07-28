@@ -2627,6 +2627,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                 ),
                               ),
                               IconButton(
+                                tooltip: 'Fermer',
                                 onPressed: isSaving
                                     ? null
                                     : () => Navigator.of(dialogContext).pop(),

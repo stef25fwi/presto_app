@@ -2345,6 +2345,7 @@ class _TopHeader extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
+            tooltip: 'Retour',
             onPressed: () => Navigator.of(context).maybePop(),
             icon: Icon(
               Icons.arrow_back_rounded,

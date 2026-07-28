@@ -934,6 +934,7 @@ class _PrestoTopBar extends StatelessWidget implements PreferredSizeWidget {
         children: [
           if (showBack)
             IconButton(
+              tooltip: 'Retour',
               onPressed: () => Navigator.of(context).maybePop(),
               icon: const Icon(Icons.arrow_back_ios_new_rounded,
                   color: Colors.white),
