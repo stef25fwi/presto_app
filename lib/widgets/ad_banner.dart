@@ -30,6 +30,14 @@ class AdConfig {
       'ca-app-pub-1792076968124623'; // Publisher ID production
 }
 
+typedef AdPlaceholderBuilder = Widget Function({
+  required String fallbackFolderPrefix,
+  required BorderRadius borderRadius,
+  required Duration interval,
+  required int antiRepeatWindow,
+  required bool enabled,
+});
+
 class AdBanner extends StatefulWidget {
   final EdgeInsetsGeometry? margin;
   final bool enabled;
@@ -37,6 +45,7 @@ class AdBanner extends StatefulWidget {
   final String? placeholderFolderPrefix; // dossier images placeholder
   final bool flat; // placeholder sans rebords
   final bool animatePlaceholder; // anime le placeholder (ticker)
+  final AdPlaceholderBuilder? placeholderBuilder;
 
   const AdBanner({
     super.key,
@@ -46,6 +55,7 @@ class AdBanner extends StatefulWidget {
     this.placeholderFolderPrefix,
     this.flat = false,
     this.animatePlaceholder = true,
+    this.placeholderBuilder,
   });
 
   @override
@@ -199,6 +209,30 @@ class _AdBannerState extends State<AdBanner> {
     final margin =
         widget.margin ?? const EdgeInsets.symmetric(vertical: 8, horizontal: 4);
 
+    Widget buildTicker({
+      required String folder,
+      required BorderRadius radius,
+      required int antiRepeatWindow,
+    }) {
+      final builder = widget.placeholderBuilder;
+      if (builder != null) {
+        return builder(
+          fallbackFolderPrefix: folder,
+          borderRadius: radius,
+          interval: const Duration(seconds: 4),
+          antiRepeatWindow: antiRepeatWindow,
+          enabled: widget.animatePlaceholder,
+        );
+      }
+      return ManagedAdPlaceholderTicker(
+        fallbackFolderPrefix: folder,
+        borderRadius: radius,
+        interval: const Duration(seconds: 4),
+        antiRepeatWindow: antiRepeatWindow,
+        enabled: widget.animatePlaceholder,
+      );
+    }
+
     // Fonction helper: placeholder image (ticker) tant que pub non active
     Widget placeholderBanner() {
       final folder = widget.placeholderFolderPrefix ?? 'assets/carousel_home/';
@@ -209,11 +243,10 @@ class _AdBannerState extends State<AdBanner> {
         return Container(
           margin: margin,
           width: double.infinity,
-          child: ManagedAdPlaceholderTicker(
-            fallbackFolderPrefix: folder,
-            borderRadius: BorderRadius.circular(18),
-            interval: const Duration(seconds: 4),
-            enabled: widget.animatePlaceholder,
+          child: buildTicker(
+            folder: folder,
+            radius: BorderRadius.circular(18),
+            antiRepeatWindow: 0,
           ),
         );
       }
@@ -226,12 +259,10 @@ class _AdBannerState extends State<AdBanner> {
           border: Border.all(color: const Color(0xFFE0E0E0), width: 0.75),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: ManagedAdPlaceholderTicker(
-          fallbackFolderPrefix: folder,
-          borderRadius: BorderRadius.circular(6),
-          interval: const Duration(seconds: 4),
+        child: buildTicker(
+          folder: folder,
+          radius: BorderRadius.circular(6),
           antiRepeatWindow: 3,
-          enabled: widget.animatePlaceholder,
         ),
       );
     }
