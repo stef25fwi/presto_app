@@ -22,7 +22,7 @@ import {
   normalizeVideoPrompt,
 } from "./videomaker_utils";
 
-const VEO_API_KEY = defineSecret("VEO_API_KEY");
+const VEO_API_KEY = COST_POLICY.veoGenerationEnabled\n  ? defineSecret("VEO_API_KEY")\n  : null;
 const VEO_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 const VIDEO_JOBS_COLLECTION = "_admin_video_maker_jobs";
 const VIDEO_STORAGE_ROOT = "admin/videomaker/videos";
@@ -265,7 +265,7 @@ export const adminGenerateVideo = onCall(
   {
     region: PROJECT_REGION,
     enforceAppCheck: ENFORCE_APP_CHECK,
-    secrets: [VEO_API_KEY],
+    secrets: VEO_API_KEY ? [VEO_API_KEY] : [],
     timeoutSeconds: 540,
     memory: "1GiB",
     maxInstances: COST_POLICY.veoMaxInstances,
@@ -288,7 +288,7 @@ export const adminGenerateVideo = onCall(
     let referenceImages: ReferenceImageInput[];
     try {
       prompt = normalizeVideoPrompt(input.prompt);
-      apiKey = normalizeApiKey(input.apiKey, VEO_API_KEY.value());
+      apiKey = normalizeApiKey(input.apiKey, VEO_API_KEY?.value() ?? "");
       aspectRatio = normalizeAspectRatio(input.aspectRatio);
       durationSeconds = normalizeDuration(input.durationSeconds);
       resolution = normalizeResolution(input.resolution);
