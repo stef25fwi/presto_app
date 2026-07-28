@@ -1,32 +1,36 @@
 name: One-time repair conversation safety banner
-# Triggered through a pull request so GitHub Actions runs the repair.
 
 on:
-  push:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
     branches:
       - main
     paths:
-      - .github/workflows/repair-conversation-safety-banner-main.yml
+      - .github/repair-triggers/conversation-safety-banner.txt
 
 permissions:
   contents: write
 
 jobs:
   repair:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main
+      - name: Checkout repair pull request branch
         uses: actions/checkout@v4
         with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Create repair branch and apply focused patch
+      - name: Apply and verify focused UI repair
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin main
-          git switch -C automation/repair-safety-banner-1017 origin/main
-
           python3 <<'PY'
           from pathlib import Path
 
@@ -82,9 +86,21 @@ jobs:
           print('Safety banner repair applied and verified.')
           PY
 
+          rm -f .github/repair-triggers/conversation-safety-banner.txt
           git diff --check
+          git diff -- lib/pages/messages/conversation_thread_page.dart
+
+      - name: Commit repair to pull request branch
+        shell: bash
+        run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add lib/pages/messages/conversation_thread_page.dart
+          git add -u .github/repair-triggers/conversation-safety-banner.txt
+          if git diff --cached --quiet; then
+            echo "Repair already present; nothing to commit."
+            exit 0
+          fi
           git commit -m "fix(messages): improve safety banner readability"
-          git push --force origin HEAD:automation/repair-safety-banner-1017
+          git push origin HEAD:"${{ github.event.pull_request.head.ref }}"
