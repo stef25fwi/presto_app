@@ -38,7 +38,7 @@ dependencies:
   google_mobile_ads: ^9.0.0
   flutter_slidable: ^4.0.3
   file_picker: ^11.0.2
-  share_plus: ^10.1.4
+  share_plus: ^12.0.2
   pdf: ^3.11.0
   open_filex: ^4.7.0
   font_awesome_flutter: ^11.0.0
@@ -51,7 +51,7 @@ dependencies:
   video_player: ^2.9.2
   just_audio: ^0.10.5
   audioplayers: ^6.7.1
-  app_settings: ^7.0.0
+  app_settings: ^8.0.3
   flutter_app_badger: ^1.5.0
   flutter_image_compress: ^2.3.0
   cached_network_image: ^3.4.1
@@ -59,7 +59,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  firebase_core_platform_interface: ^7.1.0
+  firebase_core_platform_interface: ^8.0.0
   firebase_auth_platform_interface: ^9.0.0
   fake_cloud_firestore: ^4.1.1
   flutter_lints: ^6.0.0
