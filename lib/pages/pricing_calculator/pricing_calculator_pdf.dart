@@ -8,7 +8,18 @@ class PricingPdfExporter {
     required List<PricingScenarioResult> scenarios,
     required MarketEval market,
   }) async {
-    final document = pw.Document();
+    final regularFont = pw.Font.ttf(
+      await rootBundle.load('assets/fonts/Inter-Regular.ttf'),
+    );
+    final boldFont = pw.Font.ttf(
+      await rootBundle.load('assets/fonts/Inter-Bold.ttf'),
+    );
+    final document = pw.Document(
+      theme: pw.ThemeData.withFont(
+        base: regularFont,
+        bold: boldFont,
+      ),
+    );
 
     document.addPage(
       pw.MultiPage(
@@ -149,4 +160,3 @@ class PricingPdfExporter {
     );
   }
 }
-
