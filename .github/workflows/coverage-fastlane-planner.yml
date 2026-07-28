@@ -1,0 +1,263 @@
+name: Coverage FastLane Planner
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Optional successful Pull request validation run to reuse
+        required: false
+        type: string
+
+concurrency:
+  group: coverage-fastlane-planner
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Resolve reusable validation artifact
+        id: source_run
+        uses: actions/github-script@v7
+        env:
+          MANUAL_RUN_ID: ${{ inputs.run_id }}
+        with:
+          script: |
+            const manual = (process.env.MANUAL_RUN_ID || '').trim();
+            if (manual) {
+              core.setOutput('run_id', manual);
+              return;
+            }
+            if (context.eventName !== 'push') {
+              core.setOutput('run_id', '');
+              return;
+            }
+            const associated = await github.paginate(
+              github.rest.repos.listPullRequestsAssociatedWithCommit,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: context.sha,
+                per_page: 100,
+              },
+            );
+            const merged = associated.find(
+              (pr) => pr.merged_at && pr.base?.ref === 'main' && pr.head?.sha,
+            );
+            if (!merged) {
+              core.setOutput('run_id', '');
+              return;
+            }
+            const runs = await github.paginate(
+              github.rest.actions.listWorkflowRunsForRepo,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                head_sha: merged.head.sha,
+                event: 'pull_request',
+                per_page: 100,
+              },
+            );
+            const validation = runs.find(
+              (run) =>
+                run.name === 'Pull request validation' &&
+                run.status === 'completed' &&
+                run.conclusion === 'success',
+            );
+            core.setOutput('run_id', validation ? String(validation.id) : '');
+
+      - name: Reuse validated LCOV artifact
+        if: steps.source_run.outputs.run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ steps.source_run.outputs.run_id }}
+          pattern: pr-validation-*
+          path: .fastlane-input
+          merge-multiple: true
+
+      - name: Locate reusable LCOV
+        id: reusable
+        shell: bash
+        run: |
+          set -euo pipefail
+          reusable="$(find .fastlane-input -type f -name lcov.info -print -quit 2>/dev/null || true)"
+          if [[ -n "$reusable" ]]; then
+            mkdir -p coverage
+            cp "$reusable" coverage/lcov.info
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Flutter 3.44.6
+        if: steps.reusable.outputs.found != 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.6
+          channel: stable
+          cache: true
+
+      - name: Flutter dependencies
+        if: steps.reusable.outputs.found != 'true'
+        run: flutter pub get
+
+      - name: Recalculate real global LCOV
+        if: steps.reusable.outputs.found != 'true'
+        run: flutter test --coverage
+
+      - name: Validate FastLane planner
+        run: python3 -m unittest discover -s tools/coverage -p 'test_fastlane_planner.py' -v
+
+      - name: Build high-yield two-lane plan
+        run: |
+          python3 tools/coverage/fastlane_planner.py \
+            --lcov coverage/lcov.info \
+            --source-root . \
+            --output-json coverage/fastlane-plan.json \
+            --output-md coverage/fastlane-plan.md \
+            --max-lanes 2 \
+            --max-files-per-pack 4
+
+      - name: Upload FastLane plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-fastlane-plan-${{ github.sha }}
+          path: |
+            coverage/fastlane-plan.json
+            coverage/fastlane-plan.md
+          retention-days: 14
+
+      - name: Refill free coverage lanes
+        uses: actions/github-script@v7
+        env:
+          PLAN_PATH: coverage/fastlane-plan.json
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = JSON.parse(fs.readFileSync(process.env.PLAN_PATH, 'utf8'));
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const now = Date.now();
+
+            const pulls = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const coveragePulls = pulls.filter((pr) =>
+              String(pr.head?.ref || '').startsWith('coverage/'),
+            );
+
+            let workerIssues = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: 'open',
+              labels: 'coverage-worker',
+              per_page: 100,
+            });
+            workerIssues = workerIssues.filter((issue) => !issue.pull_request);
+
+            const closedStale = [];
+            for (const issue of workerIssues) {
+              const body = issue.body || '';
+              if (!body.includes('<!-- coverage-fastlane-managed -->')) continue;
+              const linked = coveragePulls.some((pr) => {
+                const prBody = pr.body || '';
+                return (
+                  prBody.includes(`Closes #${issue.number}`) ||
+                  prBody.includes(`Fixes #${issue.number}`) ||
+                  prBody.includes(`Relates to #${issue.number}`)
+                );
+              });
+              const ageMs = now - Date.parse(issue.created_at);
+              if (!linked && ageMs > 2 * 60 * 60 * 1000) {
+                await github.rest.issues.update({
+                  owner,
+                  repo,
+                  issue_number: issue.number,
+                  state: 'closed',
+                  state_reason: 'not_planned',
+                  body: `${body}\n\n## FastLane\nMission fermée automatiquement après 2 h sans PR ni preuve d’exécution. Le verrou est libéré et la cible sera remesurée sur le dernier main.`,
+                });
+                closedStale.push(issue.number);
+              }
+            }
+
+            workerIssues = workerIssues.filter(
+              (issue) => !closedStale.includes(issue.number),
+            );
+            const occupied = Math.max(coveragePulls.length, workerIssues.length);
+            let freeSlots = Math.max(0, 2 - occupied);
+
+            const extractTargets = (text) =>
+              [...String(text || '').matchAll(/`(lib\/[^`]+\.dart)`/g)].map(
+                (match) => match[1],
+              );
+            const activeTargets = new Set();
+            for (const pr of coveragePulls) {
+              for (const target of extractTargets(pr.body)) activeTargets.add(target);
+            }
+            for (const issue of workerIssues) {
+              for (const target of extractTargets(issue.body)) activeTargets.add(target);
+            }
+
+            const created = [];
+            for (const pack of plan.packs || []) {
+              if (freeSlots <= 0) break;
+              const files = (pack.files || []).filter(
+                (file) => !activeTargets.has(file.path),
+              );
+              const expected = files.reduce(
+                (total, file) => total + Number(file.expected_gain || 0),
+                0,
+              );
+              if (!files.length || expected < plan.policy.minimum_pack_gain) continue;
+              const fingerprint = files.map((file) => file.path).sort().join('|');
+              if (workerIssues.some((issue) => String(issue.body || '').includes(`<!-- coverage-fastlane-fingerprint:${fingerprint} -->`))) continue;
+
+              const fileLines = files.map(
+                (file) => `- \`${file.path}\` — ${file.lines_hit}/${file.lines_found} (${Number(file.percent).toFixed(2)} %), ${file.missing} lignes manquantes, gain attendu ${file.expected_gain}`,
+              ).join('\n');
+              const titleFile = files[0].path.split('/').pop();
+              const body = `<!-- coverage-fastlane-managed -->\n<!-- coverage-fastlane-fingerprint:${fingerprint} -->\n<!-- coverage-parent:553 -->\n\n## Pack FastLane\n\nSous-système : **${pack.subsystem}**\nGain attendu du pack : **${expected} lignes couvertes**.\n\n${fileLines}\n\n## Exécution obligatoire\n\n1. Créer une seule branche \`coverage/w${pack.lane}-*\` depuis le dernier \`main\`.\n2. Ajouter des tests comportementaux déterministes ; petits refactors neutres d’injection autorisés.\n3. Exécuter les tests ciblés pendant l’écriture.\n4. Avant fusion : \`flutter analyze --fatal-infos\` puis \`flutter test --coverage\` complet.\n5. Télécharger et parser l’artefact \`coverage/lcov.info\` ; aucun gain n’est annoncé sans cette preuve.\n6. Gain nul : fermer sans fusion et réaffecter immédiatement la voie.\n\nAucune exclusion LCOV, aucun \`skip\`, faux test, succès forcé ou baisse de seuil.`;
+              const createdIssue = await github.rest.issues.create({
+                owner,
+                repo,
+                title: `[Coverage FastLane] ${pack.subsystem} — ${titleFile} (+${expected} attendu)`,
+                body,
+                labels: ['coverage', 'coverage-agent', 'coverage-worker'],
+                assignees: [owner],
+              });
+              created.push({number: createdIssue.data.number, expected, files: files.map((file) => file.path)});
+              for (const file of files) activeTargets.add(file.path);
+              freeSlots -= 1;
+            }
+
+            if (plan.global.percent >= 90) {
+              const comments = await github.paginate(github.rest.issues.listComments, {owner, repo, issue_number: 553, per_page: 100});
+              if (!comments.some((comment) => String(comment.body || '').includes('<!-- coverage-fastlane-90 -->'))) {
+                await github.rest.issues.createComment({owner, repo, issue_number: 553, body: `<!-- coverage-fastlane-90 -->\n## Objectif atteint\n\nCouverture globale réelle : **${plan.global.hit}/${plan.global.found} = ${Number(plan.global.percent).toFixed(4)} %**.`});
+              }
+            } else if (created.length || closedStale.length) {
+              const createdText = created.length ? created.map((item) => `- #${item.number}: +${item.expected} attendu — ${item.files.map((file) => `\`${file}\``).join(', ')}`).join('\n') : '- aucune nouvelle mission créée';
+              const closedText = closedStale.length ? `\nVerrous FastLane libérés : ${closedStale.map((number) => `#${number}`).join(', ')}.` : '';
+              await github.rest.issues.createComment({owner, repo, issue_number: 553, body: `## Coverage FastLane\n\nGlobal réel : **${plan.global.hit}/${plan.global.found} = ${Number(plan.global.percent).toFixed(4)} %**.\nGain minimum actuel par voie : **${plan.policy.minimum_pack_gain} lignes attendues**.\n\n${createdText}${closedText}`});
+            }
