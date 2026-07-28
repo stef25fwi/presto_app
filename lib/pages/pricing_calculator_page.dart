@@ -21,6 +21,7 @@ part 'pricing_calculator/pricing_calculator_pdf.dart';
 part 'pricing_calculator/pricing_calculator_history.dart';
 part 'pricing_calculator/pricing_calculator_mode_widgets.dart';
 part 'pricing_calculator/pricing_calculator_result_widgets.dart';
+part 'pricing_calculator/pricing_calculator_analysis_widgets.dart';
 part 'pricing_calculator/pricing_calculator_market_widgets.dart';
 
 /// Calculatrice de l'entrepreneur iliprestō.
