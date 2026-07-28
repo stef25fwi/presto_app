@@ -204,7 +204,23 @@ jobs:
             workerIssues = workerIssues.filter(
               (issue) => !closedStale.includes(issue.number),
             );
-            const occupied = Math.max(coveragePulls.length, workerIssues.length);
+            const linkedIssueNumbers = new Set();
+            for (const pr of coveragePulls) {
+              const body = String(pr.body || '');
+              for (const issue of workerIssues) {
+                if (
+                  body.includes(`Closes #${issue.number}`) ||
+                  body.includes(`Fixes #${issue.number}`) ||
+                  body.includes(`Relates to #${issue.number}`)
+                ) {
+                  linkedIssueNumbers.add(issue.number);
+                }
+              }
+            }
+            const unlinkedIssues = workerIssues.filter(
+              (issue) => !linkedIssueNumbers.has(issue.number),
+            );
+            const occupied = coveragePulls.length + unlinkedIssues.length;
             let freeSlots = Math.max(0, 2 - occupied);
 
             const extractTargets = (text) =>
