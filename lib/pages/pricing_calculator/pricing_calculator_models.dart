@@ -227,7 +227,7 @@ class PricingEngine {
         transportAutres;
     final coutMO = (i.tempsFabricationMin / 60.0) * i.tauxHoraire;
     final chargeFixe = i.chargesMensuelles / math.max(i.volumeMensuel, 1);
-    final amortissement = math.max(i.amortissementParUnite, 0);
+    final amortissement = math.max(i.amortissementParUnite, 0.0);
     final crHorsFraisPct =
         coutDirect + coutMO + chargeFixe + amortissement;
 
@@ -474,4 +474,3 @@ class MarketPositioning {
     );
   }
 }
-
