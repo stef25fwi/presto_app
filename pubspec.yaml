@@ -2,6 +2,7 @@ name: presto_app
 description: Prest'o app
 publish_to: "none"
 
+# Dependency constraints refreshed with Flutter 3.44.6 on 2026-07-28.
 version: 1.0.1+2
 
 environment:
