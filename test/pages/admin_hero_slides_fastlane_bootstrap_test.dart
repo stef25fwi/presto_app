@@ -10,15 +10,19 @@ void main() {
   setUpAll(() async {
     setupFirebaseCoreMocks();
     if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(
-        options: const FirebaseOptions(
-          apiKey: 'test-api-key',
-          appId: '1:1234567890:web:admin-hero-test',
-          messagingSenderId: '1234567890',
-          projectId: 'presto-test',
-          storageBucket: 'presto-test.appspot.com',
-        ),
-      );
+      try {
+        await Firebase.initializeApp(
+          options: const FirebaseOptions(
+            apiKey: 'test-api-key',
+            appId: '1:1234567890:web:admin-hero-test',
+            messagingSenderId: '1234567890',
+            projectId: 'presto-test',
+            storageBucket: 'presto-test.appspot.com',
+          ),
+        );
+      } on FirebaseException catch (error) {
+        if (error.code != 'duplicate-app') rethrow;
+      }
     }
   });
 
