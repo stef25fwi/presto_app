@@ -16,6 +16,27 @@ const { randomUUID } = require('crypto');
 
 admin.initializeApp();
 
+const { COST_POLICY } = require("./lib/config/cost_policy");
+const { reserveMonthlyUsage } = require("./lib/shared/cost_quota");
+const {
+  buildGeoplateformeCompletionUrl,
+  buildGeoplateformeSearchUrl,
+  mapGeoplateformeCompletion,
+  mapGeoplateformeSearch,
+} = require("./lib/shared/geoplateforme");
+
+function costDebug(...args) {
+  if (COST_POLICY.verboseCostLogs) console.log(...args);
+}
+
+async function reserveOpenAiRequest() {
+  return reserveMonthlyUsage({
+    metric: "openai_requests",
+    units: 1,
+    limit: COST_POLICY.openAiMonthlyRequestLimit,
+  });
+}
+
 const GCP_PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || '';
 const IS_EMULATOR =
   process.env.FUNCTIONS_EMULATOR === 'true' ||
@@ -46,7 +67,6 @@ const USER_STATS_DOC = admin.firestore().collection('_stats').doc('users');
 
 // Secrets (Firebase Functions v2)
 const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
-const GOOGLE_PLACES_API_KEY = defineSecret('GOOGLE_PLACES_API_KEY');
 const PROJECT_REGION = process.env.FUNCTION_REGION || 'europe-west1';
 
 // Carte des villes et codes postaux (Guadeloupe et Martinique)
@@ -251,7 +271,7 @@ exports.placesAutocomplete = onCall(
   {
     region: PROJECT_REGION,
     timeoutSeconds: 15,
-    secrets: [GOOGLE_PLACES_API_KEY],
+    maxInstances: 5,
     enforceAppCheck: ENFORCE_APP_CHECK,
   },
   async (req) => {
@@ -262,51 +282,27 @@ exports.placesAutocomplete = onCall(
     if (!input) throw new HttpsError('invalid-argument', 'input manquant');
     if (input.length > 120) throw new HttpsError('invalid-argument', 'input trop long');
 
-    const language = asNonEmptyString(req.data?.language) || 'fr';
-    const types = asNonEmptyString(req.data?.types);
-
-    // componentRestrictions: { country: 'fr' } etc.
-    const componentRestrictions = req.data?.componentRestrictions;
-    let components = null;
-    if (componentRestrictions && typeof componentRestrictions === 'object') {
-      const entries = Object.entries(componentRestrictions)
-        .filter(([k, v]) => typeof k === 'string' && typeof v === 'string' && k.trim() && v.trim())
-        .slice(0, 5)
-        .map(([k, v]) => `${k}:${v}`)
-        .join('|');
-      components = entries || null;
+    try {
+      const response = await fetch(buildGeoplateformeCompletionUrl(input), {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(12_000),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data) {
+        throw new Error(`GEOPLATEFORME_COMPLETION_${response.status}`);
+      }
+      return mapGeoplateformeCompletion(data);
+    } catch (error) {
+      console.warn('[placesAutocomplete] Géoplateforme unavailable', {
+        uid,
+        message: error?.message || String(error),
+      });
+      throw new HttpsError(
+        'unavailable',
+        'La recherche d’adresse est momentanément indisponible.',
+      );
     }
-
-    const apiKey = GOOGLE_PLACES_API_KEY.value();
-    if (!apiKey) throw new HttpsError('failed-precondition', 'GOOGLE_PLACES_API_KEY manquante');
-
-    const url = new URL('https://maps.googleapis.com/maps/api/place/autocomplete/json');
-    url.searchParams.set('input', input);
-    url.searchParams.set('language', language);
-    url.searchParams.set('key', apiKey);
-    if (types) url.searchParams.set('types', types);
-    if (components) url.searchParams.set('components', components);
-
-    const resp = await fetch(url.toString(), { method: 'GET' });
-    const data = await resp.json().catch(() => null);
-    if (!resp.ok || !data) {
-      throw new HttpsError('internal', 'Erreur Google Places (autocomplete)');
-    }
-
-    const status = String(data.status || '');
-    if (status !== 'OK' && status !== 'ZERO_RESULTS') {
-      console.warn('[placesAutocomplete] non-OK status', { status, uid });
-      throw new HttpsError('failed-precondition', `Places: ${status}`);
-    }
-
-    const predictions = Array.isArray(data.predictions) ? data.predictions : [];
-    return {
-      status,
-      predictions: predictions.map((item) => ({
-        description: String(item?.description || ''),
-        placeId: String(item?.place_id || ''),
-      })),
-    };
   }
 );
 
@@ -314,7 +310,7 @@ exports.placesDetails = onCall(
   {
     region: PROJECT_REGION,
     timeoutSeconds: 15,
-    secrets: [GOOGLE_PLACES_API_KEY],
+    maxInstances: 5,
     enforceAppCheck: ENFORCE_APP_CHECK,
   },
   async (req) => {
@@ -325,33 +321,27 @@ exports.placesDetails = onCall(
     if (!placeId) throw new HttpsError('invalid-argument', 'placeId manquant');
     if (placeId.length > 200) throw new HttpsError('invalid-argument', 'placeId trop long');
 
-    const language = asNonEmptyString(req.data?.language) || 'fr';
-
-    const apiKey = GOOGLE_PLACES_API_KEY.value();
-    if (!apiKey) throw new HttpsError('failed-precondition', 'GOOGLE_PLACES_API_KEY manquante');
-
-    const url = new URL('https://maps.googleapis.com/maps/api/place/details/json');
-    url.searchParams.set('place_id', placeId);
-    url.searchParams.set('fields', 'address_components');
-    url.searchParams.set('language', language);
-    url.searchParams.set('key', apiKey);
-
-    const resp = await fetch(url.toString(), { method: 'GET' });
-    const data = await resp.json().catch(() => null);
-    if (!resp.ok || !data) {
-      throw new HttpsError('internal', 'Erreur Google Places (details)');
+    try {
+      const response = await fetch(buildGeoplateformeSearchUrl(placeId), {
+        method: 'GET',
+        headers: { Accept: 'application/geo+json, application/json' },
+        signal: AbortSignal.timeout(12_000),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data) {
+        throw new Error(`GEOPLATEFORME_SEARCH_${response.status}`);
+      }
+      return mapGeoplateformeSearch(data);
+    } catch (error) {
+      console.warn('[placesDetails] Géoplateforme unavailable', {
+        uid,
+        message: error?.message || String(error),
+      });
+      throw new HttpsError(
+        'unavailable',
+        'Les détails de l’adresse sont momentanément indisponibles.',
+      );
     }
-
-    const status = String(data.status || '');
-    if (status !== 'OK') {
-      console.warn('[placesDetails] non-OK status', { status, uid });
-      throw new HttpsError('failed-precondition', `Places: ${status}`);
-    }
-
-    return {
-      status,
-      result: data.result || null,
-    };
   }
 );
 
@@ -414,6 +404,7 @@ Contexte disponible :
 
 Retourne uniquement le JSON demandé.`;
 
+  await reserveOpenAiRequest();
   const completion = await openai.chat.completions.create({
     model: model || 'gpt-4o-mini',
     messages: [
@@ -667,6 +658,7 @@ function normalizeListingAiResult(raw, { city, category }) {
 async function _internalExtractListingFieldsWithOpenAi({ openai, input, city, category, languageCode }) {
   const userPrompt = `Texte source :\n${input}\n\nContexte :\n- Ville: ${city || 'non précisée'}\n- Catégorie: ${category || 'non précisée'}\n- Langue: ${languageCode || 'fr-FR'}\n\nExtrais uniquement les informations utiles pour préremplir une annonce.`;
 
+  await reserveOpenAiRequest();
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     temperature: 0.1,
@@ -808,7 +800,7 @@ exports.moderateNewOffer = createModerateNewOffer({
 function normalizeMode(mode) {
   const m = (mode || "").toUpperCase();
   if (["HYBRID", "GOOGLE_ONLY", "WHISPER_ONLY"].includes(m)) return m;
-  return "HYBRID";
+  return COST_POLICY.microIaProviderMode;
 }
 
 function normalizeAudioQuality(v) {
@@ -846,17 +838,29 @@ async function getMicroIaConfig({ forceRefresh = false } = {}) {
     const tpl = await admin.remoteConfig().getTemplate();
     const p = tpl.parameters || {};
 
-    const mode = normalizeMode(p.microia_mode?.defaultValue?.value || "GOOGLE_ONLY");
-    const fallbackEnabled = asBool(p.microia_fallback_enabled?.defaultValue?.value, true);
+    const configuredMode = normalizeMode(
+      p.microia_mode?.defaultValue?.value || COST_POLICY.microIaProviderMode,
+    );
+    const mode = COST_POLICY.minimumCostMode
+      ? COST_POLICY.microIaProviderMode
+      : configuredMode;
+    const configuredFallback = asBool(
+      p.microia_fallback_enabled?.defaultValue?.value,
+      COST_POLICY.microIaFallbackEnabled,
+    );
+    const fallbackEnabled = COST_POLICY.minimumCostMode
+      ? COST_POLICY.microIaFallbackEnabled
+      : configuredFallback;
     const qualityThreshold = asNum(p.microia_quality_threshold?.defaultValue?.value, 0.62);
     const languageCode = p.microia_language_code?.defaultValue?.value || "fr-FR";
     const audioQuality = normalizeAudioQuality(p.microia_audio_quality?.defaultValue?.value || 'MEDIUM');
-    const ultraFastEnabled = normalizeUltraFastEnabled(
-      p.microia_ultra_fast_enabled?.defaultValue?.value ||
-        p.microia_ultrafast_enabled?.defaultValue?.value ||
-        p.microia_ultra_fast?.defaultValue?.value ||
-        false
-    );
+    const ultraFastEnabled = !COST_POLICY.minimumCostMode &&
+      normalizeUltraFastEnabled(
+        p.microia_ultra_fast_enabled?.defaultValue?.value ||
+          p.microia_ultrafast_enabled?.defaultValue?.value ||
+          p.microia_ultra_fast?.defaultValue?.value ||
+          false
+      );
     // Modèle OpenAI du draft, ajustable sans redéploiement (test latence).
     const draftModel = String(p.microia_draft_model?.defaultValue?.value || '').trim() || 'gpt-4o-mini';
 
@@ -865,7 +869,15 @@ async function getMicroIaConfig({ forceRefresh = false } = {}) {
     return _microIaCfgCache;
   } catch (e) {
     console.warn("[getMicroIaConfig] Remote Config fetch failed, using defaults:", e?.message || e);
-    _microIaCfgCache = { mode: "GOOGLE_ONLY", fallbackEnabled: true, qualityThreshold: 0.62, languageCode: "fr-FR", audioQuality: 'MEDIUM', ultraFastEnabled: false, draftModel: 'gpt-4o-mini' };
+    _microIaCfgCache = {
+      mode: COST_POLICY.microIaProviderMode,
+      fallbackEnabled: COST_POLICY.microIaFallbackEnabled,
+      qualityThreshold: 0.62,
+      languageCode: "fr-FR",
+      audioQuality: 'MEDIUM',
+      ultraFastEnabled: false,
+      draftModel: 'gpt-4o-mini',
+    };
     _microIaCfgCacheAt = now;
     return _microIaCfgCache;
   }
@@ -1553,6 +1565,7 @@ async function providerGoogleSTT({ audioBuffer, languageCode, audioInfo }) {
 
 async function providerWhisper({ audioBuffer, languageCode, openai }) {
   const file = await toFile(audioBuffer, "audio.wav");
+  await reserveOpenAiRequest();
   const res = await openai.audio.transcriptions.create({
     file,
     model: "whisper-1",
@@ -1574,6 +1587,7 @@ TRANSCRIPTION BRUTE:
 ${g.text}
 `.trim();
 
+  await reserveOpenAiRequest();
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     temperature: 0.2,
@@ -1926,9 +1940,9 @@ exports.microIaProcessAudio = onCall(
   {
     region: PROJECT_REGION,
     timeoutSeconds: 120,
-    // Instance toujours chaude : élimine le cold start (~3–6 s) qui dominait
-    // la latence du remplissage IA (objectif ≤ 5 s du stop au remplissage).
-    minInstances: 1,
+    // La bêta gratuite accepte un léger cold start pour éviter un coût 24/7.
+    minInstances: COST_POLICY.minInstances,
+    maxInstances: COST_POLICY.microIaMaxInstances,
     // Plus de mémoire = plus de vCPU (Cloud Run alloue le CPU proportionnellement).
     // Accélère à la fois le cold start (chargement des modules lourds : ffmpeg,
     // @google-cloud/speech, openai) ET le traitement CPU-bound (conversion
@@ -1939,7 +1953,7 @@ exports.microIaProcessAudio = onCall(
     enforceAppCheck: ENFORCE_APP_CHECK,
   },
   async (req) => {
-    console.log("[microIaProcessAudio] version=2026-01-01-ffmpeg-webm-1");
+    costDebug("[microIaProcessAudio] version=2026-01-01-ffmpeg-webm-1");
     try {
       const requestId = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
       const { storagePath, audioBase64, audioContentType, languageCode, generateDraft: wantDraft, draftCity, draftCategory } = req.data || {};
@@ -1959,7 +1973,7 @@ exports.microIaProcessAudio = onCall(
       const authTokenExp = req.auth?.token?.exp || null;
       const authTokenIat = req.auth?.token?.iat || null;
 
-      console.log('[microIaProcessAudio] CALL', {
+      costDebug('[microIaProcessAudio] CALL', {
         requestId,
         clientRequestId,
         clientDebugLabel,
@@ -2128,7 +2142,7 @@ exports.microIaProcessAudio = onCall(
           await fs.mkdir(tmpDir, { recursive: true });
           await fs.writeFile(inputPath, audioBuffer);
 
-          console.log('[microIaProcessAudio] FFMPEG_CONVERT', {
+          costDebug('[microIaProcessAudio] FFMPEG_CONVERT', {
             requestId,
             from: ext,
             bytes: audioBuffer?.length || 0,
@@ -2145,7 +2159,7 @@ exports.microIaProcessAudio = onCall(
         }
       }
 
-      console.log("[microIaProcessAudio] AUDIO", {
+      costDebug("[microIaProcessAudio] AUDIO", {
         requestId,
         bytes: audioBuffer?.length || 0,
         isWav: audioInfo?.isWav,
@@ -2181,6 +2195,12 @@ exports.microIaProcessAudio = onCall(
           `Audio trop long (~${durationSec.toFixed(1)}s). Max ${maxDurationSec}s.`
         );
       }
+
+      await reserveMonthlyUsage({
+        metric: "speech_seconds",
+        units: Math.max(1, Math.ceil(durationSec || maxDurationSec)),
+        limit: COST_POLICY.microIaMonthlyAudioSeconds,
+      });
 
       const tryOrder = isStreamingChunk
         ? ["GOOGLE_ONLY"]
@@ -2233,7 +2253,7 @@ exports.microIaProcessAudio = onCall(
             audioInfo,
           });
 
-          console.log("[microIaProcessAudio] TRY", {
+          costDebug("[microIaProcessAudio] TRY", {
             requestId,
             attemptMode,
             score: quality.score,
@@ -2272,7 +2292,7 @@ exports.microIaProcessAudio = onCall(
       const sttMs = Date.now() - _tStt;
       let draftMs = 0;
 
-      console.log("[microIaProcessAudio] DONE", {
+      costDebug("[microIaProcessAudio] DONE", {
         modeUsed: best?.modeUsed,
         score: best?.quality?.score,
       });
@@ -2311,7 +2331,7 @@ exports.microIaProcessAudio = onCall(
       // audio source (chemin Storage uniquement — le chemin inline n'écrit rien).
       if (file) {
         file.delete().then(
-          () => console.log("[microIaProcessAudio] CLEANUP", { requestId, storagePath: storagePathRedacted }),
+          () => costDebug("[microIaProcessAudio] CLEANUP", { requestId, storagePath: storagePathRedacted }),
           (cleanupErr) => console.warn("[microIaProcessAudio] CLEANUP_ERROR", {
             requestId,
             storagePath: storagePathRedacted,
@@ -2323,7 +2343,7 @@ exports.microIaProcessAudio = onCall(
       // 📊 Décomposition des durées par étape (diagnostic latence pipeline).
       const totalMs = downloadMs + ffmpegMs + sttMs + draftMs;
       best.timings = { downloadMs, ffmpegMs, sttMs, draftMs, totalMs };
-      console.log("[microIaProcessAudio] TIMINGS", {
+      costDebug("[microIaProcessAudio] TIMINGS", {
         requestId,
         downloadMs,
         ffmpegMs,
