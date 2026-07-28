@@ -4,6 +4,7 @@ import {
   PROJECT_REGION,
   STRIPE_CHECKOUT_SECRETS,
 } from "../../config/env";
+import { COST_POLICY } from "../../config/cost_policy";
 import { createSubscriptionCheckoutSession as checkoutHandler } from "./callables";
 import { assertCommercialBillingEnabled } from "./operating_mode_guard";
 
@@ -12,7 +13,7 @@ export const guardedCreateSubscriptionCheckoutSession = onCall({
   enforceAppCheck: ENFORCE_APP_CHECK,
   secrets: STRIPE_CHECKOUT_SECRETS,
   timeoutSeconds: 30,
-  minInstances: 1,
+  minInstances: COST_POLICY.minInstances,
   maxInstances: 20,
   concurrency: 80,
   memory: "256MiB",
