@@ -7,12 +7,40 @@ import '../toolbox_page.dart';
 const Color _kOrange = Color(0xFFFF6600);
 const Color _kBg = Color(0xFFF6F7FB);
 
+typedef ProjectUserIdProvider = String? Function();
+typedef ProjectRecordsStreamProvider = Stream<List<Map<String, dynamic>>>
+    Function(String uid);
+
 class MesProjetsFichePage extends StatelessWidget {
-  const MesProjetsFichePage({super.key});
+  const MesProjetsFichePage({
+    super.key,
+    this.userIdProvider,
+    this.recordsStreamProvider,
+    this.toolboxPageBuilder,
+  });
+
+  final ProjectUserIdProvider? userIdProvider;
+  final ProjectRecordsStreamProvider? recordsStreamProvider;
+  final WidgetBuilder? toolboxPageBuilder;
+
+  String? get _uid {
+    final provider = userIdProvider;
+    if (provider != null) return provider();
+    return FirebaseAuth.instance.currentUser?.uid;
+  }
+
+  Widget _buildToolbox(BuildContext context) =>
+      toolboxPageBuilder?.call(context) ?? const ToolboxPage();
+
+  void _openToolbox(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: _buildToolbox),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = _uid;
 
     return Scaffold(
       backgroundColor: _kBg,
@@ -25,13 +53,17 @@ class MesProjetsFichePage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.add_rounded),
             tooltip: 'Nouveau projet',
-            onPressed: () => Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const ToolboxPage())),
+            onPressed: () => _openToolbox(context),
           ),
         ],
       ),
-      body: uid == null ? const _NotSignedIn() : _ParcoursListBody(uid: uid),
+      body: uid == null
+          ? const _NotSignedIn()
+          : _ParcoursListBody(
+              uid: uid,
+              recordsStreamProvider: recordsStreamProvider,
+              onOpenToolbox: () => _openToolbox(context),
+            ),
     );
   }
 }
@@ -70,19 +102,36 @@ class _NotSignedIn extends StatelessWidget {
 }
 
 class _ParcoursListBody extends StatelessWidget {
-  final String uid;
-  const _ParcoursListBody({required this.uid});
+  const _ParcoursListBody({
+    required this.uid,
+    required this.recordsStreamProvider,
+    required this.onOpenToolbox,
+  });
 
-  @override
-  Widget build(BuildContext context) {
-    final col = FirebaseFirestore.instance
+  final String uid;
+  final ProjectRecordsStreamProvider? recordsStreamProvider;
+  final VoidCallback onOpenToolbox;
+
+  Stream<List<Map<String, dynamic>>> _recordsStream() {
+    final injected = recordsStreamProvider;
+    if (injected != null) return injected(uid);
+
+    final collection = FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
         .collection('parcours')
         .orderBy('updatedAt', descending: true);
+    return collection.snapshots().map(
+          (snapshot) => snapshot.docs
+              .map((document) => document.data())
+              .toList(growable: false),
+        );
+  }
 
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: col.snapshots(),
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: _recordsStream(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
@@ -105,19 +154,21 @@ class _ParcoursListBody extends StatelessWidget {
           );
         }
 
-        final docs = snapshot.data?.docs ?? [];
+        final records = snapshot.data ?? const <Map<String, dynamic>>[];
 
-        if (docs.isEmpty) {
-          return _EmptyState();
+        if (records.isEmpty) {
+          return _EmptyState(onStart: onOpenToolbox);
         }
 
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-          itemCount: docs.length,
+          itemCount: records.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, i) {
-            final data = docs[i].data();
-            return _ParcoursCard(data: data);
+          itemBuilder: (context, index) {
+            return _ParcoursCard(
+              data: records[index],
+              onOpen: onOpenToolbox,
+            );
           },
         );
       },
@@ -126,6 +177,10 @@ class _ParcoursListBody extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.onStart});
+
+  final VoidCallback onStart;
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -179,9 +234,7 @@ class _EmptyState extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onPressed: () => Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => const ToolboxPage())),
+              onPressed: onStart,
               icon: const Icon(Icons.rocket_launch_rounded),
               label: const Text('Démarrer un projet'),
             ),
@@ -193,14 +246,14 @@ class _EmptyState extends StatelessWidget {
 }
 
 class _ParcoursCard extends StatelessWidget {
+  const _ParcoursCard({required this.data, required this.onOpen});
+
   final Map<String, dynamic> data;
-  const _ParcoursCard({required this.data});
+  final VoidCallback onOpen;
 
   String get _title {
-    final raw =
-        ((data['data'] as Map?)?.cast<String, dynamic>()['projectText'] ?? '')
-            as String;
-    final trimmed = raw.trim();
+    final nested = (data['data'] as Map?)?.cast<String, dynamic>();
+    final trimmed = (nested?['projectText'] ?? '').toString().trim();
     return trimmed.isNotEmpty ? trimmed : 'Projet sans titre';
   }
 
@@ -221,8 +274,8 @@ class _ParcoursCard extends StatelessWidget {
   bool get _isCompleted => (data['status'] ?? '').toString() == 'completed';
 
   DateTime? get _updatedAt {
-    final ts = data['updatedAt'];
-    if (ts is Timestamp) return ts.toDate();
+    final timestamp = data['updatedAt'];
+    if (timestamp is Timestamp) return timestamp.toDate();
     return null;
   }
 
@@ -242,10 +295,10 @@ class _ParcoursCard extends StatelessWidget {
     'déc',
   ];
 
-  String _formatDate(DateTime dt) {
-    final h = dt.hour.toString().padLeft(2, '0');
-    final m = dt.minute.toString().padLeft(2, '0');
-    return '${dt.day} ${_months[dt.month]} ${dt.year} à ${h}h$m';
+  String _formatDate(DateTime date) {
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+    return '${date.day} ${_months[date.month]} ${date.year} à ${hour}h$minute';
   }
 
   @override
@@ -262,9 +315,7 @@ class _ParcoursCard extends StatelessWidget {
       elevation: 0,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const ToolboxPage())),
+        onTap: onOpen,
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
