@@ -1838,9 +1838,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         child: Row(
           children: [
             const Icon(
-              Icons.shield_outlined,
+              Icons.warning_amber_rounded,
               color: Color(0xFFFF0000),
-              size: 20,
+              size: 22,
             ),
             const SizedBox(width: 6),
             Expanded(
@@ -1848,6 +1848,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 'Ne partagez jamais de codes, mots de passe ou informations bancaires.',
                 style: kPrestoMetaTextStyle.copyWith(
                   color: const Color(0xFFFF0000),
+                  fontSize: 15,
+                  height: 1.25,
                   fontWeight: FontWeight.w900,
                 ),
               ),
