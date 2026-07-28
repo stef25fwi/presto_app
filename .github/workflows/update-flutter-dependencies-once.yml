@@ -1,0 +1,96 @@
+name: One-time Flutter dependency upgrade
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/update-flutter-dependencies-once.yml
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: one-time-flutter-dependency-upgrade
+  cancel-in-progress: false
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Prepare dependency branch
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git switch -C chore/flutter-dependencies-2026-07 origin/main
+
+      - name: Audit current dependencies
+        run: flutter pub outdated || true
+
+      - name: Upgrade Flutter dependencies
+        run: |
+          set -euo pipefail
+          flutter pub upgrade --major-versions
+          flutter pub get
+
+      - name: Restrict generated changes
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only)"
+          printf '%s\n' "$changed"
+          if [ -z "$changed" ]; then
+            echo 'No dependency update was produced.'
+            exit 1
+          fi
+          unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(pubspec\.yaml|pubspec\.lock)$' || true)"
+          if [ -n "$unexpected" ]; then
+            echo 'Unexpected files changed:'
+            printf '%s\n' "$unexpected"
+            exit 1
+          fi
+
+      - name: Analyze Flutter
+        run: flutter analyze --fatal-infos
+
+      - name: Test Flutter
+        run: flutter test --reporter expanded
+
+      - name: Build Flutter Web
+        run: flutter build web --release --no-wasm-dry-run
+
+      - name: Commit dependency update
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pubspec.yaml pubspec.lock
+          git commit -m 'chore: update Flutter dependencies'
+          git push --force-with-lease origin HEAD:chore/flutter-dependencies-2026-07
+
+          existing="$(gh pr list --repo "$GITHUB_REPOSITORY" --head chore/flutter-dependencies-2026-07 --base main --state open --json number --jq '.[0].number // empty')"
+          if [ -z "$existing" ]; then
+            gh pr create \
+              --repo "$GITHUB_REPOSITORY" \
+              --base main \
+              --head chore/flutter-dependencies-2026-07 \
+              --title 'chore: mettre à jour les dépendances Flutter' \
+              --body $'## Mise à jour\n\n- résolution avec `flutter pub upgrade --major-versions` sous Flutter 3.44.6 ;\n- modifications limitées à `pubspec.yaml` et `pubspec.lock` ;\n- `flutter analyze --fatal-infos` ;\n- suite complète `flutter test` ;\n- build Web release.\n\nLa fusion doit rester conditionnée à une CI entièrement verte.'
+          else
+            echo "PR already open: #$existing"
+          fi
