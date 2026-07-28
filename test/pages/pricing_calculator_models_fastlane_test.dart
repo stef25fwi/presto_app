@@ -80,7 +80,7 @@ void main() {
     );
     expect(scenario.name, 'Prudent');
     expect(scenario.volume, 1);
-    expect(scenario.chiffreAffairesTtc, isFinite);
-    expect(scenario.beneficeParUnite, isFinite);
+    expect(scenario.chiffreAffairesTtc.isFinite, isTrue);
+    expect(scenario.beneficeParUnite.isFinite, isTrue);
   });
 }
