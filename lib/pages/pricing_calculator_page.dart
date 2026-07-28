@@ -1,16 +1,33 @@
+import 'dart:convert';
 import 'dart:math' as math;
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../app/theme.dart';
 import '../constants.dart';
 
-/// Prestō – Calculatrice de Prix Artisan (mockup fidèle à l'image)
-/// - Écran 1 : choix du mode
-/// - Écran 2 : mode express (sections + champs)
-/// - Écran 3 : résultats + positionnement marché
+part 'pricing_calculator/pricing_calculator_results_page.dart';
+part 'pricing_calculator/pricing_calculator_models.dart';
+part 'pricing_calculator/pricing_calculator_persistence.dart';
+part 'pricing_calculator/pricing_calculator_pdf.dart';
+part 'pricing_calculator/pricing_calculator_history.dart';
+part 'pricing_calculator/pricing_calculator_mode_widgets.dart';
+part 'pricing_calculator/pricing_calculator_result_widgets.dart';
+part 'pricing_calculator/pricing_calculator_analysis_widgets.dart';
+part 'pricing_calculator/pricing_calculator_market_widgets.dart';
+
+/// Calculatrice de l'entrepreneur iliprestō.
 ///
-/// ✅ Copie/colle ce fichier comme `lib/pricing_calculator_page.dart`
-/// puis ouvre `PrestoPriceCalculatorApp()` depuis ton main.dart (ou pousse cette page via Navigator).
+/// Le mode Standard produit un prix rentable à partir des coûts essentiels.
+/// Le mode Expert ajoute l'énergie, l'eau, le transport, le marché, les
+/// scénarios de volume, la sauvegarde et l'export PDF.
 
 // ---------------------------
 // THEME / COLORS (Prestō)
@@ -42,7 +59,11 @@ class PrestoPriceCalculatorApp extends StatelessWidget {
 // ---------------------------
 // MODE SELECTION (Screen 1)
 // ---------------------------
-enum PricingMode { express, standard, expert }
+enum PricingMode { standard, expert }
+
+extension PricingModeLabel on PricingMode {
+  String get label => this == PricingMode.standard ? 'Standard' : 'Expert';
+}
 
 class _ModeOption {
   const _ModeOption({
@@ -72,35 +93,19 @@ class _ModeOption {
 
 const List<_ModeOption> _pricingModes = [
   _ModeOption(
-    mode: PricingMode.express,
-    title: 'Mode Express',
-    subtitle: 'Rapide & Simple',
-    accent: kPrestoOrange,
-    badge: 'Le plus rapide',
-    timeLabel: '2 min',
-    bestFor: 'Estimation immédiate',
-    fieldsLabel: 'Essentiels',
-    analysisLabel: 'Base prix + marge',
-    highlights: [
-      'Saisie minimale',
-      'Parfait pour tester une idée',
-      'Résultat immédiat',
-    ],
-  ),
-  _ModeOption(
     mode: PricingMode.standard,
     title: 'Mode Standard',
-    subtitle: 'Complet',
+    subtitle: 'Guidé & complet',
     accent: kPrestoBlue,
-    badge: 'Le plus équilibré',
+    badge: 'Recommandé',
     timeLabel: '5 min',
     bestFor: 'Fixer un vrai tarif de vente',
-    fieldsLabel: 'Coûts + charges + marché',
-    analysisLabel: 'Prix conseillé + positionnement',
+    fieldsLabel: 'Coûts + charges + amortissement',
+    analysisLabel: 'Prix rentable + marge',
     highlights: [
-      'Vision plus fiable',
-      'Inclut les charges réelles',
-      'Adapté à la plupart des cas',
+      'Coût de revient détaillé',
+      'Prix minimum et prix conseillé',
+      'Rentabilité du prix envisagé',
     ],
   ),
   _ModeOption(
@@ -109,14 +114,14 @@ const List<_ModeOption> _pricingModes = [
     subtitle: 'Analyse avancée',
     accent: Color(0xFF0F4C81),
     badge: 'Le plus précis',
-    timeLabel: '8 min',
+    timeLabel: '10 min',
     bestFor: 'Décision fine et arbitrages',
-    fieldsLabel: 'Données détaillées',
-    analysisLabel: 'Lecture avancée de rentabilité',
+    fieldsLabel: 'Coûts détaillés + scénarios',
+    analysisLabel: 'Marché + seuil de rentabilité',
     highlights: [
-      'Scénarios plus poussés',
-      'Analyse détaillée des postes',
-      'Pour affiner au maximum',
+      'Énergie, eau et transport',
+      'Marché et volumes prudent / cible / haut',
+      'Historique et export PDF',
     ],
   ),
 ];
@@ -129,7 +134,7 @@ class _ModeSelectionPage extends StatefulWidget {
 }
 
 class _ModeSelectionPageState extends State<_ModeSelectionPage> {
-  PricingMode _mode = PricingMode.express;
+  PricingMode _mode = PricingMode.standard;
 
   @override
   Widget build(BuildContext context) {
@@ -145,10 +150,19 @@ class _ModeSelectionPageState extends State<_ModeSelectionPage> {
           children: [
             const SizedBox(height: 6),
             const Text(
-              'Calculatrice de Prix Artisan',
+              "Calculatrice de l'entrepreneur",
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Choisis le niveau de précision adapté à ton activité.',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 14),
@@ -170,10 +184,22 @@ class _ModeSelectionPageState extends State<_ModeSelectionPage> {
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => _ExpressFormPage(mode: _mode),
+                    builder: (_) => _PricingFormPage(mode: _mode),
                   ),
                 );
               },
+            ),
+            const SizedBox(height: 10),
+            TextButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const _PricingHistoryPage(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.history_rounded),
+              label: const Text('Mes calculs enregistrés'),
             ),
             const SizedBox(height: 4),
           ],
@@ -346,18 +372,20 @@ class _RadioPill extends StatelessWidget {
 }
 
 // ---------------------------
-// EXPRESS FORM (Screen 2)
+// PRICING FORM (Screen 2)
 // ---------------------------
-class _ExpressFormPage extends StatefulWidget {
+class _PricingFormPage extends StatefulWidget {
   final PricingMode mode;
-  const _ExpressFormPage({required this.mode});
+  const _PricingFormPage({required this.mode});
 
   @override
-  State<_ExpressFormPage> createState() => _ExpressFormPageState();
+  State<_PricingFormPage> createState() => _PricingFormPageState();
 }
 
-class _ExpressFormPageState extends State<_ExpressFormPage> {
-  // Controllers (image values by default)
+class _PricingFormPageState extends State<_PricingFormPage> {
+  final _projectNameCtrl = TextEditingController(text: 'Mon produit ou service');
+  final _prixEnvisageCtrl = TextEditingController(text: '50');
+
   final _matieresCtrl = TextEditingController(text: '12,50');
   final _emballageCtrl = TextEditingController(text: '1,20');
   final _consommablesCtrl = TextEditingController(text: '0,80');
@@ -368,17 +396,37 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
   final _chargesMensCtrl = TextEditingController(text: '300');
   final _objetsMensCtrl = TextEditingController(text: '30');
 
+  final _materielCtrl = TextEditingController(text: '300');
+  final _amortissementUniteCtrl = TextEditingController(text: '10');
+
   bool _fraisTypePct = true;
   final _fraisPctCtrl = TextEditingController(text: '12');
   final _fraisFixeCtrl = TextEditingController(text: '0');
+  final _margeCtrl = TextEditingController(text: '35');
+  final _tvaCtrl = TextEditingController(text: '0');
 
-  // Market inputs (for screen 3)
+  String _regionCode = '971';
+  final _electriciteKwhCtrl = TextEditingController(text: '0,50');
+  final _tarifElectriciteCtrl = TextEditingController(text: '0,25');
+  final _eauM3Ctrl = TextEditingController(text: '0,02');
+  final _tarifEauCtrl = TextEditingController(text: '4,50');
+  final _transportCtrl = TextEditingController(text: '2');
+  final _autresCoutsCtrl = TextEditingController(text: '0');
+
   final _marketLowCtrl = TextEditingController(text: '39');
   final _marketMidCtrl = TextEditingController(text: '55');
   final _marketHighCtrl = TextEditingController(text: '79');
+  final _volumePrudentCtrl = TextEditingController(text: '15');
+  final _volumeHautCtrl = TextEditingController(text: '45');
+  bool _loadingTariffs = false;
+  String? _tariffStatus;
+
+  bool get _isExpert => widget.mode == PricingMode.expert;
 
   @override
   void dispose() {
+    _projectNameCtrl.dispose();
+    _prixEnvisageCtrl.dispose();
     _matieresCtrl.dispose();
     _emballageCtrl.dispose();
     _consommablesCtrl.dispose();
@@ -386,11 +434,23 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
     _tauxHoraireCtrl.dispose();
     _chargesMensCtrl.dispose();
     _objetsMensCtrl.dispose();
+    _materielCtrl.dispose();
+    _amortissementUniteCtrl.dispose();
     _fraisPctCtrl.dispose();
     _fraisFixeCtrl.dispose();
+    _margeCtrl.dispose();
+    _tvaCtrl.dispose();
+    _electriciteKwhCtrl.dispose();
+    _tarifElectriciteCtrl.dispose();
+    _eauM3Ctrl.dispose();
+    _tarifEauCtrl.dispose();
+    _transportCtrl.dispose();
+    _autresCoutsCtrl.dispose();
     _marketLowCtrl.dispose();
     _marketMidCtrl.dispose();
     _marketHighCtrl.dispose();
+    _volumePrudentCtrl.dispose();
+    _volumeHautCtrl.dispose();
     super.dispose();
   }
 
@@ -412,43 +472,126 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
     final th = _parseDouble(_tauxHoraireCtrl.text);
     final ch = _parseDouble(_chargesMensCtrl.text);
     final vol = _parseInt(_objetsMensCtrl.text);
+    final prixEnvisage = _parseDouble(_prixEnvisageCtrl.text);
+    final materiel = _parseDouble(_materielCtrl.text);
+    final amortissement = _parseDouble(_amortissementUniteCtrl.text);
+    final marge = _parseDouble(_margeCtrl.text);
+    final tva = _parseDouble(_tvaCtrl.text);
 
     final fraisOk = _fraisTypePct
         ? _parseDouble(_fraisPctCtrl.text) >= 0 &&
             _parseDouble(_fraisPctCtrl.text) < 99.9
         : _parseDouble(_fraisFixeCtrl.text) >= 0;
+    final amortissementOk = materiel == 0 || amortissement > 0;
+    final expertOk = !_isExpert ||
+        (_parseDouble(_electriciteKwhCtrl.text) >= 0 &&
+            _parseDouble(_tarifElectriciteCtrl.text) >= 0 &&
+            _parseDouble(_eauM3Ctrl.text) >= 0 &&
+            _parseDouble(_tarifEauCtrl.text) >= 0 &&
+            _parseDouble(_transportCtrl.text) >= 0 &&
+            _parseDouble(_autresCoutsCtrl.text) >= 0 &&
+            _parseDouble(_marketLowCtrl.text) > 0 &&
+            _parseDouble(_marketLowCtrl.text) <=
+                _parseDouble(_marketMidCtrl.text) &&
+            _parseDouble(_marketMidCtrl.text) <=
+                _parseDouble(_marketHighCtrl.text) &&
+            _parseInt(_volumePrudentCtrl.text) > 0 &&
+            _parseInt(_volumePrudentCtrl.text) <= vol &&
+            _parseInt(_volumeHautCtrl.text) >= vol);
 
     return (mat + emb + conso) >= 0 &&
         t > 0 &&
         th > 0 &&
         ch >= 0 &&
         vol > 0 &&
-        fraisOk;
+        prixEnvisage >= 0 &&
+        materiel >= 0 &&
+        amortissement >= 0 &&
+        marge >= 0 &&
+        tva >= 0 &&
+        fraisOk &&
+        amortissementOk &&
+        expertOk;
   }
 
   @override
   Widget build(BuildContext context) {
+    final modeColor =
+        _isExpert ? const Color(0xFF0F4C81) : kPrestoBlue;
+
     return Scaffold(
       appBar: _PrestoTopBar(
         title: 'iliprestō',
-        background: kPrestoBlue,
+        background: modeColor,
         showBack: true,
       ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(6, 14, 6, 16),
           children: [
-            const Text(
-              'Mode Express : Estimation Rapide',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+            Text(
+              'Mode ${widget.mode.label}',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _isExpert
+                  ? 'Analyse complète : coûts détaillés, marché et scénarios de volume.'
+                  : 'Calcul guidé : coûts essentiels, amortissement et prix rentable.',
+              style: const TextStyle(
+                fontSize: 13.5,
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 12),
 
-            // 1) Coûts Matériels
+            _ModeScopeBanner(mode: widget.mode),
+            const SizedBox(height: 12),
+
+            _SectionCard(
+              headerColor: kPrestoOrange,
+              headerIcon: Icons.sell_outlined,
+              title: '1. Produit, service et prix envisagé',
+              child: Column(
+                children: [
+                  TextField(
+                    key: const ValueKey('project-name'),
+                    controller: _projectNameCtrl,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(
+                      labelText: 'Nom du produit ou service',
+                      prefixIcon: const Icon(Icons.edit_note_rounded),
+                      filled: true,
+                      fillColor: const Color(0xFFF3F4F6),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _RowField(
+                    icon: Icons.price_check_outlined,
+                    label: 'Prix TTC envisagé',
+                    controller: _prixEnvisageCtrl,
+                    suffix: '€',
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 8),
+                  const _InlineHelp(
+                    text:
+                        'Ce prix est comparé au prix minimum rentable. Il ne remplace pas le prix conseillé calculé.',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
             _SectionCard(
               headerColor: kPrestoOrange,
               headerIcon: Icons.inventory_2_outlined,
-              title: '1. Coûts Matériels',
+              title: '2. Coûts directs par unité',
               child: Column(
                 children: [
                   _RowField(
@@ -479,16 +622,15 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
             ),
             const SizedBox(height: 12),
 
-            // 2) Temps & Main d'œuvre
             _SectionCard(
               headerColor: kPrestoBlue,
               headerIcon: Icons.timer_outlined,
-              title: '2. Temps & Main d\'oeuvre',
+              title: "3. Temps & main-d'œuvre",
               child: Column(
                 children: [
                   _RowField(
                     icon: Icons.schedule_outlined,
-                    label: 'Temps de fabrication',
+                    label: 'Temps par unité',
                     controller: _tempsMinCtrl,
                     suffix: 'min',
                     keyboardType: TextInputType.number,
@@ -515,12 +657,12 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
             ),
             const SizedBox(height: 12),
 
-            // 3) Charges Fixes
             _SectionCard(
               headerColor: kPrestoBlue,
               headerIcon: Icons.home_work_outlined,
-              title: '3. Charges Fixes',
-              subtitle: '(mensuel: 300 € / 30 objets)',
+              title: '4. Charges fixes et volume cible',
+              subtitle:
+                  '${_money(_parseDouble(_chargesMensCtrl.text))} € / ${math.max(_parseInt(_objetsMensCtrl.text), 0)} unités',
               child: Column(
                 children: [
                   _RowField(
@@ -535,7 +677,7 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
                   const SizedBox(height: 10),
                   _RowField(
                     icon: Icons.widgets_outlined,
-                    label: 'Objets / mois',
+                    label: 'Unités / mois',
                     controller: _objetsMensCtrl,
                     suffix: 'nb',
                     keyboardType: TextInputType.number,
@@ -545,18 +687,179 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
                   _MiniInfoPill(
                     icon: Icons.calculate_outlined,
                     text:
-                        'Charge estimée : ${_money(_chargeFixeUnitaire())} € par objet',
+                        'Charge estimée : ${_money(_chargeFixeUnitaire())} € par unité',
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 12),
 
-            // 4) Frais de Vente
             _SectionCard(
               headerColor: kPrestoOrange,
-              headerIcon: Icons.storefront_outlined,
-              title: '4. Frais de Vente',
+              headerIcon: Icons.precision_manufacturing_outlined,
+              title: '5. Amortissement du matériel',
+              child: Column(
+                children: [
+                  _RowField(
+                    icon: Icons.handyman_outlined,
+                    label: 'Matériel à amortir',
+                    controller: _materielCtrl,
+                    suffix: '€',
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 10),
+                  _RowField(
+                    icon: Icons.savings_outlined,
+                    label: 'Part par unité',
+                    controller: _amortissementUniteCtrl,
+                    suffix: '€',
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 12),
+                  _MiniInfoPill(
+                    icon: Icons.timelapse_rounded,
+                    text: _amortizationPreview(),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            if (_isExpert) ...[
+              _SectionCard(
+                headerColor: const Color(0xFF0F4C81),
+                headerIcon: Icons.bolt_outlined,
+                title: '6. Coûts avancés et tarifs régionaux',
+                subtitle: 'Électricité, eau, transport et autres coûts',
+                child: Column(
+                  children: [
+                    DropdownButtonFormField<String>(
+                      key: const ValueKey('expert-region'),
+                      initialValue: _regionCode,
+                      decoration: InputDecoration(
+                        labelText: 'Territoire tarifaire',
+                        prefixIcon: const Icon(Icons.location_on_outlined),
+                        filled: true,
+                        fillColor: const Color(0xFFF3F4F6),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                            value: '971', child: Text('Guadeloupe (971)')),
+                        DropdownMenuItem(
+                            value: '972', child: Text('Martinique (972)')),
+                        DropdownMenuItem(
+                            value: '973', child: Text('Guyane (973)')),
+                        DropdownMenuItem(
+                            value: '974', child: Text('La Réunion (974)')),
+                        DropdownMenuItem(
+                            value: '976', child: Text('Mayotte (976)')),
+                        DropdownMenuItem(
+                            value: 'HEX', child: Text('France hexagonale')),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => _regionCode = value);
+                        _loadRegionalTariffs();
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed:
+                          _loadingTariffs ? null : _loadRegionalTariffs,
+                      icon: _loadingTariffs
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.sync_rounded),
+                      label: Text(
+                        _loadingTariffs
+                            ? 'Actualisation…'
+                            : 'Actualiser les tarifs régionaux',
+                      ),
+                    ),
+                    if (_tariffStatus != null) ...[
+                      const SizedBox(height: 5),
+                      Text(
+                        _tariffStatus!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    _RowField(
+                      icon: Icons.electric_bolt_outlined,
+                      label: 'Électricité / unité',
+                      controller: _electriciteKwhCtrl,
+                      suffix: 'kWh',
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    const SizedBox(height: 10),
+                    _RowField(
+                      icon: Icons.euro_outlined,
+                      label: 'Tarif électricité',
+                      controller: _tarifElectriciteCtrl,
+                      suffix: '€/kWh',
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    const SizedBox(height: 10),
+                    _RowField(
+                      icon: Icons.water_drop_outlined,
+                      label: 'Eau / unité',
+                      controller: _eauM3Ctrl,
+                      suffix: 'm³',
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    const SizedBox(height: 10),
+                    _RowField(
+                      icon: Icons.euro_outlined,
+                      label: 'Tarif eau',
+                      controller: _tarifEauCtrl,
+                      suffix: '€/m³',
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    const SizedBox(height: 10),
+                    _RowField(
+                      icon: Icons.local_shipping_outlined,
+                      label: 'Transport / unité',
+                      controller: _transportCtrl,
+                      suffix: '€',
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    const SizedBox(height: 10),
+                    _RowField(
+                      icon: Icons.add_card_outlined,
+                      label: 'Autres coûts / unité',
+                      controller: _autresCoutsCtrl,
+                      suffix: '€',
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    const SizedBox(height: 8),
+                    const _InlineHelp(
+                      text:
+                          'Les tarifs restent modifiables afin de refléter la facture réelle de ton activité.',
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            _SectionCard(
+              headerColor: kPrestoOrange,
+              headerIcon: Icons.tune_rounded,
+              title: _isExpert
+                  ? '7. Frais, marge et fiscalité'
+                  : '6. Frais, marge et fiscalité',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -568,7 +871,7 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
                   if (_fraisTypePct)
                     _RowField(
                       icon: Icons.percent_rounded,
-                      label: 'Frais de plateforme',
+                      label: 'Frais de vente externes',
                       controller: _fraisPctCtrl,
                       suffix: '%',
                       keyboardType:
@@ -585,15 +888,85 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
                           const TextInputType.numberWithOptions(decimal: true),
                       onChanged: (_) => setState(() {}),
                     ),
+                  const SizedBox(height: 10),
+                  _RowField(
+                    icon: Icons.trending_up_rounded,
+                    label: 'Marge souhaitée',
+                    controller: _margeCtrl,
+                    suffix: '%',
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 10),
+                  _RowField(
+                    icon: Icons.account_balance_outlined,
+                    label: 'TVA applicable',
+                    controller: _tvaCtrl,
+                    suffix: '%',
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 8),
+                  const _InlineHelp(
+                    text:
+                        "Les frais saisis sont tes frais externes réels. iliprestō n'ajoute aucune commission.",
+                  ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 16),
+            if (_isExpert) ...[
+              const SizedBox(height: 12),
+              _SectionCard(
+                headerColor: const Color(0xFF0F4C81),
+                headerIcon: Icons.query_stats_outlined,
+                title: '8. Analyse du marché',
+                subtitle: 'Fourchette observée pour une offre comparable',
+                child: _MarketMiniCard(
+                  lowCtrl: _marketLowCtrl,
+                  midCtrl: _marketMidCtrl,
+                  highCtrl: _marketHighCtrl,
+                  onChanged: () => setState(() {}),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _SectionCard(
+                headerColor: const Color(0xFF0F4C81),
+                headerIcon: Icons.insights_outlined,
+                title: '9. Scénarios de volume',
+                child: Column(
+                  children: [
+                    _RowField(
+                      icon: Icons.south_east_rounded,
+                      label: 'Volume prudent',
+                      controller: _volumePrudentCtrl,
+                      suffix: 'nb',
+                      keyboardType: TextInputType.number,
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    const SizedBox(height: 10),
+                    _MiniInfoPill(
+                      icon: Icons.horizontal_rule_rounded,
+                      text:
+                          'Volume cible : ${math.max(_parseInt(_objetsMensCtrl.text), 0)} unités / mois',
+                    ),
+                    const SizedBox(height: 10),
+                    _RowField(
+                      icon: Icons.north_east_rounded,
+                      label: 'Volume haut',
+                      controller: _volumeHautCtrl,
+                      suffix: 'nb',
+                      keyboardType: TextInputType.number,
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ],
+                ),
+              ),
+            ],
 
-            // CTA
+            const SizedBox(height: 16),
             _PrestoPrimaryButton(
-              text: 'Voir mon Prix Conseillé',
+              text: _isExpert
+                  ? 'Lancer mon analyse experte'
+                  : 'Calculer mon prix conseillé',
               background: kPrestoOrange,
               onTap: _canCompute
                   ? () {
@@ -602,26 +975,46 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => _ResultsPage(
+                            mode: widget.mode,
+                            projectName: _projectNameCtrl.text.trim(),
                             input: input,
                             result: result,
-                            marketLow: _parseDouble(_marketLowCtrl.text),
-                            marketMid: _parseDouble(_marketMidCtrl.text),
-                            marketHigh: _parseDouble(_marketHighCtrl.text),
+                            marketLow: _isExpert
+                                ? _parseDouble(_marketLowCtrl.text)
+                                : 0,
+                            marketMid: _isExpert
+                                ? _parseDouble(_marketMidCtrl.text)
+                                : 0,
+                            marketHigh: _isExpert
+                                ? _parseDouble(_marketHighCtrl.text)
+                                : 0,
+                            volumePrudent: _isExpert
+                                ? math.max(
+                                    _parseInt(_volumePrudentCtrl.text), 1)
+                                : input.volumeMensuel,
+                            volumeHaut: _isExpert
+                                ? math.max(_parseInt(_volumeHautCtrl.text), 1)
+                                : input.volumeMensuel,
                           ),
                         ),
                       );
                     }
                   : null,
             ),
-            const SizedBox(height: 10),
-
-            // Market quick fields (kept minimal, but available)
-            _MarketMiniCard(
-              lowCtrl: _marketLowCtrl,
-              midCtrl: _marketMidCtrl,
-              highCtrl: _marketHighCtrl,
-              onChanged: () => setState(() {}),
-            ),
+            if (!_canCompute) ...[
+              const SizedBox(height: 8),
+              Text(
+                _isExpert
+                    ? 'Vérifie les valeurs, la fourchette marché et l’ordre des volumes prudent ≤ cible ≤ haut.'
+                    : 'Vérifie les valeurs obligatoires et la part d’amortissement.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFFC62828),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
             const SizedBox(height: 10),
           ],
         ),
@@ -654,9 +1047,21 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
       volumeMensuel: math.max(objetsMens, 1),
       fraisVentePct: fraisPct,
       fraisVenteFixe: fraisFixe,
-      // marge par défaut pour coller à un "prix conseillé" crédible
-      margePctSurCout: 0.35, // 35%
-      tvaPct: 0.0, // à activer plus tard si besoin
+      margePctSurCout: _parseDouble(_margeCtrl.text) / 100.0,
+      tvaPct: _parseDouble(_tvaCtrl.text) / 100.0,
+      prixVenteTtcEnvisage: _parseDouble(_prixEnvisageCtrl.text),
+      materielAAmortir: _parseDouble(_materielCtrl.text),
+      amortissementParUnite: _parseDouble(_amortissementUniteCtrl.text),
+      electriciteKwhParUnite:
+          _isExpert ? _parseDouble(_electriciteKwhCtrl.text) : 0,
+      tarifElectriciteKwh:
+          _isExpert ? _parseDouble(_tarifElectriciteCtrl.text) : 0,
+      eauM3ParUnite: _isExpert ? _parseDouble(_eauM3Ctrl.text) : 0,
+      tarifEauM3: _isExpert ? _parseDouble(_tarifEauCtrl.text) : 0,
+      transportParUnite: _isExpert ? _parseDouble(_transportCtrl.text) : 0,
+      autresCoutsParUnite:
+          _isExpert ? _parseDouble(_autresCoutsCtrl.text) : 0,
+      regionCode: _isExpert ? _regionCode : '',
     );
   }
 
@@ -665,245 +1070,56 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
     final vol = math.max(_parseInt(_objetsMensCtrl.text), 1);
     return charges / vol;
   }
-}
 
-// ---------------------------
-// RESULTS (Screen 3)
-// ---------------------------
-class _ResultsPage extends StatelessWidget {
-  final PricingInput input;
-  final PricingResult result;
-  final double marketLow;
-  final double marketMid;
-  final double marketHigh;
-
-  const _ResultsPage({
-    required this.input,
-    required this.result,
-    required this.marketLow,
-    required this.marketMid,
-    required this.marketHigh,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final market = MarketPositioning.evaluate(
-      price: result.prixConseille,
-      low: marketLow,
-      mid: marketMid,
-      high: marketHigh,
-    );
-
-    return Scaffold(
-      appBar: _PrestoTopBar(
-        title: 'iliprestō',
-        background: kPrestoBlue,
-        showBack: true,
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-          children: [
-            const Text(
-              'Résultats & Positionnement',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 12),
-
-            // Résultats card (top)
-            _ResultSummaryCard(result: result),
-
-            const SizedBox(height: 14),
-
-            // Positionnement Marché
-            _MarketCard(
-              marketLow: marketLow,
-              marketMid: marketMid,
-              marketHigh: marketHigh,
-              price: result.prixConseille,
-              label: market.label,
-              hint: market.hint,
-              levelColor: market.color,
-            ),
-
-            const SizedBox(height: 16),
-
-            // CTAs
-            _PrestoPrimaryButton(
-              text: 'Publier sur Prestō',
-              background: kPrestoOrange,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text(
-                          'Action : publier (à connecter à ton flux Prestō)')),
-                );
-              },
-            ),
-            const SizedBox(height: 10),
-            _PrestoPrimaryButton(
-              text: 'Ajuster Marges',
-              background: kPrestoBlue,
-              onTap: () {
-                Navigator.of(context).pop(); // revient à l'écran form
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------
-// CALC ENGINE (pure logic)
-// ---------------------------
-class PricingInput {
-  final double matieres;
-  final double emballage;
-  final double consommables;
-
-  final int tempsFabricationMin;
-  final double tauxHoraire;
-
-  final double chargesMensuelles;
-  final int volumeMensuel;
-
-  /// Either percent OR fixed can be used (both allowed; engine handles)
-  final double fraisVentePct; // ex: 0.12
-  final double fraisVenteFixe; // ex: 1.20
-
-  final double margePctSurCout; // ex: 0.35 (35%)
-  final double tvaPct; // ex: 0.20
-
-  const PricingInput({
-    required this.matieres,
-    required this.emballage,
-    required this.consommables,
-    required this.tempsFabricationMin,
-    required this.tauxHoraire,
-    required this.chargesMensuelles,
-    required this.volumeMensuel,
-    required this.fraisVentePct,
-    required this.fraisVenteFixe,
-    required this.margePctSurCout,
-    required this.tvaPct,
-  });
-}
-
-class PricingResult {
-  final double coutDirect;
-  final double coutMainOeuvre;
-  final double chargeFixeUnitaire;
-  final double coutDeRevient; // CR (hors frais % sur prix)
-  final double prixMinimumRentable;
-  final double prixConseille;
-  final double prixTTC;
-
-  const PricingResult({
-    required this.coutDirect,
-    required this.coutMainOeuvre,
-    required this.chargeFixeUnitaire,
-    required this.coutDeRevient,
-    required this.prixMinimumRentable,
-    required this.prixConseille,
-    required this.prixTTC,
-  });
-}
-
-class PricingEngine {
-  static PricingResult compute(PricingInput i) {
-    final coutDirect = i.matieres + i.emballage + i.consommables;
-
-    final coutMO = (i.tempsFabricationMin / 60.0) * i.tauxHoraire;
-
-    final chargeFixe = i.chargesMensuelles / math.max(i.volumeMensuel, 1);
-
-    final crHorsFraisPct = coutDirect + coutMO + chargeFixe;
-
-    // Prix minimum rentable
-    final prixMin = _applyFeesToReachNet(
-      targetNet: crHorsFraisPct + i.fraisVenteFixe,
-      fraisPct: i.fraisVentePct,
-    );
-
-    // Prix conseillé (net cible = CR + marge%)
-    final netCible =
-        (crHorsFraisPct * (1 + i.margePctSurCout)) + i.fraisVenteFixe;
-    final prixConseille = _applyFeesToReachNet(
-      targetNet: netCible,
-      fraisPct: i.fraisVentePct,
-    );
-
-    final prixTTC = prixConseille * (1 + i.tvaPct);
-
-    return PricingResult(
-      coutDirect: coutDirect,
-      coutMainOeuvre: coutMO,
-      chargeFixeUnitaire: chargeFixe,
-      coutDeRevient: crHorsFraisPct,
-      prixMinimumRentable: prixMin,
-      prixConseille: prixConseille,
-      prixTTC: prixTTC,
-    );
+  String _amortizationPreview() {
+    final total = _parseDouble(_materielCtrl.text);
+    final share = _parseDouble(_amortissementUniteCtrl.text);
+    if (total <= 0) return 'Aucun matériel à amortir.';
+    if (share <= 0) {
+      return "Indique la part d'amortissement incluse dans chaque unité.";
+    }
+    final units = (total / share).ceil();
+    return '$units unités nécessaires pour amortir ${_money(total)} €.';
   }
 
-  /// If platform takes pct on sale price, and you need to KEEP `targetNet`,
-  /// then price must be: targetNet / (1 - pct)
-  static double _applyFeesToReachNet({
-    required double targetNet,
-    required double fraisPct,
-  }) {
-    final p = fraisPct.clamp(0.0, 0.999);
-    return targetNet / (1.0 - p);
-  }
-}
-
-// ---------------------------
-// MARKET POSITIONING
-// ---------------------------
-class MarketEval {
-  final String label;
-  final String hint;
-  final Color color;
-
-  const MarketEval(this.label, this.hint, this.color);
-}
-
-class MarketPositioning {
-  static MarketEval evaluate({
-    required double price,
-    required double low,
-    required double mid,
-    required double high,
-  }) {
-    if (low <= 0 || mid <= 0 || high <= 0 || !(low <= mid && mid <= high)) {
-      return const MarketEval(
-        'Marché non renseigné',
-        'Ajoute une fourchette (bas / moyen / haut) pour un conseil plus précis.',
-        Color(0xFF9CA3AF),
-      );
+  Future<void> _loadRegionalTariffs() async {
+    if (_loadingTariffs) return;
+    setState(() {
+      _loadingTariffs = true;
+      _tariffStatus = null;
+    });
+    try {
+      final tariffs =
+          await PricingRegionalTariffRepository().load(_regionCode);
+      if (!mounted) return;
+      if (tariffs == null) {
+        setState(() {
+          _tariffStatus =
+              'Aucun tarif publié pour ce territoire : conserve les valeurs de ta facture.';
+        });
+        return;
+      }
+      setState(() {
+        if (tariffs.electricityPerKwh != null) {
+          _tarifElectriciteCtrl.text =
+              _money(tariffs.electricityPerKwh!);
+        }
+        if (tariffs.waterPerM3 != null) {
+          _tarifEauCtrl.text = _money(tariffs.waterPerM3!);
+        }
+        _tariffStatus = tariffs.updatedAt == null
+            ? 'Tarifs régionaux chargés.'
+            : 'Tarifs mis à jour le ${_formatDate(tariffs.updatedAt!)}.';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _tariffStatus =
+            'Tarifs indisponibles : les valeurs restent modifiables manuellement.';
+      });
+    } finally {
+      if (mounted) setState(() => _loadingTariffs = false);
     }
-
-    if (price < low) {
-      return const MarketEval(
-        'Sous-évalué',
-        'Tu peux augmenter ton prix sans sortir du marché.',
-        Color(0xFFF59E0B),
-      );
-    }
-    if (price <= high) {
-      return const MarketEval(
-        'Aligné sur le marché!',
-        'Bien placé. Mets en avant qualité & délai.',
-        Color(0xFF22C55E),
-      );
-    }
-    return const MarketEval(
-      'Positionnement Premium',
-      'À ce prix, renforce la valeur perçue (finitions, packaging, story, édition limitée).',
-      Color(0xFFEF4444),
-    );
   }
 }
 
@@ -1304,275 +1520,26 @@ class _PrestoPrimaryButton extends StatelessWidget {
   }
 }
 
-class _ResultSummaryCard extends StatelessWidget {
-  final PricingResult result;
-  const _ResultSummaryCard({required this.result});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 18,
-            offset: Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _ResultRow(
-              label: 'Coût de revient',
-              value: '${_money(result.coutDeRevient)} €'),
-          const SizedBox(height: 10),
-          _ResultRow(
-              label: 'Prix minimum rentable',
-              value: '${_money(result.prixMinimumRentable)} €'),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF3E8),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: kPrestoOrange.withValues(alpha: 0.25)),
-            ),
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Prix conseillé :',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
-                  ),
-                ),
-                Text(
-                  '${_money(result.prixConseille)} €',
-                  style: const TextStyle(
-                      fontSize: 26, fontWeight: FontWeight.w900),
-                ),
-                const SizedBox(width: 6),
-                const Text('TTC',
-                    style: TextStyle(fontWeight: FontWeight.w900)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ResultRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _ResultRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            '$label :',
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
-          ),
-        ),
-        Text(value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
-      ],
-    );
-  }
-}
-
-class _MarketCard extends StatelessWidget {
-  final double marketLow;
-  final double marketMid;
-  final double marketHigh;
-  final double price;
-  final String label;
-  final String hint;
-  final Color levelColor;
-
-  const _MarketCard({
-    required this.marketLow,
-    required this.marketMid,
-    required this.marketHigh,
-    required this.price,
-    required this.label,
-    required this.hint,
-    required this.levelColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 18,
-            offset: Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: const [
-              Expanded(
-                child: Text(
-                  'Positionnement Marché',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Prix du marché : ${_money(marketLow)} € - ${_money(marketMid)} € - ${_money(marketHigh)} €',
-            style: const TextStyle(
-                fontSize: 13,
-                color: Colors.black54,
-                fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Ton prix conseillé : ${_money(price)} €',
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-            decoration: BoxDecoration(
-              color: levelColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: levelColor.withValues(alpha: 0.25)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.check_circle_rounded, color: levelColor),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                        color: levelColor),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            hint,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MarketMiniCard extends StatelessWidget {
-  final TextEditingController lowCtrl;
-  final TextEditingController midCtrl;
-  final TextEditingController highCtrl;
-  final VoidCallback onChanged;
-
-  const _MarketMiniCard({
-    required this.lowCtrl,
-    required this.midCtrl,
-    required this.highCtrl,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Marché (optionnel)',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                  child: _MiniMarketField(
-                      label: 'Bas', ctrl: lowCtrl, onChanged: onChanged)),
-              const SizedBox(width: 10),
-              Expanded(
-                  child: _MiniMarketField(
-                      label: 'Moyen', ctrl: midCtrl, onChanged: onChanged)),
-              const SizedBox(width: 10),
-              Expanded(
-                  child: _MiniMarketField(
-                      label: 'Haut', ctrl: highCtrl, onChanged: onChanged)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniMarketField extends StatelessWidget {
-  final String label;
-  final TextEditingController ctrl;
-  final VoidCallback onChanged;
-
-  const _MiniMarketField({
-    required this.label,
-    required this.ctrl,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: ctrl,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      onChanged: (_) => onChanged(),
-      textAlign: TextAlign.center,
-      decoration: InputDecoration(
-        isDense: true,
-        filled: true,
-        fillColor: const Color(0xFFF3F4F6),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        labelText: label,
-        labelStyle: const TextStyle(fontWeight: FontWeight.w800),
-      ),
-    );
-  }
-}
-
 // ---------------------------
 // HELPERS
 // ---------------------------
 String _money(double v) {
-  // format simple "59,90"
   final fixed = v.isFinite ? v.toStringAsFixed(2) : '0.00';
   return fixed.replaceAll('.', ',');
+}
+
+double _jsonDouble(Object? value) {
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+int _jsonInt(Object? value) {
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+String _formatDate(DateTime date) {
+  String two(int value) => value.toString().padLeft(2, '0');
+  return '${two(date.day)}/${two(date.month)}/${date.year} '
+      '${two(date.hour)}:${two(date.minute)}';
 }

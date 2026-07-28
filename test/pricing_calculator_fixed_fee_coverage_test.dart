@@ -3,14 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/pages/pricing_calculator_page.dart';
 
 void main() {
-  testWidgets('updates the fixed selling fee field', (tester) async {
+  testWidgets('updates the Standard fixed selling-fee field', (tester) async {
     tester.view.physicalSize = const Size(1200, 1800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(const PrestoPriceCalculatorApp());
-
     await tester.scrollUntilVisible(
       find.text('Commencer'),
       400,
@@ -20,7 +19,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('4. Frais de Vente'),
+      find.text('6. Frais, marge et fiscalité'),
       350,
       scrollable: find.byType(Scrollable).first,
     );
@@ -32,17 +31,26 @@ void main() {
 
     await tester.tap(euroToggle.last);
     await tester.pump();
-    expect(find.text('Frais fixes par vente :'), findsOneWidget);
-
-    final fields = find.byType(TextField);
-    expect(fields, findsNWidgets(11));
-    await tester.enterText(fields.at(7), '4,50');
+    final fixedFeeRow = find.ancestor(
+      of: find.text('Frais fixes par vente :'),
+      matching: find.byType(Row),
+    ).first;
+    final fixedFeeField = find.descendant(
+      of: fixedFeeRow,
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(fixedFeeField, '4,50');
     await tester.pump();
 
     expect(find.text('4,50'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Calculer mon prix conseillé'),
+      350,
+      scrollable: find.byType(Scrollable).first,
+    );
     final calculateButton = tester.widget<InkWell>(
       find.ancestor(
-        of: find.text('Voir mon Prix Conseillé'),
+        of: find.text('Calculer mon prix conseillé'),
         matching: find.byType(InkWell),
       ).first,
     );
