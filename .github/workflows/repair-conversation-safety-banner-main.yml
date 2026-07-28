@@ -1,0 +1,89 @@
+name: One-time repair conversation safety banner
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/repair-conversation-safety-banner-main.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create repair branch and apply focused patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git switch -C automation/repair-safety-banner-1017 origin/main
+
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path('lib/pages/messages/conversation_thread_page.dart')
+          content = path.read_text(encoding='utf-8')
+
+          start_marker = '  Widget buildSafetyReminderBanner()'
+          end_marker = '  Widget buildTypingIndicator()'
+          start = content.index(start_marker)
+          end = content.index(end_marker, start)
+          segment = content[start:end]
+
+          old_icon = '''            const Icon(
+              Icons.shield_outlined,
+              color: Color(0xFFFF0000),
+              size: 20,
+            ),'''
+          new_icon = '''            const Icon(
+              Icons.warning_amber_rounded,
+              color: Color(0xFFFF0000),
+              size: 22,
+            ),'''
+
+          old_style = '''                style: kPrestoMetaTextStyle.copyWith(
+                  color: const Color(0xFFFF0000),
+                  fontWeight: FontWeight.w900,
+                ),'''
+          new_style = '''                style: kPrestoMetaTextStyle.copyWith(
+                  color: const Color(0xFFFF0000),
+                  fontSize: 15,
+                  height: 1.25,
+                  fontWeight: FontWeight.w900,
+                ),'''
+
+          if old_icon in segment:
+              segment = segment.replace(old_icon, new_icon, 1)
+          elif new_icon not in segment:
+              raise SystemExit('Expected safety-banner icon block not found')
+
+          if old_style in segment:
+              segment = segment.replace(old_style, new_style, 1)
+          elif new_style not in segment:
+              raise SystemExit('Expected safety-banner text style block not found')
+
+          if 'Icons.shield_outlined' in segment:
+              raise SystemExit('Old shield icon remains in safety banner')
+          if segment.count('Icons.warning_amber_rounded') != 1:
+              raise SystemExit('Warning icon is missing or duplicated')
+          if 'fontSize: 15' not in segment or 'height: 1.25' not in segment:
+              raise SystemExit('Readable text sizing was not applied')
+
+          path.write_text(content[:start] + segment + content[end:], encoding='utf-8')
+          print('Safety banner repair applied and verified.')
+          PY
+
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/pages/messages/conversation_thread_page.dart
+          git commit -m "fix(messages): improve safety banner readability"
+          git push --force origin HEAD:automation/repair-safety-banner-1017
