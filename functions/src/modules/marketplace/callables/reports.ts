@@ -7,10 +7,11 @@ import { logger } from "../../../core/logger";
 import { COLLECTIONS } from "../../../shared/constants";
 import { sha256 } from "../../../utils/hash";
 import { createInAppNotification } from "../../notifications/push";
+import { readConversationParticipants } from "../../messaging/participants";
 import { trackProductEventBackend } from "../services/analytics";
 import { toHttpsError } from "../services/errors";
 import { shouldHardRejectForRecaptcha, verifyRecaptchaAssessment } from "../services/recaptcha";
-import { validateListingReportPayload } from "../validators/listings";
+import { validateConversationReportPayload, validateListingReportPayload } from "../validators/listings";
 
 function requireAuthUid(request: { auth?: { uid?: string } }): string {
   const uid = String(request.auth?.uid || "").trim();
@@ -309,3 +310,164 @@ export const reportListing = onCall({ region: PROJECT_REGION, enforceAppCheck: E
     throw toHttpsError(error, "Unable to report listing");
   }
 });
+
+export const reportConversationMessage = onCall(
+  { region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK },
+  async (request) => {
+    const reporterId = requireAuthUid(request);
+    const recaptchaToken = normalizeString(request.data?.recaptchaToken);
+
+    const rateAllowed = await canProceedRateLimited(
+      "message_report",
+      reporterId,
+      15,
+      24 * 60 * 60 * 1000,
+    );
+    if (!rateAllowed) {
+      throw new HttpsError("resource-exhausted", "Too many reports today");
+    }
+
+    const recaptcha = await verifyRecaptchaAssessment({
+      token: recaptchaToken,
+      expectedAction: "message_report",
+      userId: reporterId,
+    });
+    if (shouldHardRejectForRecaptcha(recaptcha)) {
+      throw new HttpsError("permission-denied", "reCAPTCHA rejected the report");
+    }
+    if (!recaptcha.allowed) {
+      logger.warn("marketplace_message_report_recaptcha_non_blocking", {
+        reporterId,
+        score: recaptcha.score,
+        reasons: recaptcha.reasons,
+        action: recaptcha.action,
+        assessed: recaptcha.assessed,
+      });
+    }
+
+    try {
+      const validated = validateConversationReportPayload(
+        (request.data ?? {}) as Record<string, unknown>,
+      );
+
+      const conversationRef = db.collection(COLLECTIONS.conversations).doc(validated.conversationId);
+      const conversationSnap = await conversationRef.get();
+      if (!conversationSnap.exists) {
+        throw new HttpsError("not-found", "Conversation not found");
+      }
+
+      const conversationData = (conversationSnap.data() ?? {}) as Record<string, unknown>;
+      const participants = readConversationParticipants(conversationData, {
+        conversationId: validated.conversationId,
+      });
+      if (!participants.includes(reporterId)) {
+        throw new HttpsError("permission-denied", "You are not a participant of this conversation");
+      }
+
+      const reportedUserId = participants.find((id) => id !== reporterId) || "";
+      if (!reportedUserId) {
+        throw new HttpsError("failed-precondition", "Unable to determine the reported participant");
+      }
+
+      const reportId = validated.messageId
+        ? `${validated.conversationId}__${validated.messageId}__${reporterId}`
+        : `${validated.conversationId}__${reporterId}`;
+      const reportRef = db.collection(COLLECTIONS.messageReports).doc(reportId);
+      const moderationRef = db.collection(COLLECTIONS.userModeration).doc(reportedUserId);
+
+      let reviewTriggered = false;
+
+      await db.runTransaction(async (transaction) => {
+        const [reportSnap, moderationSnap] = await Promise.all([
+          transaction.get(reportRef),
+          transaction.get(moderationRef),
+        ]);
+
+        if (reportSnap.exists) {
+          throw new HttpsError("already-exists", "You have already reported this");
+        }
+
+        transaction.set(reportRef, {
+          id: reportId,
+          reporterId,
+          reportedUserId,
+          conversationId: validated.conversationId,
+          messageId: validated.messageId || null,
+          reasonCode: validated.reasonCode,
+          reasonText: validated.reasonText || null,
+          status: "open",
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        const moderationData = (moderationSnap.data() ?? {}) as Record<string, unknown>;
+        const newReportCount = Number(moderationData.reportCount || 0) + 1;
+        const currentAutoFlags = Array.isArray(moderationData.autoFlags)
+          ? (moderationData.autoFlags as string[])
+          : [];
+
+        const moderationUpdate: Record<string, unknown> = {
+          id: reportedUserId,
+          userId: reportedUserId,
+          reportCount: newReportCount,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        };
+
+        if (newReportCount >= MARKETPLACE_REPORT_REVIEW_THRESHOLD) {
+          reviewTriggered = true;
+          moderationUpdate.moderationDecision = "manual_review";
+          moderationUpdate.moderationReason = "report_threshold_reached";
+          moderationUpdate.autoFlags = Array.from(
+            new Set([...currentAutoFlags, "report_threshold_exceeded"]),
+          );
+        }
+
+        transaction.set(moderationRef, moderationUpdate, { merge: true });
+      });
+
+      if (reviewTriggered) {
+        const recipients = await findModerationRecipients();
+        await Promise.all(
+          recipients.map((recipient) =>
+            createInAppNotification({
+              notificationId: `message_reported_${reportedUserId}_${recipient.userId}`,
+              userId: recipient.userId,
+              title: "Utilisateur signalé en messagerie",
+              message:
+                "Un utilisateur a atteint le seuil de signalements en messagerie et passe en revue manuelle.",
+              type: "message_reported",
+              routeName: "/admin",
+              conversationId: validated.conversationId,
+              data: { reportedUserId },
+            }),
+          ),
+        );
+      }
+
+      await trackProductEventBackend({
+        eventName: "message_reported",
+        userId: reporterId,
+        threadId: validated.conversationId,
+        params: {
+          reason_code: validated.reasonCode,
+          threshold_triggered: reviewTriggered,
+        },
+      });
+
+      logger.info("marketplace_message_reported", {
+        conversationId: validated.conversationId,
+        reporterId,
+        reportedUserId,
+        reasonCode: validated.reasonCode,
+        reviewTriggered,
+      });
+
+      return {
+        ok: true,
+        reportId,
+        reviewTriggered,
+      };
+    } catch (error) {
+      throw toHttpsError(error, "Unable to report message");
+    }
+  },
+);

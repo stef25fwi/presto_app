@@ -18,6 +18,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/presto_overlay_theme.dart';
 import '../../constants.dart';
+import '../../data/marketplace/report_repository.dart';
+import '../../models/marketplace_enums.dart';
+import '../../models/marketplace_report.dart';
+import '../../services/marketplace_human_verification.dart';
 import '../../features/micro_ia/web_audio_recorder_stub.dart'
     if (dart.library.js_interop) '../../features/micro_ia/web_audio_recorder.dart';
 import '../../features/subscriptions/subscription_action_placeholders.dart';
@@ -77,6 +81,9 @@ class ConversationThreadPage extends StatefulWidget {
 
 class _ConversationThreadPageState extends State<ConversationThreadPage> {
   static const int _messagePageSize = 50;
+  static final ReportRepository _reportRepository = ReportRepository();
+  static const MarketplaceHumanVerification _verification =
+      MarketplaceHumanVerification();
   final AdminAccessResolver _adminAccessResolver = AdminAccessResolver();
   final SubscriptionConfigService _subscriptionConfigService =
       SubscriptionConfigService();
@@ -1718,6 +1725,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           });
           showSuccessSnackBar(context, 'Conversation debloquee par admin.');
           return;
+        case _ConversationThreadAction.report:
+          await _showConversationReportSheet();
+          return;
         case _ConversationThreadAction.delete:
           final confirmed = await showDialog<bool>(
             context: context,
@@ -1773,6 +1783,122 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         'Cette action est temporairement indisponible. Reessayez dans un instant.',
       );
     }
+  }
+
+  Future<void> _showConversationReportSheet() async {
+    if (!mounted) return;
+    final overlayTheme = context.prestoOverlayTheme;
+    final reason = await showModalBottomSheet<MessageReportReasonCode>(
+      context: context,
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
+      builder: (sheetContext) {
+        return SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(6, 16, 6, 8),
+                child: Text(
+                  'Signaler cette conversation',
+                  textAlign: TextAlign.center,
+                  style: kPrestoSectionTitleStyle,
+                ),
+              ),
+              ...MessageReportReasonCode.values.map(
+                (entry) => ListTile(
+                  tileColor: overlayTheme.surfaceColor,
+                  leading: const Icon(Icons.flag_outlined),
+                  title: Text(_messageReportReasonLabel(entry)),
+                  onTap: () => Navigator.of(sheetContext).pop(entry),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (reason == null || !mounted) return;
+
+    String? reasonText;
+    if (reason == MessageReportReasonCode.other) {
+      final controller = TextEditingController();
+      try {
+        reasonText = await showDialog<String>(
+          context: context,
+          builder: (dialogContext) {
+            final dialogOverlayTheme = dialogContext.prestoOverlayTheme;
+            return AlertDialog(
+              backgroundColor: dialogOverlayTheme.surfaceColor,
+              surfaceTintColor: dialogOverlayTheme.surfaceTintColor,
+              shape: dialogOverlayTheme.dialogShape,
+              title: const Text('Précisez le motif'),
+              content: TextField(
+                controller: controller,
+                maxLines: 4,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  hintText: 'Décrivez brièvement le problème',
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Annuler'),
+                ),
+                ElevatedButton(
+                  onPressed: () =>
+                      Navigator.of(dialogContext).pop(controller.text.trim()),
+                  child: const Text('Envoyer'),
+                ),
+              ],
+            );
+          },
+        );
+      } finally {
+        controller.dispose();
+      }
+      if (!mounted) return;
+    }
+
+    try {
+      final recaptchaToken = await _verification.obtainToken(
+        MarketplaceHumanVerificationAction.messageReport,
+      );
+      final ok = await _reportRepository.reportConversation(
+        ConversationReportDraft(
+          conversationId: widget.conversationId,
+          reasonCode: reason,
+          reasonText:
+              (reasonText ?? '').trim().isEmpty ? null : reasonText!.trim(),
+        ),
+        recaptchaToken: recaptchaToken,
+      );
+      if (!mounted) return;
+      if (ok) {
+        showSuccessSnackBar(context, 'Signalement envoyé. Merci pour votre retour.');
+      } else {
+        showErrorSnackBar(context, 'Le signalement n\'a pas pu être envoyé.');
+      }
+    } catch (error) {
+      debugPrint('[ConversationThread] report error: $error');
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur lors du signalement.');
+    }
+  }
+
+  String _messageReportReasonLabel(MessageReportReasonCode reason) {
+    return switch (reason) {
+      MessageReportReasonCode.spam => 'Spam',
+      MessageReportReasonCode.fraud => 'Fraude / arnaque',
+      MessageReportReasonCode.harassment => 'Harcèlement',
+      MessageReportReasonCode.inappropriate => 'Contenu inapproprié',
+      MessageReportReasonCode.other => 'Autre motif',
+    };
   }
 
   Widget buildStateBanner() {
@@ -3581,6 +3707,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                   child: Text('Bloquer'),
                 ),
               const PopupMenuItem<_ConversationThreadAction>(
+                value: _ConversationThreadAction.report,
+                child: Text('Signaler'),
+              ),
+              const PopupMenuItem<_ConversationThreadAction>(
                 value: _ConversationThreadAction.delete,
                 child: Text('Supprimer', style: TextStyle(color: Colors.red)),
               ),
@@ -4529,6 +4659,7 @@ enum _ConversationThreadAction {
   unblock,
   adminUnblock,
   delete,
+  report,
 }
 
 class ConversationBanner extends StatelessWidget {

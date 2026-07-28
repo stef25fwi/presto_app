@@ -42,6 +42,15 @@ export const REPORT_REASON_CODES = [
 ] as const;
 export type ReportReasonCode = (typeof REPORT_REASON_CODES)[number];
 
+export const MESSAGE_REPORT_REASON_CODES = [
+  "spam",
+  "fraud",
+  "harassment",
+  "inappropriate",
+  "other",
+] as const;
+export type MessageReportReasonCode = (typeof MESSAGE_REPORT_REASON_CODES)[number];
+
 export const MODERATION_AUTO_FLAGS = [
   "adult_content",
   "violent_content",
@@ -71,6 +80,7 @@ export const NOTIFICATION_TYPES = [
   "listing_renewal_reminder",
   "new_chat_message",
   "manual_review_required",
+  "message_reported",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
@@ -86,6 +96,7 @@ export const PRODUCT_ANALYTICS_EVENTS = [
   "listing_contact_clicked",
   "listing_message_started",
   "listing_reported",
+  "message_reported",
   "search_performed",
   "search_result_clicked",
   "premium_upgrade_started",
@@ -97,6 +108,7 @@ export const RECAPTCHA_ACTIONS = [
   "listing_submit",
   "listing_report",
   "message_create",
+  "message_report",
   "account_create",
 ] as const;
 export type RecaptchaAction = (typeof RECAPTCHA_ACTIONS)[number];

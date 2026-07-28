@@ -99,4 +99,54 @@ const listings_1 = require("./listings");
         return true;
     });
 });
+(0, node_test_1.default)("validateConversationReportPayload normalizes a valid report", () => {
+    const payload = (0, listings_1.validateConversationReportPayload)({
+        conversationId: "offer_listing_123__uidA__uidB",
+        messageId: " msg_1 ",
+        reasonCode: "harassment",
+        reasonText: "  Propos déplacés répétés  ",
+    });
+    strict_1.default.equal(payload.conversationId, "offer_listing_123__uidA__uidB");
+    strict_1.default.equal(payload.messageId, "msg_1");
+    strict_1.default.equal(payload.reasonCode, "harassment");
+    strict_1.default.equal(payload.reasonText, "Propos déplacés répétés");
+});
+(0, node_test_1.default)("validateConversationReportPayload allows an omitted messageId", () => {
+    const payload = (0, listings_1.validateConversationReportPayload)({
+        conversationId: "offer_listing_123__uidA__uidB",
+        reasonCode: "spam",
+    });
+    strict_1.default.equal(payload.messageId, undefined);
+    strict_1.default.equal(payload.reasonText, undefined);
+});
+(0, node_test_1.default)("validateConversationReportPayload rejects a missing conversationId", () => {
+    strict_1.default.throws(() => (0, listings_1.validateConversationReportPayload)({
+        reasonCode: "spam",
+    }), (error) => {
+        strict_1.default.ok(error instanceof errors_1.ValidationError);
+        strict_1.default.deepEqual(error.issues, ["conversationId is required"]);
+        return true;
+    });
+});
+(0, node_test_1.default)("validateConversationReportPayload rejects unsupported reason codes", () => {
+    strict_1.default.throws(() => (0, listings_1.validateConversationReportPayload)({
+        conversationId: "offer_listing_123__uidA__uidB",
+        reasonCode: "wrong_category",
+    }), (error) => {
+        strict_1.default.ok(error instanceof errors_1.ValidationError);
+        strict_1.default.deepEqual(error.issues, ["reasonCode is invalid"]);
+        return true;
+    });
+});
+(0, node_test_1.default)("validateConversationReportPayload rejects an over-long reasonText", () => {
+    strict_1.default.throws(() => (0, listings_1.validateConversationReportPayload)({
+        conversationId: "offer_listing_123__uidA__uidB",
+        reasonCode: "other",
+        reasonText: "x".repeat(801),
+    }), (error) => {
+        strict_1.default.ok(error instanceof errors_1.ValidationError);
+        strict_1.default.deepEqual(error.issues, ["reasonText is too long"]);
+        return true;
+    });
+});
 //# sourceMappingURL=listings.test.js.map

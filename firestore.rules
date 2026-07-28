@@ -464,6 +464,18 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /messageReports/{reportId} {
+      allow read: if isMarketplaceModerator()
+        || (hasAppCheck() && isSignedIn() && resource.data.reporterId == uid());
+      allow create, update, delete: if false;
+    }
+
+    match /userModeration/{userId} {
+      allow read: if isMarketplaceModerator()
+        || (hasAppCheck() && isSignedIn() && userId == uid());
+      allow write: if false;
+    }
+
     match /listingPhotoReviews/{reviewId} {
       allow read: if isMarketplaceModerator();
       allow create, update, delete: if false;

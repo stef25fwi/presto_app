@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MODERATION_STATUS_TRANSITIONS = exports.LISTING_STATUS_TRANSITIONS = exports.LISTING_SERVER_ONLY_FIELDS = exports.MODERATION_ROLES = exports.ADMIN_ROLES = exports.RECAPTCHA_ACTIONS = exports.PRODUCT_ANALYTICS_EVENTS = exports.NOTIFICATION_TYPES = exports.CHAT_THREAD_STATUSES = exports.LISTING_VISIBILITIES = exports.MODERATION_AUTO_FLAGS = exports.REPORT_REASON_CODES = exports.REPORT_STATUSES = exports.MODERATION_STATUSES = exports.LISTING_STATUSES = exports.USER_ROLES = void 0;
+exports.MODERATION_STATUS_TRANSITIONS = exports.LISTING_STATUS_TRANSITIONS = exports.LISTING_SERVER_ONLY_FIELDS = exports.MODERATION_ROLES = exports.ADMIN_ROLES = exports.RECAPTCHA_ACTIONS = exports.PRODUCT_ANALYTICS_EVENTS = exports.NOTIFICATION_TYPES = exports.CHAT_THREAD_STATUSES = exports.LISTING_VISIBILITIES = exports.MODERATION_AUTO_FLAGS = exports.MESSAGE_REPORT_REASON_CODES = exports.REPORT_REASON_CODES = exports.REPORT_STATUSES = exports.MODERATION_STATUSES = exports.LISTING_STATUSES = exports.USER_ROLES = void 0;
 exports.hasRole = hasRole;
 exports.isAdminRole = isAdminRole;
 exports.isModerationRole = isModerationRole;
@@ -40,6 +40,13 @@ exports.REPORT_REASON_CODES = [
     "harassment",
     "other",
 ];
+exports.MESSAGE_REPORT_REASON_CODES = [
+    "spam",
+    "fraud",
+    "harassment",
+    "inappropriate",
+    "other",
+];
 exports.MODERATION_AUTO_FLAGS = [
     "adult_content",
     "violent_content",
@@ -63,6 +70,7 @@ exports.NOTIFICATION_TYPES = [
     "listing_renewal_reminder",
     "new_chat_message",
     "manual_review_required",
+    "message_reported",
 ];
 exports.PRODUCT_ANALYTICS_EVENTS = [
     "listing_create_started",
@@ -76,6 +84,7 @@ exports.PRODUCT_ANALYTICS_EVENTS = [
     "listing_contact_clicked",
     "listing_message_started",
     "listing_reported",
+    "message_reported",
     "search_performed",
     "search_result_clicked",
     "premium_upgrade_started",
@@ -85,6 +94,7 @@ exports.RECAPTCHA_ACTIONS = [
     "listing_submit",
     "listing_report",
     "message_create",
+    "message_report",
     "account_create",
 ];
 exports.ADMIN_ROLES = ["admin", "superadmin"];

@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { ValidationError } from "../services/errors";
 import {
+  validateConversationReportPayload,
   validateListingDraftPayload,
   validateListingReportPayload,
 } from "./listings";
@@ -108,6 +109,72 @@ test("validateListingReportPayload rejects unsupported reason codes", () => {
     (error: unknown) => {
       assert.ok(error instanceof ValidationError);
       assert.deepEqual(error.issues, ["reasonCode is invalid"]);
+      return true;
+    },
+  );
+});
+
+test("validateConversationReportPayload normalizes a valid report", () => {
+  const payload = validateConversationReportPayload({
+    conversationId: "offer_listing_123__uidA__uidB",
+    messageId: " msg_1 ",
+    reasonCode: "harassment",
+    reasonText: "  Propos déplacés répétés  ",
+  });
+
+  assert.equal(payload.conversationId, "offer_listing_123__uidA__uidB");
+  assert.equal(payload.messageId, "msg_1");
+  assert.equal(payload.reasonCode, "harassment");
+  assert.equal(payload.reasonText, "Propos déplacés répétés");
+});
+
+test("validateConversationReportPayload allows an omitted messageId", () => {
+  const payload = validateConversationReportPayload({
+    conversationId: "offer_listing_123__uidA__uidB",
+    reasonCode: "spam",
+  });
+
+  assert.equal(payload.messageId, undefined);
+  assert.equal(payload.reasonText, undefined);
+});
+
+test("validateConversationReportPayload rejects a missing conversationId", () => {
+  assert.throws(
+    () => validateConversationReportPayload({
+      reasonCode: "spam",
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof ValidationError);
+      assert.deepEqual(error.issues, ["conversationId is required"]);
+      return true;
+    },
+  );
+});
+
+test("validateConversationReportPayload rejects unsupported reason codes", () => {
+  assert.throws(
+    () => validateConversationReportPayload({
+      conversationId: "offer_listing_123__uidA__uidB",
+      reasonCode: "wrong_category",
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof ValidationError);
+      assert.deepEqual(error.issues, ["reasonCode is invalid"]);
+      return true;
+    },
+  );
+});
+
+test("validateConversationReportPayload rejects an over-long reasonText", () => {
+  assert.throws(
+    () => validateConversationReportPayload({
+      conversationId: "offer_listing_123__uidA__uidB",
+      reasonCode: "other",
+      reasonText: "x".repeat(801),
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof ValidationError);
+      assert.deepEqual(error.issues, ["reasonText is too long"]);
       return true;
     },
   );

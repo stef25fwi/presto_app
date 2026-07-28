@@ -33,12 +33,15 @@ class ReportRepository {
   ProductAnalyticsService get _analytics =>
       _analyticsOverride ?? ProductAnalyticsService();
 
-  Future<Object?> _report(Map<String, dynamic> parameters) async {
+  Future<Object?> _report(
+    Map<String, dynamic> parameters, {
+    String name = 'reportListing',
+  }) async {
     final caller = _caller;
     if (caller != null) return caller(parameters);
     final response = await callPrestoFunction<dynamic>(
       functions: _functions,
-      name: 'reportListing',
+      name: name,
       timeout: const Duration(seconds: 20),
       parameters: parameters,
     );
@@ -68,6 +71,29 @@ class ReportRepository {
     );
     await _log('listing_reported', <String, Object?>{
       'listing_id': draft.listingId,
+      'reason_code': draft.reasonCode.value,
+      'review_triggered': data['reviewTriggered'] == true,
+    });
+    return data['ok'] == true;
+  }
+
+  Future<bool> reportConversation(
+    ConversationReportDraft draft, {
+    required String recaptchaToken,
+  }) async {
+    final rawData = await _report(
+      <String, dynamic>{
+        ...draft.toMap(),
+        'recaptchaToken': recaptchaToken,
+      },
+      name: 'reportConversationMessage',
+    );
+    final data = Map<String, dynamic>.from(
+      (rawData as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{},
+    );
+    await _log('message_reported', <String, Object?>{
+      'conversation_id': draft.conversationId,
       'reason_code': draft.reasonCode.value,
       'review_triggered': data['reviewTriggered'] == true,
     });

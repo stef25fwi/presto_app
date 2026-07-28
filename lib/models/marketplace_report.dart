@@ -19,3 +19,26 @@ class ListingReportDraft {
     };
   }
 }
+
+class ConversationReportDraft {
+  final String conversationId;
+  final String? messageId;
+  final MessageReportReasonCode reasonCode;
+  final String? reasonText;
+
+  const ConversationReportDraft({
+    required this.conversationId,
+    this.messageId,
+    required this.reasonCode,
+    this.reasonText,
+  });
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'conversationId': conversationId,
+      'messageId': messageId,
+      'reasonCode': reasonCode.value,
+      'reasonText': reasonText,
+    };
+  }
+}
