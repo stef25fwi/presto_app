@@ -10,6 +10,7 @@ import {
   STRIPE_PRICE_ILIPRO,
   STRIPE_SECRET_KEY,
 } from "../../config/env";
+import { COST_POLICY } from "../../config/cost_policy";
 import { db } from "../../core/firestore";
 import { COLLECTIONS } from "../../shared/constants";
 
@@ -617,7 +618,7 @@ export const createSubscriptionCheckoutSession = onCall({
   enforceAppCheck: ENFORCE_APP_CHECK,
   secrets: STRIPE_CHECKOUT_SECRETS,
   timeoutSeconds: 30,
-  minInstances: 1,
+  minInstances: COST_POLICY.minInstances,
   maxInstances: 20,
   concurrency: 80,
   memory: "256MiB",
@@ -829,6 +830,11 @@ export const auditStripeCatalog = onSchedule({
   timeoutSeconds: 60,
   memory: "256MiB",
 }, async () => {
+  if (!COST_POLICY.stripeCatalogAuditEnabled) {
+    console.info("STRIPE_CATALOG_AUDIT_SKIPPED", { reason: "minimum_cost_mode" });
+    return;
+  }
+
   const startedAt = Date.now();
   try {
     validatedPriceCache.clear();
