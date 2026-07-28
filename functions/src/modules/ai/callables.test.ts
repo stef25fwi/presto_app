@@ -22,6 +22,7 @@ test("buildLegacyDraftPayload preserves the Flutter publishing contract", () => 
     missingFields: [],
     questionsToAsk: ["Quelle est la surface ?"],
     confidenceScore: 0.92,
+    taxonomyVersion: "ilipresto-listing-taxonomy-v1",
   });
 
   assert.equal(payload.title, "Tonte de jardin");
@@ -39,6 +40,7 @@ test("buildLegacyDraftPayload preserves the Flutter publishing contract", () => 
     max: null,
     devise: "EUR",
   });
+  assert.equal(payload.taxonomyVersion, "ilipresto-listing-taxonomy-v1");
 });
 
 test("buildLegacyDraftPayload keeps category fallback compatible", () => {
@@ -60,6 +62,7 @@ test("buildLegacyDraftPayload keeps category fallback compatible", () => {
     missingFields: ["category", "city", "postalCode"],
     questionsToAsk: [],
     confidenceScore: 0.4,
+    taxonomyVersion: "ilipresto-listing-taxonomy-v1",
   });
 
   assert.equal(payload.category, "Autre");
