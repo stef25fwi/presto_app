@@ -91,10 +91,18 @@ audit_push_web_notifications_*.txt
 android/.kotlin/
 # Local generated logs / audits / backups
 backups/
+.backups/
+_archive/
 release_apk/
 downloads/
 flutter_analyze_*.log
 *.tmp
+audit_push_*.txt
+audit_phone_*.txt
+diagnostic_phone_*.txt
+*.backup.*
+audit_logs/*export*.json
+audit_logs/*audit_export*
 
 # Flutter / Android generated files
 build/
