@@ -15,8 +15,10 @@
 
 import OpenAI from "openai";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { COST_POLICY } from "../../../config/cost_policy";
 import { OPENAI_API_KEY, ENFORCE_APP_CHECK, PROJECT_REGION } from "../../../config/env";
 import { logger } from "../../../core/logger";
+import { reserveMonthlyUsage } from "../../../shared/cost_quota";
 
 // ── Enum fermé (miroir de kTradeLookup dans trade_category_lookup.dart) ──────
 
@@ -132,6 +134,11 @@ export const classifyServicePhoto = onCall(
 
     let rawJson: string;
     try {
+      await reserveMonthlyUsage({
+        metric: "openai_requests",
+        units: 1,
+        limit: COST_POLICY.openAiMonthlyRequestLimit,
+      });
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         max_tokens: 64,
