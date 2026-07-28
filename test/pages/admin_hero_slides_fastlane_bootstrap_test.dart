@@ -9,7 +9,15 @@ void main() {
 
   setUpAll(() async {
     setupFirebaseCoreMocks();
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: 'test-api-key',
+        appId: '1:1234567890:web:admin-hero-test',
+        messagingSenderId: '1234567890',
+        projectId: 'presto-test',
+        storageBucket: 'presto-test.appspot.com',
+      ),
+    );
   });
 
   testWidgets('affiche la structure admin hero sans blocage au démarrage',
