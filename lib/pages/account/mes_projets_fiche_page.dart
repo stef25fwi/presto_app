@@ -23,8 +23,11 @@ class MesProjetsFichePage extends StatelessWidget {
   final ProjectRecordsStreamProvider? recordsStreamProvider;
   final WidgetBuilder? toolboxPageBuilder;
 
-  String? get _uid =>
-      userIdProvider?.call() ?? FirebaseAuth.instance.currentUser?.uid;
+  String? get _uid {
+    final provider = userIdProvider;
+    if (provider != null) return provider();
+    return FirebaseAuth.instance.currentUser?.uid;
+  }
 
   Widget _buildToolbox(BuildContext context) =>
       toolboxPageBuilder?.call(context) ?? const ToolboxPage();
