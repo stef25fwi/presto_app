@@ -5,8 +5,10 @@ import { logger } from "firebase-functions";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
 
+import { COST_POLICY } from "../../config/cost_policy";
 import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { getDb } from "../../core/firestore";
+import { reserveMonthlyUsage } from "../../shared/cost_quota";
 import { extractRolesFromAuthToken, requireAnyRole } from "../marketplace/services/roles";
 import {
   DEFAULT_VEO_MODEL,
@@ -266,9 +268,17 @@ export const adminGenerateVideo = onCall(
     secrets: [VEO_API_KEY],
     timeoutSeconds: 540,
     memory: "1GiB",
+    maxInstances: COST_POLICY.veoMaxInstances,
   },
   async (request) => {
     requireAdmin(request);
+    if (!COST_POLICY.veoGenerationEnabled) {
+      throw new HttpsError(
+        "failed-precondition",
+        "La génération vidéo est désactivée pendant la bêta à coût minimum.",
+      );
+    }
+
     const input = asRecord(request.data);
     let prompt: string;
     let apiKey: string;
@@ -291,6 +301,12 @@ export const adminGenerateVideo = onCall(
     } catch (error) {
       throw mapGenerationError(error);
     }
+
+    await reserveMonthlyUsage({
+      metric: "veo_generations",
+      units: 1,
+      limit: COST_POLICY.veoMonthlyGenerationLimit,
+    });
 
     const model = DEFAULT_VEO_MODEL;
     const jobRef = getDb().collection(VIDEO_JOBS_COLLECTION).doc();
