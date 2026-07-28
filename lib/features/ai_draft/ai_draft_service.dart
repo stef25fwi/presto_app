@@ -30,9 +30,7 @@ class AiDraftService {
       await override();
       return;
     }
-    await MicroIaService.prepareSecureCallableContext(
-      forceRefreshToken: true,
-    );
+    await MicroIaService.prepareSecureCallableContext();
     await FirebaseAuth.instance.currentUser?.getIdToken(false);
   }
 
@@ -50,7 +48,10 @@ class AiDraftService {
     return result.data as Map<dynamic, dynamic>;
   }
 
-  /// Génère un brouillon enrichi avec format JSON riche
+  /// Génère un brouillon enrichi avec format JSON riche.
+  ///
+  /// Les retries sont volontairement limités aux erreurs de transport sûres :
+  /// le backend gère désormais les retries OpenAI et l'idempotence.
   Future<Map<String, dynamic>> generateOfferDraftV2({
     required String text,
     String? city,
@@ -67,13 +68,11 @@ class AiDraftService {
           if (category != null) 'category': category,
           'clientRequestId': clientRequestId,
         }),
-        maxAttempts: 3,
+        maxAttempts: 2,
         retryIf: (e) {
           if (e is FirebaseFunctionsException) {
             return e.code == 'unavailable' ||
-                e.code == 'deadline-exceeded' ||
-                e.code == 'internal' ||
-                e.code == 'resource-exhausted';
+                e.code == 'deadline-exceeded';
           }
           return false;
         },
@@ -133,7 +132,7 @@ class AiDraftService {
       );
       return {
         'success': false,
-        'error': e.message ?? 'Erreur lors de l\'appel à la fonction',
+        'error': _friendlyFirebaseError(e),
         'code': e.code,
       };
     } catch (e, st) {
@@ -149,8 +148,43 @@ class AiDraftService {
       );
       return {
         'success': false,
-        'error': e.toString(),
+        'error': 'Le brouillon automatique est indisponible. Réessaie dans un instant.',
       };
+    }
+  }
+
+  String _friendlyFirebaseError(FirebaseFunctionsException error) {
+    final providerCode = (error.message ?? '').trim();
+    switch (providerCode) {
+      case 'AI_TIMEOUT':
+        return 'Le service IA met trop de temps à répondre. Réessaie dans un instant.';
+      case 'AI_RATE_LIMITED':
+        return 'Trop de demandes successives. Attends quelques secondes puis réessaie.';
+      case 'AI_QUOTA_EXHAUSTED':
+        return 'Le service IA est temporairement indisponible. Réessaie plus tard.';
+      case 'AI_PROVIDER_UNAVAILABLE':
+        return 'Le service IA est momentanément indisponible. Réessaie dans un instant.';
+      case 'AI_OUTPUT_INVALID':
+      case 'AI_OUTPUT_EMPTY':
+      case 'AI_OUTPUT_INCOMPLETE':
+        return 'Le texte a été compris, mais le brouillon n’a pas pu être structuré. Réessaie.';
+      case 'AI_REFUSAL':
+        return 'Le contenu ne peut pas être traité automatiquement. Reformule puis réessaie.';
+      case 'AI_REQUEST_IN_PROGRESS':
+        return 'La demande est encore en cours de traitement. Attends un instant.';
+    }
+
+    switch (error.code) {
+      case 'deadline-exceeded':
+        return 'Connexion lente avec le service IA. Réessaie.';
+      case 'resource-exhausted':
+        return 'Trop de demandes successives. Attends quelques secondes puis réessaie.';
+      case 'unavailable':
+        return 'Le service IA est momentanément indisponible. Réessaie dans un instant.';
+      case 'unauthenticated':
+        return 'Ta session a expiré. Reconnecte-toi puis réessaie.';
+      default:
+        return 'Le brouillon automatique est indisponible. Réessaie dans un instant.';
     }
   }
 

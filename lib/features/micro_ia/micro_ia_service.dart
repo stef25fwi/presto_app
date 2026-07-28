@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import '../../services/firebase_functions_region.dart';
 import '../../utils/crashlytics_context.dart';
 import '../../utils/retry.dart';
+import 'micro_ia_remote_config.dart';
 
 class MicroIaClientAuthException implements Exception {
   const MicroIaClientAuthException({
@@ -43,21 +44,17 @@ class MicroIaSecureContext {
 class MicroIaService {
   MicroIaService._();
 
-  static final _functions = prestoFirebaseFunctions;
+  static final FirebaseFunctions _functions = prestoFirebaseFunctions;
+  static final MicroIaRemoteConfig _remoteConfig = MicroIaRemoteConfig();
   static const Duration _kAuthRestoreTimeout = Duration(seconds: 8);
   static const Duration _kCurrentUserBindingTimeout = Duration(seconds: 3);
-
-  /// Tracks the last time a force-refresh was performed on the ID token.
-  /// Used to pre-emptively refresh before the 60-minute expiry window.
-  static DateTime? _lastForcedTokenRefresh;
   static const Duration _kTokenPreemptiveRefreshAge = Duration(minutes: 50);
+  static DateTime? _lastForcedTokenRefresh;
 
-  /// Returns true if a forced token refresh is advisable (first call or
-  /// token is older than 50 minutes).
   static bool _shouldForceTokenRefresh() {
-    if (_lastForcedTokenRefresh == null) return true;
-    return DateTime.now().difference(_lastForcedTokenRefresh!) >
-        _kTokenPreemptiveRefreshAge;
+    final lastRefresh = _lastForcedTokenRefresh;
+    return lastRefresh == null ||
+        DateTime.now().difference(lastRefresh) > _kTokenPreemptiveRefreshAge;
   }
 
   static void _log(String stage, String message) {
@@ -69,16 +66,7 @@ class MicroIaService {
   }) async {
     final auth = FirebaseAuth.instance;
     final currentUser = auth.currentUser;
-    if (currentUser != null) {
-      _log(
-        'AUTH',
-        'uid=${currentUser.uid} email=${currentUser.email ?? ''} source=currentUser',
-      );
-      return currentUser;
-    }
-
-    _log('AUTH', 'user=null waiting_session_restore=yes');
-
+    if (currentUser != null) return currentUser;
     try {
       final restoredUser = await auth
           .authStateChanges()
@@ -90,14 +78,8 @@ class MicroIaService {
           message: 'Connecte-toi pour utiliser la dictée IA.',
         );
       }
-
-      _log(
-        'AUTH',
-        'uid=${restoredUser.uid} email=${restoredUser.email ?? ''} source=authStateChanges',
-      );
       return restoredUser;
     } on TimeoutException {
-      _log('AUTH', 'user=null restore_timeout=yes');
       throw const MicroIaClientAuthException(
         code: 'auth-missing',
         message: 'Connecte-toi pour utiliser la dictée IA.',
@@ -111,15 +93,7 @@ class MicroIaService {
   }) async {
     final auth = FirebaseAuth.instance;
     final currentUser = auth.currentUser;
-    if (currentUser != null && currentUser.uid == user.uid) {
-      return currentUser;
-    }
-
-    _log(
-      'AUTH',
-      'current_user_mismatch current=${currentUser?.uid ?? 'null'} expected=${user.uid}',
-    );
-
+    if (currentUser?.uid == user.uid) return currentUser!;
     try {
       final reboundUser = await auth
           .userChanges()
@@ -132,10 +106,8 @@ class MicroIaService {
               'La session n’est pas encore synchronisée. Réessaie dans un instant.',
         );
       }
-      _log('AUTH', 'current_user_bound=yes uid=${reboundUser.uid}');
       return reboundUser;
     } on TimeoutException {
-      _log('AUTH', 'current_user_bound=no expected=${user.uid}');
       throw const MicroIaClientAuthException(
         code: 'auth-not-ready',
         message:
@@ -151,27 +123,19 @@ class MicroIaService {
     final boundUser = await _ensureCurrentUserBound(
       user ?? await requireSignedInUser(),
     );
-
     try {
-      final idToken = await boundUser.getIdToken(forceRefreshToken);
-      final normalizedToken = (idToken ?? '').trim();
-      if (normalizedToken.isEmpty) {
-        _log('TOKEN', 'fetched=no uid=${boundUser.uid}');
+      final idToken = (await boundUser.getIdToken(forceRefreshToken) ?? '').trim();
+      if (idToken.isEmpty) {
         throw const MicroIaClientAuthException(
           code: 'token-missing',
-          message:
-              'Session utilisateur invalide. Reconnecte-toi puis réessaie.',
+          message: 'Session utilisateur invalide. Reconnecte-toi puis réessaie.',
         );
       }
-      if (forceRefreshToken) {
-        _lastForcedTokenRefresh = DateTime.now();
-      }
-      _log('TOKEN',
-          'fetched=yes uid=${boundUser.uid} forced=$forceRefreshToken');
-      return normalizedToken;
-    } catch (error) {
-      if (error is MicroIaClientAuthException) rethrow;
-      _log('TOKEN', 'fetched=no uid=${boundUser.uid} err=${error.runtimeType}');
+      if (forceRefreshToken) _lastForcedTokenRefresh = DateTime.now();
+      return idToken;
+    } on MicroIaClientAuthException {
+      rethrow;
+    } catch (_) {
       throw const MicroIaClientAuthException(
         code: 'token-missing',
         message: 'Session utilisateur invalide. Reconnecte-toi puis réessaie.',
@@ -184,11 +148,9 @@ class MicroIaService {
   }) async {
     try {
       final token = await FirebaseAppCheck.instance.getToken(forceRefresh);
-      final normalizedToken = (token ?? '').trim();
-      _log('APPCHECK', 'fetched=${normalizedToken.isNotEmpty ? 'yes' : 'no'}');
-      return normalizedToken.isEmpty ? null : normalizedToken;
-    } catch (error) {
-      _log('APPCHECK', 'fetched=no err=${error.runtimeType}');
+      final normalized = (token ?? '').trim();
+      return normalized.isEmpty ? null : normalized;
+    } catch (_) {
       return null;
     }
   }
@@ -209,27 +171,94 @@ class MicroIaService {
     final appCheckToken = await _tryGetAppCheckToken(
       forceRefresh: forceRefreshAppCheckToken,
     );
-    final authSource = FirebaseAuth.instance.currentUser?.uid == boundUser.uid
-        ? 'currentUser'
-        : 'restored';
-
     return MicroIaSecureContext(
       user: boundUser,
       idToken: idToken,
-      authSource: authSource,
+      authSource: FirebaseAuth.instance.currentUser?.uid == boundUser.uid
+          ? 'currentUser'
+          : 'restored',
       appCheckToken: appCheckToken,
     );
   }
 
-  /// Process audio and optionally generate a draft in a single round-trip.
-  /// When [generateDraft] is true, the CF merges STT + OpenAI draft
-  /// to eliminate one network round-trip (~1-2s saved).
-  ///
-  /// L'audio peut être fourni de deux façons exclusives :
-  /// - [audioBase64] + [audioContentType] : bytes envoyés directement dans le
-  ///   payload du callable (chemin rapide — évite l'upload Storage côté client
-  ///   et le re-download côté serveur).
-  /// - [storagePath] : chemin Firebase Storage (fallback pour gros audios).
+  static String _buildClientRequestId({
+    required String uid,
+    String? storagePath,
+    String? audioBase64,
+  }) {
+    final source = (storagePath ?? '').isNotEmpty
+        ? storagePath!
+        : '${(audioBase64 ?? '').length}:${(audioBase64 ?? '').hashCode}';
+    return '${DateTime.now().microsecondsSinceEpoch}_${uid.hashCode}_${source.hashCode}';
+  }
+
+  static bool _retryableTransportError(Object error) {
+    if (error is TimeoutException) return true;
+    if (error is! FirebaseFunctionsException) return false;
+    return error.code == 'unavailable' || error.code == 'deadline-exceeded';
+  }
+
+  static bool _canFallbackToV1(Object error) {
+    if (error is TimeoutException) return true;
+    if (error is! FirebaseFunctionsException) return false;
+    return error.code == 'unavailable' ||
+        error.code == 'deadline-exceeded' ||
+        error.code == 'internal' ||
+        error.code == 'not-found' ||
+        error.message == 'AI_PIPELINE_FAILED';
+  }
+
+  static Future<Map<String, dynamic>> _invoke({
+    required String functionName,
+    required Map<String, dynamic> parameters,
+    required int maxAttempts,
+  }) async {
+    final result = await retry(
+      () => callPrestoFunction<dynamic>(
+        functions: _functions,
+        name: functionName,
+        timeout: const Duration(seconds: 75),
+        parameters: parameters,
+      ),
+      maxAttempts: maxAttempts,
+      retryIf: _retryableTransportError,
+    );
+    return Map<String, dynamic>.from(result.data as Map);
+  }
+
+  static Map<String, dynamic> _buildParameters({
+    required MicroIaSecureContext secureContext,
+    required String clientRequestId,
+    String? storagePath,
+    String? audioBase64,
+    String? audioContentType,
+    String? languageCode,
+    bool generateDraft = false,
+    String? draftCity,
+    String? draftCategory,
+    String? debugLabel,
+  }) {
+    final hasInlineAudio = (audioBase64 ?? '').isNotEmpty;
+    return <String, dynamic>{
+      if ((storagePath ?? '').isNotEmpty) 'storagePath': storagePath,
+      if (hasInlineAudio) 'audioBase64': audioBase64,
+      if (hasInlineAudio && audioContentType != null)
+        'audioContentType': audioContentType,
+      if (languageCode != null) 'languageCode': languageCode,
+      if (generateDraft) 'generateDraft': true,
+      if (generateDraft && draftCity != null) 'draftCity': draftCity,
+      if (generateDraft && draftCategory != null)
+        'draftCategory': draftCategory,
+      'clientRequestId': clientRequestId,
+      'clientDebugLabel': debugLabel ?? '',
+      'clientAuthUid': secureContext.uid,
+      'clientAuthEmail': secureContext.email ?? '',
+      'clientAuthSource': secureContext.authSource,
+      'clientTokenPresent': secureContext.idToken.isNotEmpty,
+      'clientAppCheckTokenPresent': secureContext.hasAppCheckToken,
+    };
+  }
+
   static Future<Map<String, dynamic>> processAudio({
     String? storagePath,
     String? audioBase64,
@@ -246,124 +275,101 @@ class MicroIaService {
         'processAudio requires either storagePath or audioBase64.',
       );
     }
-    final clientRequestId =
-        '${DateTime.now().millisecondsSinceEpoch}_${(storagePath ?? '').hashCode}';
 
-    Future<Map<String, dynamic>> invokeCallable(
+    Future<Map<String, dynamic>> execute(
       MicroIaSecureContext secureContext,
     ) async {
-      // ── Guard: verify Firebase Auth SDK has a signed-in user ──
-      // The callable SDK independently reads currentUser to attach
-      // the Authorization header.  If currentUser is null, the
-      // request will reach the backend without auth (req.auth=null).
-      final callableUser = FirebaseAuth.instance.currentUser;
-      if (callableUser == null) {
-        _log('PROCESS',
-            'currentUser=null before callable label=${debugLabel ?? 'default'}');
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser?.uid != secureContext.uid) {
         throw const MicroIaClientAuthException(
           code: 'auth-lost',
           message:
-              'Session perdue avant l\'appel serveur. Reconnecte-toi puis réessaie.',
+              'Session perdue avant l’appel serveur. Reconnecte-toi puis réessaie.',
         );
       }
-
-      // ── Prime the SDK token cache ──
-      // Force the SDK to resolve a valid ID token *right now* so
-      // that the callable's internal getIdToken() call returns
-      // immediately with a fresh value instead of a stale cached one.
+      await currentUser!.getIdToken(false);
+      await _remoteConfig.initialize();
+      final clientRequestId = _buildClientRequestId(
+        uid: secureContext.uid,
+        storagePath: storagePath,
+        audioBase64: audioBase64,
+      );
+      final parameters = _buildParameters(
+        secureContext: secureContext,
+        clientRequestId: clientRequestId,
+        storagePath: storagePath,
+        audioBase64: audioBase64,
+        audioContentType: audioContentType,
+        languageCode: languageCode,
+        generateDraft: generateDraft,
+        draftCity: draftCity,
+        draftCategory: draftCategory,
+        debugLabel: debugLabel,
+      );
+      final useV2 = _remoteConfig.shouldUseV2(secureContext.uid);
+      if (!useV2) {
+        return _invoke(
+          functionName: 'microIaProcessAudio',
+          parameters: parameters,
+          maxAttempts: 1,
+        );
+      }
       try {
-        await callableUser.getIdToken(false);
-      } catch (e) {
-        _log('PROCESS',
-            'token_prime_failed err=${e.runtimeType} label=${debugLabel ?? 'default'}');
-        throw const MicroIaClientAuthException(
-          code: 'token-prime-failed',
-          message:
-              'Impossible de préparer la session. Reconnecte-toi puis réessaie.',
+        final response = await _invoke(
+          functionName: 'microIaProcessAudioV2',
+          parameters: parameters,
+          maxAttempts: 2,
         );
+        return <String, dynamic>{
+          ...response,
+          'clientPipelineSelection': 'v2',
+        };
+      } catch (error) {
+        if (!_remoteConfig.fallbackToV1Enabled || !_canFallbackToV1(error)) {
+          rethrow;
+        }
+        _log(
+          'FALLBACK',
+          'v2_to_v1 label=${debugLabel ?? 'default'} error=${error.runtimeType}',
+        );
+        final response = await _invoke(
+          functionName: 'microIaProcessAudio',
+          parameters: parameters,
+          maxAttempts: 1,
+        );
+        return <String, dynamic>{
+          ...response,
+          'clientPipelineSelection': 'v1_fallback',
+        };
       }
-
-      _log(
-        'PROCESS',
-        'calling backend label=${debugLabel ?? 'default'} uid=${secureContext.uid} authSource=${secureContext.authSource}',
-      );
-
-      final res = await retry(
-        () => callPrestoFunction<dynamic>(
-          functions: _functions,
-          name: 'microIaProcessAudio',
-          timeout: const Duration(seconds: 75),
-          parameters: <String, dynamic>{
-            if ((storagePath ?? '').isNotEmpty) 'storagePath': storagePath,
-            if (hasInlineAudio) 'audioBase64': audioBase64,
-            if (hasInlineAudio && audioContentType != null)
-              'audioContentType': audioContentType,
-            if (languageCode != null) 'languageCode': languageCode,
-            if (generateDraft) 'generateDraft': true,
-            if (generateDraft && draftCity != null) 'draftCity': draftCity,
-            if (generateDraft && draftCategory != null)
-              'draftCategory': draftCategory,
-            'clientRequestId': clientRequestId,
-            'clientDebugLabel': debugLabel ?? '',
-            'clientAuthUid': secureContext.uid,
-            'clientAuthEmail': secureContext.email ?? '',
-            'clientAuthSource': secureContext.authSource,
-            'clientTokenPresent': secureContext.idToken.isNotEmpty,
-            'clientAppCheckTokenPresent': secureContext.hasAppCheckToken,
-          },
-        ),
-        maxAttempts: 3,
-        retryIf: (e) {
-          if (e is TimeoutException) return true;
-          if (e is FirebaseFunctionsException) {
-            return e.code == 'unavailable' ||
-                e.code == 'deadline-exceeded' ||
-                e.code == 'internal' ||
-                e.code == 'resource-exhausted';
-          }
-          return false;
-        },
-      );
-
-      return Map<String, dynamic>.from(res.data as Map);
     }
 
     try {
       final secureContext = await prepareSecureCallableContext(
         forceRefreshToken: _shouldForceTokenRefresh(),
       );
-      return await invokeCallable(secureContext);
-    } on FirebaseFunctionsException catch (error, st) {
+      return await execute(secureContext);
+    } on FirebaseFunctionsException catch (error, stackTrace) {
       if (error.code == 'unauthenticated') {
-        _log(
-          'PROCESS',
-          'backend unauthenticated retrying_with_forced_refresh=yes label=${debugLabel ?? 'default'}',
-        );
         try {
           final refreshedContext = await prepareSecureCallableContext(
             forceRefreshToken: true,
             forceRefreshAppCheckToken: true,
           );
-          // After forced refresh, also force-prime the SDK cache
-          // so that the callable picks up the very latest token.
           await FirebaseAuth.instance.currentUser?.getIdToken(true);
-          return await invokeCallable(refreshedContext);
-        } on FirebaseFunctionsException catch (retryError) {
-          _log(
-            'PROCESS',
-            'auth retry_failed code=${retryError.code} label=${debugLabel ?? 'default'}',
-          );
+          return await execute(refreshedContext);
+        } catch (retryError, retryStackTrace) {
           await CrashlyticsContext.recordError(
-            retryError,
-            st,
+            retryError is Exception
+                ? retryError
+                : Exception(retryError.toString()),
+            retryStackTrace,
             reason: 'microIaProcessAudio auth retry failed',
             fatal: false,
-            keys: {
+            keys: <String, String>{
               'component': 'MicroIaService',
               'function': 'microIaProcessAudio',
               'storagePath': storagePath ?? '(inline)',
-              'languageCode': languageCode ?? '',
-              'generateDraft': generateDraft.toString(),
               'debugLabel': debugLabel ?? '',
             },
           );
@@ -372,10 +378,10 @@ class MicroIaService {
       }
       await CrashlyticsContext.recordError(
         error,
-        st,
+        stackTrace,
         reason: 'microIaProcessAudio failed',
         fatal: false,
-        keys: {
+        keys: <String, String>{
           'component': 'MicroIaService',
           'function': 'microIaProcessAudio',
           'storagePath': storagePath ?? '(inline)',
@@ -387,13 +393,13 @@ class MicroIaService {
       rethrow;
     } on MicroIaClientAuthException {
       rethrow;
-    } catch (e, st) {
+    } catch (error, stackTrace) {
       await CrashlyticsContext.recordError(
-        e is Exception ? e : Exception(e.toString()),
-        st,
+        error is Exception ? error : Exception(error.toString()),
+        stackTrace,
         reason: 'microIaProcessAudio failed',
         fatal: false,
-        keys: {
+        keys: <String, String>{
           'component': 'MicroIaService',
           'function': 'microIaProcessAudio',
           'storagePath': storagePath ?? '(inline)',

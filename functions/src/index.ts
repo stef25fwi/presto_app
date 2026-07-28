@@ -14,10 +14,6 @@ export { syncMyEmailVerification } from "./modules/auth/email_verification_sync"
 export {
   placesAutocomplete,
   placesDetails,
-  generateOfferDraft,
-  openAiExtractListingFields,
-  openAiTranscribeListingAudio,
-  openAiExtractListingFieldsFromAudio,
   adminGetAccessStatus,
   getMyAdminAccessStatus,
   adminGetUserStats,
@@ -26,6 +22,18 @@ export {
   adminGetMicroIaConfig,
   adminSetMicroIaConfig,
 } from "./legacy/callables_compat";
+export {
+  generateOfferDraft,
+  openAiExtractListingFields,
+  openAiTranscribeListingAudio,
+  openAiExtractListingFieldsFromAudio,
+} from "./modules/ai/callables";
+export { microIaProcessAudioV2 } from "./modules/ai/micro_ia_callable";
+export { adminGetAiMetrics } from "./modules/ai/ai_metrics";
+export {
+  purgeExpiredAiAudio,
+  purgeExpiredAiOperationalData,
+} from "./modules/ai/operational_cleanup";
 export {
   requestPasswordResetEmail,
   requestEmailVerificationEmail,

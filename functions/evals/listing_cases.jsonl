@@ -1,0 +1,12 @@
+{"id":"garden-baie-mahault","input":"Je cherche quelqu'un pour tondre mon jardin à Baie-Mahault samedi matin.","expectedCategory":"Jardinage","expectedCity":"Baie-Mahault","mustInclude":["jardin"]}
+{"id":"plumbing-abymes","input":"Besoin d'un plombier aux Abymes pour réparer une fuite sous l'évier.","expectedCategory":"Bricolage / Travaux","expectedCity":"Les Abymes","mustInclude":["fuite"]}
+{"id":"painting-fort-de-france","input":"Je recherche une personne pour repeindre une chambre à Fort-de-France.","expectedCategory":"Peinture","expectedCity":"Fort-de-France","mustInclude":["chambre"]}
+{"id":"moving-petit-bourg","input":"J'ai besoin de deux personnes pour déplacer un canapé à Petit-Bourg.","expectedCategory":"Main-d'œuvre","expectedCity":"Petit-Bourg","mustInclude":["canapé"]}
+{"id":"childcare-gosier","input":"Recherche baby-sitter au Gosier vendredi de 18 heures à 22 heures.","expectedCategory":"Garde d'enfants","expectedCity":"Le Gosier","mustInclude":["vendredi"]}
+{"id":"restaurant-extra","input":"Restaurant recherche serveur pour un extra ce week-end à Sainte-Anne.","expectedCategory":"Restauration / Extra","expectedCity":"Sainte-Anne","mustInclude":["serveur"]}
+{"id":"home-help","input":"Je cherche une aide pour faire les courses de ma mère au Lamentin.","expectedCategory":"Aide à domicile","expectedCity":"Le Lamentin","mustInclude":["courses"]}
+{"id":"tutoring","input":"Besoin de soutien scolaire en mathématiques niveau collège à Schoelcher.","expectedCategory":"Cours & soutien","expectedCity":"Schoelcher","mustInclude":["mathématiques"]}
+{"id":"event-dj","input":"Je cherche un DJ pour un anniversaire à Pointe-à-Pitre.","expectedCategory":"Événementiel / DJ","expectedCity":"Pointe-à-Pitre","mustInclude":["anniversaire"]}
+{"id":"ambiguous-no-invention","input":"J'ai besoin d'aide demain.","expectedCategory":null,"expectedCity":null,"mustInclude":["aide"]}
+{"id":"speech-error-city","input":"Je cherche quelqu'un pour du jardinage à baie ma haut.","expectedCategory":"Jardinage","expectedCity":"Baie-Mahault","mustInclude":["jardinage"]}
+{"id":"speech-error-abymes","input":"Besoin d'un déménageur aux zabîmes.","expectedCategory":"Main-d'œuvre","expectedCity":"Les Abymes","mustInclude":["déménageur"]}

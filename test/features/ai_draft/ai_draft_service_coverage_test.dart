@@ -86,23 +86,23 @@ void main() {
     expect(result['details'], isEmpty);
   });
 
-  test('retourne le code et le message d une erreur Functions', () async {
+  test('retourne un message stable pour une erreur Functions', () async {
     final service = AiDraftService(
       sessionPreparer: () async {},
       callable: (_) async => throw FirebaseFunctionsException(
-        code: 'permission-denied',
-        message: 'Accès refusé',
+        code: 'resource-exhausted',
+        message: 'AI_RATE_LIMITED',
       ),
     );
 
     final result = await service.generateOfferDraftV2(text: 'Annonce');
 
     expect(result, containsPair('success', false));
-    expect(result, containsPair('code', 'permission-denied'));
-    expect(result, containsPair('error', 'Accès refusé'));
+    expect(result, containsPair('code', 'resource-exhausted'));
+    expect(result['error'], contains('Trop de demandes'));
   });
 
-  test('convertit une erreur inconnue en résultat exploitable', () async {
+  test('convertit une erreur inconnue en message non technique', () async {
     final service = AiDraftService(
       sessionPreparer: () async {},
       callable: (_) async => throw StateError('payload invalide'),
@@ -111,7 +111,8 @@ void main() {
     final result = await service.generateOfferDraftV2(text: 'Annonce');
 
     expect(result['success'], isFalse);
-    expect(result['error'], contains('payload invalide'));
+    expect(result['error'], contains('brouillon automatique'));
+    expect(result['error'], isNot(contains('payload invalide')));
     expect(result, isNot(contains('code')));
   });
 }
