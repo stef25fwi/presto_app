@@ -25,7 +25,7 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Apply and verify focused UI repair
         shell: bash
@@ -33,6 +33,7 @@ jobs:
           set -euo pipefail
           python3 <<'PY'
           from pathlib import Path
+          import re
 
           path = Path('lib/pages/messages/conversation_thread_page.dart')
           content = path.read_text(encoding='utf-8')
@@ -43,42 +44,41 @@ jobs:
           end = content.index(end_marker, start)
           segment = content[start:end]
 
-          old_icon = '''            const Icon(
-              Icons.shield_outlined,
-              color: Color(0xFFFF0000),
-              size: 20,
-            ),'''
-          new_icon = '''            const Icon(
-              Icons.warning_amber_rounded,
-              color: Color(0xFFFF0000),
-              size: 22,
-            ),'''
+          if 'Icons.warning_amber_rounded' not in segment:
+              segment, count = re.subn(
+                  r'Icons\.shield_outlined',
+                  'Icons.warning_amber_rounded',
+                  segment,
+                  count=1,
+              )
+              if count != 1:
+                  raise SystemExit('Could not replace the safety-banner shield icon')
 
-          old_style = '''                style: kPrestoMetaTextStyle.copyWith(
-                  color: const Color(0xFFFF0000),
-                  fontWeight: FontWeight.w900,
-                ),'''
-          new_style = '''                style: kPrestoMetaTextStyle.copyWith(
-                  color: const Color(0xFFFF0000),
-                  fontSize: 15,
-                  height: 1.25,
-                  fontWeight: FontWeight.w900,
-                ),'''
+          segment, count = re.subn(
+              r'(Icons\.warning_amber_rounded,\s*\n\s*color:\s*Color\(0xFFFF0000\),\s*\n\s*size:\s*)20',
+              r'\g<1>22',
+              segment,
+              count=1,
+          )
+          if count == 0 and 'size: 22' not in segment:
+              raise SystemExit('Could not set the warning icon size to 22')
 
-          if old_icon in segment:
-              segment = segment.replace(old_icon, new_icon, 1)
-          elif new_icon not in segment:
-              raise SystemExit('Expected safety-banner icon block not found')
-
-          if old_style in segment:
-              segment = segment.replace(old_style, new_style, 1)
-          elif new_style not in segment:
-              raise SystemExit('Expected safety-banner text style block not found')
+          if 'fontSize: 15' not in segment or 'height: 1.25' not in segment:
+              segment, count = re.subn(
+                  r'(style:\s*kPrestoMetaTextStyle\.copyWith\(\s*\n\s*color:\s*const Color\(0xFFFF0000\),\s*\n)(\s*fontWeight:)',
+                  r'\1                  fontSize: 15,\n                  height: 1.25,\n\2',
+                  segment,
+                  count=1,
+              )
+              if count != 1:
+                  raise SystemExit('Could not add the readable text sizing')
 
           if 'Icons.shield_outlined' in segment:
               raise SystemExit('Old shield icon remains in safety banner')
           if segment.count('Icons.warning_amber_rounded') != 1:
               raise SystemExit('Warning icon is missing or duplicated')
+          if 'size: 22' not in segment:
+              raise SystemExit('Warning icon size 22 is missing')
           if 'fontSize: 15' not in segment or 'height: 1.25' not in segment:
               raise SystemExit('Readable text sizing was not applied')
 
