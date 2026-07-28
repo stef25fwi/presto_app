@@ -77,6 +77,10 @@ const TASKS: Record<CostScheduledTaskName, RunnableSchedule> = {
   expireOldListings,
 };
 
+const QUARTER_HOUR_SECRETS = COST_POLICY.stripeCatalogAuditEnabled
+  ? STRIPE_CHECKOUT_SECRETS
+  : [];
+
 async function runTasks(
   names: CostScheduledTaskName[],
   event: ScheduledRunEvent,
@@ -123,9 +127,9 @@ export const runCostOptimizedQuarterHourTasks = onSchedule({
   schedule: "every 15 minutes",
   timeZone: "UTC",
   timeoutSeconds: 540,
-  memory: "1GiB",
+  memory: "256MiB",
   retryCount: 1,
-  secrets: STRIPE_CHECKOUT_SECRETS,
+  secrets: QUARTER_HOUR_SECRETS,
 }, async (event) => {
   const scheduleTime = new Date(event.scheduleTime);
   const referenceTime = Number.isNaN(scheduleTime.valueOf())
