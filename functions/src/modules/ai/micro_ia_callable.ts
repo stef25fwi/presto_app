@@ -52,7 +52,9 @@ async function transcribeWithGoogle(options: {
 }): Promise<{ text: string; confidence: number | null }> {
   const startedAtMs = Date.now();
   const encoding = googleEncoding(options.audio.contentType);
-  if (!encoding) throw new HttpsError("failed-precondition", "GOOGLE_STT_UNSUPPORTED_AUDIO");
+  if (!encoding) {
+    throw new HttpsError("failed-precondition", "GOOGLE_STT_UNSUPPORTED_AUDIO");
+  }
   try {
     const [response] = await getSpeechClient().recognize(
       {
@@ -60,9 +62,7 @@ async function transcribeWithGoogle(options: {
         config: {
           encoding,
           languageCode: options.languageCode || "fr-FR",
-          alternativeLanguageCodes: ["fr-FR", "fr-GP"],
           model: "latest_short",
-          useEnhanced: true,
           enableAutomaticPunctuation: true,
           enableWordTimeOffsets: false,
           maxAlternatives: 1,
@@ -91,9 +91,10 @@ async function transcribeWithGoogle(options: {
       } as never,
       { timeout: 12_000 } as never,
     );
-    const alternatives = (response.results || [])
-      .map((result) => result.alternatives?.[0])
-      .filter((item): item is NonNullable<typeof item> => item != null);
+    const alternatives = (response.results || []).flatMap((result) => {
+      const alternative = result.alternatives?.[0];
+      return alternative ? [alternative] : [];
+    });
     const text = correctAntillesTranscript(
       alternatives.map((item) => item.transcript || "").join(" "),
     );
@@ -104,16 +105,18 @@ async function transcribeWithGoogle(options: {
       ? confidenceValues.reduce((sum, value) => sum + value, 0) /
         confidenceValues.length
       : null;
+    if (!text) {
+      throw new HttpsError("failed-precondition", "AUDIO_TRANSCRIPT_EMPTY");
+    }
     await recordAiMetric({
       operation: "micro_ia_google_stt",
       provider: "google",
       model: "latest_short",
-      success: Boolean(text),
+      success: true,
       durationMs: Date.now() - startedAtMs,
       audioSeconds: options.audio.durationSeconds,
       pipelineVersion: PIPELINE_VERSION,
     });
-    if (!text) throw new HttpsError("failed-precondition", "AUDIO_TRANSCRIPT_EMPTY");
     return { text, confidence };
   } catch (error) {
     await recordAiMetric({
@@ -213,7 +216,7 @@ export const microIaProcessAudioV2 = onCall(
           let confidence: number | null = null;
           let modeUsed = "OPENAI_TRANSCRIBE";
           let fallbackUsed = false;
-          let googleQuality = null as ReturnType<typeof evaluateTranscriptQuality> | null;
+          let googleQuality: ReturnType<typeof evaluateTranscriptQuality> | null = null;
           if (googleEligible(audio)) {
             try {
               const googleResult = await transcribeWithGoogle({
@@ -253,7 +256,11 @@ export const microIaProcessAudioV2 = onCall(
             text = openAiResult.text;
             modeUsed = "OPENAI_TRANSCRIBE";
           }
-          const quality = evaluateTranscriptQuality({ text, confidence, threshold: 0.4 });
+          const quality = evaluateTranscriptQuality({
+            text,
+            confidence,
+            threshold: 0.4,
+          });
           const sttMs = Date.now() - sttStartedAtMs;
           let draft: Record<string, unknown> | null = null;
           let draftError: string | null = null;
@@ -306,7 +313,7 @@ export const microIaProcessAudioV2 = onCall(
               audioDurationSeconds: audio.durationSeconds,
             },
             draft,
-            if (draftError != null) "draftError": draftError,
+            ...(draftError != null ? { draftError } : {}),
             timings: {
               downloadMs,
               ffmpegMs: 0,
