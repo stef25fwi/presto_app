@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import 'firebase_functions_region.dart';
 
-/// Représente une suggestion retournée par l'API Places
+/// Représente une suggestion d’adresse retournée par la Géoplateforme.
 class PlaceSuggestion {
   final String description;
   final String placeId;
@@ -13,9 +13,10 @@ class PlaceSuggestion {
   PlaceSuggestion({required this.description, required this.placeId});
 }
 
+/// Nom conservé pour compatibilité avec les écrans existants.
+/// Les callables utilisent désormais le service public Géoplateforme.
 class GooglePlacesService {
   final FirebaseFunctions _functions = prestoFirebaseFunctions;
-  // Conserve l'import http si d'autres fichiers l'utilisent; ici on passe par Cloud Functions.
 
   /// Autocomplétion de lieux avec paramètres personnalisables
   Future<List<PlaceSuggestion>> autocomplete(
@@ -48,15 +49,15 @@ class GooglePlacesService {
           .where((p) => p.description.isNotEmpty && p.placeId.isNotEmpty)
           .toList(growable: false);
     } on FirebaseFunctionsException catch (e) {
-      debugPrint('PLACES AUTOCOMPLETE (CF) error: ${e.code} ${e.message}');
+      debugPrint('ADDRESS AUTOCOMPLETE (CF) error: ${e.code} ${e.message}');
       return [];
     } catch (e) {
-      debugPrint('PLACES AUTOCOMPLETE (CF) error: $e');
+      debugPrint('ADDRESS AUTOCOMPLETE (CF) error: $e');
       return [];
     }
   }
 
-  /// Récupère les détails d'un lieu via son place_id
+  /// Récupère les détails normalisés d’une adresse via le callable.
   Future<Map<String, dynamic>?> getPlaceDetails(String placeId) async {
     try {
       final callable = _functions.httpsCallable(
@@ -77,10 +78,10 @@ class GooglePlacesService {
       }
       return null;
     } on FirebaseFunctionsException catch (e) {
-      debugPrint('PLACES DETAILS (CF) error: ${e.code} ${e.message}');
+      debugPrint('ADDRESS DETAILS (CF) error: ${e.code} ${e.message}');
       return null;
     } catch (e) {
-      debugPrint('PLACES DETAILS (CF) error: $e');
+      debugPrint('ADDRESS DETAILS (CF) error: $e');
       return null;
     }
   }
