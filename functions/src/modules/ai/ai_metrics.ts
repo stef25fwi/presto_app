@@ -30,6 +30,17 @@ export interface AiMetricInput {
   pipelineVersion?: string;
 }
 
+interface AiMetricRow extends Record<string, unknown> {
+  id: string;
+  count?: number;
+  successCount?: number;
+  failureCount?: number;
+  fallbackCount?: number;
+  cacheHitCount?: number;
+  totalDurationMs?: number;
+  estimatedCostMicrosEur?: number;
+}
+
 function safeSegment(value: string): string {
   return value
     .trim()
@@ -154,7 +165,10 @@ export const adminGetAiMetrics = onCall(
       .orderBy("day", "desc")
       .limit(500)
       .get();
-    const rows = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const rows: AiMetricRow[] = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as Record<string, unknown>),
+    }));
     const totals = rows.reduce(
       (acc, row) => {
         acc.count += Number(row.count || 0);
