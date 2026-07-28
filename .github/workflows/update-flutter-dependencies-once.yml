@@ -10,6 +10,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 concurrency:
   group: one-time-flutter-dependency-upgrade
@@ -19,9 +20,16 @@ jobs:
   upgrade:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    env:
+      TRACKING_ISSUE: '1035'
     steps:
+      - name: Report workflow start
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "$TRACKING_ISSUE" --repo "$GITHUB_REPOSITORY" --body "🚀 Mise à jour démarrée sur le commit $GITHUB_SHA. Installation de Flutter 3.44.6 et résolution des dépendances en cours."
+
       - name: Checkout main
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -31,6 +39,11 @@ jobs:
           flutter-version: '3.44.6'
           channel: stable
           cache: true
+
+      - name: Report Flutter setup
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "$TRACKING_ISSUE" --repo "$GITHUB_REPOSITORY" --body "✅ Flutter 3.44.6 installé. Audit et résolution avec \`flutter pub upgrade --major-versions\`."
 
       - name: Prepare dependency branch
         run: |
@@ -63,6 +76,11 @@ jobs:
             exit 1
           fi
 
+      - name: Report dependency resolution
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment "$TRACKING_ISSUE" --repo "$GITHUB_REPOSITORY" --body '✅ Résolution terminée. Les changements générés sont limités à `pubspec.yaml` et `pubspec.lock`. Publication de la branche et de la PR.'
+
       - name: Publish draft dependency PR
         id: publish
         env:
@@ -87,6 +105,7 @@ jobs:
             pr_number="${pr_url##*/}"
           fi
           echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
+          gh issue comment "$TRACKING_ISSUE" --repo "$GITHUB_REPOSITORY" --body "📦 PR #$pr_number publiée en brouillon. Analyse Flutter, tests complets et build Web en cours."
 
       - name: Analyze Flutter
         run: flutter analyze --fatal-infos
@@ -105,10 +124,15 @@ jobs:
         run: |
           gh pr ready "$PR_NUMBER" --repo "$GITHUB_REPOSITORY"
           gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body '✅ Dépendances résolues et validations terminées : analyse Flutter, tests complets et build Web réussis.'
+          gh issue comment "$TRACKING_ISSUE" --repo "$GITHUB_REPOSITORY" --body "✅ Mise à jour validée. La PR #$PR_NUMBER est prête à être fusionnée après les contrôles CI de branche."
 
       - name: Report validation failure
-        if: failure() && steps.publish.outputs.pr_number != ''
+        if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ steps.publish.outputs.pr_number }}
-        run: gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body '❌ La résolution des dépendances a été publiée, mais au moins une validation (analyse, tests ou build Web) a échoué. La PR reste en brouillon pour correction.'
+        run: |
+          if [ -n "${PR_NUMBER:-}" ]; then
+            gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body '❌ La résolution des dépendances a été publiée, mais au moins une validation (analyse, tests ou build Web) a échoué. La PR reste en brouillon pour correction.'
+          fi
+          gh issue comment "$TRACKING_ISSUE" --repo "$GITHUB_REPOSITORY" --body "❌ La mise à jour automatisée a échoué sur le commit $GITHUB_SHA. Consultez le workflow One-time Flutter dependency upgrade pour l’étape exacte."
