@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:presto_app/pages/pricing_calculator_page.dart';
+import 'package:presto_app/pages/entrepreneur_pricing_page.dart';
 import 'package:presto_app/pages/toolbox_je_me_lance_page.dart';
 
 import '../constants.dart';
@@ -387,6 +387,6 @@ class EntrepreneurCalculatorPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const PrestoPriceCalculatorApp();
+    return const EntrepreneurPricingPage();
   }
 }
