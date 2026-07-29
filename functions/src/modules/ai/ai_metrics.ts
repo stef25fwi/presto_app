@@ -4,6 +4,11 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { logger } from "../../core/logger";
 import {
+  latencyBucketField,
+  latencyPercentiles,
+  mergeLatencyBuckets,
+} from "./latency_histogram";
+import {
   extractRolesFromAuthToken,
   requireAnyRole,
 } from "../marketplace/services/roles";
@@ -97,6 +102,7 @@ export async function recordAiMetric(input: AiMetricInput): Promise<void> {
   ].join("__");
   const ref = admin.firestore().collection(COLLECTION).doc(id);
   const costMicrosEur = estimateAiCostMicrosEur(normalized);
+  const bucketField = latencyBucketField(normalized.durationMs);
   const increments: Record<string, unknown> = {
     day: dayKey(),
     operation: normalized.operation,
@@ -109,6 +115,7 @@ export async function recordAiMetric(input: AiMetricInput): Promise<void> {
     fallbackCount: admin.firestore.FieldValue.increment(normalized.fallbackUsed ? 1 : 0),
     cacheHitCount: admin.firestore.FieldValue.increment(normalized.cacheHit ? 1 : 0),
     totalDurationMs: admin.firestore.FieldValue.increment(normalized.durationMs),
+    [bucketField]: admin.firestore.FieldValue.increment(1),
     totalInputTokens: admin.firestore.FieldValue.increment(
       Math.max(0, Number(normalized.inputTokens || 0)),
     ),
@@ -190,6 +197,8 @@ export const adminGetAiMetrics = onCall(
         estimatedCostMicrosEur: 0,
       },
     );
+    const latencyBuckets = mergeLatencyBuckets(rows);
+    const percentiles = latencyPercentiles(rows);
     return {
       days,
       rows,
@@ -199,6 +208,8 @@ export const adminGetAiMetrics = onCall(
         averageDurationMs:
           totals.count > 0 ? Math.round(totals.totalDurationMs / totals.count) : null,
         estimatedCostEur: totals.estimatedCostMicrosEur / 1_000_000,
+        latencyBuckets,
+        latencyMs: percentiles,
       },
     };
   },
