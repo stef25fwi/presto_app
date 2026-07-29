@@ -1,0 +1,61 @@
+name: AI production smoke
+
+on:
+  workflow_run:
+    workflows:
+      - Validate and Deploy Firebase
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: ai-production-smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    environment: recaptcha
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Install synthetic speech dependency
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends espeak-ng
+
+      - name: Install and build Functions
+        run: |
+          npm --prefix functions ci
+          npm --prefix functions run build
+
+      - name: Verify production Functions, Auth, App Check, fallback and logs
+        env:
+          PROJECT_ID: presto-app-74abe
+          FUNCTIONS_REGION: europe-west1
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+        run: npm --prefix functions run ai:smoke:production
