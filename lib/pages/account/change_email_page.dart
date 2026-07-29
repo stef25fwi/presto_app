@@ -125,6 +125,9 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
                   labelText: 'Mot de passe actuel',
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
+                    tooltip: _hidePassword
+                        ? 'Afficher le mot de passe'
+                        : 'Masquer le mot de passe',
                     icon: Icon(_hidePassword
                         ? Icons.visibility
                         : Icons.visibility_off),

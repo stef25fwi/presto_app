@@ -100,6 +100,15 @@ if [[ "$version_line" == *"+"* ]]; then
   app_build_number="${version_line##*+}"
 fi
 
+# Les stores exigent un build number strictement croissant à chaque envoi, ce que
+# la valeur figée de pubspec.yaml ne fournit pas. La CI mobile passe donc
+# --build-number à Flutter et renseigne APP_BUILD_NUMBER_OVERRIDE avec la même
+# valeur, pour que le numéro affiché dans l'app (et remonté par Crashlytics)
+# corresponde exactement au build publié.
+if [[ -n "${APP_BUILD_NUMBER_OVERRIDE:-}" ]]; then
+  app_build_number="$APP_BUILD_NUMBER_OVERRIDE"
+fi
+
 app_build_sha="$(git rev-parse --short=12 HEAD 2>/dev/null || echo local)"
 app_build_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '')"
 app_build_tag="$(git describe --tags --exact-match 2>/dev/null || git describe --tags --abbrev=0 2>/dev/null || echo '')"

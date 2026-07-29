@@ -6,6 +6,8 @@ export const COLLECTIONS = {
   conversations: "conversations",
   favorites: "favorites",
   listingReports: "listingReports",
+  messageReports: "messageReports",
+  userModeration: "userModeration",
   reviews: "reviews",
   reviewReports: "review_reports",
   reviewReplies: "review_replies",

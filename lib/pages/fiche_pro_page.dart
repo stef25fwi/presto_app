@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+
+import 'fiche_pro_form_widgets.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -336,10 +338,10 @@ class _FicheProPageState extends State<FicheProPage> {
             controller: ctrl,
             maxLines: 5,
             autofocus: true,
-            decoration: _inputDec('Décrivez votre activité, vos services…'),
+            decoration: ficheProInputDecoration('Décrivez votre activité, vos services…'),
           ),
           const SizedBox(height: 14),
-          _confirmButton(ctx, () => Navigator.pop(ctx, ctrl.text.trim())),
+          ficheProConfirmButton(ctx, () => Navigator.pop(ctx, ctrl.text.trim())),
         ],
       ),
     );
@@ -362,10 +364,10 @@ class _FicheProPageState extends State<FicheProPage> {
           TextField(
             controller: ctrl,
             autofocus: true,
-            decoration: _inputDec('Ex : 3 ans, 10 ans, Débutant…'),
+            decoration: ficheProInputDecoration('Ex : 3 ans, 10 ans, Débutant…'),
           ),
           const SizedBox(height: 14),
-          _confirmButton(ctx, () => Navigator.pop(ctx, ctrl.text.trim())),
+          ficheProConfirmButton(ctx, () => Navigator.pop(ctx, ctrl.text.trim())),
         ],
       ),
     );
@@ -417,7 +419,7 @@ class _FicheProPageState extends State<FicheProPage> {
               Expanded(
                 child: TextField(
                   controller: ctrl,
-                  decoration: _inputDec('Ajouter…'),
+                  decoration: ficheProInputDecoration('Ajouter…'),
                   onSubmitted: (v) {
                     if (v.trim().isNotEmpty) {
                       setModal(() {
@@ -430,6 +432,7 @@ class _FicheProPageState extends State<FicheProPage> {
               ),
               const SizedBox(width: 8),
               IconButton(
+                tooltip: 'Ajouter',
                 onPressed: () {
                   final v = ctrl.text.trim();
                   if (v.isNotEmpty) {
@@ -448,7 +451,7 @@ class _FicheProPageState extends State<FicheProPage> {
             ],
           ),
           const SizedBox(height: 14),
-          _confirmButton(
+          ficheProConfirmButton(
             ctx,
             () => Navigator.pop(ctx, List<String>.from(items)),
           ),
@@ -500,6 +503,7 @@ class _FicheProPageState extends State<FicheProPage> {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Supprimer cette disponibilité',
                     onPressed: () => setModal(() => dispos.remove(d)),
                     icon: const Icon(
                       Icons.delete_outline_rounded,
@@ -517,18 +521,19 @@ class _FicheProPageState extends State<FicheProPage> {
               Expanded(
                 child: TextField(
                   controller: dayCtrl,
-                  decoration: _inputDec('Jour(s)'),
+                  decoration: ficheProInputDecoration('Jour(s)'),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: TextField(
                   controller: heuresCtrl,
-                  decoration: _inputDec('Heures'),
+                  decoration: ficheProInputDecoration('Heures'),
                 ),
               ),
               const SizedBox(width: 4),
               IconButton(
+                tooltip: 'Ajouter cette disponibilité',
                 onPressed: () {
                   final day = dayCtrl.text.trim();
                   if (day.isNotEmpty) {
@@ -551,7 +556,7 @@ class _FicheProPageState extends State<FicheProPage> {
             ],
           ),
           const SizedBox(height: 14),
-          _confirmButton(
+          ficheProConfirmButton(
             ctx,
             () => Navigator.pop(ctx, List<Map<String, String>>.from(dispos)),
           ),
@@ -614,29 +619,6 @@ class _FicheProPageState extends State<FicheProPage> {
       },
     );
   }
-
-  InputDecoration _inputDec(String hint) => InputDecoration(
-        hintText: hint,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      );
-
-  Widget _confirmButton(BuildContext ctx, VoidCallback onPressed) =>
-      FilledButton(
-        style: FilledButton.styleFrom(
-          backgroundColor: _kOrange,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          minimumSize: const Size.fromHeight(48),
-        ),
-        onPressed: onPressed,
-        child: const Text(
-          'Confirmer',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-      );
 
   // ─── UI builders ──────────────────────────────────────────────────────────
 

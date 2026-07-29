@@ -114,6 +114,7 @@ class _ProSiretVerificationCardState extends State<ProSiretVerificationCard> {
                 prefixIcon: const Icon(Icons.business_rounded),
                 suffixIcon: _controller.text.isNotEmpty
                     ? IconButton(
+                        tooltip: 'Effacer',
                         onPressed: _loading
                             ? null
                             : () {

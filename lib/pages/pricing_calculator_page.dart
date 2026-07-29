@@ -19,6 +19,7 @@ part 'pricing_calculator/pricing_calculator_persistence.dart';
 part 'pricing_calculator/pricing_calculator_pdf.dart';
 part 'pricing_calculator/pricing_calculator_history.dart';
 part 'pricing_calculator/pricing_calculator_mode_widgets.dart';
+part 'pricing_calculator/pricing_calculator_top_bar.dart';
 part 'pricing_calculator/pricing_calculator_result_widgets.dart';
 part 'pricing_calculator/pricing_calculator_analysis_widgets.dart';
 part 'pricing_calculator/pricing_calculator_market_widgets.dart';
@@ -1126,45 +1127,6 @@ class _PricingFormPageState extends State<_PricingFormPage> {
 // ---------------------------
 // UI COMPONENTS
 // ---------------------------
-class _PrestoTopBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title;
-  final Color background;
-  final bool showBack;
-
-  const _PrestoTopBar({
-    required this.title,
-    required this.background,
-    required this.showBack,
-  });
-
-  @override
-  Size get preferredSize => const Size.fromHeight(58);
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      automaticallyImplyLeading: false,
-      backgroundColor: background,
-      elevation: 0,
-      title: Row(
-        children: [
-          if (showBack)
-            IconButton(
-              onPressed: () => Navigator.of(context).maybePop(),
-              icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                  color: Colors.white),
-            ),
-          if (showBack) const SizedBox(width: 2),
-          Text(
-            title,
-            style: kPrestoAppBarTitleStyle.copyWith(color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _SectionCard extends StatelessWidget {
   final Color headerColor;
   final IconData headerIcon;

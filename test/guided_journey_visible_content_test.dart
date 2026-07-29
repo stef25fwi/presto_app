@@ -5,6 +5,19 @@ import 'package:presto_app/features/guided_journey/guided_journey_visible_conten
 import 'package:presto_app/features/guided_journey/widgets/guided_journey_stage_view.dart';
 
 void main() {
+  // La vue d'étape est une liste défilante à construction paresseuse : dans le
+  // viewport de test par défaut (800x600), la section des ressources n'est
+  // jamais montée et reste introuvable.
+  setUp(() {
+    final view = TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
+        .views
+        .first;
+    view.physicalSize = const Size(1200, 3600);
+    view.devicePixelRatio = 1;
+    addTearDown(view.resetPhysicalSize);
+    addTearDown(view.resetDevicePixelRatio);
+  });
+
   JourneyStage duplicatedStage() => JourneyStage(
     id: 'secure',
     order: 6,

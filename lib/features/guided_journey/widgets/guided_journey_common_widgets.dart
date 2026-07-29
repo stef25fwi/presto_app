@@ -162,7 +162,11 @@ class GuidedJourneySectionCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          child,
+          // Le contenu peut porter des ListTile. Sans un Material intercalé
+          // ici, leur fond et leurs effets d'encre seraient peints sur le
+          // Material le plus proche — situé au-dessus du Container blanc —
+          // donc invisibles au tap (Flutter le signale par une assertion).
+          Material(type: MaterialType.transparency, child: child),
         ],
       ),
     );

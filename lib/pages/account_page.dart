@@ -32,6 +32,8 @@ import '../utils/friendly_snackbar.dart';
 import '../widgets/account_notifications_tile.dart';
 import '../widgets/account_profile_sections.dart';
 import '../services/app_check_bootstrap.dart';
+import '../widgets/account_menu_item.dart';
+import '../widgets/language_picker_sheet.dart';
 
 import '../main.dart'
     show
@@ -4073,7 +4075,7 @@ class _AccountPageState extends State<AccountPage> {
   Widget _buildEnterpriseMenuSection(User user) {
     return Column(
       children: [
-        _buildBlueMenuItem(
+        AccountMenuItem(
           icon: Icons.campaign_rounded,
           label: 'Mes annonces',
           onTap: () => showPrestoSnackBar(
@@ -4082,7 +4084,7 @@ class _AccountPageState extends State<AccountPage> {
           ),
         ),
         const Divider(height: 1, thickness: 1, indent: 72),
-        _buildBlueMenuItem(
+        AccountMenuItem(
           icon: Icons.security_rounded,
           label: 'Sécurité du compte',
           onTap: () {
@@ -4092,7 +4094,13 @@ class _AccountPageState extends State<AccountPage> {
           },
         ),
         const Divider(height: 1, thickness: 1, indent: 72),
-        _buildBlueMenuItem(
+        AccountMenuItem(
+          icon: Icons.language_rounded,
+          label: 'Langue de l\'application',
+          onTap: () => showLanguagePickerSheet(context),
+        ),
+        const Divider(height: 1, thickness: 1, indent: 72),
+        AccountMenuItem(
           icon: Icons.gavel_rounded,
           label: 'Mentions légales',
           onTap: () => Navigator.of(
@@ -4100,7 +4108,7 @@ class _AccountPageState extends State<AccountPage> {
           ).push(MaterialPageRoute(builder: (_) => const LegalInfoPage())),
         ),
         const Divider(height: 1, thickness: 1, indent: 72),
-        _buildBlueMenuItem(
+        AccountMenuItem(
           icon: Icons.logout_rounded,
           label: 'Déconnexion',
           onTap: _isSigningOut ? () {} : _signOut,
@@ -4116,50 +4124,6 @@ class _AccountPageState extends State<AccountPage> {
               : null,
         ),
       ],
-    );
-  }
-
-  Widget _buildBlueMenuItem({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    Widget? trailing,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: kPrestoBlue,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: Colors.white, size: 22),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-            trailing ??
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: Colors.grey.shade400,
-                  size: 22,
-                ),
-          ],
-        ),
-      ),
     );
   }
 }

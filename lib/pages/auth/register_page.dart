@@ -313,6 +313,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
+                          tooltip: _hidePassword
+                              ? 'Afficher le mot de passe'
+                              : 'Masquer le mot de passe',
                           icon: Icon(
                             _hidePassword
                                 ? Icons.visibility

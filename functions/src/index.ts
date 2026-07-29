@@ -11,6 +11,10 @@ export { onAuthUserCreated } from "./modules/auth/on_auth_user_created";
 export { onUserRolesChanged } from "./modules/auth/role_claims_sync";
 export { requestAccountDeletion } from "./modules/auth/account_deletion";
 export { syncMyEmailVerification } from "./modules/auth/email_verification_sync";
+// Doit rester après syncMyEmailVerification : tools/apply_auth_client_hardening.mjs
+// vérifie l'adjacence de ces deux exports pour rester idempotent, et réinsère un
+// doublon si une ligne s'intercale.
+export { confirmPhoneVerified } from "./modules/auth/phone_verification";
 export {
   placesAutocomplete,
   placesDetails,
@@ -56,7 +60,8 @@ export {
 export { adminBulkDeleteListings } from "./modules/marketplace/callables/admin_bulk_listings";
 export { processOfferPhoto } from "./modules/marketplace/callables/media";
 export { classifyServicePhoto } from "./modules/marketplace/callables/classify_service_photo";
-export { reportListing } from "./modules/marketplace/callables/reports";
+export { reportListing, reportConversationMessage } from "./modules/marketplace/callables/reports";
+export { exportMyData } from "./modules/marketplace/callables/account_data_export";
 export {
   getEligibleRespondersForReview,
   submitVerifiedReview,

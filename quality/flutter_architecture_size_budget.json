@@ -35,7 +35,7 @@
       "next_split": "extraire la carte parcours, les actions PDF et les états d’abonnement"
     },
     "lib/pages/toolbox_je_me_lance_page.dart": {
-      "current_lines": 7217,
+      "current_lines": 7218,
       "target_lines": 500,
       "module": "parcours_personnalise",
       "next_split": "extraire génération, sauvegarde, résumé, sections métier et actions PDF"

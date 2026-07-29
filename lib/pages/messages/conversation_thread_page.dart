@@ -18,6 +18,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/presto_overlay_theme.dart';
 import '../../constants.dart';
+import 'conversation_report_sheet.dart';
 import '../../features/micro_ia/web_audio_recorder_stub.dart'
     if (dart.library.js_interop) '../../features/micro_ia/web_audio_recorder.dart';
 import '../../features/subscriptions/subscription_action_placeholders.dart';
@@ -1718,6 +1719,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           });
           showSuccessSnackBar(context, 'Conversation debloquee par admin.');
           return;
+        case _ConversationThreadAction.report:
+          await showConversationReportSheet(
+            context,
+            conversationId: widget.conversationId,
+          );
+          return;
         case _ConversationThreadAction.delete:
           final confirmed = await showDialog<bool>(
             context: context,
@@ -3165,6 +3172,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                       top: 8,
                       right: 8,
                       child: IconButton(
+                        tooltip: 'Fermer',
                         icon: const Icon(Icons.close, color: Colors.white),
                         onPressed: () => Navigator.of(ctx).pop(),
                       ),
@@ -3582,6 +3590,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                   value: _ConversationThreadAction.block,
                   child: Text('Bloquer'),
                 ),
+              const PopupMenuItem<_ConversationThreadAction>(
+                value: _ConversationThreadAction.report,
+                child: Text('Signaler'),
+              ),
               const PopupMenuItem<_ConversationThreadAction>(
                 value: _ConversationThreadAction.delete,
                 child: Text('Supprimer', style: TextStyle(color: Colors.red)),
@@ -4531,6 +4543,7 @@ enum _ConversationThreadAction {
   unblock,
   adminUnblock,
   delete,
+  report,
 }
 
 class ConversationBanner extends StatelessWidget {

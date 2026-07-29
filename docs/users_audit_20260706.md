@@ -47,12 +47,12 @@ Profil historique : pas d’email, pas de createdAt, pas de displayName, pas de 
 
 ## Exemples canonical_user
 
-- 4TMLQxgGZZTvkScQYDxyfILOjsH2
-- gUntmNjknrh3YAyzHHf0SmJa04t2
-- hFhJtgWhgbS3DOFJm44u4utfDZP2
-- jyRmGHNVTvQF5QgjPbS2zpquiSY2
-- Xe1oPdQFzGe0KMYgrfWlpEwSY8q2
-- ZYBI61m0qNeEqab2GPZh1y6xT6P2
+Les identifiants réels ont été retirés de ce document : ce dépôt est public et
+ces UID désignent de vrais comptes utilisateurs. Ils n'apportaient rien à la
+lecture de l'audit (6 documents `canonical_user` pris comme échantillon).
+
+Pour retrouver l'échantillon en cas de besoin, relancer l'audit sur la
+collection `users` avec les outils de `tools/`.
 
 ## Scripts préparés
 

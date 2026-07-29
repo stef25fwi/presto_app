@@ -1,6 +1,6 @@
 import type { ListingMedia } from "../models/firestore";
-import type { ReportReasonCode, UserRole } from "../constants/enums";
-import { REPORT_REASON_CODES, USER_ROLES } from "../constants/enums";
+import type { MessageReportReasonCode, ReportReasonCode, UserRole } from "../constants/enums";
+import { MESSAGE_REPORT_REASON_CODES, REPORT_REASON_CODES, USER_ROLES } from "../constants/enums";
 import { ValidationError } from "../services/errors";
 
 type UnknownRecord = Record<string, unknown>;
@@ -196,6 +196,35 @@ export function validateListingReportPayload(rawData: UnknownRecord): {
 
   return {
     listingId,
+    reasonCode,
+    reasonText: reasonText || undefined,
+  };
+}
+
+export function validateConversationReportPayload(rawData: UnknownRecord): {
+  conversationId: string;
+  messageId?: string;
+  reasonCode: MessageReportReasonCode;
+  reasonText?: string;
+} {
+  const conversationId = normalizeString(rawData.conversationId);
+  const messageId = normalizeString(rawData.messageId);
+  const reasonCode = normalizeString(rawData.reasonCode) as MessageReportReasonCode;
+  const reasonText = normalizeString(rawData.reasonText);
+
+  if (!conversationId) {
+    throw new ValidationError("conversationId is required");
+  }
+  if (!MESSAGE_REPORT_REASON_CODES.includes(reasonCode)) {
+    throw new ValidationError("reasonCode is invalid");
+  }
+  if (reasonText.length > 800) {
+    throw new ValidationError("reasonText is too long");
+  }
+
+  return {
+    conversationId,
+    messageId: messageId || undefined,
     reasonCode,
     reasonText: reasonText || undefined,
   };

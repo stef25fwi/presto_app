@@ -2,10 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/marketplace_human_verification.dart';
 
 void main() {
-  test('expose les trois valeurs d action attendues', () {
+  test('expose les quatre valeurs d action attendues', () {
     expect(
       MarketplaceHumanVerificationAction.values.map((value) => value.value),
-      <String>['listing_submit', 'listing_report', 'message_create'],
+      <String>[
+        'listing_submit',
+        'listing_report',
+        'message_create',
+        'message_report',
+      ],
     );
   });
 

@@ -41,6 +41,14 @@ enum ListingReportReasonCode {
   other,
 }
 
+enum MessageReportReasonCode {
+  spam,
+  fraud,
+  harassment,
+  inappropriate,
+  other,
+}
+
 extension ListingStatusParsing on ListingStatus {
   String get value => switch (this) {
         ListingStatus.draft => 'draft',
@@ -103,5 +111,15 @@ extension ListingReportReasonCodeParsing on ListingReportReasonCode {
         ListingReportReasonCode.fakeListing => 'fake_listing',
         ListingReportReasonCode.harassment => 'harassment',
         ListingReportReasonCode.other => 'other',
+      };
+}
+
+extension MessageReportReasonCodeParsing on MessageReportReasonCode {
+  String get value => switch (this) {
+        MessageReportReasonCode.spam => 'spam',
+        MessageReportReasonCode.fraud => 'fraud',
+        MessageReportReasonCode.harassment => 'harassment',
+        MessageReportReasonCode.inappropriate => 'inappropriate',
+        MessageReportReasonCode.other => 'other',
       };
 }

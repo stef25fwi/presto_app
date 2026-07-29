@@ -382,6 +382,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
         if (user == null) {
           return IconButton(
+            tooltip: 'Notifications',
             onPressed: () {
               showSuccessSnackBar(
                 context,
@@ -401,6 +402,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         return UnreadInboxBell(
           userId: user.uid,
           builder: (context, badgeCount) => IconButton(
+            tooltip: 'Messages',
             onPressed: () {
               Navigator.of(context).pushNamed(buildMessagesRoute());
             },
@@ -670,9 +672,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     _filterCityController.addListener(_syncLocationFieldFromFilter);
     _syncLocationFieldFromFilter();
 
-    // ✅ Écouter les changements de connectivité
-    _monitorConnectivity();
-
     final initialStreamKey = _buildOffersStreamKey();
     unawaited(_primeOffersWarmCache(initialStreamKey));
     if (!_hasActiveClientFilters) {
@@ -740,27 +739,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       return;
     }
     unawaited(_refreshPublishedOffersCount(force: true));
-  }
-
-  void _monitorConnectivity() {
-    // Utiliser la librairie `connectivity_plus` pour détecter le réseau
-    // (à ajouter dans pubspec.yaml si absent)
-    /*
-    _connectivitySubscription = Connectivity()
-        .onConnectivityChanged
-        .listen((List<ConnectivityResult> results) {
-      final isNowOnline = results.any((r) => r != ConnectivityResult.none);
-      if (isNowOnline != _isOnline && mounted) {
-        setState(() {
-          _isOnline = isNowOnline;
-        });
-        if (isNowOnline) {
-          // Resync des données quand on retrouve du réseau
-          setState(() {});
-        }
-      }
-    });
-    */
   }
 
   void _maybeLoadMore() {
@@ -881,7 +859,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    // _connectivitySubscription.cancel();
     _filterDebounce.dispose();
     _cacheInvalidationTimer?.cancel(); // ✅ Nettoyer le timer de cache
     _locationController.dispose();
@@ -2692,6 +2669,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
             suffixIcon: textCtrl.text.isEmpty
                 ? null
                 : IconButton(
+                    tooltip: 'Effacer la ville',
                     icon: const Icon(Icons.clear),
                     onPressed: () {
                       setState(() {

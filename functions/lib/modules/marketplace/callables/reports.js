@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.reportListing = void 0;
+exports.reportConversationMessage = exports.reportListing = void 0;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const env_1 = require("../../../config/env");
@@ -13,6 +13,7 @@ const logger_1 = require("../../../core/logger");
 const constants_1 = require("../../../shared/constants");
 const hash_1 = require("../../../utils/hash");
 const push_1 = require("../../notifications/push");
+const participants_1 = require("../../messaging/participants");
 const analytics_1 = require("../services/analytics");
 const errors_1 = require("../services/errors");
 const recaptcha_1 = require("../services/recaptcha");
@@ -258,6 +259,131 @@ exports.reportListing = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enfo
     }
     catch (error) {
         throw (0, errors_1.toHttpsError)(error, "Unable to report listing");
+    }
+});
+exports.reportConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+    const reporterId = requireAuthUid(request);
+    const recaptchaToken = normalizeString(request.data?.recaptchaToken);
+    const rateAllowed = await (0, rate_limit_1.canProceedRateLimited)("message_report", reporterId, 15, 24 * 60 * 60 * 1000);
+    if (!rateAllowed) {
+        throw new https_1.HttpsError("resource-exhausted", "Too many reports today");
+    }
+    const recaptcha = await (0, recaptcha_1.verifyRecaptchaAssessment)({
+        token: recaptchaToken,
+        expectedAction: "message_report",
+        userId: reporterId,
+    });
+    if ((0, recaptcha_1.shouldHardRejectForRecaptcha)(recaptcha)) {
+        throw new https_1.HttpsError("permission-denied", "reCAPTCHA rejected the report");
+    }
+    if (!recaptcha.allowed) {
+        logger_1.logger.warn("marketplace_message_report_recaptcha_non_blocking", {
+            reporterId,
+            score: recaptcha.score,
+            reasons: recaptcha.reasons,
+            action: recaptcha.action,
+            assessed: recaptcha.assessed,
+        });
+    }
+    try {
+        const validated = (0, listings_1.validateConversationReportPayload)((request.data ?? {}));
+        const conversationRef = firestore_1.db.collection(constants_1.COLLECTIONS.conversations).doc(validated.conversationId);
+        const conversationSnap = await conversationRef.get();
+        if (!conversationSnap.exists) {
+            throw new https_1.HttpsError("not-found", "Conversation not found");
+        }
+        const conversationData = (conversationSnap.data() ?? {});
+        const participants = (0, participants_1.readConversationParticipants)(conversationData, {
+            conversationId: validated.conversationId,
+        });
+        if (!participants.includes(reporterId)) {
+            throw new https_1.HttpsError("permission-denied", "You are not a participant of this conversation");
+        }
+        const reportedUserId = participants.find((id) => id !== reporterId) || "";
+        if (!reportedUserId) {
+            throw new https_1.HttpsError("failed-precondition", "Unable to determine the reported participant");
+        }
+        const reportId = validated.messageId
+            ? `${validated.conversationId}__${validated.messageId}__${reporterId}`
+            : `${validated.conversationId}__${reporterId}`;
+        const reportRef = firestore_1.db.collection(constants_1.COLLECTIONS.messageReports).doc(reportId);
+        const moderationRef = firestore_1.db.collection(constants_1.COLLECTIONS.userModeration).doc(reportedUserId);
+        let reviewTriggered = false;
+        await firestore_1.db.runTransaction(async (transaction) => {
+            const [reportSnap, moderationSnap] = await Promise.all([
+                transaction.get(reportRef),
+                transaction.get(moderationRef),
+            ]);
+            if (reportSnap.exists) {
+                throw new https_1.HttpsError("already-exists", "You have already reported this");
+            }
+            transaction.set(reportRef, {
+                id: reportId,
+                reporterId,
+                reportedUserId,
+                conversationId: validated.conversationId,
+                messageId: validated.messageId || null,
+                reasonCode: validated.reasonCode,
+                reasonText: validated.reasonText || null,
+                status: "open",
+                createdAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            });
+            const moderationData = (moderationSnap.data() ?? {});
+            const newReportCount = Number(moderationData.reportCount || 0) + 1;
+            const currentAutoFlags = Array.isArray(moderationData.autoFlags)
+                ? moderationData.autoFlags
+                : [];
+            const moderationUpdate = {
+                id: reportedUserId,
+                userId: reportedUserId,
+                reportCount: newReportCount,
+                updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            };
+            if (newReportCount >= env_1.MARKETPLACE_REPORT_REVIEW_THRESHOLD) {
+                reviewTriggered = true;
+                moderationUpdate.moderationDecision = "manual_review";
+                moderationUpdate.moderationReason = "report_threshold_reached";
+                moderationUpdate.autoFlags = Array.from(new Set([...currentAutoFlags, "report_threshold_exceeded"]));
+            }
+            transaction.set(moderationRef, moderationUpdate, { merge: true });
+        });
+        if (reviewTriggered) {
+            const recipients = await findModerationRecipients();
+            await Promise.all(recipients.map((recipient) => (0, push_1.createInAppNotification)({
+                notificationId: `message_reported_${reportedUserId}_${recipient.userId}`,
+                userId: recipient.userId,
+                title: "Utilisateur signalé en messagerie",
+                message: "Un utilisateur a atteint le seuil de signalements en messagerie et passe en revue manuelle.",
+                type: "message_reported",
+                routeName: "/admin",
+                conversationId: validated.conversationId,
+                data: { reportedUserId },
+            })));
+        }
+        await (0, analytics_1.trackProductEventBackend)({
+            eventName: "message_reported",
+            userId: reporterId,
+            threadId: validated.conversationId,
+            params: {
+                reason_code: validated.reasonCode,
+                threshold_triggered: reviewTriggered,
+            },
+        });
+        logger_1.logger.info("marketplace_message_reported", {
+            conversationId: validated.conversationId,
+            reporterId,
+            reportedUserId,
+            reasonCode: validated.reasonCode,
+            reviewTriggered,
+        });
+        return {
+            ok: true,
+            reportId,
+            reviewTriggered,
+        };
+    }
+    catch (error) {
+        throw (0, errors_1.toHttpsError)(error, "Unable to report message");
     }
 });
 //# sourceMappingURL=reports.js.map

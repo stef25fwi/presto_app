@@ -130,81 +130,68 @@ void main() {
         await Future<void>.delayed(const Duration(seconds: 1));
         await _settle(tester, times: 20);
 
-        // Section "1. Comprendre les règles" : contenu de la fiche, pas le
-        // texte générique de repli.
-        expect(
-          find.textContaining('Code APE indicatif : 56.10A'),
-          findsOneWidget,
-        );
+        // Le parcours généré s'ouvre désormais dans le renderer guidé par
+        // étapes : la fiche officielle n'est plus déversée dans une longue
+        // page de synthèse, elle alimente le contenu de chaque étape. On
+        // vérifie donc que ce sont bien les données de la fiche Étudiant +
+        // Service en salle qui remontent, et non le texte générique de repli.
 
-        // Alertes bloquantes issues de regles_etudiant.mineur /
-        // regles_etudiant.titre_sejour, remontées dans la section 1.
+        // Aperçu : la phrase d'introduction reprend l'activité, la région et
+        // le statut réellement choisis.
         expect(
-          find.textContaining('Étudiant mineur'),
-          findsOneWidget,
-        );
-        expect(
-          find.textContaining('titre de séjour étudiant'),
-          findsOneWidget,
-        );
-
-        // La fiche officielle alimente désormais bien plus de tuiles dans la
-        // section 1 (vue d'ensemble, activité, organismes, sources
-        // officielles...) : la section 2 n'est plus visible sans défiler, et
-        // de combien dépend du nombre de tuiles (variable selon la fiche).
-        // dragUntilVisible avance par petits pas jusqu'à ce que le texte
-        // cible soit effectivement monté, au lieu de parier sur une distance
-        // fixe (ListView : les sections hors-écran ne sont montées qu'une
-        // fois scrollées en vue).
-        await tester.dragUntilVisible(
-          find.text('Points à vérifier avant de démarrer — Service en salle'),
-          find.byType(Scrollable).first,
-          const Offset(0, -300),
-        );
-        await _settle(tester, times: 5);
-
-        // Section "2. Vérifier votre situation personnelle" : titre et
-        // résumé propres au statut Étudiant (regles_etudiant), pas le texte
-        // générique "Cumul d'activité".
-        expect(
-          find.text('Points à vérifier avant de démarrer — Service en salle'),
-          findsOneWidget,
-        );
-        // Ce résumé apparaît aussi en tête des todos de l'étape tutoriel
-        // "Vérifier votre situation personnelle" (section 4), en plus de la
-        // carte de la section 2 : findsWidgets, pas findsOneWidget.
-        expect(
-          find.textContaining('Un étudiant peut créer une micro-entreprise'),
-          findsWidgets,
-        );
-
-        // Scroll jusqu'aux étapes 4-9 pour vérifier l'enrichissement du plan
-        // d'action (ListView : les sections hors-écran ne sont montées
-        // qu'une fois scrollées en vue).
-        for (var i = 0; i < 6; i++) {
-          await tester.drag(
-              find.byType(Scrollable).first, const Offset(0, -2000));
-          await _settle(tester, times: 5);
-        }
-        expect(find.textContaining('Crous'), findsWidgets);
-        expect(
-          find.textContaining(
-            'Dispositif identifié pour l’activité « Service en salle » (fiche officielle).',
+          find.text(
+            'Créer une activité de Service en salle en Guadeloupe '
+            'avec le statut actuel : Étudiant.',
           ),
-          findsWidgets,
+          findsOneWidget,
         );
+        expect(find.text('0 étape(s) terminée(s) sur 8'), findsOneWidget);
 
-        // Plan 30 jours : cadrage hebdomadaire propre à la fiche, injecté en
-        // tête de chaque semaine, en plus des tâches génériques.
-        for (var i = 0; i < 6; i++) {
-          await tester.drag(
-              find.byType(Scrollable).first, const Offset(0, -2000));
-          await _settle(tester, times: 5);
-        }
+        // --- Étape 1 : règles de l'activité ---
+        await tester.tap(find.text('Commencer l’étape 1'));
+        await _settle(tester, times: 20);
+
+        expect(find.text('Étape 1 sur 8'), findsWidgets);
         expect(
           find.textContaining(
-              'Vérifier situation étudiant, âge, titre de séjour'),
+            'Pour une activité de Service en salle en Guadeloupe',
+          ),
           findsOneWidget,
+        );
+
+        // Alertes bloquantes propres au statut Étudiant (regles_etudiant.*),
+        // regroupées sous « À vérifier avant de continuer ».
+        expect(find.text('À vérifier avant de continuer'), findsOneWidget);
+        expect(find.textContaining('Étudiant mineur'), findsWidgets);
+        expect(find.textContaining('titre de séjour étudiant'), findsWidgets);
+        expect(find.textContaining('Crous'), findsWidgets);
+
+        // La checklist de l'étape est construite à partir de la fiche
+        // (activité nommée, alertes et source officielle), pas d'un gabarit.
+        expect(find.text('Activité : Service en salle'), findsOneWidget);
+        expect(
+          find.text('Alertes spécifiques à l’activité'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('Source officielle'), findsWidgets);
+
+        // --- Étape 8 : le plan 30 jours reprend le cadrage de la fiche ---
+        await tester.tap(find.byTooltip('Vue d’ensemble'));
+        await _settle(tester, times: 20);
+
+        final lastStage = find.text('Suivre mon plan sur 30 jours');
+        await tester.dragUntilVisible(
+          lastStage,
+          find.byType(Scrollable).first,
+          const Offset(0, -200),
+        );
+        await tester.tap(lastStage.last);
+        await _settle(tester, times: 20);
+
+        expect(find.text('Étape 8 sur 8'), findsWidgets);
+        expect(
+          find.textContaining('Vérifier situation étudiant, âge, titre de séjour'),
+          findsWidgets,
         );
       });
     },

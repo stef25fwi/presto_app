@@ -16,6 +16,7 @@ audit_prod/
 .buildlog/
 *.class
 /coverage/
+/quality_reports/
 .dart_tool/
 **/doc/api/
 # Données Firestore exportées

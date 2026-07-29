@@ -1,16 +1,68 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../services/account_data_export_service.dart';
 import '../../services/auth_service.dart';
 import 'change_email_page.dart';
 import 'change_password_page.dart';
 import 'delete_account_page.dart';
+import 'phone_verification_page.dart';
 import 'package:presto_app/services/auth_guard.dart';
 
-class AccountSecurityPage extends StatelessWidget {
+class AccountSecurityPage extends StatefulWidget {
   const AccountSecurityPage({super.key});
 
   static const routeName = '/account/security';
+
+  @override
+  State<AccountSecurityPage> createState() => _AccountSecurityPageState();
+}
+
+class _AccountSecurityPageState extends State<AccountSecurityPage> {
+  final AccountDataExportService _dataExportService =
+      AccountDataExportService();
+  bool _isExportingData = false;
+
+  Future<void> _exportMyData() async {
+    if (_isExportingData) return;
+    setState(() => _isExportingData = true);
+    try {
+      final downloaded = await _dataExportService.exportAndDownload();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            downloaded
+                ? 'Export de vos données prêt au téléchargement.'
+                : 'Export annulé.',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'L\'export de vos données a échoué. Réessayez dans un instant.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isExportingData = false);
+    }
+  }
+
+  Future<void> _openPhoneVerification() async {
+    final verified = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const PhoneVerificationPage()),
+    );
+    if (verified == true && mounted) {
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Numéro de téléphone vérifié.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +93,26 @@ class AccountSecurityPage extends StatelessWidget {
               trailing: user?.emailVerified == true
                   ? const Icon(Icons.check_circle, color: Colors.green)
                   : const Icon(Icons.warning, color: Colors.orange),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.phone_iphone_rounded),
+              title: Text(
+                (user?.phoneNumber ?? '').isNotEmpty
+                    ? user!.phoneNumber!
+                    : 'Aucun numéro vérifié',
+              ),
+              subtitle: Text(
+                (user?.phoneNumber ?? '').isNotEmpty
+                    ? 'Téléphone vérifié'
+                    : 'Vérifie ton numéro pour sécuriser ton compte',
+              ),
+              trailing: (user?.phoneNumber ?? '').isNotEmpty
+                  ? const Icon(Icons.check_circle, color: Colors.green)
+                  : const Icon(Icons.warning, color: Colors.orange),
+              onTap: _openPhoneVerification,
             ),
           ),
           const SizedBox(height: 12),
@@ -80,6 +152,21 @@ class AccountSecurityPage extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const ChangePasswordPage()),
               );
             },
+          ),
+          const Divider(),
+          ListTile(
+            leading: _isExportingData
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.download_rounded),
+            title: const Text('Exporter mes données'),
+            subtitle: const Text(
+              'Téléchargez une copie de vos données personnelles (profil, annonces, avis, conversations).',
+            ),
+            onTap: _isExportingData ? null : _exportMyData,
           ),
           const Divider(),
           ListTile(

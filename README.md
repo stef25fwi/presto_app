@@ -53,13 +53,18 @@ node tools/check_web_bundle_size.mjs
 
 ## Déploiement
 
-Le déploiement de production est assuré par GitHub Actions après validation complète sur `main`. Un déploiement manuel ne doit être réalisé qu’en procédure d’urgence documentée.
+Le déploiement web de production est assuré par GitHub Actions après validation complète sur `main`. Un déploiement manuel ne doit être réalisé qu’en procédure d’urgence documentée.
+
+La publication mobile (AAB Play Store, IPA TestFlight) passe par des workflows manuels décrits dans [`docs/deployment/mobile-release.md`](docs/deployment/mobile-release.md).
 
 ## Documentation
 
 - [Audit et baseline qualité](docs/audit/README.md)
 - [Architecture système](docs/architecture/system-overview.md)
 - [Feuille de route niveau de référence](docs/architecture/production-reference-roadmap.md)
+- [Publication mobile Android et iOS](docs/deployment/mobile-release.md)
+- [Checklist de release](docs/deployment/release-checklist.md)
+- [Procédure de rollback](docs/deployment/rollback.md)
 - [Décisions d’architecture](docs/adr/)
 
 ## Règle de contribution

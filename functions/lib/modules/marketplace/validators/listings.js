@@ -4,6 +4,7 @@ exports.buildSearchKeywords = buildSearchKeywords;
 exports.validateListingMedia = validateListingMedia;
 exports.validateListingDraftPayload = validateListingDraftPayload;
 exports.validateListingReportPayload = validateListingReportPayload;
+exports.validateConversationReportPayload = validateConversationReportPayload;
 exports.validateRoleAssignment = validateRoleAssignment;
 exports.validateChatMessageBody = validateChatMessageBody;
 const enums_1 = require("../constants/enums");
@@ -159,6 +160,27 @@ function validateListingReportPayload(rawData) {
     }
     return {
         listingId,
+        reasonCode,
+        reasonText: reasonText || undefined,
+    };
+}
+function validateConversationReportPayload(rawData) {
+    const conversationId = normalizeString(rawData.conversationId);
+    const messageId = normalizeString(rawData.messageId);
+    const reasonCode = normalizeString(rawData.reasonCode);
+    const reasonText = normalizeString(rawData.reasonText);
+    if (!conversationId) {
+        throw new errors_1.ValidationError("conversationId is required");
+    }
+    if (!enums_1.MESSAGE_REPORT_REASON_CODES.includes(reasonCode)) {
+        throw new errors_1.ValidationError("reasonCode is invalid");
+    }
+    if (reasonText.length > 800) {
+        throw new errors_1.ValidationError("reasonText is too long");
+    }
+    return {
+        conversationId,
+        messageId: messageId || undefined,
         reasonCode,
         reasonText: reasonText || undefined,
     };

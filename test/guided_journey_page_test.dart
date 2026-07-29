@@ -3,6 +3,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/pages/account/guided_journey_page.dart';
 
 void main() {
+  // L'aperçu du parcours est un ListView : ses enfants sont construits
+  // paresseusement. Dans le viewport de test par défaut (800x600), les
+  // sections situées sous la carte d'en-tête ne sont jamais montées et
+  // restent introuvables. On élargit donc la fenêtre, comme le font déjà
+  // les autres tests d'écrans longs du dépôt.
+  setUp(() {
+    final view = TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
+        .views
+        .first;
+    view.physicalSize = const Size(1200, 3600);
+    view.devicePixelRatio = 1;
+    addTearDown(view.resetPhysicalSize);
+    addTearDown(view.resetDevicePixelRatio);
+  });
+
   Widget buildSubject({Map<String, dynamic> progress = const {}}) {
     return MaterialApp(
       home: GuidedJourneyPage(

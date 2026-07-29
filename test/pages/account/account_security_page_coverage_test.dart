@@ -7,6 +7,7 @@ import 'package:presto_app/pages/account/account_security_page.dart';
 import 'package:presto_app/pages/account/change_email_page.dart';
 import 'package:presto_app/pages/account/change_password_page.dart';
 import 'package:presto_app/pages/account/delete_account_page.dart';
+import 'package:presto_app/pages/account/phone_verification_page.dart';
 import 'package:presto_app/pages/auth/verify_email_page.dart';
 
 class _SecurityMultiFactorPlatform extends MultiFactorPlatform {
@@ -20,6 +21,7 @@ class _SecurityUserPlatform extends UserPlatform {
     required String? email,
     required bool emailVerified,
     required String providerId,
+    String? phoneNumber,
   }) : super(
           auth,
           _SecurityMultiFactorPlatform(auth),
@@ -28,6 +30,7 @@ class _SecurityUserPlatform extends UserPlatform {
               uid: uid,
               email: email,
               displayName: 'Utilisateur sécurité',
+              phoneNumber: phoneNumber,
               isAnonymous: false,
               isEmailVerified: emailVerified,
               creationTimestamp:
@@ -41,7 +44,7 @@ class _SecurityUserPlatform extends UserPlatform {
                 'uid': uid,
                 'email': email,
                 'displayName': 'Utilisateur sécurité',
-                'phoneNumber': null,
+                'phoneNumber': phoneNumber,
                 'photoURL': null,
                 'isAnonymous': false,
                 'isEmailVerified': emailVerified,
@@ -142,9 +145,27 @@ void main() {
     expect(find.text('Sécurité du compte'), findsOneWidget);
     expect(find.text('securite@ilipresto.fr'), findsOneWidget);
     expect(find.text('Email vérifié'), findsOneWidget);
-    expect(find.byIcon(Icons.check_circle), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.ancestor(
+          of: find.text('Email vérifié'),
+          matching: find.byType(ListTile),
+        ),
+        matching: find.byIcon(Icons.check_circle),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Aucun numéro vérifié'), findsOneWidget);
     expect(find.text('Changer mon email'), findsOneWidget);
     expect(find.text('Changer mon mot de passe'), findsOneWidget);
+
+    // La liste dépasse le viewport de test : le dernier élément n'est construit
+    // qu'après défilement.
+    await tester.scrollUntilVisible(
+      find.text('Supprimer mon compte'),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Supprimer mon compte'), findsOneWidget);
   });
 
@@ -154,7 +175,17 @@ void main() {
 
     expect(find.text('Email inconnu'), findsOneWidget);
     expect(find.text('Email non vérifié'), findsOneWidget);
-    expect(find.byIcon(Icons.warning), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.ancestor(
+          of: find.text('Email non vérifié'),
+          matching: find.byType(ListTile),
+        ),
+        matching: find.byIcon(Icons.warning),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Aucun numéro vérifié'), findsOneWidget);
   });
 
   testWidgets('redirige un compte non vérifié vers la vérification email',
@@ -222,6 +253,54 @@ void main() {
     );
   });
 
+  testWidgets('affiche un téléphone vérifié et son indicateur vert', (
+    tester,
+  ) async {
+    platform.user = _SecurityUserPlatform(
+      platform,
+      uid: 'phone-security-user',
+      email: 'phone@ilipresto.fr',
+      emailVerified: true,
+      providerId: 'password',
+      phoneNumber: '+33612345678',
+    );
+
+    await pumpPage(tester);
+
+    expect(find.text('+33612345678'), findsOneWidget);
+    expect(find.text('Téléphone vérifié'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.ancestor(
+          of: find.text('Téléphone vérifié'),
+          matching: find.byType(ListTile),
+        ),
+        matching: find.byIcon(Icons.check_circle),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('ouvre la vérification du téléphone', (tester) async {
+    final user = _SecurityUserPlatform(
+      platform,
+      uid: 'phone-nav-security-user',
+      email: 'phone-nav@ilipresto.fr',
+      emailVerified: true,
+      providerId: 'password',
+    );
+    platform.user = user;
+    final observer = await pumpPage(tester);
+
+    await tester.tap(find.text('Aucun numéro vérifié'));
+    await tester.pump();
+
+    expect(
+      destinationOf(observer, tester.element(find.byType(AccountSecurityPage))),
+      isA<PhoneVerificationPage>(),
+    );
+  });
+
   testWidgets('ouvre la suppression du compte après contrôle', (tester) async {
     final user = _SecurityUserPlatform(
       platform,
@@ -233,6 +312,11 @@ void main() {
     platform.user = user;
     final observer = await pumpPage(tester);
 
+    await tester.scrollUntilVisible(
+      find.text('Supprimer mon compte'),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Supprimer mon compte'));
     await tester.pump();
 

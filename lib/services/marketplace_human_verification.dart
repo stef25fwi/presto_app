@@ -8,6 +8,7 @@ enum MarketplaceHumanVerificationAction {
   listingSubmit,
   listingReport,
   chatFirstMessage,
+  messageReport,
 }
 
 extension MarketplaceHumanVerificationActionValue
@@ -16,6 +17,7 @@ extension MarketplaceHumanVerificationActionValue
         MarketplaceHumanVerificationAction.listingSubmit => 'listing_submit',
         MarketplaceHumanVerificationAction.listingReport => 'listing_report',
         MarketplaceHumanVerificationAction.chatFirstMessage => 'message_create',
+        MarketplaceHumanVerificationAction.messageReport => 'message_report',
       };
 }
 

@@ -1,0 +1,271 @@
+name: Release iOS (IPA → TestFlight)
+
+# Construit l'IPA signé et l'envoie sur TestFlight.
+#
+# La signature est explicitement MANUELLE : le projet Xcode est en
+# CODE_SIGN_STYLE=Automatic, ce qui convient en local mais exige une session
+# Apple ID interactive qu'un runner CI n'a pas. On force donc l'identité et le
+# profil de distribution importés depuis les secrets, sans modifier le projet.
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: "Envoyer sur TestFlight (sinon build + artefact seulement)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  build-ipa:
+    name: Build IPA signé
+    environment: recaptcha
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze Flutter
+        run: flutter analyze --fatal-infos
+
+      - name: Run tests
+        run: flutter test --reporter expanded
+
+      - name: Check signing secrets
+        env:
+          CERT_B64: ${{ secrets.IOS_DIST_CERT_P12_B64 }}
+          PROFILE_B64: ${{ secrets.IOS_PROVISIONING_PROFILE_B64 }}
+          TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in CERT_B64 PROFILE_B64 TEAM_ID; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Secret manquant : $name"
+              missing=1
+            fi
+          done
+          if [[ "$missing" -eq 1 ]]; then
+            echo "::error::Voir docs/deployment/mobile-release.md pour créer les secrets iOS."
+            exit 1
+          fi
+
+      - name: Import certificate and provisioning profile
+        id: signing
+        env:
+          CERT_B64: ${{ secrets.IOS_DIST_CERT_P12_B64 }}
+          CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+          PROFILE_B64: ${{ secrets.IOS_PROVISIONING_PROFILE_B64 }}
+        run: |
+          set -euo pipefail
+
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+          # Mot de passe éphémère : le trousseau est détruit en fin de job.
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+          CERT_PATH="$RUNNER_TEMP/dist-cert.p12"
+          PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
+
+          printf "%s" "$CERT_B64" | tr -d '\r\n[:space:]' | base64 -d > "$CERT_PATH"
+          printf "%s" "$PROFILE_B64" | tr -d '\r\n[:space:]' | base64 -d > "$PROFILE_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          security import "$CERT_PATH" \
+            -k "$KEYCHAIN_PATH" \
+            -P "$CERT_PASSWORD" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security \
+            -f pkcs12
+
+          # Autorise codesign à utiliser la clé privée sans invite graphique.
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" > /dev/null
+
+          # Garde le trousseau système dans la liste de recherche, sinon les
+          # certificats racine Apple deviennent introuvables pendant la signature.
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+
+          CODE_SIGN_IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" \
+            | grep -o '"[^"]*"' | head -n1 | tr -d '"')
+          if [[ -z "$CODE_SIGN_IDENTITY" ]]; then
+            echo "::error::Aucune identité de signature trouvée dans le certificat importé."
+            exit 1
+          fi
+
+          # Le profil doit être installé sous son UUID pour qu'Xcode le trouve.
+          security cms -D -i "$PROFILE_PATH" > "$RUNNER_TEMP/profile.plist"
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" "$RUNNER_TEMP/profile.plist")
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print Name" "$RUNNER_TEMP/profile.plist")
+          PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILE_DIR"
+          cp "$PROFILE_PATH" "$PROFILE_DIR/$PROFILE_UUID.mobileprovision"
+
+          echo "keychain_path=$KEYCHAIN_PATH" >> "$GITHUB_OUTPUT"
+          echo "profile_uuid=$PROFILE_UUID" >> "$GITHUB_OUTPUT"
+          echo "profile_name=$PROFILE_NAME" >> "$GITHUB_OUTPUT"
+          echo "code_sign_identity=$CODE_SIGN_IDENTITY" >> "$GITHUB_OUTPUT"
+
+          echo "Identité : $CODE_SIGN_IDENTITY"
+          echo "Profil   : $PROFILE_NAME ($PROFILE_UUID)"
+
+      - name: Resolve version
+        id: version
+        run: |
+          set -euo pipefail
+          VERSION_NAME=$(grep -E '^version:' pubspec.yaml | head -n1 | sed -E 's/^version:[[:space:]]*//' | cut -d'+' -f1)
+          # App Store Connect refuse un build number déjà utilisé pour une même
+          # version : le numéro de run GitHub est monotone.
+          BUILD_NUMBER=${{ github.run_number }}
+          echo "version_name=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
+          echo "build_number=${BUILD_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "Version ${VERSION_NAME} (build ${BUILD_NUMBER})"
+
+      - name: Build Flutter iOS bundle
+        env:
+          APP_BUILD_NUMBER_OVERRIDE: ${{ steps.version.outputs.build_number }}
+        run: |
+          # Étape non signée : la signature est appliquée par xcodebuild plus bas,
+          # avec les réglages manuels explicites.
+          bash tools/flutter_with_build_stamp.sh build ios \
+            --release \
+            --no-codesign \
+            --build-number=${{ steps.version.outputs.build_number }}
+
+      - name: Archive
+        run: |
+          set -euo pipefail
+          # Pas de -allowProvisioningUpdates : la signature doit rester
+          # strictement manuelle, sans tentative de récupération en ligne.
+          xcodebuild archive \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM=${{ secrets.IOS_TEAM_ID }} \
+            CODE_SIGN_IDENTITY="${{ steps.signing.outputs.code_sign_identity }}" \
+            PROVISIONING_PROFILE_SPECIFIER="${{ steps.signing.outputs.profile_name }}" \
+            OTHER_CODE_SIGN_FLAGS="--keychain ${{ steps.signing.outputs.keychain_path }}"
+
+      - name: Export IPA
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store-connect</string>
+            <key>teamID</key>
+            <string>${{ secrets.IOS_TEAM_ID }}</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>uploadSymbols</key>
+            <true/>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>fr.ilipresto.app</key>
+              <string>${{ steps.signing.outputs.profile_name }}</string>
+            </dict>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/ipa"
+
+          ls -lh "$RUNNER_TEMP/ipa"
+
+      - name: Name artifact
+        id: artifact
+        run: |
+          set -euo pipefail
+          SHA=$(git rev-parse --short=8 HEAD)
+          NAME="ilipresto_ios_${{ steps.version.outputs.version_name }}_${{ steps.version.outputs.build_number }}_${SHA}"
+          mkdir -p dist
+          # Le nom de l'IPA exporté dépend du nom du schéma : on prend le seul
+          # .ipa présent plutôt que de le deviner.
+          IPA_PATH=$(find "$RUNNER_TEMP/ipa" -name '*.ipa' -maxdepth 1 | head -n1)
+          if [[ -z "$IPA_PATH" ]]; then
+            echo "::error::Aucun .ipa produit par l'export."
+            exit 1
+          fi
+          cp "$IPA_PATH" "dist/${NAME}.ipa"
+          echo "name=${NAME}" >> "$GITHUB_OUTPUT"
+          echo "path=dist/${NAME}.ipa" >> "$GITHUB_OUTPUT"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.artifact.outputs.name }}
+          path: ${{ steps.artifact.outputs.path }}
+          retention-days: 30
+
+      - name: Upload to TestFlight
+        if: ${{ inputs.upload }}
+        env:
+          API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
+          API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$API_KEY_ID" || -z "$API_ISSUER_ID" || -z "$API_PRIVATE_KEY" ]]; then
+            echo "::error::Secrets App Store Connect manquants (APPSTORE_API_KEY_ID / APPSTORE_API_ISSUER_ID / APPSTORE_API_PRIVATE_KEY)."
+            exit 1
+          fi
+
+          # altool cherche la clé dans un de ces répertoires conventionnels.
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          printf "%s" "$API_PRIVATE_KEY" > "$HOME/.appstoreconnect/private_keys/AuthKey_${API_KEY_ID}.p8"
+
+          xcrun altool --upload-app \
+            -f "${{ steps.artifact.outputs.path }}" \
+            -t ios \
+            --apiKey "$API_KEY_ID" \
+            --apiIssuer "$API_ISSUER_ID"
+
+      - name: Cleanup keychain and secrets
+        if: always()
+        run: |
+          # Le runner macOS est éphémère, mais on ne laisse jamais traîner une
+          # clé privée ou un trousseau déverrouillé en cas de réutilisation.
+          security delete-keychain "${{ steps.signing.outputs.keychain_path }}" 2>/dev/null || true
+          rm -f "$HOME/.appstoreconnect/private_keys/"*.p8 2>/dev/null || true
+          rm -f "$RUNNER_TEMP/dist-cert.p12" "$RUNNER_TEMP/profile.mobileprovision" "$RUNNER_TEMP/profile.plist" 2>/dev/null || true
+          if [[ -n "${{ steps.signing.outputs.profile_uuid }}" ]]; then
+            rm -f "$HOME/Library/MobileDevice/Provisioning Profiles/${{ steps.signing.outputs.profile_uuid }}.mobileprovision" 2>/dev/null || true
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Release iOS"
+            echo ""
+            echo "- version : \`${{ steps.version.outputs.version_name }}\`"
+            echo "- build : \`${{ steps.version.outputs.build_number }}\`"
+            echo "- artefact : \`${{ steps.artifact.outputs.name }}.ipa\`"
+            if [[ "${{ inputs.upload }}" == "true" ]]; then
+              echo "- TestFlight : envoyé"
+            else
+              echo "- TestFlight : **non envoyé** (case \`upload\` décochée)"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
