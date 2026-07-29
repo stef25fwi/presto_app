@@ -158,64 +158,41 @@ void main() {
         await Future<void>.delayed(const Duration(seconds: 1));
         await _settle(tester, times: 20);
 
-        // Section "1. Comprendre les règles" : contenu propre à la fiche
-        // salarie_agriculteur, pas le texte générique de repli.
-        // Code APE agricole (tuile "Activité : Agriculteur").
+        // Le parcours s'ouvre dans le renderer guidé par étapes : la fiche
+        // officielle n'alimente plus une page de synthèse unique, elle
+        // nourrit le contenu des étapes. On vérifie que ce sont bien les
+        // données Salarié + Agriculteur qui remontent, et non un repli
+        // générique.
         expect(
-          find.textContaining('Code APE indicatif : 01.xx'),
-          findsWidgets,
-        );
-        // Niveau de vigilance réel de la fiche (tuile "Vue d'ensemble"),
-        // et non le "Faible/Moyen" générique calculé par l'app.
-        expect(
-          find.textContaining('vigilance : très élevé'),
-          findsWidgets,
-        );
-
-        // Organisme(s) de contrôle spécifiques à l'agriculture (MSA...),
-        // qui n'existent que dans la fiche.
-        await _scrollUntilFound(
-          tester,
-          find.textContaining('MSA, DAAF/DDT(M)'),
-        );
-        expect(find.textContaining('MSA, DAAF/DDT(M)'), findsWidgets);
-
-        // Source officielle MSA micro-BA (tuile dédiée de la section 1).
-        await _scrollUntilFound(
-          tester,
-          find.textContaining('MSA — Le régime du micro-BA'),
-        );
-        expect(
-          find.textContaining('MSA — Le régime du micro-BA'),
-          findsWidgets,
-        );
-
-        // Section "2. Vérifier votre situation personnelle" : titre et résumé
-        // propres à la fiche (regles_statut), pas le bloc générique "Contrat
-        // de travail à vérifier" du statut Salarié.
-        await _scrollUntilFound(
-          tester,
-          find.text('Cumul d’activité — Agriculteur'),
-        );
-        expect(
-          find.text('Cumul d’activité — Agriculteur'),
+          find.text(
+            'Créer une activité de Agriculteur en Guadeloupe '
+            'avec le statut actuel : Salarié.',
+          ),
           findsOneWidget,
         );
+
+        await tester.tap(find.text('Commencer l’étape 1'));
+        await _settle(tester, times: 20);
+
+        expect(find.text('Étape 1 sur 8'), findsWidgets);
         expect(
-          find.textContaining('convention collective, clause d’exclusivité'),
-          findsWidgets,
+          find.textContaining(
+            'Pour une activité de Agriculteur en Guadeloupe',
+          ),
+          findsOneWidget,
         );
 
-        // Section "6. Prévoir les coûts" : coût agricole propre à la fiche
-        // (cotisations MSA), affiché dans la liste des coûts détaillés.
-        await _scrollUntilFound(
-          tester,
-          find.textContaining('cotisations MSA : à simuler'),
-        );
-        expect(
-          find.textContaining('cotisations MSA : à simuler'),
-          findsWidgets,
-        );
+        // Alertes bloquantes : régime agricole (MSA, micro-BA, cotisant
+        // solidaire) et contraintes propres au cumul salarié.
+        expect(find.text('À vérifier avant de continuer'), findsOneWidget);
+        expect(find.textContaining('MSA'), findsWidgets);
+        expect(find.textContaining('micro-BA'), findsWidgets);
+        expect(find.textContaining('cotisant solidaire'), findsWidgets);
+        expect(find.textContaining('obligation de loyauté'), findsWidgets);
+
+        // La checklist est construite depuis la fiche de l'activité choisie.
+        expect(find.text('Activité : Agriculteur'), findsOneWidget);
+        expect(find.text('Organismes à consulter'), findsOneWidget);
       });
     },
   );

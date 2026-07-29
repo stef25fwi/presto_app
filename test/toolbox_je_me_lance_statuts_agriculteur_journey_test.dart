@@ -82,7 +82,6 @@ Future<void> _scrollUntilFound(
 Future<void> _runAgriculteurJourney(
   WidgetTester tester, {
   required String statusLabel,
-  required String section2Title,
 }) async {
   final oldOnError = FlutterError.onError;
   FlutterError.onError = (details) {
@@ -143,15 +142,34 @@ Future<void> _runAgriculteurJourney(
     await Future<void>.delayed(const Duration(seconds: 1));
     await _settle(tester, times: 20);
 
-    // Contenu propre à la fiche Agriculteur (section 1), pas le repli
-    // générique : code APE agricole + niveau de vigilance réel.
-    expect(find.textContaining('Code APE indicatif : 01.xx'), findsWidgets);
-    expect(find.textContaining('vigilance : très élevé'), findsWidgets);
+    // Le parcours s'ouvre dans le renderer guidé par étapes : la fiche
+    // officielle alimente le contenu des étapes plutôt qu'une page de
+    // synthèse unique. On vérifie que ce sont bien les données Agriculteur
+    // et le statut choisi qui remontent, et non un repli générique.
+    expect(
+      find.textContaining('Créer une activité de Agriculteur en Guadeloupe'),
+      findsOneWidget,
+    );
+    expect(find.textContaining(statusLabel), findsWidgets);
 
-    // Section 2 : titre propre à la fiche du statut (issu de regles_statut +
-    // libellé de cumul spécifique au statut), donc jamais le bloc générique.
-    await _scrollUntilFound(tester, find.text(section2Title));
-    expect(find.text(section2Title), findsOneWidget);
+    await tester.tap(find.text('Commencer l’étape 1'));
+    await _settle(tester, times: 20);
+
+    expect(find.text('Étape 1 sur 8'), findsWidgets);
+    expect(
+      find.textContaining('Pour une activité de Agriculteur en Guadeloupe'),
+      findsOneWidget,
+    );
+
+    // Alertes bloquantes propres au régime agricole : elles ne peuvent pas
+    // provenir d'un gabarit générique.
+    expect(find.text('À vérifier avant de continuer'), findsOneWidget);
+    expect(find.textContaining('MSA'), findsWidgets);
+    expect(find.textContaining('micro-BA'), findsWidgets);
+    expect(find.textContaining('cotisant solidaire'), findsWidgets);
+
+    // La checklist est construite depuis la fiche de l'activité choisie.
+    expect(find.text('Activité : Agriculteur'), findsOneWidget);
   });
 }
 
@@ -165,23 +183,19 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  // (statut affiché dans le sélecteur, titre attendu de la section 2).
-  final cases = <(String, String)>[
-    ('Retraité', 'Cumul emploi-retraite — Agriculteur'),
-    ('Indépendant', 'Cumul d’activité — Agriculteur'),
-    ("Demandeur d'emploi", 'Cumul d’activité — Agriculteur'),
-    ('Sans activité', 'Cumul d’activité — Agriculteur'),
+  // Statuts tels qu'affichés dans le sélecteur.
+  const statuts = <String>[
+    'Retraité',
+    'Indépendant',
+    "Demandeur d'emploi",
+    'Sans activité',
   ];
 
-  for (final (statusLabel, section2Title) in cases) {
+  for (final statusLabel in statuts) {
     testWidgets(
       'le statut $statusLabel + activité Agriculteur affiche les vraies infos de la fiche officielle',
       (tester) async {
-        await _runAgriculteurJourney(
-          tester,
-          statusLabel: statusLabel,
-          section2Title: section2Title,
-        );
+        await _runAgriculteurJourney(tester, statusLabel: statusLabel);
       },
     );
   }
