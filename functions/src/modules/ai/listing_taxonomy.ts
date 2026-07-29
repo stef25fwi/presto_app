@@ -13,7 +13,7 @@ export const LISTING_CATEGORY_VALUES = [
 
 export type ListingCategory = (typeof LISTING_CATEGORY_VALUES)[number];
 
-export const LISTING_TAXONOMY_VERSION = "ilipresto-listing-taxonomy-v1";
+export const LISTING_TAXONOMY_VERSION = "ilipresto-ai-taxonomy-v2";
 
 const CATEGORY_ALIASES: Record<string, ListingCategory> = {
   jardinage: "Jardinage",
