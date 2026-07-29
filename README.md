@@ -63,6 +63,7 @@ La publication mobile (AAB Play Store, IPA TestFlight) passe par des workflows m
 - [Architecture système](docs/architecture/system-overview.md)
 - [Feuille de route niveau de référence](docs/architecture/production-reference-roadmap.md)
 - [Publication mobile Android et iOS](docs/deployment/mobile-release.md)
+- [Mise en place de l'environnement staging](docs/deployment/staging-environment-setup.md)
 - [Checklist de release](docs/deployment/release-checklist.md)
 - [Procédure de rollback](docs/deployment/rollback.md)
 - [Décisions d’architecture](docs/adr/)

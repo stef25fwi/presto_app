@@ -29,3 +29,5 @@ Les secrets de production sont associés à l’environnement GitHub nommé `rec
 ## Cible suivante
 
 Provisionner un projet Firebase staging distinct avec Auth, Firestore, Functions, Storage, App Check, Remote Config, FCM et Stripe test. Une release ne doit être promue en production qu’après validation du staging.
+
+La procédure détaillée est dans [`staging-environment-setup.md`](staging-environment-setup.md).
