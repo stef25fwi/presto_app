@@ -17,6 +17,9 @@ audit_prod/
 *.class
 /coverage/
 /quality_reports/
+# Artefact écrit dans le répertoire courant par tools/quality/check_mobile_readiness.mjs,
+# y compris lors de l'exécution de sa suite de tests.
+/mobile-readiness-report.json
 .dart_tool/
 **/doc/api/
 # Données Firestore exportées
