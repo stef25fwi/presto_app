@@ -88,20 +88,46 @@ function readFirstArgument(source, position) {
   return { type: 'unknown', value: afterCall.slice(0, 120) };
 }
 
-export function auditAppCheckSource(source, filePath = '<memory>') {
+/**
+ * Une exception App Check porte une date `reviewBy` : passé cette date, elle
+ * cesse d'être une dérogation tracée et redevient une violation. Sans ce
+ * contrôle, `reviewBy` n'est qu'un commentaire et l'exception survit
+ * indéfiniment.
+ */
+export function isExpiredException(exception, now = new Date()) {
+  if (!exception?.reviewBy) return false;
+  const deadline = new Date(`${exception.reviewBy}T23:59:59.999Z`);
+  if (Number.isNaN(deadline.getTime())) return true;
+  return now.getTime() > deadline.getTime();
+}
+
+export function auditAppCheckSource(source, filePath = '<memory>', now = new Date()) {
   const violations = [];
   const exceptions = [];
   const callablePositions = [...source.matchAll(ON_CALL_PATTERN)].map(
     (match) => match.index ?? 0,
   );
   const legacyException = resolveLegacyException(filePath);
+  const expired = legacyException != null && isExpiredException(legacyException, now);
+  // Une exception périmée ne blanchit plus rien : les callables qu'elle
+  // couvrait redeviennent des violations ordinaires.
+  const activeException = expired ? null : legacyException;
   const safeOptionConstants = collectSafeOptionConstants(
     source,
-    legacyException != null,
+    activeException != null,
   );
 
   if (FORBIDDEN_FALSE_PATTERN.test(source)) {
-    if (legacyException) {
+    if (expired) {
+      violations.push({
+        file: filePath,
+        type: 'expired-exception',
+        message:
+          `App Check exception ${legacyException.id} expired on `
+          + `${legacyException.reviewBy}: enforce App Check or extend the `
+          + 'exception through an explicit review.',
+      });
+    } else if (legacyException) {
       exceptions.push({
         file: filePath,
         type: 'legacy-explicit-disable',
@@ -122,7 +148,7 @@ export function auditAppCheckSource(source, filePath = '<memory>') {
       firstArgument.type === 'object' &&
       (SAFE_OPTION_PATTERN.test(firstArgument.value) ||
         hasSafeSpreadOption(firstArgument.value, safeOptionConstants) ||
-        (legacyException &&
+        (activeException &&
           EXPLICIT_FALSE_OPTION_PATTERN.test(firstArgument.value)));
     const isSafeIdentifier =
       firstArgument.type === 'identifier' &&
@@ -165,7 +191,7 @@ async function listTypeScriptFiles(root) {
   return files;
 }
 
-export async function auditFunctionsAppCheck(root = 'functions/src') {
+export async function auditFunctionsAppCheck(root = 'functions/src', now = new Date()) {
   const files = await listTypeScriptFiles(root);
   const violations = [];
   const exceptions = [];
@@ -173,7 +199,7 @@ export async function auditFunctionsAppCheck(root = 'functions/src') {
 
   for (const file of files) {
     const source = await readFile(file, 'utf8');
-    const result = auditAppCheckSource(source, file);
+    const result = auditAppCheckSource(source, file, now);
     callableCount += result.callableCount;
     violations.push(...result.violations);
     exceptions.push(...result.exceptions);

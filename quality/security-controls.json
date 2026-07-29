@@ -1,7 +1,64 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "production_project_ids": ["presto-app-74abe"],
+  "kinds": {
+    "automated": "Le contrôle porte une commande réellement exécutée par check_security_controls.mjs. Son statut est dérivé du code de sortie et ne peut pas être déclaré à la main.",
+    "source-control": "Vérifiable par la présence d'un artefact versionné dans le dépôt.",
+    "external-evidence": "Dépend d'une console externe (Firebase, Google Cloud) hors de portée du dépôt. Statut déclaré par un opérateur humain, preuve à l'appui."
+  },
   "controls": [
+    {
+      "id": "app-check-functions-enforced",
+      "category": "app-check",
+      "kind": "automated",
+      "required": true,
+      "command": ["node", "tools/quality/check_functions_app_check.mjs"],
+      "evidence": "docs/evidence/security/app-check-functions.md"
+    },
+    {
+      "id": "secrets-inventory-current",
+      "category": "secrets",
+      "kind": "automated",
+      "required": true,
+      "command": ["node", "tools/quality/check_secrets_inventory.mjs"],
+      "evidence": "docs/evidence/security/secrets-inventory.md"
+    },
+    {
+      "id": "dependency-audit-clean",
+      "category": "dependencies",
+      "kind": "automated",
+      "required": true,
+      "command": [
+        "node",
+        "tools/quality/generate_dependency_audit.mjs",
+        "--verify-report"
+      ],
+      "evidence": "docs/evidence/security/dependency-audit.md"
+    },
+    {
+      "id": "firebase-preview-production-blocked",
+      "category": "deployment",
+      "kind": "source-control",
+      "required": true,
+      "status": "verified",
+      "evidence": "tools/quality/check_firebase_preview_project.mjs"
+    },
+    {
+      "id": "codeql-enabled",
+      "category": "sast",
+      "kind": "source-control",
+      "required": true,
+      "status": "verified",
+      "evidence": ".github/workflows/codeql.yml"
+    },
+    {
+      "id": "owasp-review-complete",
+      "category": "owasp",
+      "kind": "external-evidence",
+      "required": true,
+      "status": "verified",
+      "evidence": "docs/evidence/security/owasp-review.md"
+    },
     {
       "id": "app-check-firestore-enforced",
       "category": "app-check",
@@ -19,60 +76,12 @@
       "evidence": "docs/evidence/security/app-check-storage.md"
     },
     {
-      "id": "app-check-functions-enforced",
-      "category": "app-check",
-      "kind": "external-evidence",
-      "required": true,
-      "status": "pending",
-      "evidence": "docs/evidence/security/app-check-functions.md"
-    },
-    {
       "id": "api-keys-restricted",
       "category": "api-keys",
       "kind": "external-evidence",
       "required": true,
       "status": "pending",
       "evidence": "docs/evidence/security/api-key-restrictions.md"
-    },
-    {
-      "id": "secrets-inventory-current",
-      "category": "secrets",
-      "kind": "external-evidence",
-      "required": true,
-      "status": "pending",
-      "evidence": "docs/evidence/security/secrets-inventory.md"
-    },
-    {
-      "id": "dependency-audit-clean",
-      "category": "dependencies",
-      "kind": "external-evidence",
-      "required": true,
-      "status": "pending",
-      "evidence": "docs/evidence/security/dependency-audit.md"
-    },
-    {
-      "id": "owasp-review-complete",
-      "category": "owasp",
-      "kind": "external-evidence",
-      "required": true,
-      "status": "pending",
-      "evidence": "docs/evidence/security/owasp-review.md"
-    },
-    {
-      "id": "firebase-preview-production-blocked",
-      "category": "deployment",
-      "kind": "source-control",
-      "required": true,
-      "status": "verified",
-      "evidence": "tools/quality/check_firebase_preview_project.mjs"
-    },
-    {
-      "id": "codeql-enabled",
-      "category": "sast",
-      "kind": "source-control",
-      "required": true,
-      "status": "verified",
-      "evidence": ".github/workflows/codeql.yml"
     }
   ]
 }

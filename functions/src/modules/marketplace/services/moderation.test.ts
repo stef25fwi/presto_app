@@ -7,6 +7,7 @@ import {
   buildModerationUserMessage,
   computeModerationDecision,
   finalizeListingPublication,
+  resolveModerationImageUri,
 } from "./moderation";
 
 test("computeModerationDecision blocks severe high-risk content", () => {
@@ -289,4 +290,49 @@ test("buildListingPhotoReviewDocs creates one pending review per image", () => {
   assert.equal(docs[0]?.status, "pending");
   assert.equal(docs[0]?.storagePath, "listingDrafts/user_123/draft_123/photo-1.jpg");
   assert.equal(docs[0]?.imageUrl, "https://cdn.example/photo-1.jpg");
+});
+test("resolveModerationImageUri préfixe un chemin relatif avec le bucket du projet", () => {
+  assert.equal(
+    resolveModerationImageUri("listings/abc/photo.jpg", "presto-app-74abe.appspot.com"),
+    "gs://presto-app-74abe.appspot.com/listings/abc/photo.jpg",
+  );
+});
+
+test("resolveModerationImageUri accepte un gs:// désignant le bucket du projet", () => {
+  assert.equal(
+    resolveModerationImageUri(
+      "gs://presto-app-74abe.appspot.com/listings/abc/photo.jpg",
+      "presto-app-74abe.appspot.com",
+    ),
+    "gs://presto-app-74abe.appspot.com/listings/abc/photo.jpg",
+  );
+});
+
+test("resolveModerationImageUri refuse un bucket tiers fourni par le client", () => {
+  assert.throws(
+    () =>
+      resolveModerationImageUri(
+        "gs://bucket-attaquant/photo.jpg",
+        "presto-app-74abe.appspot.com",
+      ),
+    /Bucket de modération non autorisé : bucket-attaquant/,
+  );
+});
+
+test("resolveModerationImageUri refuse une remontée de chemin ou un chemin absolu", () => {
+  assert.throws(
+    () => resolveModerationImageUri("../../etc/passwd", "bucket"),
+    /storagePath de modération invalide/,
+  );
+  assert.throws(
+    () => resolveModerationImageUri("/listings/a.jpg", "bucket"),
+    /storagePath de modération invalide/,
+  );
+});
+
+test("resolveModerationImageUri refuse un storagePath vide", () => {
+  assert.throws(
+    () => resolveModerationImageUri("   ", "bucket"),
+    /storagePath de modération vide/,
+  );
 });

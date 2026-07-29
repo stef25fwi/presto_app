@@ -260,4 +260,20 @@ const moderation_1 = require("./moderation");
     strict_1.default.equal(docs[0]?.storagePath, "listingDrafts/user_123/draft_123/photo-1.jpg");
     strict_1.default.equal(docs[0]?.imageUrl, "https://cdn.example/photo-1.jpg");
 });
+(0, node_test_1.default)("resolveModerationImageUri préfixe un chemin relatif avec le bucket du projet", () => {
+    strict_1.default.equal((0, moderation_1.resolveModerationImageUri)("listings/abc/photo.jpg", "presto-app-74abe.appspot.com"), "gs://presto-app-74abe.appspot.com/listings/abc/photo.jpg");
+});
+(0, node_test_1.default)("resolveModerationImageUri accepte un gs:// désignant le bucket du projet", () => {
+    strict_1.default.equal((0, moderation_1.resolveModerationImageUri)("gs://presto-app-74abe.appspot.com/listings/abc/photo.jpg", "presto-app-74abe.appspot.com"), "gs://presto-app-74abe.appspot.com/listings/abc/photo.jpg");
+});
+(0, node_test_1.default)("resolveModerationImageUri refuse un bucket tiers fourni par le client", () => {
+    strict_1.default.throws(() => (0, moderation_1.resolveModerationImageUri)("gs://bucket-attaquant/photo.jpg", "presto-app-74abe.appspot.com"), /Bucket de modération non autorisé : bucket-attaquant/);
+});
+(0, node_test_1.default)("resolveModerationImageUri refuse une remontée de chemin ou un chemin absolu", () => {
+    strict_1.default.throws(() => (0, moderation_1.resolveModerationImageUri)("../../etc/passwd", "bucket"), /storagePath de modération invalide/);
+    strict_1.default.throws(() => (0, moderation_1.resolveModerationImageUri)("/listings/a.jpg", "bucket"), /storagePath de modération invalide/);
+});
+(0, node_test_1.default)("resolveModerationImageUri refuse un storagePath vide", () => {
+    strict_1.default.throws(() => (0, moderation_1.resolveModerationImageUri)("   ", "bucket"), /storagePath de modération vide/);
+});
 //# sourceMappingURL=moderation.test.js.map

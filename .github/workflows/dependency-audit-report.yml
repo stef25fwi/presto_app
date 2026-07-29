@@ -1,20 +1,25 @@
 name: Dependency audit report
 
+# Le workflow précédent ne se déclenchait que sur `audit/prod-hardening-p0-p11`
+# et recommittait le rapport sur cette même branche : `main` n'a donc jamais été
+# audité et `docs/DEPENDENCY_AUDIT.md` a divergé de la réalité. Il devient ici
+# une barrière vérifiante sur `main` et sur chaque PR.
+
 on:
+  pull_request:
+    branches: [main]
   push:
-    branches:
-      - audit/prod-hardening-p0-p11
-    paths:
-      - functions/package.json
-      - functions/package-lock.json
-      - .github/workflows/dependency-audit-report.yml
+    branches: [main]
+  schedule:
+    # Les avis de sécurité tombent après le merge : re-vérifier chaque lundi.
+    - cron: '0 6 * * 1'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: dependency-audit-report
+  group: dependency-audit-report-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -22,61 +27,28 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: audit/prod-hardening-p0-p11
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-          cache-dependency-path: functions/package-lock.json
 
+      - name: Test the report generator
+        run: node --test tools/quality/generate_dependency_audit.test.mjs
+
+      - run: npm ci
       - run: npm --prefix functions ci
 
-      - name: Generate npm audit JSON
-        run: npm --prefix functions audit --json > docs/DEPENDENCY_AUDIT.json || true
+      - name: Verify report freshness and block high/critical advisories
+        run: node tools/quality/generate_dependency_audit.mjs --check
 
-      - name: Generate readable report
-        run: |
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';
-          const report = JSON.parse(fs.readFileSync('docs/DEPENDENCY_AUDIT.json', 'utf8'));
-          const metadata = report.metadata?.vulnerabilities ?? {};
-          const vulnerabilities = Object.entries(report.vulnerabilities ?? {})
-            .sort((a, b) => {
-              const order = { critical: 4, high: 3, moderate: 2, low: 1, info: 0 };
-              return (order[b[1].severity] ?? 0) - (order[a[1].severity] ?? 0);
-            });
-          const lines = [
-            '# Audit des dépendances Functions',
-            '',
-            'Rapport reproductible généré à partir de `functions/package-lock.json`.',
-            '',
-            `- Critiques : **${metadata.critical ?? 0}**`,
-            `- Hautes : **${metadata.high ?? 0}**`,
-            `- Modérées : **${metadata.moderate ?? 0}**`,
-            `- Faibles : **${metadata.low ?? 0}**`,
-            '',
-            '| Module | Sévérité | Direct | Correctif disponible | Dépendances affectées |',
-            '|---|---|---:|---:|---|',
-          ];
-          for (const [name, item] of vulnerabilities) {
-            const effects = Array.isArray(item.effects) ? item.effects.join(', ') : '';
-            lines.push(`| ${name} | ${item.severity} | ${item.isDirect ? 'oui' : 'non'} | ${item.fixAvailable ? 'oui' : 'non'} | ${effects} |`);
-          }
-          fs.writeFileSync('docs/DEPENDENCY_AUDIT.md', `${lines.join('\n')}\n`);
-          NODE
-
-      - name: Commit report only when dependency results changed
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/DEPENDENCY_AUDIT.md docs/DEPENDENCY_AUDIT.json
-          if git diff --cached --quiet; then
-            echo "Dependency report unchanged."
-            exit 0
-          fi
-          git commit -m "security: publie le rapport npm audit"
-          git push origin HEAD:audit/prod-hardening-p0-p11
+      - name: Upload dependency audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-${{ github.sha }}
+          path: |
+            docs/DEPENDENCY_AUDIT.md
+            docs/DEPENDENCY_AUDIT.json
+          if-no-files-found: error
+          retention-days: 30

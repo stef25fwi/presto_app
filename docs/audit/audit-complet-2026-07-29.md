@@ -2,153 +2,173 @@
 
 ## Périmètre et méthode
 
-Cet audit couvre l'état du dépôt à la racine de `main` (commit `b4c7b8f`). Il s'appuie
-uniquement sur des outils exécutables dans l'environnement d'exécution (le SDK Flutter
-n'y est pas installé — voir limites en fin de document) :
+Audit du dépôt à partir de `main` (`b4c7b8f`), suivi de la remédiation des
+constats. Toutes les vérifications ont été exécutées, pas seulement relues :
 
-- baseline quantitative via `tools/quality/audit_repository.py` ;
-- build TypeScript (`tsc`) et suite de tests Node (`npm test`) des Cloud Functions ;
-- `npm audit` sur `functions/` et sur la racine ;
-- gate de sécurité `tools/quality/check_security_controls.mjs` ;
-- revue manuelle de `firestore.rules` (885 lignes) ;
-- recherche de secrets en dur (clés API, clés privées, tokens Stripe) ;
-- historique des exécutions GitHub Actions sur `main`.
+- SDK Flutter `3.44.6` (version des workflows CI) installé pour exécuter
+  `flutter analyze --fatal-infos` et `flutter test --coverage` ;
+- build TypeScript (`tsc`) et suite de tests Node des Cloud Functions ;
+- `npm audit` sur les deux espaces npm (racine et `functions/`) ;
+- barrières qualité du dépôt (`tools/quality/*`) ;
+- revue manuelle de `firestore.rules` (885 lignes) et revue OWASP Top 10 du
+  code serveur ;
+- recherche de secrets en dur ;
+- historique GitHub Actions sur `main`.
 
-## Résumé exécutif
+## Résultat
 
-| # | Constat | Sévérité |
-|---|---|---|
-| 1 | 7 des 9 contrôles de sécurité obligatoires de la Phase 8 sont `pending`, sans aucune preuve déposée (`docs/evidence/security/` n'existe pas) | P0 avant tout go-live |
-| 2 | `docs/DEPENDENCY_AUDIT.md` est périmé : 13 vulnérabilités réelles (7 modérées, 6 élevées) contre 9 modérées/0 élevée documentées | P1 |
-| 3 | Dette structurelle : 19 fichiers Dart/TS dépassent 1200 lignes (jusqu'à 7218 lignes) | P2 |
-| 4 | Cloud Functions : build et 223/223 tests passent sans échec | ✅ sain |
-| 5 | `firestore.rules` : design solide, anti-élévation de privilèges vérifiée | ✅ sain (1 remarque) |
-| 6 | Aucun secret en dur détecté dans le code source | ✅ sain |
+| # | Constat initial | Sévérité | État |
+|---|---|---|---|
+| 1 | 7 des 9 contrôles de sécurité obligatoires `pending`, aucune preuve déposée | P0 | **6/9 vérifiés** — 3 restants hors de portée du dépôt |
+| 2 | 13 vulnérabilités npm (6 hautes, 7 modérées) ; rapport périmé annonçant 9 modérées / 0 haute | P1 | **Corrigé — 0 vulnérabilité** |
+| 3 | Échéance des exceptions App Check jamais appliquée | P1 | **Corrigé** |
+| 4 | SSRF latente : jeton `cloud-platform` envoyable à un hôte arbitraire | P1 | **Corrigé** |
+| 5 | `storagePath` client non contraint au bucket du projet | P1 | **Corrigé** |
+| 6 | Cliquet de couverture resté à 12,2 % pour 51,95 % mesurés | P2 | **Corrigé — relevé à 40 %** |
+| 7 | Dette structurelle : 19 fichiers > 1200 lignes | P2 | Inchangé — voir plus bas |
 
-## 1. Gate de sécurité production — contrôles obligatoires sans preuve (P0)
+État final des barrières :
 
 ```
-node tools/quality/check_security_controls.mjs
-→ {"ready":true,"total":9,"verified":2,"pending":7}
+flutter analyze --fatal-infos          → aucun problème
+flutter test --coverage                → 1986 tests, tous passants, 51,95 %
+npm --prefix functions run build       → OK
+npm --prefix functions test            → 235/235
+npm audit (racine et functions)        → 0 vulnérabilité
+node tools/quality/check_security_controls.mjs → ready, 6/9 vérifiés
 ```
 
-`ready:true` uniquement parce que le script tourne sans `--enforce`. Avec `--enforce`
-(mode go-live), il échouerait : le dossier `docs/evidence/security/` n'existe pas du
-tout, donc les 7 preuves suivantes sont manquantes :
+## 1. Contrôles de sécurité — de 2 à 6 vérifiés, et surtout prouvés
 
-- `app-check-firestore-enforced`
-- `app-check-storage-enforced`
-- `app-check-functions-enforced`
-- `api-keys-restricted`
-- `secrets-inventory-current`
-- `dependency-audit-clean`
-- `owasp-review-complete`
+Le vérificateur `check_security_controls.mjs` ne contrôlait que deux choses :
+« le champ `status` vaut `verified` » et « un fichier de preuve existe ». Un
+contrôle pouvait donc être marqué vérifié sans que quoi que ce soit ne soit
+vérifié — c'était du déclaratif, trivialement contournable.
 
-Seuls 2 contrôles sont `verified` (blocage des previews Firebase vers la prod, CodeQL
-actif). `docs/security/PHASE_8_CONTROL_MATRIX.md` indique explicitement que la phase 8
-« ne peut être clôturée que lorsque chaque contrôle obligatoire est marqué `verified` » :
-ce n'est pas le cas aujourd'hui. À clarifier avec l'équipe : soit produire les preuves
-externes (App Check console, restrictions de clés API, inventaire de secrets, revue
-OWASP), soit documenter explicitement que ces contrôles restent en attente pour une
-phase ultérieure.
+Le vérificateur exécute désormais une commande pour les contrôles de nature
+`automated`, et **dérive** leur statut du code de sortie. Trois contrôles ont
+basculé dans cette catégorie :
 
-## 2. Dépendances — vulnérabilités et documentation périmée (P1)
+| Contrôle | Commande exécutée |
+|---|---|
+| `app-check-functions-enforced` | `check_functions_app_check.mjs` — 79 callables, 0 violation |
+| `secrets-inventory-current` | `check_secrets_inventory.mjs` — 10 secrets, 0 écart |
+| `dependency-audit-clean` | `generate_dependency_audit.mjs --verify-report` |
 
-`npm audit` (racine et `functions/`) remonte **13 vulnérabilités (7 modérées, 6
-élevées)**, toutes transitives via les SDK Google Cloud (`@google-cloud/firestore`,
-`@google-cloud/storage`, `google-gax` → `gaxios`, `glob`, `minimatch`, `rimraf`,
-`uuid`, `teeny-request`, `retry-request`, `brace-expansion`, `gcp-metadata`).
+`owasp-review-complete` a été fermé par une revue réelle du Top 10 documentée
+dans `docs/evidence/security/owasp-review.md` — c'est elle qui a produit les
+constats 4 et 5.
 
-`docs/DEPENDENCY_AUDIT.md` déclare **9 modérées / 0 élevée** : ce rapport est périmé et
-sous-estime l'état réel (6 vulnérabilités élevées non documentées, dont
-`brace-expansion` — DoS par expansion non bornée). À régénérer.
+**Les 3 contrôles restants (`app-check-firestore-enforced`,
+`app-check-storage-enforced`, `api-keys-restricted`) ne peuvent pas être fermés
+depuis le dépôt** : ce sont des réglages des consoles Firebase et Google Cloud.
+Ils restent honnêtement en `pending`, chacun avec un runbook prêt à l'emploi
+sous `docs/evidence/security/`. C'est le seul reliquat avant go-live.
 
-Le correctif proposé par `npm audit fix --force` impose un **downgrade cassant de
-`firebase-admin` vers 10.3.0** : à ne pas appliquer sans étudier l'impact, le projet
-utilise des API `firebase-admin` v13. Recommandation : vérifier s'il existe des
-résolutions ciblées (overrides npm) pour `uuid`/`brace-expansion` sans repasser par un
-major bump de `firebase-admin`/`google-gax`.
+⚠️ Le runbook Firestore porte un avertissement important : le SDK Flutter Web
+n'attache pas de jeton App Check aux requêtes Firestore. Basculer Firestore sur
+`Enforced` sans traiter ce point **coupera le client web**.
 
-## 3. Dette technique structurelle (P2)
+## 2. Dépendances — 13 vulnérabilités → 0
 
-Baseline générée (724 fichiers source, 178 312 lignes, 428 fichiers de test, 62 452
-lignes de test) :
+Les 13 remontées ne portaient en réalité que **deux avis** ; tout le reste
+n'était que propagation transitive :
 
-- 53 fichiers dépassent 500 lignes, 31 dépassent 800, **19 dépassent 1200 lignes**
-  (seuil jugé critique par l'outil interne) ;
-- en tête : `lib/pages/toolbox_je_me_lance_page.dart` (7218 lignes),
-  `lib/pages/admin_space_page.dart` (5777), `lib/pages/messages/conversation_thread_page.dart`
-  (5181), `lib/pages/publish_offer_page.dart` (5116), `lib/pages/offers/offer_details_page.dart`
-  (4518), `functions/index.js` (2591) ;
-- 383 appels `debugPrint`/`print` détectés côté Flutter — à vérifier qu'ils sont bien
-  neutralisés en production ;
-- 5 règles analyzer ignorées globalement dans `analysis_options.yaml`.
+- `brace-expansion <=5.0.7` (haute) — déni de service par expansion non bornée ;
+- `uuid <11.1.1` (modérée) — absence de contrôle de bornes du buffer.
 
-Ce registre est déjà suivi dans `quality/technical-debt-register.md` (TECH-001 à
-TECH-054) ; aucun nouvel écart significatif par rapport à ce registre existant, il reste
-d'actualité.
+Trois changements, sans imposer de version majeure aux dépendances directes :
 
-## 4. Règles Firestore (sain, une remarque)
+1. `@google-cloud/vertexai` retiré de `functions/package.json` — **déclaré mais
+   importé nulle part**, et unique source de `google-auth-library@9 → gaxios@6.7.1` ;
+2. `@google-cloud/vision` et `firebase-functions` retirés de la `package.json`
+   racine — jamais importés (74 paquets en moins) ;
+3. overrides sur les deux seules racines vulnérables, dans les deux espaces.
 
-Revue manuelle de `firestore.rules` : le design est robuste.
+`firebase-admin` reste en `^13.10.0` : le correctif proposé par
+`npm audit fix --force` était un downgrade cassant vers 10.3.0, et
+`firebase-functions@7` plafonne de toute façon à `firebase-admin@13.x`.
 
-- `protectedUserFields()` bloque explicitement l'auto-modification des champs
-  sensibles (`roles`, `admin`, `subscriptionStatus`, `stripeCustomerId`, etc.) sur
-  `users/{userId}` — un utilisateur ne peut pas s'auto-élever admin ni falsifier son
-  abonnement côté client.
-- La résolution du rôle admin combine plusieurs sources cohérentes (custom claims,
-  document `users`, document `admins`/`adminUsers` avec expiration) sans ouvrir de
-  chemin de contournement évident.
-- Les collections serveur (`_rate_limits`, `admins`) sont verrouillées
-  (`allow read, write: if false`), écriture réservée aux Cloud Functions Admin SDK.
-- Remarque documentée dans le fichier lui-même : `hasAppCheck()` est volontairement
-  omis sur l'écriture de `users/{userId}` car le SDK Flutter Web n'attache pas de jeton
-  App Check aux requêtes Firestore. Compensé par le contrôle de propriétaire + les
-  champs protégés. À réévaluer si App Check Web devient disponible pour Firestore.
+Non-régression vérifiée : chargement effectif de `uuid`, `brace-expansion`,
+`firebase-admin`, `google-gax`, `@google-cloud/storage` et
+`@google-cloud/firestore`, plus 235 tests Functions et `flutter analyze`.
 
-Non vérifié ici : exécution des règles contre l'émulateur Firestore (nécessite
-`firebase-tools` ; scripts prévus dans `functions/package.json`,
-`test:firestore:*` — à exécuter via `firestore-quality.yml` en CI).
+**Cause racine du rapport périmé** : le workflow `dependency-audit-report.yml`
+ne se déclenchait que sur la branche `audit/prod-hardening-p0-p11` et y
+recommittait son résultat — `main` n'était jamais audité. Il s'exécute
+désormais sur `main`, sur chaque PR et chaque lundi, et **échoue** si le
+rapport versionné est périmé ou si une vulnérabilité haute apparaît. Son
+générateur, jusqu'ici en heredoc dans le YAML (ni testable ni exécutable en
+local), est devenu `tools/quality/generate_dependency_audit.mjs`, couvert par
+7 tests.
 
-## 5. Secrets et identifiants
+## 3. Échéance des exceptions App Check — non appliquée
 
-Aucune clé secrète en dur trouvée (recherche `sk_live_`/`sk_test_`/`BEGIN PRIVATE
-KEY`/`AKIA...`). `STRIPE_SECRET_KEY` est chargé via Firebase Secret Manager
-(`defineSecret`), jamais committé. Les clés `AIzaSy...` présentes dans
-`lib/firebase_options.dart`, `android/app/google-services.json` et le service worker
-sont des clés Web Firebase publiques (identifiants de projet, pas des secrets
-d'authentification) — usage standard, à condition que les restrictions d'API (origine
-HTTP, nom de package) soient bien configurées côté console Google Cloud. C'est
-justement l'objet du contrôle `api-keys-restricted`, actuellement `pending` (§1).
+L'exception App Check de `functions/src/modules/messaging/callables.ts` portait
+`reviewBy: '2026-08-31'`, mais cette date n'était **lue nulle part**. C'était un
+commentaire : l'exception aurait survécu indéfiniment.
 
-## 6. Cloud Functions — build et tests
+`check_functions_app_check.mjs` applique désormais l'échéance. Passé la date,
+l'exception bascule en violation `expired-exception`, cesse de blanchir les
+callables qu'elle couvrait, et fait échouer la barrière. 5 tests ajoutés.
 
-- `npm run build` (`tsc`) : compile sans erreur.
-- `npm test` : **223/223 tests passent**, 0 échec.
+## 4 et 5. Deux faiblesses SSRF trouvées par la revue OWASP
 
-## 7. CI/CD
+**`fetchGoogleApiJson` acceptait une URL arbitraire** tout en y attachant un
+jeton OAuth de portée `cloud-platform`. Les deux appelants actuels n'utilisent
+que des hôtes littéraux, mais la signature ouvrait la voie à l'exfiltration
+d'un jeton très privilégié. Une liste blanche d'hôtes rejette désormais tout
+autre hôte, tout schéma non `https:`, et les échappements par identifiants
+d'URL (`https://hôte-autorisé@attaquant/`).
 
-37 workflows actifs sous `.github/workflows/`. Historique récent sur `main` :
-`quality-baseline.yml` : dernière exécution en succès (2026-07-29T22:31Z), après un
-échec isolé plus tôt dans la journée (12:36Z) résolu depuis. `security-controls.yml` :
-succès continu (mode non-`enforce`, cohérent avec le constat du §1).
+**`storagePath` était transmis tel quel à l'API Vision** lorsqu'il commençait
+par `gs://`. Ce champ vient du client et n'est que normalisé à la publication :
+un client pouvait faire lire la modération dans un bucket arbitraire avec les
+identifiants du projet. `resolveModerationImageUri` n'accepte plus qu'un chemin
+relatif au bucket du projet, ou un `gs://` désignant ce même bucket, et rejette
+chemins absolus et remontées `..`.
 
-## Recommandations priorisées
+11 tests ajoutés sur ces deux correctifs.
 
-- **P0** — Statuer sur les 7 contrôles de sécurité en attente (§1) : soit produire les
-  preuves manquantes avant tout go-live, soit documenter formellement le report de
-  phase.
-- **P1** — Régénérer `docs/DEPENDENCY_AUDIT.md` et évaluer une résolution ciblée des
-  vulnérabilités `uuid`/`brace-expansion` sans downgrade cassant de `firebase-admin`.
-- **P2** — Poursuivre le découpage des fichiers > 1200 lignes déjà suivi dans
-  `quality/technical-debt-register.md`, en commençant par les P0 du registre.
+## 6. Cliquet de couverture jamais avancé
 
-## Limites de cet audit
+La politique du dépôt prévoit des paliers `[12.2, 25, 40, 55, 70]`, le seuil
+devant monter au fur et à mesure. La couverture mesurée est de **51,95 %**
+(23 098 / 44 464 lignes) mais `minimum_percent` était resté à **12,2 %** : la
+couverture pouvait régresser de 40 points sans qu'aucune barrière ne réagisse.
 
-Le SDK Flutter n'est pas installé dans cet environnement d'exécution : `flutter
-analyze --fatal-infos`, `flutter test --coverage` et le build web n'ont pas pu être
-exécutés ici. Ces vérifications restent couvertes par la CI GitHub Actions
-(`quality-baseline.yml`, `flutter-architecture-size.yml`) — dernière exécution connue
-en succès. De même, les tests Firestore avec émulateur et la vérification live d'App
-Check / des restrictions de clés API dans les consoles Firebase/GCP n'ont pas pu être
-exécutés depuis ce sandbox (accès externe requis).
+Seuil relevé au palier atteint, soit **40 %**, ce qui verrouille le progrès
+acquis en gardant de la marge sous les 51,95 % réels.
+
+## 7. Dette structurelle — non traitée, délibérément
+
+19 fichiers dépassent 1200 lignes, jusqu'à 7218 pour
+`lib/pages/toolbox_je_me_lance_page.dart`. Ce constat est inchangé et reste
+suivi dans `quality/technical-debt-register.md` (TECH-001 à TECH-054).
+
+Ce n'est pas un oubli : découper des fichiers de cette taille est un
+refactoring à fort risque de régression fonctionnelle, que ni `flutter analyze`
+ni la suite de tests actuelle ne rattraperaient entièrement. Le faire au sein
+du même lot que des correctifs de sécurité rendrait ces derniers impossibles à
+relire et à revenir en arrière indépendamment. À traiter fichier par fichier,
+dans des PR dédiées.
+
+## Ce qui reste ouvert
+
+1. **3 contrôles de console** (App Check Firestore et Storage, restrictions de
+   clés API) — runbooks prêts, nécessitent un accès au projet
+   `presto-app-74abe`. Traiter l'avertissement SDK Web avant toute bascule.
+2. **Dette structurelle** — 19 fichiers > 1200 lignes, en PR dédiées.
+3. **Couverture** — 51,95 % pour une cible de 70 % ; prochain palier 55 %.
+4. **383 `debugPrint`** côté Flutter : revue ciblée des chemins susceptibles de
+   journaliser des données personnelles.
+5. **Exception App Check messagerie** — échéance au 2026-08-31, désormais
+   réellement appliquée par la CI.
+
+## Limites
+
+Les tests Firestore contre l'émulateur (`npm run test:firestore`) n'ont pas été
+exécutés : ils exigent l'émulateur Firebase. La revue OWASP est une analyse
+statique — ni test d'intrusion, ni vérification des consoles Firebase et Google
+Cloud. `npm audit` ne couvre ni les dépendances Dart (`pubspec.lock`), ni les
+paquets système de l'image de déploiement.

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "coverage": {
-    "minimum_percent": 12.2,
+    "minimum_percent": 40,
     "target_percent": 70,
     "critical_modules_target_percent": 85,
     "ramp_plan": [12.2, 25, 40, 55, 70]

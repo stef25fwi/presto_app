@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.resolveModerationImageUri = resolveModerationImageUri;
 exports.buildListingMediaModerationState = buildListingMediaModerationState;
 exports.buildListingPhotoReviewDocs = buildListingPhotoReviewDocs;
 exports.loadModerationConfig = loadModerationConfig;
@@ -51,6 +52,32 @@ function listingMediaUrl(entry) {
 }
 function normalizeString(value) {
     return String(value ?? "").trim();
+}
+/**
+ * `storagePath` arrive du client et n'est que normalisé à la publication. Une
+ * valeur préfixée `gs://` était auparavant transmise telle quelle à Vision :
+ * un client pouvait donc faire lire la modération dans un bucket arbitraire
+ * avec les identifiants du projet. On n'accepte plus qu'un chemin relatif au
+ * bucket du projet, ou un `gs://` désignant explicitement ce même bucket.
+ */
+function resolveModerationImageUri(storagePath, bucket) {
+    const normalized = normalizeString(storagePath);
+    if (!normalized) {
+        throw new Error("storagePath de modération vide");
+    }
+    if (!normalized.startsWith("gs://")) {
+        if (normalized.startsWith("/") || normalized.includes("..")) {
+            throw new Error(`storagePath de modération invalide : ${normalized}`);
+        }
+        return `gs://${bucket}/${normalized}`;
+    }
+    const withoutScheme = normalized.slice("gs://".length);
+    const separatorIndex = withoutScheme.indexOf("/");
+    const declaredBucket = separatorIndex === -1 ? withoutScheme : withoutScheme.slice(0, separatorIndex);
+    if (declaredBucket !== bucket) {
+        throw new Error(`Bucket de modération non autorisé : ${declaredBucket}`);
+    }
+    return normalized;
 }
 async function queryModerationUsersByField(field, operator, value) {
     try {
@@ -231,9 +258,7 @@ async function moderateListingMedia(media) {
     try {
         const bucket = firebase_admin_1.default.storage().bucket().name;
         const responses = await Promise.all(media.map(async (entry) => {
-            const imageUri = entry.storagePath.startsWith("gs://")
-                ? entry.storagePath
-                : `gs://${bucket}/${entry.storagePath}`;
+            const imageUri = resolveModerationImageUri(entry.storagePath, bucket);
             const response = await (0, google_api_1.fetchGoogleApiJson)({
                 url: "https://vision.googleapis.com/v1/images:annotate",
                 body: {

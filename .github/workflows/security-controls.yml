@@ -21,9 +21,17 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Test security controls checker
-        run: node --test tools/quality/check_security_controls.test.mjs
+      - name: Test security controls checker and its automated controls
+        run: |
+          node --test \
+            tools/quality/check_security_controls.test.mjs \
+            tools/quality/check_secrets_inventory.test.mjs \
+            tools/quality/check_functions_app_check.test.mjs \
+            tools/quality/generate_dependency_audit.test.mjs
 
+      # Les contrôles `automated` de la matrice sont réellement exécutés ici :
+      # leur statut est dérivé du code de sortie, jamais déclaré à la main.
+      # Aucun n'exige de node_modules installés.
       - name: Inventory security readiness
         run: node tools/quality/check_security_controls.mjs
 

@@ -1,7 +1,18 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { auditAppCheckSource } from './check_functions_app_check.mjs';
+import {
+  auditAppCheckSource,
+  isExpiredException,
+} from './check_functions_app_check.mjs';
+
+const MESSAGING_CALLABLES = 'functions/src/modules/messaging/callables.ts';
+const DISABLED_CALLABLE = `
+  export const legacy = onCall(
+    { enforceAppCheck: false },
+    async () => ({ ok: true }),
+  );
+`;
 
 test('accepte un callable protégé par la policy centrale', () => {
   const result = auditAppCheckSource(`
@@ -142,4 +153,44 @@ test('ne traite pas onRequest comme un callable App Check', () => {
   assert.equal(result.callableCount, 0);
   assert.deepEqual(result.violations, []);
   assert.deepEqual(result.exceptions, []);
+});
+
+test('isExpiredException tolère une exception sans échéance', () => {
+  assert.equal(isExpiredException({ id: 'x' }), false);
+  assert.equal(isExpiredException(null), false);
+});
+
+test('isExpiredException accepte une échéance jusqu à la fin du jour dit', () => {
+  const exception = { id: 'x', reviewBy: '2026-08-31' };
+  assert.equal(isExpiredException(exception, new Date('2026-08-31T23:59:00Z')), false);
+  assert.equal(isExpiredException(exception, new Date('2026-09-01T00:00:01Z')), true);
+});
+
+test('isExpiredException considère une échéance illisible comme périmée', () => {
+  assert.equal(isExpiredException({ id: 'x', reviewBy: 'bientôt' }), true);
+});
+
+test('tolère l exception de messagerie avant son échéance', () => {
+  const result = auditAppCheckSource(
+    DISABLED_CALLABLE,
+    MESSAGING_CALLABLES,
+    new Date('2026-07-29T00:00:00Z'),
+  );
+  assert.deepEqual(result.violations, []);
+  assert.equal(result.exceptions.length, 1);
+  assert.equal(result.exceptions[0].id, 'messaging-app-check-web-availability');
+});
+
+test('refuse l exception de messagerie une fois son échéance dépassée', () => {
+  const result = auditAppCheckSource(
+    DISABLED_CALLABLE,
+    MESSAGING_CALLABLES,
+    new Date('2026-09-01T00:00:00Z'),
+  );
+  assert.deepEqual(result.exceptions, []);
+  assert.deepEqual(
+    result.violations.map((violation) => violation.type).sort(),
+    ['expired-exception', 'missing-enforcement'],
+  );
+  assert.match(result.violations[0].message, /expired on 2026-08-31/);
 });

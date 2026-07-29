@@ -121,6 +121,34 @@ function normalizeString(value: unknown): string {
   return String(value ?? "").trim();
 }
 
+/**
+ * `storagePath` arrive du client et n'est que normalisé à la publication. Une
+ * valeur préfixée `gs://` était auparavant transmise telle quelle à Vision :
+ * un client pouvait donc faire lire la modération dans un bucket arbitraire
+ * avec les identifiants du projet. On n'accepte plus qu'un chemin relatif au
+ * bucket du projet, ou un `gs://` désignant explicitement ce même bucket.
+ */
+export function resolveModerationImageUri(storagePath: string, bucket: string): string {
+  const normalized = normalizeString(storagePath);
+  if (!normalized) {
+    throw new Error("storagePath de modération vide");
+  }
+  if (!normalized.startsWith("gs://")) {
+    if (normalized.startsWith("/") || normalized.includes("..")) {
+      throw new Error(`storagePath de modération invalide : ${normalized}`);
+    }
+    return `gs://${bucket}/${normalized}`;
+  }
+  const withoutScheme = normalized.slice("gs://".length);
+  const separatorIndex = withoutScheme.indexOf("/");
+  const declaredBucket =
+    separatorIndex === -1 ? withoutScheme : withoutScheme.slice(0, separatorIndex);
+  if (declaredBucket !== bucket) {
+    throw new Error(`Bucket de modération non autorisé : ${declaredBucket}`);
+  }
+  return normalized;
+}
+
 async function queryModerationUsersByField(
   field: string,
   operator: FirebaseFirestore.WhereFilterOp,
@@ -366,9 +394,7 @@ export async function moderateListingMedia(media: ListingMedia[]): Promise<{
     const bucket = admin.storage().bucket().name;
     const responses = await Promise.all(
       media.map(async (entry) => {
-        const imageUri = entry.storagePath.startsWith("gs://")
-          ? entry.storagePath
-          : `gs://${bucket}/${entry.storagePath}`;
+        const imageUri = resolveModerationImageUri(entry.storagePath, bucket);
         const response = await fetchGoogleApiJson<VisionAnnotateResponse>({
           url: "https://vision.googleapis.com/v1/images:annotate",
           body: {
