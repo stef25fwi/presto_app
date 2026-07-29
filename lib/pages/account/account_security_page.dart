@@ -6,6 +6,7 @@ import '../../services/auth_service.dart';
 import 'change_email_page.dart';
 import 'change_password_page.dart';
 import 'delete_account_page.dart';
+import 'phone_verification_page.dart';
 import 'package:presto_app/services/auth_guard.dart';
 
 class AccountSecurityPage extends StatefulWidget {
@@ -51,6 +52,18 @@ class _AccountSecurityPageState extends State<AccountSecurityPage> {
     }
   }
 
+  Future<void> _openPhoneVerification() async {
+    final verified = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const PhoneVerificationPage()),
+    );
+    if (verified == true && mounted) {
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Numéro de téléphone vérifié.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -80,6 +93,26 @@ class _AccountSecurityPageState extends State<AccountSecurityPage> {
               trailing: user?.emailVerified == true
                   ? const Icon(Icons.check_circle, color: Colors.green)
                   : const Icon(Icons.warning, color: Colors.orange),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.phone_iphone_rounded),
+              title: Text(
+                (user?.phoneNumber ?? '').isNotEmpty
+                    ? user!.phoneNumber!
+                    : 'Aucun numéro vérifié',
+              ),
+              subtitle: Text(
+                (user?.phoneNumber ?? '').isNotEmpty
+                    ? 'Téléphone vérifié'
+                    : 'Vérifie ton numéro pour sécuriser ton compte',
+              ),
+              trailing: (user?.phoneNumber ?? '').isNotEmpty
+                  ? const Icon(Icons.check_circle, color: Colors.green)
+                  : const Icon(Icons.warning, color: Colors.orange),
+              onTap: _openPhoneVerification,
             ),
           ),
           const SizedBox(height: 12),

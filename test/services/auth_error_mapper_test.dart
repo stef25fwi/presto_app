@@ -24,6 +24,14 @@ void main() {
           'Ce moyen de connexion est déjà utilisé par un autre compte.',
       'operation-not-allowed':
           'Cette méthode de connexion n’est pas encore activée.',
+      'invalid-phone-number':
+          'Numéro de téléphone invalide. Vérifie le format (ex : +33612345678).',
+      'invalid-verification-code':
+          'Code incorrect. Vérifie les chiffres reçus par SMS.',
+      'invalid-verification-id': 'La demande a expiré. Renvoie un nouveau code.',
+      'session-expired': 'La demande a expiré. Renvoie un nouveau code.',
+      'missing-verification-code': 'Saisis le code reçu par SMS.',
+      'quota-exceeded': 'Trop de SMS envoyés. Réessaie plus tard.',
     };
 
     for (final entry in expectedMessages.entries) {

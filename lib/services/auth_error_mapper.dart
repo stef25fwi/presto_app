@@ -27,6 +27,17 @@ abstract final class AuthErrorMapper {
           return 'Ce moyen de connexion est déjà utilisé par un autre compte.';
         case 'operation-not-allowed':
           return 'Cette méthode de connexion n’est pas encore activée.';
+        case 'invalid-phone-number':
+          return 'Numéro de téléphone invalide. Vérifie le format (ex : +33612345678).';
+        case 'invalid-verification-code':
+          return 'Code incorrect. Vérifie les chiffres reçus par SMS.';
+        case 'invalid-verification-id':
+        case 'session-expired':
+          return 'La demande a expiré. Renvoie un nouveau code.';
+        case 'missing-verification-code':
+          return 'Saisis le code reçu par SMS.';
+        case 'quota-exceeded':
+          return 'Trop de SMS envoyés. Réessaie plus tard.';
         default:
           return 'Erreur d’authentification : ${error.code}';
       }
