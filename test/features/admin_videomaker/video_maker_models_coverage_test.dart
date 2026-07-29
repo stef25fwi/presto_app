@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:presto_app/features/admin_videomaker/video_maker_models.dart';
@@ -55,31 +53,13 @@ void main() {
 
   test('image MIME type prefers metadata then file extension fallbacks', () {
     expect(
-      imageMimeTypeFor(
-        XFile.fromData(
-          Uint8List(0),
-          name: 'photo.unknown',
-          mimeType: ' IMAGE/PNG ',
-        ),
-      ),
+      imageMimeTypeFor(XFile('/tmp/photo.unknown', mimeType: ' IMAGE/PNG ')),
       'image/png',
     );
-    expect(
-      imageMimeTypeFor(XFile.fromData(Uint8List(0), name: 'photo.WEBP')),
-      'image/webp',
-    );
-    expect(
-      imageMimeTypeFor(XFile.fromData(Uint8List(0), name: 'photo.heic')),
-      'image/heic',
-    );
-    expect(
-      imageMimeTypeFor(XFile.fromData(Uint8List(0), name: 'photo.heif')),
-      'image/heif',
-    );
-    expect(
-      imageMimeTypeFor(XFile.fromData(Uint8List(0), name: 'photo.bin')),
-      'image/jpeg',
-    );
+    expect(imageMimeTypeFor(XFile('/tmp/photo.WEBP')), 'image/webp');
+    expect(imageMimeTypeFor(XFile('/tmp/photo.heic')), 'image/heic');
+    expect(imageMimeTypeFor(XFile('/tmp/photo.heif')), 'image/heif');
+    expect(imageMimeTypeFor(XFile('/tmp/photo.bin')), 'image/jpeg');
   });
 
   test('stringMap normalizes keys and formatters cover unit thresholds', () {
