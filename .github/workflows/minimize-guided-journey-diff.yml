@@ -1,0 +1,38 @@
+name: Minimize guided journey diff
+
+on:
+  push:
+    branches:
+      - fix/guided-journey-clean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: minimize-guided-journey-diff
+  cancel-in-progress: true
+
+jobs:
+  minimize:
+    if: ${{ !contains(github.event.head_commit.message, '[guided-diff-minimized]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/guided-journey-clean
+          fetch-depth: 0
+
+      - name: Fetch current main
+        run: git fetch origin main
+
+      - name: Restore and patch only integration lines
+        run: python3 tools/recover_guided_journey.py
+
+      - name: Commit minimized diff
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "[guided-diff-minimized] fix(toolbox): keep guided integration diff minimal"
+          git push origin HEAD:fix/guided-journey-clean
