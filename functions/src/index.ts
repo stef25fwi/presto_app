@@ -128,7 +128,11 @@ export { reportClientMonitoringEvent } from "./modules/monitoring/callables";
 export { onSupportTicketCreated, onSupportTicketReplied } from "./modules/support/triggers";
 export { onReportCreated, onReportUpdated } from "./modules/moderation/triggers";
 export { moderateNewOffer } from "./modules/moderation/moderate_new_offer";
-export { generatePaymentInfoAudio } from "./modules/admin/callables";
+export {
+  generatePaymentInfoAudio,
+  generatePaymentInfoAudioDraft,
+  publishPaymentInfoAudioDraft,
+} from "./modules/admin/payment_info_audio";
 export {
   adminGenerateVideo,
   adminListGeneratedVideos,
@@ -184,11 +188,3 @@ export { purgeOldEmailWebhooks, purgeOldEmailLogs, syncEmailAnalytics } from "./
 
 export { verifySiret } from "./modules/pro/verifySiret";
 export { preVerifySiret } from "./modules/pro/preVerifySiret";
-
-const paymentInfoAudioDraftWorkflowExports = require("../payment_info_audio_pipeline");
-
-export const generatePaymentInfoAudioDraft =
-  paymentInfoAudioDraftWorkflowExports.generatePaymentInfoAudioDraft;
-
-export const publishPaymentInfoAudioDraft =
-  paymentInfoAudioDraftWorkflowExports.publishPaymentInfoAudioDraft;
