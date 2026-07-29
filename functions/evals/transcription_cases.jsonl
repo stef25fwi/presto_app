@@ -1,0 +1,3 @@
+{"id":"baie-mahault-gardening","audio":"media/transcription/baie-mahault-gardening.webm","language":"fr","expectedText":"Je cherche quelqu'un pour tondre mon jardin à Baie-Mahault samedi matin.","entities":["Baie-Mahault","jardin","samedi matin"]}
+{"id":"les-abymes-plumbing","audio":"media/transcription/les-abymes-plumbing.m4a","language":"fr","expectedText":"Besoin d'un plombier aux Abymes pour réparer une fuite sous l'évier.","entities":["Les Abymes","plombier","fuite"]}
+{"id":"fort-de-france-painting","audio":"media/transcription/fort-de-france-painting.wav","language":"fr","expectedText":"Je recherche une personne pour repeindre une chambre à Fort-de-France.","entities":["Fort-de-France","repeindre","chambre"]}
