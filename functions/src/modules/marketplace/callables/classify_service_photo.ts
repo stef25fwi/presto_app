@@ -17,22 +17,20 @@ import {
   logOpenAiFailure,
   logOpenAiSuccess,
 } from "../../ai/openai_runtime";
+import { downloadVerifiedRemoteImage } from "../../ai/remote_media";
 
 if (admin.apps.length === 0) {
   admin.initializeApp();
 }
 
 const MODEL = process.env.OPENAI_VISION_MODEL?.trim() || "gpt-4o-mini-2024-07-18";
-const PROMPT_VERSION = "ilipresto-trade-photo-v2";
-const SCHEMA_VERSION = "ilipresto-trade-photo-schema-v2";
+const PROMPT_VERSION = "ilipresto-trade-photo-v3";
+const SCHEMA_VERSION = "ilipresto-trade-photo-schema-v3";
+export const TRADE_TAXONOMY_VERSION = "ilipresto-trade-taxonomy-v2";
 const MAX_IMAGE_BYTES = 6 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const ALLOWED_IMAGE_HOSTS = new Set([
-  "firebasestorage.googleapis.com",
-  "storage.googleapis.com",
-]);
 
-const VALID_TRADE_KEYS = [
+export const VALID_TRADE_KEYS = [
   "serveur", "barman", "plongeur", "commis_cuisine", "cuisinier",
   "snack", "food_truck", "traiteur", "banquet",
   "plombier", "electricien", "montage_meubles", "luminaire", "etagere",
@@ -90,23 +88,11 @@ N'invente pas de contexte absent de l'image.`;
 export interface ClassifyServicePhotoResult extends Record<string, unknown> {
   metier: string | null;
   confidence: number;
+  taxonomyVersion: string;
 }
 
 function normalizeMimeType(value: unknown): string {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
-}
-
-function validateImageUrl(value: string): string {
-  let parsed: URL;
-  try {
-    parsed = new URL(value);
-  } catch {
-    throw new HttpsError("invalid-argument", "IMAGE_URL_INVALID");
-  }
-  if (parsed.protocol !== "https:" || !ALLOWED_IMAGE_HOSTS.has(parsed.hostname)) {
-    throw new HttpsError("invalid-argument", "IMAGE_URL_NOT_ALLOWED");
-  }
-  return parsed.toString();
 }
 
 function validateBase64(value: string, mimeType: string): string {
@@ -119,6 +105,13 @@ function validateBase64(value: string, mimeType: string): string {
     throw new HttpsError("invalid-argument", "IMAGE_EMPTY");
   }
   if (estimatedBytes > MAX_IMAGE_BYTES) {
+    throw new HttpsError("invalid-argument", "IMAGE_TOO_LARGE");
+  }
+  const actualBytes = Buffer.from(normalized, "base64").length;
+  if (actualBytes <= 0) {
+    throw new HttpsError("invalid-argument", "IMAGE_EMPTY");
+  }
+  if (actualBytes > MAX_IMAGE_BYTES) {
     throw new HttpsError("invalid-argument", "IMAGE_TOO_LARGE");
   }
   return normalized;
@@ -198,7 +191,7 @@ export const classifyServicePhoto = onCall(
 
     const imageUrl =
       typeof request.data?.imageUrl === "string" && request.data.imageUrl.trim()
-        ? validateImageUrl(request.data.imageUrl.trim())
+        ? request.data.imageUrl.trim()
         : null;
     const rawBase64 =
       typeof request.data?.imageBase64 === "string"
@@ -217,11 +210,12 @@ export const classifyServicePhoto = onCall(
       mimeType,
       MODEL,
       PROMPT_VERSION,
+      TRADE_TAXONOMY_VERSION,
     ]);
 
     const operation = await runIdempotentOperation<ClassifyServicePhotoResult>({
       uid,
-      operation: "classify_service_photo_v2",
+      operation: "classify_service_photo_v3",
       requestId,
       ttlMs: 7 * 24 * 60 * 60 * 1000,
       execute: async () => {
@@ -237,6 +231,15 @@ export const classifyServicePhoto = onCall(
         };
 
         try {
+          const verifiedRemote = imageUrl
+            ? await downloadVerifiedRemoteImage({
+                url: imageUrl,
+                expectedBucket: admin.storage().bucket().name,
+                maxBytes: MAX_IMAGE_BYTES,
+              })
+            : null;
+          const imageContentUrl =
+            verifiedRemote?.dataUrl || `data:${mimeType};base64,${imageBase64}`;
           const response = await client.chat.completions.create(
             {
               model: MODEL,
@@ -251,7 +254,7 @@ export const classifyServicePhoto = onCall(
                     {
                       type: "image_url",
                       image_url: {
-                        url: imageUrl || `data:${mimeType};base64,${imageBase64}`,
+                        url: imageContentUrl,
                         detail: "low",
                       },
                     },
@@ -284,11 +287,18 @@ export const classifyServicePhoto = onCall(
             : 0;
           logger.info("classifyServicePhoto", {
             uid,
+            requestId,
             metier,
             confidence,
             cacheHit: false,
+            taxonomyVersion: TRADE_TAXONOMY_VERSION,
+            remoteSizeBytes: verifiedRemote?.sizeBytes ?? null,
           });
-          return { metier, confidence };
+          return {
+            metier,
+            confidence,
+            taxonomyVersion: TRADE_TAXONOMY_VERSION,
+          };
         } catch (error) {
           if (!(error instanceof HttpsError)) {
             logOpenAiFailure(context, error);
