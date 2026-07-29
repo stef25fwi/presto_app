@@ -1,0 +1,3 @@
+{"id":"plumber-sink","image":"media/vision/plumber-sink.jpg","expectedMetier":"plombier"}
+{"id":"garden-mower","image":"media/vision/garden-mower.jpg","expectedMetier":"tonte"}
+{"id":"ambiguous-landscape","image":"media/vision/ambiguous-landscape.jpg","expectedMetier":null}
