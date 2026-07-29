@@ -15,10 +15,6 @@ export { syncMyEmailVerification } from "./modules/auth/email_verification_sync"
 export {
   placesAutocomplete,
   placesDetails,
-  generateOfferDraft,
-  openAiExtractListingFields,
-  openAiTranscribeListingAudio,
-  openAiExtractListingFieldsFromAudio,
   adminGetAccessStatus,
   getMyAdminAccessStatus,
   adminGetUserStats,
@@ -27,6 +23,18 @@ export {
   adminGetMicroIaConfig,
   adminSetMicroIaConfig,
 } from "./legacy/callables_compat";
+export {
+  generateOfferDraft,
+  openAiExtractListingFields,
+  openAiTranscribeListingAudio,
+  openAiExtractListingFieldsFromAudio,
+} from "./modules/ai/callables";
+export { microIaProcessAudioV2 } from "./modules/ai/micro_ia_callable";
+export { adminGetAiMetrics } from "./modules/ai/ai_metrics";
+export {
+  purgeExpiredAiAudio,
+  purgeExpiredAiOperationalData,
+} from "./modules/ai/operational_cleanup";
 export {
   requestPasswordResetEmail,
   requestEmailVerificationEmail,
@@ -122,7 +130,11 @@ export { reportClientMonitoringEvent } from "./modules/monitoring/callables";
 export { onSupportTicketCreated, onSupportTicketReplied } from "./modules/support/triggers";
 export { onReportCreated, onReportUpdated } from "./modules/moderation/triggers";
 export { moderateNewOffer } from "./modules/moderation/moderate_new_offer";
-export { generatePaymentInfoAudio } from "./modules/admin/callables";
+export {
+  generatePaymentInfoAudio,
+  generatePaymentInfoAudioDraft,
+  publishPaymentInfoAudioDraft,
+} from "./modules/admin/payment_info_audio";
 export {
   adminGenerateVideo,
   adminListGeneratedVideos,
@@ -178,11 +190,3 @@ export { purgeOldEmailWebhooks, purgeOldEmailLogs, syncEmailAnalytics } from "./
 
 export { verifySiret } from "./modules/pro/verifySiret";
 export { preVerifySiret } from "./modules/pro/preVerifySiret";
-
-const paymentInfoAudioDraftWorkflowExports = require("../payment_info_audio_pipeline");
-
-export const generatePaymentInfoAudioDraft =
-  paymentInfoAudioDraftWorkflowExports.generatePaymentInfoAudioDraft;
-
-export const publishPaymentInfoAudioDraft =
-  paymentInfoAudioDraftWorkflowExports.publishPaymentInfoAudioDraft;

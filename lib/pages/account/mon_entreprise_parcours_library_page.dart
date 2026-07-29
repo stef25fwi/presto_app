@@ -14,8 +14,31 @@ const _text = Color(0xFF111827);
 const _muted = Color(0xFF6B7280);
 const _border = Color(0xFFE5E7EB);
 
+typedef JourneyLibraryLoader = Future<List<SavedJourneyRecord>> Function();
+typedef JourneyLibraryExporter = Future<bool> Function(
+  Map<String, dynamic> snapshot,
+);
+typedef JourneyLibraryDeleter = Future<void> Function(String journeyId);
+typedef JourneyDestinationBuilder = Widget Function();
+typedef JourneySummaryBuilder = Widget Function(Map<String, dynamic> snapshot);
+
 class MonEntrepriseParcoursLibraryPage extends StatefulWidget {
-  const MonEntrepriseParcoursLibraryPage({super.key});
+  const MonEntrepriseParcoursLibraryPage({
+    super.key,
+    this.loadLibrary,
+    this.exportJourney,
+    this.deleteJourney,
+    this.newJourneyBuilder,
+    this.summaryBuilder,
+    this.showCredits = true,
+  });
+
+  final JourneyLibraryLoader? loadLibrary;
+  final JourneyLibraryExporter? exportJourney;
+  final JourneyLibraryDeleter? deleteJourney;
+  final JourneyDestinationBuilder? newJourneyBuilder;
+  final JourneySummaryBuilder? summaryBuilder;
+  final bool showCredits;
 
   @override
   State<MonEntrepriseParcoursLibraryPage> createState() =>
@@ -32,6 +55,22 @@ class _MonEntrepriseParcoursLibraryPageState
   String? _busyId;
   List<SavedJourneyRecord> _journeys = const [];
 
+  Future<List<SavedJourneyRecord>> _loadLibrary() =>
+      (widget.loadLibrary ?? _storage.loadLibrary)();
+
+  Future<bool> _exportJourney(Map<String, dynamic> snapshot) =>
+      (widget.exportJourney ?? _pdf.downloadJourneyPdf)(snapshot);
+
+  Future<void> _deleteJourney(String id) =>
+      (widget.deleteJourney ?? _storage.deleteLibraryJourney)(id);
+
+  Widget _newJourneyPage() =>
+      widget.newJourneyBuilder?.call() ?? const ToolboxJeMeLancePage();
+
+  Widget _summaryPage(Map<String, dynamic> snapshot) =>
+      widget.summaryBuilder?.call(snapshot) ??
+      SavedJourneySummaryPage(snapshot: snapshot);
+
   @override
   void initState() {
     super.initState();
@@ -41,7 +80,7 @@ class _MonEntrepriseParcoursLibraryPageState
   Future<void> _load() async {
     if (mounted) setState(() => _loading = true);
     try {
-      final journeys = await _storage.loadLibrary();
+      final journeys = await _loadLibrary();
       if (!mounted) return;
       setState(() {
         _journeys = journeys;
@@ -74,13 +113,15 @@ class _MonEntrepriseParcoursLibraryPageState
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
                 children: [
-                  const SubscriptionCreditsInlineBadges(
-                    kinds: [
-                      SubscriptionCreditKind.journeys,
-                      SubscriptionCreditKind.pdf,
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                  if (widget.showCredits) ...[
+                    const SubscriptionCreditsInlineBadges(
+                      kinds: [
+                        SubscriptionCreditKind.journeys,
+                        SubscriptionCreditKind.pdf,
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   _LibraryHeader(count: _journeys.length),
                   const SizedBox(height: 12),
                   if (_error != null)
@@ -117,11 +158,7 @@ class _MonEntrepriseParcoursLibraryPageState
                       minimumSize: const Size.fromHeight(58),
                     ),
                     onPressed: () => Navigator.of(context)
-                        .push(
-                          MaterialPageRoute(
-                            builder: (_) => const ToolboxJeMeLancePage(),
-                          ),
-                        )
+                        .push(MaterialPageRoute(builder: (_) => _newJourneyPage()))
                         .then((_) => _load()),
                     icon: const Icon(Icons.add_road_rounded),
                     label: const Text(
@@ -137,9 +174,7 @@ class _MonEntrepriseParcoursLibraryPageState
 
   void _open(Map<String, dynamic> snapshot) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => SavedJourneySummaryPage(snapshot: snapshot),
-      ),
+      MaterialPageRoute(builder: (_) => _summaryPage(snapshot)),
     );
   }
 
@@ -147,7 +182,7 @@ class _MonEntrepriseParcoursLibraryPageState
     if (_busyId != null) return;
     setState(() => _busyId = journey.id);
     try {
-      final ok = await _pdf.downloadJourneyPdf(journey.snapshot);
+      final ok = await _exportJourney(journey.snapshot);
       if (ok && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('PDF généré et téléchargé.')),
@@ -203,7 +238,7 @@ class _MonEntrepriseParcoursLibraryPageState
     if (confirmed != true || _busyId != null) return;
     setState(() => _busyId = journey.id);
     try {
-      await _storage.deleteLibraryJourney(journey.id);
+      await _deleteJourney(journey.id);
       await _load();
     } finally {
       if (mounted) setState(() => _busyId = null);
@@ -212,8 +247,8 @@ class _MonEntrepriseParcoursLibraryPageState
 }
 
 class _LibraryHeader extends StatelessWidget {
-  final int count;
   const _LibraryHeader({required this.count});
+  final int count;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -232,10 +267,7 @@ class _LibraryHeader extends StatelessWidget {
                 ),
                 Text(
                   'Synchronisés sur tous vos appareils.',
-                  style: TextStyle(
-                    color: _muted,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(color: _muted, fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -248,10 +280,7 @@ class _LibraryHeader extends StatelessWidget {
             ),
             child: Text(
               '$count',
-              style: const TextStyle(
-                color: _blue,
-                fontWeight: FontWeight.w900,
-              ),
+              style: const TextStyle(color: _blue, fontWeight: FontWeight.w900),
             ),
           ),
         ],
@@ -259,12 +288,6 @@ class _LibraryHeader extends StatelessWidget {
 }
 
 class _JourneyTile extends StatelessWidget {
-  final SavedJourneyRecord journey;
-  final bool busy;
-  final VoidCallback onOpen;
-  final VoidCallback onPdf;
-  final VoidCallback onDelete;
-
   const _JourneyTile({
     required this.journey,
     required this.busy,
@@ -272,6 +295,12 @@ class _JourneyTile extends StatelessWidget {
     required this.onPdf,
     required this.onDelete,
   });
+
+  final SavedJourneyRecord journey;
+  final bool busy;
+  final VoidCallback onOpen;
+  final VoidCallback onPdf;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -363,10 +392,10 @@ class _JourneyTile extends StatelessWidget {
 }
 
 class _MessageCard extends StatelessWidget {
+  const _MessageCard({required this.icon, required this.message, this.action});
   final IconData icon;
   final String message;
   final Widget? action;
-  const _MessageCard({required this.icon, required this.message, this.action});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -383,10 +412,7 @@ class _MessageCard extends StatelessWidget {
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(
-                  color: _muted,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: const TextStyle(color: _muted, fontWeight: FontWeight.w600),
               ),
             ),
             if (action != null) action!,

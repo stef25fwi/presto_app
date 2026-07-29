@@ -26,6 +26,7 @@ import 'package:flutter/services.dart';
 import 'package:presto_app/features/subscriptions/journey_entitlements_service.dart';
 import 'package:presto_app/features/subscriptions/subscription_action_placeholders.dart';
 import 'package:presto_app/pages/account_page.dart';
+import 'package:presto_app/pages/account/guided_journey_page.dart';
 import 'package:presto_app/services/journey_local_storage_service.dart';
 import 'package:presto_app/services/journey_pdf_export_service.dart';
 import 'package:presto_app/services/parcours_fiches_service.dart';
@@ -1927,7 +1928,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => _JourneySummaryPage(
+        builder: (_) => GuidedJourneyPage(
           projectLabel: _projectCtrl.text.trim(),
           region: _region,
           currentStatus: _normalizedSituation,
@@ -6708,7 +6709,7 @@ class _ToolboxMyParcoursPageState extends State<ToolboxMyParcoursPage> {
       );
     }
 
-    return _JourneySummaryPage(
+    return GuidedJourneyPage(
       projectLabel: _projectLabel,
       region: _region,
       currentStatus: _currentStatus,

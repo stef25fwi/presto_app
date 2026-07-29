@@ -1,0 +1,44 @@
+/// Generated mirror of `shared/listing_taxonomy_v2.json`.
+///
+/// Run `npm --prefix functions run taxonomy:check` after any taxonomy change.
+abstract final class ListingTaxonomy {
+  static const String version = 'ilipresto-ai-taxonomy-v2';
+
+  static const List<String> listingCategories = <String>[
+    'Jardinage',
+    'Bricolage / Travaux',
+    'Aide à domicile',
+    'Restauration / Extra',
+    'Événementiel / DJ',
+    "Garde d'enfants",
+    'Cours & soutien',
+    'Peinture',
+    "Main-d'œuvre",
+    'Autre',
+  ];
+
+  static const List<String> tradeKeys = <String>[
+    'serveur', 'barman', 'plongeur', 'commis_cuisine', 'cuisinier',
+    'snack', 'food_truck', 'traiteur', 'banquet',
+    'plombier', 'electricien', 'montage_meubles', 'luminaire', 'etagere',
+    'electromenager', 'carreleur', 'plaquiste', 'portail', 'installation_tv',
+    'menage', 'nettoyage_grand', 'repassage', 'courses', 'cuisine_domicile',
+    'aide_personne_agee', 'aide_administrative', 'gardiennage',
+    'nettoyage_demenagement', 'rangement',
+    'baby_sitter', 'sortie_ecole', 'garde_periscolaire', 'garde_weekend',
+    'garde_vacances', 'garde_domicile',
+    'dj', 'dj_mariage', 'sono', 'animateur', 'photographe', 'videaste',
+    'decoration_salle', 'organisation_evenement',
+    'soutien_primaire', 'soutien_college', 'soutien_lycee', 'maths_physique',
+    'francais_langues', 'anglais', 'espagnol', 'informatique_cours',
+    'musique', 'coaching_sport', 'concours',
+    'tonte', 'taille_haies', 'debroussaillage', 'desherbage', 'elagage',
+    'plantation', 'potager',
+    'peintre', 'peinture_facade', 'peinture_portail', 'enduit',
+    'renovation_locative',
+    'demenageur', 'manutention', 'vigile', 'distribution_flyers',
+    'inventaire', 'debarras', 'stand',
+    'informatique_depannage', 'reseaux_sociaux', 'nettoyage_vehicule',
+    'coaching_perso', 'traduction', 'pet_sitting', 'couture', 'shooting_photo',
+  ];
+}

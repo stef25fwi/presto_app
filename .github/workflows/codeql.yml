@@ -3,6 +3,17 @@ name: CodeQL
 on:
   pull_request:
     branches: [main]
+    paths:
+      - 'functions/**'
+      - 'tools/**/*.js'
+      - 'tools/**/*.mjs'
+      - 'tools/**/*.cjs'
+      - 'tools/**/*.ts'
+      - 'load-tests/**/*.js'
+      - 'load-tests/**/*.mjs'
+      - 'load-tests/**/*.cjs'
+      - 'load-tests/**/*.ts'
+      - '.github/codeql/**'
   push:
     branches: [main]
   schedule:

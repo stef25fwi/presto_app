@@ -1,0 +1,136 @@
+name: AI evaluations
+
+on:
+  pull_request:
+    paths:
+      - 'functions/evals/**'
+      - 'functions/scripts/openai_*eval.mjs'
+      - 'functions/scripts/ai_eval_metrics.mjs'
+      - 'functions/scripts/generate_ai_eval_media.mjs'
+      - 'functions/src/modules/ai/**'
+      - 'functions/src/modules/marketplace/callables/classify_service_photo.ts'
+      - 'shared/listing_taxonomy_v2.json'
+      - 'lib/config/listing_taxonomy.dart'
+      - 'tools/check_listing_taxonomy_sync.mjs'
+      - '.github/workflows/ai-evaluations.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'functions/evals/**'
+      - 'functions/scripts/openai_*eval.mjs'
+      - 'functions/scripts/ai_eval_metrics.mjs'
+      - 'functions/scripts/generate_ai_eval_media.mjs'
+      - 'functions/src/modules/ai/**'
+      - 'functions/src/modules/marketplace/callables/classify_service_photo.ts'
+      - 'shared/listing_taxonomy_v2.json'
+      - 'lib/config/listing_taxonomy.dart'
+      - 'tools/check_listing_taxonomy_sync.mjs'
+      - '.github/workflows/ai-evaluations.yml'
+  workflow_dispatch:
+    inputs:
+      live:
+        description: 'Exécuter les évaluations OpenAI réelles'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install synthetic speech dependency
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends espeak-ng
+
+      - name: Install Functions dependencies
+        run: npm --prefix functions ci
+
+      - name: Build and test Functions
+        run: npm --prefix functions run ci
+
+      - name: Generate synthetic privacy-safe evaluation media
+        run: npm --prefix functions run ai:eval:media
+
+      - name: Validate evaluation manifests
+        run: |
+          npm --prefix functions run ai:eval:transcription:dry
+          npm --prefix functions run ai:eval:vision:dry
+          npm --prefix functions run ai:prompt:tokens
+
+  live:
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.live == true)
+    needs: validate
+    environment: recaptcha
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Install synthetic speech dependency
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends espeak-ng
+
+      - name: Install Functions dependencies and generate media
+        run: |
+          npm --prefix functions ci
+          npm --prefix functions run ai:eval:media
+
+      - name: Load OpenAI key from Secret Manager
+        shell: bash
+        run: |
+          set -euo pipefail
+          key="$(gcloud secrets versions access latest --secret=OPENAI_API_KEY --project=presto-app-74abe)"
+          test -n "$key"
+          echo "::add-mask::$key"
+          echo "OPENAI_API_KEY=$key" >> "$GITHUB_ENV"
+
+      - name: Run live OpenAI evaluations
+        env:
+          AI_EVAL_ENFORCE: 'true'
+          OPENAI_TRANSCRIPTION_EUR_PER_MINUTE: ${{ vars.OPENAI_TRANSCRIPTION_EUR_PER_MINUTE }}
+          OPENAI_INPUT_EUR_PER_MILLION_TOKENS: ${{ vars.OPENAI_INPUT_EUR_PER_MILLION_TOKENS }}
+          OPENAI_OUTPUT_EUR_PER_MILLION_TOKENS: ${{ vars.OPENAI_OUTPUT_EUR_PER_MILLION_TOKENS }}
+        run: |
+          mkdir -p quality_reports/ai
+          npm --prefix functions run ai:eval:transcription -- --output ../quality_reports/ai/transcription.json
+          npm --prefix functions run ai:eval:vision -- --output ../quality_reports/ai/vision.json
+
+      - name: Archive live evaluation reports
+        uses: actions/upload-artifact@v7
+        with:
+          name: ai-evaluation-reports-${{ github.sha }}
+          path: quality_reports/ai
+          if-no-files-found: error
+          retention-days: 90
