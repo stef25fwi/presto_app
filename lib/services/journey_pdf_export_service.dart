@@ -84,6 +84,7 @@ class JourneyPdfExportService {
     _appendTimeline(widgets, 'Aides possibles', journey['aides']);
     _appendTimeline(widgets, 'Plan d’action 30 jours', journey['plan30']);
     _appendTimeline(widgets, 'Étapes détaillées', journey['steps']);
+    _appendMap(widgets, 'Progression guidée', journey['guidedProgress']);
 
     document.addPage(
       pw.MultiPage(
