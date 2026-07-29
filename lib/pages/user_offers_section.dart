@@ -27,7 +27,6 @@ import '../widgets/phone_input_field.dart';
 
 import '../main.dart'
     show buildOfferDetailsOffer, kOfferDeleteReasonFoundOnIliPresto;
-import 'package:presto_app/widgets/deleted_user_profile.dart';
 
 // 🔥 SECTION "Mes annonces publiées" dans Mon compte
 class UserOffersSection extends StatefulWidget {
@@ -3441,30 +3440,4 @@ class _QuerySnapshotAdapter implements QuerySnapshot<Map<String, dynamic>> {
 
   @override
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-bool _isDeletedUserMap(Map<String, dynamic>? data) {
-  return DeletedUserProfile.isDeletedMap(data);
-}
-
-String _deletedAwareDisplayName(
-  Map<String, dynamic>? data,
-  String? fallbackName,
-) {
-  return DeletedUserProfile.displayName(
-    isDeleted: _isDeletedUserMap(data),
-    fallbackName: fallbackName,
-  );
-}
-
-Widget _deletedAwareAvatar({
-  required Map<String, dynamic>? data,
-  required Widget fallback,
-  double radius = 22,
-}) {
-  if (_isDeletedUserMap(data)) {
-    return DeletedUserAvatar(radius: radius);
-  }
-
-  return fallback;
 }

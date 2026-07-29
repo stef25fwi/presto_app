@@ -10,8 +10,11 @@ export { onUserCreated, onUserUpdated } from "./modules/auth/triggers";
 export { onAuthUserCreated } from "./modules/auth/on_auth_user_created";
 export { onUserRolesChanged } from "./modules/auth/role_claims_sync";
 export { requestAccountDeletion } from "./modules/auth/account_deletion";
-export { confirmPhoneVerified } from "./modules/auth/phone_verification";
 export { syncMyEmailVerification } from "./modules/auth/email_verification_sync";
+// Doit rester après syncMyEmailVerification : tools/apply_auth_client_hardening.mjs
+// vérifie l'adjacence de ces deux exports pour rester idempotent, et réinsère un
+// doublon si une ligne s'intercale.
+export { confirmPhoneVerified } from "./modules/auth/phone_verification";
 export {
   placesAutocomplete,
   placesDetails,

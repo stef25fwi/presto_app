@@ -45,9 +45,8 @@ import 'pages/account/change_password_page.dart';
 import 'pages/account/delete_account_page.dart';
 import 'services/app_monitoring_service.dart';
 import 'services/cookie_consent_service.dart';
-import 'widgets/cookie_consent_banner.dart';
+import 'app/presto_app_chrome.dart';
 import 'core/connectivity/connectivity_status.dart';
-import 'widgets/offline_banner.dart';
 import 'core/localization/locale_controller.dart';
 import 'l10n/app_localizations.dart';
 
@@ -1002,61 +1001,12 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
           if (!mounted) return;
           _signalNavigatorReady();
         });
-        return ListenableBuilder(
-          listenable: typographySettings,
-          builder: (ctx, __) {
-            final base = Theme.of(ctx);
-            final delta = typographySettings.fontWeightDelta;
-            final withFamily =
-                base.textTheme.apply(fontFamily: typographySettings.fontFamily);
-            final withWeight = shiftTextThemeWeight(withFamily, delta);
-            final primaryWithFamily = base.primaryTextTheme
-                .apply(fontFamily: typographySettings.fontFamily);
-            final primaryWithWeight =
-                shiftTextThemeWeight(primaryWithFamily, delta);
-            return Theme(
-              data: base.copyWith(
-                textTheme: withWeight,
-                primaryTextTheme: primaryWithWeight,
-                appBarTheme: base.appBarTheme.copyWith(
-                  titleTextStyle: base.appBarTheme.titleTextStyle?.copyWith(
-                    fontFamily: typographySettings.fontFamily,
-                  ),
-                ),
-              ),
-              child: MediaQuery(
-                data: MediaQuery.of(ctx).copyWith(
-                  textScaler: TextScaler.linear(typographySettings.scale),
-                ),
-                child: Stack(
-                  children: [
-                    AdminWebDebugPanel(
-                      child: _PrestoResponsiveFrame(
-                        child: child ?? const SizedBox.shrink(),
-                      ),
-                    ),
-                    const Positioned.fill(
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: CookieConsentBanner(),
-                      ),
-                    ),
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: ListenableBuilder(
-                        listenable: ConnectivityStatus.instance,
-                        builder: (_, __) => OfflineBanner(
-                          isVisible: !ConnectivityStatus.instance.isOnline,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
+        return PrestoAppChrome(
+          child: AdminWebDebugPanel(
+            child: _PrestoResponsiveFrame(
+              child: child ?? const SizedBox.shrink(),
+            ),
+          ),
         );
       },
       onGenerateInitialRoutes: _onGenerateInitialRoutes,
