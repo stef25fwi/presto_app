@@ -22,3 +22,7 @@ Les rapports générés sont :
 Le seuil de couverture démarre au niveau réellement mesuré, puis monte par paliers jusqu’à 70 %. Les modules critiques — authentification, abonnements, paiement, publication, messagerie et administration — visent 85 % minimum.
 
 Un seuil ne doit jamais être abaissé pour faire passer une PR. Toute exception doit être documentée dans un ADR et limitée dans le temps.
+
+## Derniers audits
+
+- [Audit complet — 2026-07-29](audit-complet-2026-07-29.md)
