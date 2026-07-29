@@ -3,8 +3,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 async function read(relativePath) {
   return fs.readFile(path.join(root, relativePath), "utf8");
@@ -19,27 +20,35 @@ function assertContainsAll(label, source, values) {
 
 async function main() {
   const manifest = JSON.parse(await read("shared/listing_taxonomy_v2.json"));
-  const backend = await read("functions/src/modules/ai/listing_taxonomy.ts");
-  const vision = await read(
+  const listing = await read("functions/src/modules/ai/listing_taxonomy.ts");
+  const trade = await read("functions/src/modules/ai/trade_taxonomy.ts");
+  const classifier = await read(
     "functions/src/modules/marketplace/callables/classify_service_photo.ts",
   );
   const flutter = await read("lib/config/listing_taxonomy.dart");
 
-  if (!manifest.version || !Array.isArray(manifest.listingCategories)) {
+  if (
+    !manifest.version ||
+    !Array.isArray(manifest.listingCategories) ||
+    !Array.isArray(manifest.tradeKeys)
+  ) {
     throw new Error("Invalid canonical taxonomy manifest");
   }
-  if (!backend.includes(manifest.version)) {
-    throw new Error("Backend listing taxonomy version is not canonical");
+  for (const [label, source] of [
+    ["Backend listing taxonomy", listing],
+    ["Backend trade taxonomy", trade],
+    ["Flutter taxonomy", flutter],
+  ]) {
+    if (!source.includes(manifest.version)) {
+      throw new Error(`${label} version is not canonical`);
+    }
   }
-  if (!vision.includes(manifest.version)) {
-    throw new Error("Vision taxonomy version is not canonical");
-  }
-  if (!flutter.includes(manifest.version)) {
-    throw new Error("Flutter taxonomy version is not canonical");
+  if (!classifier.includes("TRADE_TAXONOMY_VERSION")) {
+    throw new Error("Vision classifier does not expose canonical taxonomy version");
   }
 
-  assertContainsAll("Backend listing taxonomy", backend, manifest.listingCategories);
-  assertContainsAll("Vision taxonomy", vision, manifest.tradeKeys);
+  assertContainsAll("Backend listing taxonomy", listing, manifest.listingCategories);
+  assertContainsAll("Backend trade taxonomy", trade, manifest.tradeKeys);
   assertContainsAll("Flutter listing taxonomy", flutter, manifest.listingCategories);
   assertContainsAll("Flutter trade taxonomy", flutter, manifest.tradeKeys);
 
