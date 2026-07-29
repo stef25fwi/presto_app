@@ -63,9 +63,7 @@ async function createFirebaseTokens() {
 function run(command, args) {
   const result = spawnSync(command, args, { encoding: "utf8" });
   if (result.status !== 0) {
-    throw new Error(
-      `${command} failed (${result.status}): ${result.stderr || result.stdout}`,
-    );
+    throw new Error(`${command} failed (${result.status}): ${result.stderr || result.stdout}`);
   }
 }
 
@@ -91,7 +89,7 @@ async function createSyntheticM4a() {
   return { directory, bytes };
 }
 
-async function callCallable(name, data, tokens) {
+async function callCallableRaw(name, data, tokens) {
   const response = await fetch(
     `https://${region}-${projectId}.cloudfunctions.net/${name}`,
     {
@@ -105,10 +103,37 @@ async function callCallable(name, data, tokens) {
     },
   );
   const payload = await response.json().catch(() => null);
+  return { response, payload };
+}
+
+async function callCallable(name, data, tokens) {
+  const { response, payload } = await callCallableRaw(name, data, tokens);
   if (!response.ok || payload?.error) {
     throw new Error(`${name} failed http=${response.status}: ${JSON.stringify(payload)}`);
   }
   return payload?.result ?? payload?.data ?? payload;
+}
+
+async function forceV2UnavailableThenRecoverWithV1(data, tokens) {
+  const missingName = "microIaProcessAudioV2UnavailableSmoke";
+  const failed = await callCallableRaw(missingName, data, tokens);
+  if (failed.response.ok && !failed.payload?.error) {
+    throw new Error("Forced V2-unavailable scenario unexpectedly succeeded");
+  }
+  const code = String(
+    failed.payload?.error?.status ||
+      failed.payload?.error?.code ||
+      failed.response.status,
+  );
+  const recovered = await callCallable(
+    "microIaProcessAudio",
+    { ...data, clientRequestId: `smoke_v1_recovery_${Date.now()}` },
+    tokens,
+  );
+  if (!extractText(recovered)) {
+    throw new Error("V1 did not recover after the forced V2 unavailable scenario");
+  }
+  return { forcedV2Failure: code, recoveredWithV1: true };
 }
 
 async function assertFunctionsActive() {
@@ -128,24 +153,22 @@ async function assertFunctionsActive() {
   return states;
 }
 
-function assertFallbackContract() {
-  return fs
-    .readFile(
-      path.resolve(process.cwd(), "../lib/features/micro_ia/micro_ia_service.dart"),
-      "utf8",
-    )
-    .then((source) => {
-      const required = [
-        "fallbackToV1Enabled",
-        "_canFallbackToV1",
-        "functionName: 'microIaProcessAudio'",
-        "'clientPipelineSelection': 'v1_fallback'",
-      ];
-      const missing = required.filter((value) => !source.includes(value));
-      if (missing.length) {
-        throw new Error(`Flutter fallback contract missing: ${missing.join(", ")}`);
-      }
-    });
+async function assertFallbackContract() {
+  const source = await fs.readFile(
+    path.resolve(process.cwd(), "../lib/features/micro_ia/micro_ia_service.dart"),
+    "utf8",
+  );
+  const required = [
+    "fallbackToV1Enabled",
+    "_canFallbackToV1",
+    "error.code == 'not-found'",
+    "functionName: 'microIaProcessAudio'",
+    "'clientPipelineSelection': 'v1_fallback'",
+  ];
+  const missing = required.filter((value) => !source.includes(value));
+  if (missing.length) {
+    throw new Error(`Flutter fallback contract missing: ${missing.join(", ")}`);
+  }
 }
 
 function collectSensitiveKeys(value, pathPrefix = "") {
@@ -192,8 +215,7 @@ function logPayload(entry) {
 
 async function verifyStructuredLogs(requestId, sinceIso) {
   for (let attempt = 1; attempt <= 10; attempt += 1) {
-    const entries = await readRecentLogs(sinceIso);
-    const payloads = entries
+    const payloads = (await readRecentLogs(sinceIso))
       .map(logPayload)
       .filter((payload) => payload?.requestId === requestId);
     const success = payloads.find(
@@ -235,16 +257,15 @@ async function main() {
     assertFallbackContract(),
   ]);
   try {
-    const audioBase64 = syntheticAudio.bytes.toString("base64");
-    const v2RequestId = `smoke_v2_${Date.now()}`;
     const commonData = {
-      audioBase64,
+      audioBase64: syntheticAudio.bytes.toString("base64"),
       audioContentType: "audio/mp4",
       languageCode: "fr-FR",
       generateDraft: true,
       draftCity: "Baie-Mahault",
       draftCategory: "Peinture",
     };
+    const v2RequestId = `smoke_v2_${Date.now()}`;
     const v2 = await callCallable(
       "microIaProcessAudioV2",
       { ...commonData, clientRequestId: v2RequestId },
@@ -253,13 +274,10 @@ async function main() {
     if (!extractText(v2)) throw new Error("V2 smoke returned an empty transcript");
     if (!v2?.pipelineVersion) throw new Error("V2 smoke missing pipelineVersion");
 
-    const v1 = await callCallable(
-      "microIaProcessAudio",
-      { ...commonData, clientRequestId: `smoke_v1_${Date.now()}` },
+    const forcedFallback = await forceV2UnavailableThenRecoverWithV1(
+      commonData,
       tokens,
     );
-    if (!extractText(v1)) throw new Error("V1 fallback endpoint returned an empty transcript");
-
     const logProof = await verifyStructuredLogs(v2RequestId, sinceIso);
     console.log(
       JSON.stringify(
@@ -274,10 +292,7 @@ async function main() {
             pipelineVersion: v2.pipelineVersion,
             transcriptLength: extractText(v2).length,
           },
-          v1FallbackEndpoint: {
-            available: true,
-            transcriptLength: extractText(v1).length,
-          },
+          fallback: forcedFallback,
           logs: logProof,
         },
         null,
