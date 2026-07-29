@@ -1,9 +1,9 @@
 import admin from "firebase-admin";
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 import {
-  OPENAI_API_KEY,
   ENFORCE_APP_CHECK,
+  OPENAI_API_KEY,
   PROJECT_REGION,
 } from "../../../config/env";
 import { logger } from "../../../core/logger";
@@ -17,47 +17,20 @@ import {
   logOpenAiFailure,
   logOpenAiSuccess,
 } from "../../ai/openai_runtime";
+import { downloadVerifiedRemoteImage } from "../../ai/remote_media";
+import {
+  TRADE_TAXONOMY_VERSION,
+  VALID_TRADE_KEYS,
+  VALID_TRADE_KEY_SET,
+} from "../../ai/trade_taxonomy";
 
-if (admin.apps.length === 0) {
-  admin.initializeApp();
-}
+if (admin.apps.length === 0) admin.initializeApp();
 
 const MODEL = process.env.OPENAI_VISION_MODEL?.trim() || "gpt-4o-mini-2024-07-18";
-const PROMPT_VERSION = "ilipresto-trade-photo-v2";
-const SCHEMA_VERSION = "ilipresto-trade-photo-schema-v2";
+const PROMPT_VERSION = "ilipresto-trade-photo-v3";
+const SCHEMA_VERSION = "ilipresto-trade-photo-schema-v3";
 const MAX_IMAGE_BYTES = 6 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const ALLOWED_IMAGE_HOSTS = new Set([
-  "firebasestorage.googleapis.com",
-  "storage.googleapis.com",
-]);
-
-const VALID_TRADE_KEYS = [
-  "serveur", "barman", "plongeur", "commis_cuisine", "cuisinier",
-  "snack", "food_truck", "traiteur", "banquet",
-  "plombier", "electricien", "montage_meubles", "luminaire", "etagere",
-  "electromenager", "carreleur", "plaquiste", "portail", "installation_tv",
-  "menage", "nettoyage_grand", "repassage", "courses", "cuisine_domicile",
-  "aide_personne_agee", "aide_administrative", "gardiennage",
-  "nettoyage_demenagement", "rangement",
-  "baby_sitter", "sortie_ecole", "garde_periscolaire", "garde_weekend",
-  "garde_vacances", "garde_domicile",
-  "dj", "dj_mariage", "sono", "animateur", "photographe", "videaste",
-  "decoration_salle", "organisation_evenement",
-  "soutien_primaire", "soutien_college", "soutien_lycee", "maths_physique",
-  "francais_langues", "anglais", "espagnol", "informatique_cours",
-  "musique", "coaching_sport", "concours",
-  "tonte", "taille_haies", "debroussaillage", "desherbage", "elagage",
-  "plantation", "potager",
-  "peintre", "peinture_facade", "peinture_portail", "enduit",
-  "renovation_locative",
-  "demenageur", "manutention", "vigile", "distribution_flyers",
-  "inventaire", "debarras", "stand",
-  "informatique_depannage", "reseaux_sociaux", "nettoyage_vehicule",
-  "coaching_perso", "traduction", "pet_sitting", "couture", "shooting_photo",
-] as const;
-
-const VALID_TRADE_KEY_SET = new Set<string>(VALID_TRADE_KEYS);
 
 const RESPONSE_FORMAT = {
   type: "json_schema",
@@ -90,23 +63,11 @@ N'invente pas de contexte absent de l'image.`;
 export interface ClassifyServicePhotoResult extends Record<string, unknown> {
   metier: string | null;
   confidence: number;
+  taxonomyVersion: string;
 }
 
 function normalizeMimeType(value: unknown): string {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
-}
-
-function validateImageUrl(value: string): string {
-  let parsed: URL;
-  try {
-    parsed = new URL(value);
-  } catch {
-    throw new HttpsError("invalid-argument", "IMAGE_URL_INVALID");
-  }
-  if (parsed.protocol !== "https:" || !ALLOWED_IMAGE_HOSTS.has(parsed.hostname)) {
-    throw new HttpsError("invalid-argument", "IMAGE_URL_NOT_ALLOWED");
-  }
-  return parsed.toString();
 }
 
 function validateBase64(value: string, mimeType: string): string {
@@ -119,6 +80,13 @@ function validateBase64(value: string, mimeType: string): string {
     throw new HttpsError("invalid-argument", "IMAGE_EMPTY");
   }
   if (estimatedBytes > MAX_IMAGE_BYTES) {
+    throw new HttpsError("invalid-argument", "IMAGE_TOO_LARGE");
+  }
+  const actualBytes = Buffer.from(normalized, "base64").length;
+  if (actualBytes <= 0) {
+    throw new HttpsError("invalid-argument", "IMAGE_EMPTY");
+  }
+  if (actualBytes > MAX_IMAGE_BYTES) {
     throw new HttpsError("invalid-argument", "IMAGE_TOO_LARGE");
   }
   return normalized;
@@ -198,7 +166,7 @@ export const classifyServicePhoto = onCall(
 
     const imageUrl =
       typeof request.data?.imageUrl === "string" && request.data.imageUrl.trim()
-        ? validateImageUrl(request.data.imageUrl.trim())
+        ? request.data.imageUrl.trim()
         : null;
     const rawBase64 =
       typeof request.data?.imageBase64 === "string"
@@ -206,7 +174,6 @@ export const classifyServicePhoto = onCall(
         : "";
     const mimeType = normalizeMimeType(request.data?.mimeType) || "image/jpeg";
     const imageBase64 = rawBase64 ? validateBase64(rawBase64, mimeType) : null;
-
     if (!imageUrl && !imageBase64) {
       throw new HttpsError("invalid-argument", "IMAGE_REQUIRED");
     }
@@ -217,11 +184,11 @@ export const classifyServicePhoto = onCall(
       mimeType,
       MODEL,
       PROMPT_VERSION,
+      TRADE_TAXONOMY_VERSION,
     ]);
-
     const operation = await runIdempotentOperation<ClassifyServicePhotoResult>({
       uid,
-      operation: "classify_service_photo_v2",
+      operation: "classify_service_photo_v3",
       requestId,
       ttlMs: 7 * 24 * 60 * 60 * 1000,
       execute: async () => {
@@ -235,8 +202,16 @@ export const classifyServicePhoto = onCall(
           schemaVersion: SCHEMA_VERSION,
           startedAtMs,
         };
-
         try {
+          const verifiedRemote = imageUrl
+            ? await downloadVerifiedRemoteImage({
+                url: imageUrl,
+                expectedBucket: admin.storage().bucket().name,
+                maxBytes: MAX_IMAGE_BYTES,
+              })
+            : null;
+          const imageContentUrl =
+            verifiedRemote?.dataUrl || `data:${mimeType};base64,${imageBase64}`;
           const response = await client.chat.completions.create(
             {
               model: MODEL,
@@ -250,10 +225,7 @@ export const classifyServicePhoto = onCall(
                   content: [
                     {
                       type: "image_url",
-                      image_url: {
-                        url: imageUrl || `data:${mimeType};base64,${imageBase64}`,
-                        detail: "low",
-                      },
+                      image_url: { url: imageContentUrl, detail: "low" },
                     },
                   ],
                 },
@@ -262,7 +234,6 @@ export const classifyServicePhoto = onCall(
             { timeout: 15_000, maxRetries: 1 },
           );
           logOpenAiSuccess(context, response);
-
           const content = response.choices[0]?.message?.content?.trim() || "";
           if (!content) {
             throw new HttpsError("internal", "AI_OUTPUT_EMPTY", {
@@ -274,8 +245,7 @@ export const classifyServicePhoto = onCall(
             confidence: unknown;
           };
           const metier =
-            typeof parsed.metier === "string" &&
-            VALID_TRADE_KEY_SET.has(parsed.metier)
+            typeof parsed.metier === "string" && VALID_TRADE_KEY_SET.has(parsed.metier)
               ? parsed.metier
               : null;
           const rawConfidence = Number(parsed.confidence);
@@ -284,20 +254,24 @@ export const classifyServicePhoto = onCall(
             : 0;
           logger.info("classifyServicePhoto", {
             uid,
+            requestId,
             metier,
             confidence,
             cacheHit: false,
+            taxonomyVersion: TRADE_TAXONOMY_VERSION,
+            remoteSizeBytes: verifiedRemote?.sizeBytes ?? null,
           });
-          return { metier, confidence };
+          return {
+            metier,
+            confidence,
+            taxonomyVersion: TRADE_TAXONOMY_VERSION,
+          };
         } catch (error) {
-          if (!(error instanceof HttpsError)) {
-            logOpenAiFailure(context, error);
-          }
+          if (!(error instanceof HttpsError)) logOpenAiFailure(context, error);
           throw mapProviderError(error);
         }
       },
     });
-
     return operation.value;
   },
 );
