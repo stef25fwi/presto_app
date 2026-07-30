@@ -1,0 +1,60 @@
+name: Apply prepublication bootstrap patch
+
+on:
+  push:
+    branches:
+      - perf/prepublication-bootstrap-routing
+    paths:
+      - tool/apply_prepublication_bootstrap_patch.py
+      - .github/workflows/apply-prepublication-bootstrap.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prepublication-bootstrap-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  apply-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: perf/prepublication-bootstrap-routing
+          fetch-depth: 0
+
+      - name: Set up Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Apply strict bootstrap patch
+        run: python3 tool/apply_prepublication_bootstrap_patch.py
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Format changed Dart files
+        run: dart format lib/main.dart lib/services/initial_route_resolver.dart test/services/initial_route_resolver_test.dart
+
+      - name: Run targeted route tests
+        run: flutter test test/services/initial_route_resolver_test.dart
+
+      - name: Analyze application
+        run: flutter analyze --fatal-infos
+
+      - name: Commit validated migration
+        run: |
+          if git diff --quiet; then
+            echo "No generated migration changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/main.dart lib/services/initial_route_resolver.dart test/services/initial_route_resolver_test.dart
+          git commit -m "perf: supprimer le splash temporisé et unifier le routage"
+          git push origin HEAD:perf/prepublication-bootstrap-routing
