@@ -3,7 +3,7 @@ importScripts('https://www.gstatic.com/firebasejs/11.10.0/firebase-messaging-com
 
 firebase.initializeApp({
   apiKey: 'AIzaSyB-Oo_86VpG_refQU7my0qk10tQFQDU-Fo',
-  authDomain: 'presto-app-74abe.firebaseapp.com',
+  authDomain: 'ilipresto.fr',
   projectId: 'presto-app-74abe',
   storageBucket: 'presto-app-74abe.firebasestorage.app',
   messagingSenderId: '151421230024',
