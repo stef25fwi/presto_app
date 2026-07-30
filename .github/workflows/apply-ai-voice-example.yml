@@ -1,0 +1,207 @@
+name: Apply AI voice example
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/apply-ai-voice-example.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Apply guided voice example
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('lib/widgets/ai_publish_control.dart')
+          text = path.read_text()
+
+          anchor = """                  const SizedBox(height: 22),
+
+                  // Bouton microphone central
+"""
+          replacement = """                  const SizedBox(height: 16),
+                  const _VoiceExampleCard(),
+                  const SizedBox(height: 20),
+
+                  // Bouton microphone central
+"""
+          if anchor not in text:
+              raise SystemExit('Insertion anchor not found or already modified')
+          text = text.replace(anchor, replacement, 1)
+
+          class_anchor = """// ─── AiWritingButton (bouton \"Améliorer ma description avec l'IA\") ────────────
+"""
+          helper = r'''class _VoiceExampleCard extends StatelessWidget {
+            const _VoiceExampleCard();
+
+            @override
+            Widget build(BuildContext context) {
+              const primary = Color(0xFF1A6FFF);
+              const textColor = Color(0xFF334155);
+
+              return Semantics(
+                label:
+                    'Exemple à dire : Je cherche un jardinier pour tailler une haie et nettoyer mon jardin dans le secteur de votre commune.',
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFFC8D9FF)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primary.withValues(alpha: 0.08),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned(
+                        top: -34,
+                        left: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEAF2FF),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: const Color(0xFFC8D9FF)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.record_voice_over_rounded,
+                                size: 15,
+                                color: primary,
+                              ),
+                              SizedBox(width: 7),
+                              Text(
+                                'Exemple à dire',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '“',
+                            style: TextStyle(
+                              fontSize: 34,
+                              height: 0.9,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFFB7D2FF),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text.rich(
+                              const TextSpan(
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  height: 1.45,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor,
+                                ),
+                                children: [
+                                  TextSpan(text: 'Je cherche un '),
+                                  TextSpan(
+                                    text: 'jardinier',
+                                    style: TextStyle(
+                                      color: primary,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  TextSpan(text: ' pour '),
+                                  TextSpan(
+                                    text:
+                                        'tailler une haie et nettoyer mon jardin',
+                                    style: TextStyle(
+                                      color: primary,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  TextSpan(text: ' '),
+                                  TextSpan(
+                                    text: 'dans le secteur de …',
+                                    style: TextStyle(
+                                      color: primary,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Text(
+                              '”',
+                              style: TextStyle(
+                                fontSize: 34,
+                                height: 1.5,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFFB7D2FF),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+          }
+
+'''
+          if class_anchor not in text:
+              raise SystemExit('Class insertion anchor not found')
+          text = text.replace(class_anchor, helper + class_anchor, 1)
+          path.write_text(text)
+          PY
+
+          dart format lib/widgets/ai_publish_control.dart
+          flutter test test/widgets/ai_publish_control_state_test.dart
+          git diff --check
+
+      - name: Commit result and remove temporary workflow
+        shell: bash
+        run: |
+          rm .github/workflows/apply-ai-voice-example.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/widgets/ai_publish_control.dart .github/workflows/apply-ai-voice-example.yml
+          git commit -m "feat(ai): guider l'enregistrement vocal avec un exemple"
+          git push origin HEAD:main
