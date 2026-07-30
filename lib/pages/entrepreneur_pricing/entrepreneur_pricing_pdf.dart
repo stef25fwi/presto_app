@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../services/pdf/ilipresto_pdf_branding.dart';
 import 'entrepreneur_pricing_models.dart';
 
 class EntrepreneurPricingPdfExporter {
@@ -11,15 +12,8 @@ class EntrepreneurPricingPdfExporter {
     required EntrepreneurPricingDraft draft,
     required EntrepreneurPricingCalculation calculation,
   }) async {
-    final regularFont = pw.Font.ttf(
-      await rootBundle.load('assets/fonts/Inter-Regular.ttf'),
-    );
-    final boldFont = pw.Font.ttf(
-      await rootBundle.load('assets/fonts/Inter-Bold.ttf'),
-    );
-    final document = pw.Document(
-      theme: pw.ThemeData.withFont(base: regularFont, bold: boldFont),
-    );
+    final branding = await IliprestoPdfBranding.load();
+    final document = pw.Document(theme: branding.theme);
 
     final scenarios = draft.mode == EntrepreneurPricingMode.expert
         ? <EntrepreneurPricingScenario>[
@@ -41,45 +35,22 @@ class EntrepreneurPricingPdfExporter {
           ]
         : const <EntrepreneurPricingScenario>[];
 
+    final title = "Fiche de calcul du prix — Mode ${draft.mode.label}";
     document.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(32),
-        footer: (context) => pw.Align(
-          alignment: pw.Alignment.centerRight,
-          child: pw.Text(
-            'iliprestō • page ${context.pageNumber}/${context.pagesCount}',
-            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
-          ),
-        ),
+        margin: const pw.EdgeInsets.fromLTRB(32, 45, 32, 40),
+        header: (_) => branding.header(documentTitle: title),
+        footer: branding.footer,
         build: (_) => [
-          pw.Text(
-            'iliprestō',
-            style: pw.TextStyle(
-              fontSize: 25,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColor.fromHex('#FF6600'),
-            ),
-          ),
-          pw.SizedBox(height: 4),
-          pw.Text(
-            "Fiche de calcul du prix — Mode ${draft.mode.label}",
-            style: pw.TextStyle(
-              fontSize: 16,
-              fontWeight: pw.FontWeight.bold,
-            ),
-          ),
-          pw.SizedBox(height: 18),
+          pw.SizedBox(height: 12),
           _title(draft.projectName.isEmpty ? 'Calcul sans nom' : draft.projectName),
           _rows([
             ['Prix TTC envisagé', '${_money(draft.expectedPriceTtc)} €'],
             ['Coût de revient', '${_money(calculation.costPrice)} €'],
             ['Prix minimum rentable TTC', '${_money(calculation.minimumPriceTtc)} €'],
             ['Prix conseillé TTC', '${_money(calculation.suggestedPriceTtc)} €'],
-            [
-              'Marge au prix envisagé',
-              '${_money(calculation.expectedUnitProfit)} € / unité',
-            ],
+            ['Marge au prix envisagé', '${_money(calculation.expectedUnitProfit)} € / unité'],
             [
               'Décision',
               calculation.expectedPriceIsProfitable
@@ -182,12 +153,10 @@ class EntrepreneurPricingPdfExporter {
               cellPadding: const pw.EdgeInsets.all(7),
             ),
           ],
-          pw.SizedBox(height: 22),
-          pw.Text(
-            'Cette fiche est une simulation indicative fondée sur les données saisies. '
-            'Les frais iliprestō sont fixés à 0 %. Vérifie tes obligations fiscales, '
-            'sociales et réglementaires auprès des organismes compétents.',
-            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+          branding.disclaimer(
+            additionalText:
+                'Cette fiche est une simulation fondée sur les données saisies. '
+                'Les frais iliprestō sont fixés à 0 %.',
           ),
         ],
       ),
@@ -196,39 +165,38 @@ class EntrepreneurPricingPdfExporter {
     return document.save();
   }
 
-  static pw.Widget _title(String value) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 8),
-      child: pw.Text(
-        value,
-        style: pw.TextStyle(
-          fontSize: 13,
-          fontWeight: pw.FontWeight.bold,
-          color: PdfColor.fromHex('#1A73E8'),
+  static pw.Widget _title(String value) => pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 8),
+        child: pw.Text(
+          value,
+          style: pw.TextStyle(
+            fontSize: 13,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColor.fromHex('#1A73E8'),
+          ),
         ),
-      ),
-    );
-  }
+      );
 
-  static pw.Widget _rows(List<List<String>> rows) {
-    return pw.Column(
-      children: rows
-          .map(
-            (row) => pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(vertical: 4),
-              child: pw.Row(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Expanded(child: pw.Text(row[0])),
-                  pw.SizedBox(width: 12),
-                  pw.Text(row[1], style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                ],
+  static pw.Widget _rows(List<List<String>> rows) => pw.Column(
+        children: rows
+            .map(
+              (row) => pw.Padding(
+                padding: const pw.EdgeInsets.symmetric(vertical: 4),
+                child: pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Expanded(child: pw.Text(row[0])),
+                    pw.SizedBox(width: 12),
+                    pw.Text(
+                      row[1],
+                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          )
-          .toList(),
-    );
-  }
+            )
+            .toList(),
+      );
 
   static String _money(double value) => _number(value, 2);
 
