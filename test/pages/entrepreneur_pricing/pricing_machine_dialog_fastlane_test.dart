@@ -4,7 +4,7 @@ import 'package:presto_app/pages/entrepreneur_pricing/entrepreneur_pricing_machi
 import 'package:presto_app/pages/entrepreneur_pricing/entrepreneur_pricing_models.dart';
 
 void main() {
-  Finder numericField(String key) => find.descendant(
+  Finder numberField(String key) => find.descendant(
         of: find.byKey(ValueKey(key)),
         matching: find.byType(TextField),
       );
@@ -52,9 +52,18 @@ void main() {
       find.byKey(const ValueKey('machine-name')),
       'Four professionnel',
     );
-    await tester.enterText(numericField('machine-watts'), '1 250,5');
-    await tester.enterText(numericField('machine-minutes'), '12,5');
-    await tester.enterText(numericField('machine-quantity'), '2');
+    await tester.enterText(
+      numberField('machine-watts'),
+      '1 250,5',
+    );
+    await tester.enterText(
+      numberField('machine-minutes'),
+      '12,5',
+    );
+    await tester.enterText(
+      numberField('machine-quantity'),
+      '2',
+    );
 
     await tester.tap(find.text('Enregistrer'));
     await tester.pumpAndSettle();
@@ -78,9 +87,18 @@ void main() {
       find.byKey(const ValueKey('machine-name')),
       '   ',
     );
-    await tester.enterText(numericField('machine-watts'), '0');
-    await tester.enterText(numericField('machine-minutes'), 'abc');
-    await tester.enterText(numericField('machine-quantity'), '-1');
+    await tester.enterText(
+      numberField('machine-watts'),
+      '0',
+    );
+    await tester.enterText(
+      numberField('machine-minutes'),
+      'abc',
+    );
+    await tester.enterText(
+      numberField('machine-quantity'),
+      '-1',
+    );
 
     await tester.tap(find.text('Enregistrer'));
     await tester.pump();
@@ -126,15 +144,15 @@ void main() {
       'Découpeuse',
     );
     expect(
-      tester.widget<TextField>(numericField('machine-watts')).controller!.text,
+      tester.widget<TextField>(numberField('machine-watts')).controller!.text,
       '800',
     );
     expect(
-      tester.widget<TextField>(numericField('machine-minutes')).controller!.text,
+      tester.widget<TextField>(numberField('machine-minutes')).controller!.text,
       '7.5',
     );
     expect(
-      tester.widget<TextField>(numericField('machine-quantity')).controller!.text,
+      tester.widget<TextField>(numberField('machine-quantity')).controller!.text,
       '3',
     );
 
