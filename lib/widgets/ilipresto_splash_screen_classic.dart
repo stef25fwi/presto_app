@@ -12,7 +12,7 @@ class IliprestoSplashScreenClassic extends StatefulWidget {
   const IliprestoSplashScreenClassic({
     super.key,
     required this.nextPage,
-    this.splashDuration = const Duration(milliseconds: 2200),
+    this.splashDuration = const Duration(seconds: 3),
     this.autoNavigate = true,
   });
 
@@ -65,12 +65,12 @@ class _IliprestoSplashScreenClassicState
 
     _logoScale = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(begin: 0.92, end: 1.02)
+        tween: Tween(begin: 0.90, end: 1.03)
             .chain(CurveTween(curve: Curves.easeOutCubic)),
         weight: 70,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 1.02, end: 1.0)
+        tween: Tween(begin: 1.03, end: 1.0)
             .chain(CurveTween(curve: Curves.easeOut)),
         weight: 30,
       ),
@@ -81,9 +81,9 @@ class _IliprestoSplashScreenClassicState
       curve: const Interval(0.0, 0.55, curve: Curves.easeOut),
     );
 
-    _textController.forward();
-    Future.delayed(const Duration(milliseconds: 160), () {
-      if (mounted) _logoController.forward();
+    _logoController.forward();
+    Future<void>.delayed(const Duration(milliseconds: 160), () {
+      if (mounted) _textController.forward();
     });
 
     if (widget.autoNavigate) {
@@ -94,7 +94,7 @@ class _IliprestoSplashScreenClassicState
   void _goNext() {
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
+      PageRouteBuilder<void>(
         transitionDuration: const Duration(milliseconds: 450),
         pageBuilder: (_, __, ___) => widget.nextPage,
         transitionsBuilder: (_, animation, __, child) {
@@ -118,7 +118,7 @@ class _IliprestoSplashScreenClassicState
       body: LayoutBuilder(
         builder: (context, constraints) {
           final size = Size(constraints.maxWidth, constraints.maxHeight);
-          final logoSize = math.min(size.width * 0.52, 300.0);
+          final logoSize = math.min(size.width * 0.30, 142.0);
 
           return Stack(
             fit: StackFit.expand,
@@ -128,45 +128,97 @@ class _IliprestoSplashScreenClassicState
               const _ClassicBottomTint(),
               const _ClassicGrainOverlay(opacity: 0.07),
               SafeArea(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Spacer(flex: 2),
-                    AnimatedBuilder(
-                      animation: _textController,
-                      builder: (context, child) {
-                        return Opacity(
-                          opacity: _textOpacity.value,
-                          child: Transform.scale(
-                            scale: _textScale.value,
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: const _ClassicBrandTitle(),
-                    ),
-                    const Spacer(flex: 2),
-                    AnimatedBuilder(
-                      animation: _logoController,
-                      builder: (context, child) {
-                        return Opacity(
-                          opacity: _logoOpacity.value,
-                          child: Transform.scale(
-                            scale: _logoScale.value,
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: _ClassicCenterLogo(size: logoSize),
-                    ),
-                    const Spacer(flex: 3),
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 18, 24, 28),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      AnimatedBuilder(
+                        animation: _logoController,
+                        builder: (context, child) {
+                          return Opacity(
+                            opacity: _logoOpacity.value,
+                            child: Transform.scale(
+                              scale: _logoScale.value,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: _ClassicTopLogo(size: logoSize),
+                      ),
+                      const Spacer(flex: 3),
+                      AnimatedBuilder(
+                        animation: _textController,
+                        builder: (context, child) {
+                          return Opacity(
+                            opacity: _textOpacity.value,
+                            child: Transform.scale(
+                              scale: _textScale.value,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: const _ClassicBrandTitle(),
+                      ),
+                      const Spacer(flex: 5),
+                    ],
+                  ),
                 ),
               ),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _ClassicTopLogo extends StatelessWidget {
+  final double size;
+
+  const _ClassicTopLogo({required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Logo iliprestō',
+      image: true,
+      child: SizedBox(
+        key: const Key('ilipresto-splash-top-logo'),
+        width: size,
+        height: size,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Center(
+              child: Container(
+                width: size * 0.78,
+                height: size * 0.78,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(size * 0.22),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x38000000),
+                      blurRadius: 20,
+                      offset: Offset(0, 10),
+                    ),
+                    BoxShadow(
+                      color: Color(0x30FFFFFF),
+                      blurRadius: 24,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Image.asset(
+              'assets/images/ilipresto_splash_logo.webp',
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.high,
+              gaplessPlayback: true,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -259,18 +311,21 @@ class _ClassicBrandTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text(
+    final width = MediaQuery.sizeOf(context).width;
+    final fontSize = width < 360 ? 46.0 : 54.0;
+
+    return Text(
       'iliprestō',
       textAlign: TextAlign.center,
       style: TextStyle(
         fontFamily: 'Inter',
-        fontFamilyFallback: ['Inter'],
-        fontSize: 54,
+        fontFamilyFallback: const ['Inter'],
+        fontSize: fontSize,
         height: 1,
         fontWeight: FontWeight.w800,
         letterSpacing: -2.4,
         color: Colors.white,
-        shadows: [
+        shadows: const [
           Shadow(
             color: Color(0x28000000),
             offset: Offset(0, 8),
@@ -285,181 +340,6 @@ class _ClassicBrandTitle extends StatelessWidget {
       ),
     );
   }
-}
-
-class _ClassicCenterLogo extends StatelessWidget {
-  final double size;
-
-  const _ClassicCenterLogo({required this.size});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            bottom: size * 0.03,
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-              child: Container(
-                width: size * 0.55,
-                height: size * 0.12,
-                decoration: BoxDecoration(
-                  color: const Color(0x662F3654),
-                  borderRadius: BorderRadius.circular(100),
-                ),
-              ),
-            ),
-          ),
-          ImageFiltered(
-            imageFilter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-            child: CustomPaint(
-              size: Size(size, size),
-              painter: _ClassicLogoGlowPainter(),
-            ),
-          ),
-          CustomPaint(
-            size: Size(size, size),
-            painter: _ClassicLogoPainter(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ClassicLogoGlowPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Rect.fromLTWH(
-      size.width * 0.12,
-      size.height * 0.12,
-      size.width * 0.76,
-      size.height * 0.76,
-    );
-
-    final glowPaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          Colors.white.withValues(alpha: 0.55),
-          Colors.white.withValues(alpha: 0.18),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.45, 1.0],
-      ).createShader(rect.inflate(30));
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        rect.inflate(8),
-        Radius.circular(size.width * 0.16),
-      ),
-      glowPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _ClassicLogoPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Rect.fromLTWH(
-      size.width * 0.12,
-      size.height * 0.12,
-      size.width * 0.76,
-      size.height * 0.76,
-    );
-
-    final radius = Radius.circular(size.width * 0.14);
-    final rrect = RRect.fromRectAndRadius(rect, radius);
-
-    final fillPaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-        colors: [
-          Color(0xFF2250F4),
-          Color(0xFF2250F4),
-          Color(0xFFFF8A1D),
-          Color(0xFFFF8A1D),
-        ],
-        stops: [0.0, 0.499, 0.501, 1.0],
-      ).createShader(rect);
-
-    canvas.drawRRect(rrect, fillPaint);
-
-    final borderPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.014
-      ..color = Colors.white.withValues(alpha: 0.92)
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    canvas.drawRRect(rrect, borderPaint);
-
-    final whitePaint = Paint()..color = const Color(0xFFF6F6F6);
-    final shadowPaint = Paint()
-      ..color = const Color(0x22000000)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, size.width * 0.012);
-
-    final leftCenterX = rect.left + rect.width * 0.32;
-    final rightCenterX = rect.left + rect.width * 0.68;
-    final dotY = rect.top + rect.height * 0.30;
-    final stemTop = rect.top + rect.height * 0.43;
-    final stemHeight = rect.height * 0.32;
-    final stemWidth = rect.width * 0.16;
-    final dotRadius = rect.width * 0.08;
-
-    void drawIPillar(double x) {
-      final stemRect = RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: Offset(x, stemTop + stemHeight / 2),
-          width: stemWidth,
-          height: stemHeight,
-        ),
-        Radius.circular(stemWidth * 0.18),
-      );
-
-      canvas.drawCircle(Offset(x, dotY + 3), dotRadius, shadowPaint);
-      canvas.drawRRect(stemRect.shift(const Offset(0, 4)), shadowPaint);
-      canvas.drawCircle(Offset(x, dotY), dotRadius, whitePaint);
-      canvas.drawRRect(stemRect, whitePaint);
-    }
-
-    drawIPillar(leftCenterX);
-    drawIPillar(rightCenterX);
-
-    final smilePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = rect.width * 0.055
-      ..strokeCap = StrokeCap.round
-      ..color = const Color(0xFFF6F6F6);
-
-    final smileShadowPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = rect.width * 0.055
-      ..strokeCap = StrokeCap.round
-      ..color = const Color(0x22000000)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, size.width * 0.01);
-
-    final smilePath = Path()
-      ..moveTo(rect.left + rect.width * 0.38, rect.top + rect.height * 0.73)
-      ..quadraticBezierTo(
-        rect.left + rect.width * 0.50,
-        rect.top + rect.height * 0.84,
-        rect.left + rect.width * 0.64,
-        rect.top + rect.height * 0.75,
-      );
-
-    canvas.drawPath(smilePath.shift(const Offset(0, 3)), smileShadowPaint);
-    canvas.drawPath(smilePath, smilePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _ClassicGrainOverlay extends StatelessWidget {
