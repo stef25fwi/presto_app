@@ -1,11 +1,14 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:presto_app/features/operating_mode/app_operating_mode.dart';
 import 'package:presto_app/features/subscriptions/subscription_action_placeholders.dart';
 import 'package:presto_app/features/subscriptions/subscription_checkout_service.dart';
 import 'package:presto_app/features/subscriptions/subscription_models.dart';
 
 class _FakeCheckoutService extends SubscriptionCheckoutService {
-  final List<SubscriptionActionRequest> requests = <SubscriptionActionRequest>[];
+  final List<SubscriptionActionRequest> requests =
+      <SubscriptionActionRequest>[];
 
   @override
   Future<void> handleAction(
@@ -51,6 +54,20 @@ void main() {
     expect(calls, 1);
   });
 
+  test(
+    'résout le mode commercial avec le service d exploitation injecté',
+    () async {
+      final firestore = FakeFirebaseFirestore();
+      await firestore.collection('app_config').doc('legal').set(
+        const <String, dynamic>{'operatingMode': 'commercial'},
+      );
+      subscriptionOperatingModeServiceFactory = () =>
+          AppOperatingModeService(firestore: firestore);
+
+      expect(await resolveSubscriptionCommercialModeForTesting(), isTrue);
+    },
+  );
+
   testWidgets('checkout payant passe au service en mode commercial', (
     tester,
   ) async {
@@ -86,11 +103,8 @@ void main() {
     subscriptionCommercialModeResolverOverride = () async => false;
     await tester.pumpWidget(
       actionButton(
-        (context) => startSubscriptionCheckout(
-          context,
-          'ilipro',
-          stripeEnabled: true,
-        ),
+        (context) =>
+            startSubscriptionCheckout(context, 'ilipro', stripeEnabled: true),
       ),
     );
 
@@ -136,10 +150,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       actionButton(
-        (context) => openSubscriptionManagement(
-          context,
-          stripeEnabled: false,
-        ),
+        (context) => openSubscriptionManagement(context, stripeEnabled: false),
       ),
     );
 
