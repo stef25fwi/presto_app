@@ -28,10 +28,10 @@ if (admin.apps.length === 0) {
 }
 
 export const LISTING_MODEL =
-  process.env.OPENAI_LISTING_MODEL?.trim() || "gpt-4o-mini-2024-07-18";
+  process.env.OPENAI_LISTING_MODEL?.trim() || "gpt-4o-mini";
 export const TRANSCRIPTION_MODEL =
   process.env.OPENAI_TRANSCRIBE_MODEL?.trim() ||
-  "gpt-4o-mini-transcribe-2025-12-15";
+  "gpt-4o-mini-transcribe";
 export const TRANSCRIPTION_FALLBACK_MODEL = "whisper-1";
 export const LISTING_PROMPT_VERSION = "ilipresto-listing-v3";
 export const LISTING_SCHEMA_VERSION = "ilipresto-listing-schema-v3";

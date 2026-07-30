@@ -101,9 +101,9 @@ OPENAI_TRANSCRIPTION_EUR_PER_MINUTE
 Les modèles sont configurables sans modifier le code Functions :
 
 ```text
-OPENAI_LISTING_MODEL=gpt-4o-mini-2024-07-18
-OPENAI_TRANSCRIBE_MODEL=gpt-4o-mini-transcribe-2025-12-15
-OPENAI_VISION_MODEL=gpt-4o-mini-2024-07-18
+OPENAI_LISTING_MODEL=gpt-4o-mini
+OPENAI_TRANSCRIBE_MODEL=gpt-4o-mini-transcribe
+OPENAI_VISION_MODEL=gpt-4o-mini
 OPENAI_TTS_MODEL=tts-1
 OPENAI_TTS_VOICE=nova
 ```

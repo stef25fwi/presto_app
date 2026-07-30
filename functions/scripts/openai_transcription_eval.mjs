@@ -14,7 +14,7 @@ import {
 function parseArgs(argv) {
   const options = {
     fixture: "evals/transcription_cases.jsonl",
-    model: process.env.OPENAI_TRANSCRIBE_MODEL || "gpt-4o-mini-transcribe-2025-12-15",
+    model: process.env.OPENAI_TRANSCRIBE_MODEL || "gpt-4o-mini-transcribe",
     concurrency: 1,
     dryRun: false,
     jsonOutput: false,

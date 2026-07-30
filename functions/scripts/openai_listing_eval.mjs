@@ -8,7 +8,7 @@ import OpenAI from "openai";
 const root = path.resolve(import.meta.dirname, "..");
 const fixturePath = process.argv[2] || path.join(root, "evals", "listing_cases.jsonl");
 const outputPath = process.argv[3] || path.join(root, "evals", "listing_eval_report.json");
-const model = process.env.OPENAI_LISTING_MODEL || "gpt-4o-mini-2024-07-18";
+const model = process.env.OPENAI_LISTING_MODEL || "gpt-4o-mini";
 const apiKey = process.env.OPENAI_API_KEY;
 
 if (!apiKey) {
