@@ -29,13 +29,13 @@
   <meta name="description" content="iliprestō — la marketplace des services dans les territoires ultramarins. Publiez une annonce en quelques secondes et trouvez le bon prestataire près de chez vous.">
 
   <!-- Open Graph (partages réseaux sociaux) -->
-  <link rel="canonical" href="https://ilipresto.web.app/">
+  <link rel="canonical" href="https://ilipresto.fr/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="iliprestō">
-  <meta property="og:url" content="https://ilipresto.web.app/">
+  <meta property="og:url" content="https://ilipresto.fr/">
   <meta property="og:title" content="iliprestō — la marketplace des services ultramarins">
   <meta property="og:description" content="Publiez une annonce en quelques secondes et trouvez le bon prestataire près de chez vous.">
-  <meta property="og:image" content="https://ilipresto.web.app/icons/Icon-512.png">
+  <meta property="og:image" content="https://ilipresto.fr/icons/Icon-512.png">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="iliprestō — la marketplace des services ultramarins">
   <meta name="twitter:description" content="Publiez une annonce en quelques secondes et trouvez le bon prestataire près de chez vous.">
@@ -56,16 +56,15 @@
   <link rel="manifest" href="manifest.json">
   <script>
     (function () {
-      // Hôte canonique = site Hosting « production » (cible .firebaserc
-      // "ilipresto"), celui vers lequel ilipresto.fr fait déjà un 301
-      // serveur (site ilipresto-fr-redirect-74abe). Tous les autres hôtes
-      // techniques (miroir presto-app-74abe, *.firebaseapp.com) sont
-      // rabattus dessus pour n'avoir qu'une seule origine de session.
-      const canonicalHost = 'ilipresto.web.app';
+      // Hôte canonique public = ilipresto.fr. Les hôtes techniques Firebase
+      // restent autorisés uniquement comme miroirs de sécurité et sont rabattus
+      // vers le domaine public pour conserver une origine de session unique,
+      // notamment pour Firebase Auth / Google Sign-In Web.
+      const canonicalHost = 'ilipresto.fr';
       const host = window.location.hostname.toLowerCase();
       const redirectHosts = new Set([
-        'ilipresto.fr',
         'www.ilipresto.fr',
+        'ilipresto.web.app',
         'ilipresto.firebaseapp.com',
         'presto-app-74abe.firebaseapp.com',
         'presto-app-74abe.web.app',
