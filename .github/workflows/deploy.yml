@@ -228,10 +228,10 @@ jobs:
         run: |
           curl --fail --silent --show-error \
             --retry 6 --retry-delay 5 --retry-all-errors \
-            https://ilipresto.web.app/ >/dev/null
+            https://ilipresto.fr/ >/dev/null
           curl --fail --silent --show-error \
             --retry 6 --retry-delay 5 --retry-all-errors \
-            https://ilipresto.web.app/manifest.json >/dev/null
+            https://ilipresto.fr/manifest.json >/dev/null
 
       - name: Publish deployment summary
         if: always()
@@ -242,7 +242,7 @@ jobs:
             echo "- Commit : \`${{ github.sha }}\`"
             echo "- Workflow : \`${{ github.run_id }}\`"
             echo '- Cible : `presto-app-74abe`'
-            echo '- URL contrôlée : `https://ilipresto.web.app`'
+            echo '- URL contrôlée : `https://ilipresto.fr`'
             echo "- Functions modifiées : \`${{ steps.functions_changes.outputs.changed || 'unknown' }}\`"
             echo '- Artefact de restauration : `production-release-${{ github.sha }}`'
           } >> "$GITHUB_STEP_SUMMARY"
