@@ -225,9 +225,8 @@ class _MethodTabButton extends StatelessWidget {
     final background = alwaysSelected
         ? const Color(0xFFFF6600)
         : (selected ? selectedColor : Colors.white);
-    final foreground = alwaysSelected || selected
-        ? Colors.white
-        : const Color(0xFF111827);
+    final foreground =
+        alwaysSelected || selected ? Colors.white : const Color(0xFF111827);
 
     return GestureDetector(
       onTap: enabled ? onTap : null,
@@ -497,9 +496,8 @@ class AiWritingButton extends StatelessWidget {
           height: 46,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isAnalyzing
-                ? const Color(0xFFE65500)
-                : const Color(0xFFFF6600),
+            color:
+                isAnalyzing ? const Color(0xFFE65500) : const Color(0xFFFF6600),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -600,6 +598,12 @@ class _MicroStateCard extends StatelessWidget {
       AiPublishState.analyzing => 'État : Analyse en cours',
     };
 
+    final badgeLabel = switch (state) {
+      AiPublishState.ready => 'ADMIN',
+      AiPublishState.recording => 'LIVE',
+      AiPublishState.analyzing => 'ANALYSE',
+    };
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -611,11 +615,15 @@ class _MicroStateCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.mic_rounded, size: 18, color: Color(0xFF4E6475)),
-              SizedBox(width: 10),
-              Expanded(
+              const Icon(
+                Icons.mic_rounded,
+                size: 18,
+                color: Color(0xFF4E6475),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
                 child: Text(
                   'Micro classique web',
                   style: TextStyle(
@@ -625,7 +633,7 @@ class _MicroStateCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Chip(label: Text('ADMIN')),
+              Chip(label: Text(badgeLabel)),
             ],
           ),
           const SizedBox(height: 10),
