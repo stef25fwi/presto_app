@@ -153,6 +153,11 @@ du même lot que des correctifs de sécurité rendrait ces derniers impossibles 
 relire et à revenir en arrière indépendamment. À traiter fichier par fichier,
 dans des PR dédiées.
 
+Le plan de traitement est détaillé dans
+[`docs/architecture/refactoring-plan-oversized-files.md`](../architecture/refactoring-plan-oversized-files.md) :
+31 % de cette dette est déplaçable sans aucun risque, preuve mécanique à
+l'appui ; le reste demande d'abord des tests de caractérisation.
+
 ## Ce qui reste ouvert
 
 1. **3 contrôles de console** (App Check Firestore et Storage, restrictions de
