@@ -4,6 +4,11 @@ import 'package:presto_app/pages/entrepreneur_pricing/entrepreneur_pricing_machi
 import 'package:presto_app/pages/entrepreneur_pricing/entrepreneur_pricing_models.dart';
 
 void main() {
+  Finder numberField(String key) => find.descendant(
+        of: find.byKey(ValueKey(key)),
+        matching: find.byType(TextField),
+      );
+
   Future<void> pumpLauncher(
     WidgetTester tester, {
     ProductionMachineUsage? initialValue,
@@ -48,15 +53,15 @@ void main() {
       'Four professionnel',
     );
     await tester.enterText(
-      find.byKey(const ValueKey('machine-watts')),
+      numberField('machine-watts'),
       '1 250,5',
     );
     await tester.enterText(
-      find.byKey(const ValueKey('machine-minutes')),
+      numberField('machine-minutes'),
       '12,5',
     );
     await tester.enterText(
-      find.byKey(const ValueKey('machine-quantity')),
+      numberField('machine-quantity'),
       '2',
     );
 
@@ -83,15 +88,15 @@ void main() {
       '   ',
     );
     await tester.enterText(
-      find.byKey(const ValueKey('machine-watts')),
+      numberField('machine-watts'),
       '0',
     );
     await tester.enterText(
-      find.byKey(const ValueKey('machine-minutes')),
+      numberField('machine-minutes'),
       'abc',
     );
     await tester.enterText(
-      find.byKey(const ValueKey('machine-quantity')),
+      numberField('machine-quantity'),
       '-1',
     );
 
@@ -139,24 +144,15 @@ void main() {
       'Découpeuse',
     );
     expect(
-      tester
-          .widget<TextField>(find.byKey(const ValueKey('machine-watts')))
-          .controller!
-          .text,
+      tester.widget<TextField>(numberField('machine-watts')).controller!.text,
       '800',
     );
     expect(
-      tester
-          .widget<TextField>(find.byKey(const ValueKey('machine-minutes')))
-          .controller!
-          .text,
+      tester.widget<TextField>(numberField('machine-minutes')).controller!.text,
       '7.5',
     );
     expect(
-      tester
-          .widget<TextField>(find.byKey(const ValueKey('machine-quantity')))
-          .controller!
-          .text,
+      tester.widget<TextField>(numberField('machine-quantity')).controller!.text,
       '3',
     );
 

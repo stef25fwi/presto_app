@@ -28,6 +28,7 @@ import 'pages/toolbox_je_me_lance_page.dart';
 import 'services/city_search.dart';
 import 'services/app_check_bootstrap.dart';
 import 'services/app_route_parser.dart';
+import 'services/initial_route_resolver.dart';
 import 'services/firestore_bootstrap.dart';
 import 'services/notification_service.dart';
 import 'services/admin_audio_runtime_store.dart';
@@ -1012,7 +1013,7 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
       onGenerateInitialRoutes: _onGenerateInitialRoutes,
       onGenerateRoute: _onGenerateRoute,
       routes: {
-        LoginPage.routeName: (_) => const HomePage(),
+        LoginPage.routeName: (_) => const LoginPage(),
         RegisterPage.routeName: (_) => const RegisterPage(),
         ForgotPasswordPage.routeName: (_) => const ForgotPasswordPage(),
         VerifyEmailPage.routeName: (_) => const VerifyEmailPage(),
@@ -1077,7 +1078,7 @@ class _SplashScreenState extends State<SplashScreen>
     final isRoot =
         !kIsWeb || _normalizedWebPath().isEmpty || _normalizedWebPath() == '/';
     _scheduleNavigation(
-      isRoot ? const Duration(seconds: 3) : const Duration(milliseconds: 600),
+      isRoot ? Duration.zero : const Duration(milliseconds: 120),
     );
   }
 
@@ -1092,79 +1093,38 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Widget _destinationForCurrentLocation() {
-    final webPath = _normalizedWebPath();
+    final resolution = resolveInitialRoute(
+      kIsWeb ? Uri.base.toString() : '/',
+    );
 
-    // ROUTAGE RACINE APRÈS SPLASH :
-    // Une ouverture normale de l'application doit toujours afficher l'accueil.
-    if (webPath.isEmpty || webPath == '/') {
-      pendingPostAuthRoute = null;
-      return const HomePage();
-    }
-
-    // FIX DESTINATION SPLASH ROOT HOME :
-    // Après le splash, l'ouverture normale de l'app doit aller sur l'accueil.
-    if (webPath.isEmpty || webPath == '/') {
-      pendingPostAuthRoute = null;
-      return const HomePage();
-    }
-
-    // RÈGLE PRINCIPALE :
-    // Après le splash, l'ouverture normale de l'app doit aller sur l'accueil.
-    // On ne doit jamais envoyer un utilisateur déconnecté vers Connexion/Compte
-    // sauf s'il a explicitement ouvert /account.
+    // Une seule remise à zéro au démarrage. La reprise post-auth est ensuite
+    // gérée par PostAuthNavigationIntentService, sans mutations répétées.
     pendingPostAuthRoute = null;
 
-    if (webPath.isEmpty || webPath == '/') {
-      return const HomePage();
-    }
-
-    if (!kIsWeb) {
-      return const HomePage();
-    }
-
-    // Flow normal :
-    // - ouverture racine "/" => SplashScreen puis HomePage
-    // - aucune redirection automatique vers l'onglet Compte après splash
-    // - la connexion s'affiche uniquement si l'utilisateur clique sur Profil/Compte
-    pendingPostAuthRoute = null;
-
-    // Sécurité démarrage :
-    // Le splash ne doit jamais imposer l'écran Compte/Connexion.
-    // Même si le navigateur/PWA rouvre l'ancienne URL /account,
-    // on revient sur l'accueil. L'utilisateur accédera au compte via le bouton Compte.
-    if (webPath == '/account') {
-      pendingPostAuthRoute = null;
-      return const HomePage(initialIndex: 4);
-    }
-    if (webPath == '/publish') {
-      return const PublishOfferPage();
-    }
-
-    final target = parseAppDeepLink(Uri.base.toString());
-    if (target != null) {
-      if (target.offerId != null) {
+    switch (resolution.kind) {
+      case InitialRouteKind.account:
+        return const HomePage(initialIndex: 4);
+      case InitialRouteKind.publish:
+        return const PublishOfferPage();
+      case InitialRouteKind.offer:
+        final target = resolution.deepLinkTarget!;
         return OfferDeepLinkPage(
           offerId: target.offerId!,
           preferMarketplace: target.preferMarketplace,
         );
-      }
-
-      if (target.routeName == AppDeepLinkTarget.messagesRouteName ||
-          target.routeName == AppDeepLinkTarget.messagesV2RouteName) {
+      case InitialRouteKind.profile:
+        return UserPublicProfilePage(
+          userId: resolution.deepLinkTarget!.userId!,
+        );
+      case InitialRouteKind.messages:
+        final target = resolution.deepLinkTarget!;
         return MessagesPageV2(
           initialConversationId: target.conversationId,
           initialDraftText: target.initialDraftText,
         );
-      }
-
-      return HomePage(
-        initialIndex: 3,
-        initialMessagesConversationId: target.conversationId,
-        initialMessagesDraftText: target.initialDraftText,
-      );
+      case InitialRouteKind.home:
+        return const HomePage();
     }
-
-    return const HomePage();
   }
 
   void _scheduleNavigation(Duration duration) {
