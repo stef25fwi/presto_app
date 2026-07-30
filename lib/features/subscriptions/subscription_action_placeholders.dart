@@ -8,9 +8,14 @@ const SubscriptionCheckoutService _checkoutService =
     SubscriptionCheckoutService();
 
 typedef SubscriptionCommercialModeResolver = Future<bool> Function();
+typedef SubscriptionModeServiceFactory = AppOperatingModeService Function();
 
 @visibleForTesting
 SubscriptionCommercialModeResolver? subscriptionCommercialModeResolverOverride;
+
+@visibleForTesting
+SubscriptionModeServiceFactory subscriptionOperatingModeServiceFactory =
+    AppOperatingModeService.new;
 
 @visibleForTesting
 SubscriptionCheckoutService? subscriptionCheckoutServiceOverride;
@@ -21,6 +26,7 @@ SubscriptionCheckoutService get _resolvedCheckoutService =>
 @visibleForTesting
 void resetSubscriptionActionOverrides() {
   subscriptionCommercialModeResolverOverride = null;
+  subscriptionOperatingModeServiceFactory = AppOperatingModeService.new;
   subscriptionCheckoutServiceOverride = null;
 }
 
@@ -28,7 +34,8 @@ Future<bool> _isCommercialMode() async {
   final override = subscriptionCommercialModeResolverOverride;
   if (override != null) return override();
   try {
-    return (await AppOperatingModeService().getState()).mode.isCommercial;
+    final service = subscriptionOperatingModeServiceFactory();
+    return (await service.getState()).mode.isCommercial;
   } catch (_) {
     // Fail closed: une configuration indisponible ne doit jamais ouvrir Stripe.
     return false;
