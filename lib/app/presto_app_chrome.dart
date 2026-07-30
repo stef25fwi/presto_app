@@ -44,12 +44,12 @@ class PrestoAppChrome extends StatelessWidget {
             child: Stack(
               children: [
                 child,
-                const Positioned.fill(
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: CookieConsentBanner(),
-                  ),
-                ),
+                // CookieConsentBanner renvoie lui-même un Positioned.fill
+                // lorsque le consentement doit être affiché. Il doit donc être
+                // un enfant direct du Stack. Le wrapper Positioned/Align
+                // précédent cassait son ParentData et ne laissait visible que
+                // le voile modal gris, sans la feuille de consentement.
+                const CookieConsentBanner(),
                 Positioned(
                   top: 0,
                   left: 0,
