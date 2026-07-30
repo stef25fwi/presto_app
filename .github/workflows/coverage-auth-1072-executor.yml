@@ -1,0 +1,176 @@
+name: Coverage auth 1072 executor
+
+on:
+  push:
+    branches:
+      - coverage/w2-authentication-20260729-123102
+    paths:
+      - .github/workflows/coverage-auth-1072-executor.yml
+
+permissions:
+  contents: write
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: coverage/w2-authentication-20260729-123102
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Apply deterministic web auth coverage patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          auth_path = Path('lib/services/auth_service.dart')
+          auth = auth_path.read_text()
+
+          replacements = [
+              (
+                  "    AuthGoogleSignOut? googleSignOut,\n  })  : _auth = auth ?? FirebaseAuth.instance,",
+                  "    AuthGoogleSignOut? googleSignOut,\n    bool isWeb = kIsWeb,\n  })  : _auth = auth ?? FirebaseAuth.instance,",
+              ),
+              (
+                  "        _functionCaller = functionCaller,\n        _googleSignOut = googleSignOut;",
+                  "        _functionCaller = functionCaller,\n        _googleSignOut = googleSignOut,\n        _isWeb = isWeb;",
+              ),
+              (
+                  "    AuthGoogleSignOut? googleSignOut,\n  }) {\n    return AuthService._(",
+                  "    AuthGoogleSignOut? googleSignOut,\n    bool isWeb = kIsWeb,\n  }) {\n    return AuthService._(",
+              ),
+              (
+                  "      functionCaller: functionCaller,\n      googleSignOut: googleSignOut,\n    );",
+                  "      functionCaller: functionCaller,\n      googleSignOut: googleSignOut,\n      isWeb: isWeb,\n    );",
+              ),
+              (
+                  "  final AuthGoogleSignOut? _googleSignOut;\n",
+                  "  final AuthGoogleSignOut? _googleSignOut;\n  final bool _isWeb;\n",
+              ),
+              ("    if (kIsWeb) {\n      final provider = GoogleAuthProvider();", "    if (_isWeb) {\n      final provider = GoogleAuthProvider();"),
+              ("    final credential = kIsWeb\n        ? await _auth.signInWithPopup(provider)", "    final credential = _isWeb\n        ? await _auth.signInWithPopup(provider)"),
+          ]
+
+          for old, new in replacements:
+              count = auth.count(old)
+              if count != 1:
+                  raise SystemExit(f'auth replacement expected once, found {count}: {old!r}')
+              auth = auth.replace(old, new, 1)
+          auth_path.write_text(auth)
+
+          test_path = Path('test/services/auth_service_completion_test.dart')
+          test = test_path.read_text()
+
+          old = "  var providerCalls = 0;\n  String? providerId;\n"
+          new = "  var providerCalls = 0;\n  var popupCalls = 0;\n  String? providerId;\n  String? popupProviderId;\n"
+          if test.count(old) != 1:
+              raise SystemExit('platform fields marker not found exactly once')
+          test = test.replace(old, new, 1)
+
+          old = "  @override\n  Future<UserCredentialPlatform> signInWithProvider(\n    AuthProvider provider,\n  ) async {\n    providerCalls += 1;\n    providerId = provider.providerId;\n    return _CompletionCredentialPlatform(auth: this, user: user);\n  }\n"
+          new = old + "\n  @override\n  Future<UserCredentialPlatform> signInWithPopup(\n    AuthProvider provider,\n  ) async {\n    popupCalls += 1;\n    popupProviderId = provider.providerId;\n    return _CompletionCredentialPlatform(auth: this, user: user);\n  }\n"
+          if test.count(old) != 1:
+              raise SystemExit('provider method marker not found exactly once')
+          test = test.replace(old, new, 1)
+
+          old = "      ..providerCalls = 0\n      ..providerId = null;"
+          new = "      ..providerCalls = 0\n      ..popupCalls = 0\n      ..providerId = null\n      ..popupProviderId = null;"
+          if test.count(old) != 1:
+              raise SystemExit('reset marker not found exactly once')
+          test = test.replace(old, new, 1)
+
+          helper_marker = "  test('inscrit un utilisateur, normalise le profil et envoie la vérification',"
+          helper = """  AuthService webService() {
+    return AuthService.forTesting(
+      auth: FirebaseAuth.instance,
+      firestore: firestore,
+      isWeb: true,
+      functionCaller: ({
+        required String name,
+        required Duration timeout,
+        required Map<String, dynamic> parameters,
+        required String area,
+      }) async {
+        functionCalls.add((
+          name: name,
+          timeout: timeout,
+          parameters: Map<String, dynamic>.from(parameters),
+          area: area,
+        ));
+      },
+      googleSignOut: () async {
+        googleSignOutCalls += 1;
+      },
+    );
+  }
+
+"""
+          if test.count(helper_marker) != 1:
+              raise SystemExit('helper insertion marker not found exactly once')
+          test = test.replace(helper_marker, helper + helper_marker, 1)
+
+          end_marker = "  test('connexion Apple avec user met à jour le profil social', () async {"
+          if test.count(end_marker) != 1:
+              raise SystemExit('apple test marker not found exactly once')
+
+          web_tests = """  test('connexion Google Web utilise popup et met à jour le profil', () async {
+    final current = user(provider: 'google.com');
+    platform.user = current;
+
+    final credential = await webService().signInWithGoogle();
+
+    expect(credential.user?.uid, 'user-1');
+    expect(platform.popupCalls, 1);
+    expect(platform.popupProviderId, 'google.com');
+    final profile = await firestore.collection('users').doc('user-1').get();
+    expect(profile.data()?['authProvider'], 'google');
+    expect(profile.data()?.containsKey('lastLoginAt'), isTrue);
+  });
+
+  test('connexion Apple Web utilise popup et met à jour le profil', () async {
+    final current = user(provider: 'apple.com');
+    platform.user = current;
+
+    final credential = await webService().signInWithApple();
+
+    expect(credential.user?.uid, 'user-1');
+    expect(platform.popupCalls, 1);
+    expect(platform.popupProviderId, 'apple.com');
+    final profile = await firestore.collection('users').doc('user-1').get();
+    expect(profile.data()?['authProvider'], 'apple');
+    expect(profile.data()?.containsKey('lastLoginAt'), isTrue);
+  });
+
+"""
+          test = test.replace(end_marker, web_tests + end_marker, 1)
+          test_path.write_text(test)
+          PY
+
+      - name: Format and targeted validation
+        run: |
+          dart format lib/services/auth_service.dart test/services/auth_service_completion_test.dart
+          flutter pub get
+          flutter analyze --fatal-infos lib/services/auth_service.dart test/services/auth_service_completion_test.dart
+          flutter test test/services/auth_service_completion_test.dart
+
+      - name: Full coverage and critical gate
+        run: |
+          flutter test --coverage
+          python3 tools/quality/check_critical_coverage.py --enforce
+
+      - name: Commit validated patch and remove executor
+        run: |
+          rm .github/workflows/coverage-auth-1072-executor.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/services/auth_service.dart test/services/auth_service_completion_test.dart .github/workflows/coverage-auth-1072-executor.yml
+          git commit -m 'test(coverage): close AuthService web social paths'
+          git push origin HEAD:coverage/w2-authentication-20260729-123102
