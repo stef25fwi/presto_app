@@ -62,35 +62,38 @@ class GuidedJourneyOverviewStageTile extends StatelessWidget {
         : active
         ? kGuidedJourneyOrange
         : const Color(0xFF9CA3AF);
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      onTap: onTap,
-      leading: CircleAvatar(
-        backgroundColor: tone.withValues(alpha: 0.12),
-        foregroundColor: tone,
-        child: completed
-            ? const Icon(Icons.check_rounded)
-            : Text(
-                '${stage.order}',
-                style: const TextStyle(fontWeight: FontWeight.w900),
-              ),
-      ),
-      title: Text(
-        stage.title,
-        style: const TextStyle(
-          color: kGuidedJourneyText,
-          fontWeight: FontWeight.w800,
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        onTap: onTap,
+        leading: CircleAvatar(
+          backgroundColor: tone.withValues(alpha: 0.12),
+          foregroundColor: tone,
+          child: completed
+              ? const Icon(Icons.check_rounded)
+              : Text(
+                  '${stage.order}',
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
         ),
+        title: Text(
+          stage.title,
+          style: const TextStyle(
+            color: kGuidedJourneyText,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        subtitle: Text(
+          completed
+              ? 'Terminée'
+              : active
+              ? 'Prochaine étape'
+              : 'À faire',
+          style: TextStyle(color: tone, fontWeight: FontWeight.w700),
+        ),
+        trailing: const Icon(Icons.chevron_right_rounded),
       ),
-      subtitle: Text(
-        completed
-            ? 'Terminée'
-            : active
-            ? 'Prochaine étape'
-            : 'À faire',
-        style: TextStyle(color: tone, fontWeight: FontWeight.w700),
-      ),
-      trailing: const Icon(Icons.chevron_right_rounded),
     );
   }
 }
