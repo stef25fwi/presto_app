@@ -4,6 +4,12 @@
     "widget_max_lines": 250
   },
   "baseline_exceptions": {
+    "lib/pages/admin/ad_placeholder_images_admin_page.dart": {
+      "current_lines": 909,
+      "target_lines": 500,
+      "module": "administration_placeholders",
+      "next_split": "vague 1 (extraction part des widgets) faite : 1590 -> 909. Reste la classe _AdPlaceholderImagesAdminPageState (891 lignes), qui relève des vagues 3 et 4 du plan de refactoring"
+    },
     "lib/pages/publish_offer_page.dart": {
       "current_lines": 5131,
       "target_lines": 500,

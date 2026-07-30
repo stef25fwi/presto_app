@@ -35,32 +35,37 @@ fichiers, seules des transformations prouvées sont acceptables.
 
 Deux familles, qui n'appellent pas le même traitement :
 
-| Fichier | Total | Classe `State` | Widgets privés | Famille |
-|---|---:|---:|---:|---|
-| `ad_placeholder_images_admin_page.dart` | 1590 | 34 | 1542 | widgets |
-| `admin_messaging_center_page.dart` | 1765 | 253 | 1288 | widgets |
-| `trust_score_widgets.dart` | 1290 | 165 | 824 | widgets |
-| `admin_space_page.dart` | 5777 | 1060 | 3658 | widgets |
-| `offer_details_page.dart` | 4518 | 1424 | 2519 | widgets |
-| `main.dart` | 1372 | 258 | 805 | widgets |
-| `toolbox_je_me_lance_page.dart` | 7218 | 3683 | 2718 | mixte |
-| `pricing_calculator_page.dart` | 1507 | 743 | 634 | mixte |
-| `home_page.dart` | 2792 | 1912 | 716 | mixte |
-| `admin_hero_slides_page.dart` | 2368 | 1491 | 716 | mixte |
-| `consult_offers_page.dart` | 4115 | 2998 | 694 | état |
-| `conversations_list_page.dart` | 2787 | 2411 | 319 | état |
-| `user_offers_section.dart` | 3443 | 2671 | 76 | état |
-| `conversation_thread_page.dart` | 5181 | 4149 | 590 | état |
-| `publish_offer_page.dart` | 5116 | 4846 | 154 | état |
-| `account_page.dart` | 4277 | 4061 | 51 | état |
-| `fiche_pro_page.dart` | 1237 | 1204 | 9 | état |
+| Fichier | Total | Classe `State` | Widgets privés | Après T1 | Famille |
+|---|---:|---:|---:|---:|---|
+| `admin_space_page.dart` | 5777 | 2462 | 3289 | 2488 | widgets |
+| `offer_details_page.dart` | 4518 | 1939 | 2549 | 1969 | widgets |
+| `trust_score_widgets.dart` | 1290 | 531 | 752 | 538 | widgets |
+| `main.dart` | 1372 | 494 | 813 | 559 | widgets |
+| `toolbox_je_me_lance_page.dart` | 7218 | 4195 | 2783 | 4435 | mixte |
+| `admin_messaging_center_page.dart` | 1765 | 873 | 859 | 906 | mixte |
+| `admin_hero_slides_page.dart` | 2368 | 1492 | 854 | 1514 | mixte |
+| `pricing_calculator_page.dart` | 1507 | 820 | 650 | 857 | mixte |
+| `home_page.dart` | 2792 | 2340 | 410 | 2382 | mixte |
+| `consult_offers_page.dart` | 4115 | 3366 | 704 | 3411 | état |
+| `conversations_list_page.dart` | 2787 | 2412 | 338 | 2449 | état |
+| `conversation_thread_page.dart` | 5181 | 4515 | 607 | 4574 | état |
+| `user_offers_section.dart` | 3443 | 3331 | 82 | 3361 | état |
+| `publish_offer_page.dart` | 5116 | 4893 | 160 | 4956 | état |
+| `account_page.dart` | 4277 | 4166 | 54 | 4223 | état |
+| `fiche_pro_page.dart` | 1237 | 1205 | 10 | 1227 | état |
 
 Sur les fichiers de la famille « état », extraire les widgets ne gagne
-quasiment rien : `publish_offer_page.dart` est à 95 % une seule classe `State`.
+quasiment rien : `publish_offer_page.dart` est à 96 % une seule classe `State`.
 Un plan qui ne parlerait que d'« extraire les widgets » échouerait sur la
 moitié du périmètre.
 
-Total : **56 353 lignes**, dont **17 313 déplaçables sans aucun risque** (31 %).
+Total : **53 391 lignes**, dont **14 101 déplaçables sans aucun risque** (26 %).
+
+> Ces chiffres corrigent une première estimation qui annonçait 31 %. Le
+> compteur initial classait mal les déclarations de classe étalées sur deux
+> lignes (`class _XState` puis `extends State<…>`), et attribuait donc aux
+> widgets des milliers de lignes appartenant en réalité à la classe `State`.
+> Les valeurs ci-dessus sont issues du compteur corrigé.
 
 ---
 
@@ -226,20 +231,60 @@ possible. **Interdit tant que le fichier n'a pas de tests de caractérisation.**
 Ordre par rapport gain/effort, indépendant de la couverture puisque T1 est
 prouvé :
 
-| Fichier | Avant | Après T1 (principal) |
-|---|---:|---:|
-| `ad_placeholder_images_admin_page.dart` | 1590 | ~50 |
-| `admin_messaging_center_page.dart` | 1765 | ~480 |
-| `trust_score_widgets.dart` | 1290 | ~470 |
-| `main.dart` | 1372 | ~570 |
-| `offer_details_page.dart` | 4518 | ~2000 |
-| `admin_space_page.dart` | 5777 | ~2120 |
-| `toolbox_je_me_lance_page.dart` | 7218 | ~4500 |
+| Fichier | Avant | Après T1 (principal) | État |
+|---|---:|---:|---|
+| `ad_placeholder_images_admin_page.dart` | 1590 | **909** | ✅ fait |
+| `trust_score_widgets.dart` | 1290 | ~538 | à faire |
+| `main.dart` | 1372 | ~559 | à faire |
+| `admin_messaging_center_page.dart` | 1765 | ~906 | à faire |
+| `offer_details_page.dart` | 4518 | ~1969 | à faire |
+| `admin_space_page.dart` | 5777 | ~2488 | à faire |
+| `toolbox_je_me_lance_page.dart` | 7218 | ~4435 | à faire |
 
-Quatre fichiers passent sous budget ou à portée immédiate dès cette vague.
 `offer_details_page.dart` et `admin_space_page.dart` — les deux moins couverts —
 perdent plus de la moitié de leur volume **sans qu'aucune ligne ne soit
 éditée**. C'est précisément l'intérêt de commencer par là.
+
+Aucun de ces fichiers n'atteint le budget de 500 lignes par la seule vague 1 :
+T1 retire les widgets, pas la classe `State`. La vague 1 sort les fichiers de
+la catégorie « > 1200 lignes » et rend le reste traitable, elle ne termine pas
+le travail.
+
+### Cas de référence exécuté — `ad_placeholder_images_admin_page.dart`
+
+Premier fichier traité, à utiliser comme gabarit pour les suivants.
+
+**1590 → 909 lignes** dans le fichier principal, 686 lignes déplacées vers
+4 parts, toutes sous le budget de 250 :
+
+| Fichier | Lignes | Contenu |
+|---|---:|---|
+| `ad_placeholder_images_admin_page.dart` | 909 | page + `_AdPlaceholderImagesAdminPageState` (891 l) |
+| `…/ad_placeholder_images_received_widgets.dart` | 100 | `_LatestPlaceholderReceivedCard` |
+| `…/ad_placeholder_images_preview_widgets.dart` | 213 | `_SelectedAdPlaceholderPreview`, `_PlaceholderProgressLine` |
+| `…/ad_placeholder_images_grid_tile_widgets.dart` | 200 | `_AdminPlaceholderImageTile` |
+| `…/ad_placeholder_images_list_widgets.dart` | 177 | `_ReorderTile`, `_EmptyPlaceholderAdminState`, `_PlaceholderToolChip` |
+
+Découpage en tranches **contiguës** de l'original : chaque part est une plage
+de lignes reprise telle quelle, bannières de commentaire comprises. Aucune
+ligne éditée, aucun renommage.
+
+Les cinq barrières, toutes vertes :
+
+| Vérification | Résultat |
+|---|---|
+| `verify_part_extraction.py` | OK — déplacement pur, 1517 lignes sur 5 fichiers |
+| `flutter analyze --fatal-infos` | aucun problème |
+| Garde-fou de taille (mode CI) | OK |
+| `flutter test` | 1986/1986, total inchangé |
+| Taille de `build/web/main.dart.js` | **7 000 549 o avant et après** |
+
+L'invariant de taille s'est vérifié à l'octet près, comme prédit : un
+déplacement pur permute les noms minifiés sans rien ajouter ni retirer.
+
+Le fichier est entré dans `flutter_architecture_size_budget.json` à
+`current_lines: 909`, ce qui **verrouille le gain** — il ne pourra plus
+regrandir au-delà.
 
 ### Vague 2 — tests de caractérisation (achat de sûreté)
 
