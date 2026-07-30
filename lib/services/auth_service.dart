@@ -31,11 +31,13 @@ class AuthService {
     FirebaseFunctions? functions,
     AuthFunctionCaller? functionCaller,
     AuthGoogleSignOut? googleSignOut,
+    bool isWeb = kIsWeb,
   })  : _auth = auth ?? FirebaseAuth.instance,
         _db = firestore ?? FirebaseFirestore.instance,
         _functionsOverride = functions,
         _functionCaller = functionCaller,
-        _googleSignOut = googleSignOut;
+        _googleSignOut = googleSignOut,
+        _isWeb = isWeb;
 
   static final AuthService instance = AuthService._();
 
@@ -46,6 +48,7 @@ class AuthService {
     FirebaseFunctions? functions,
     AuthFunctionCaller? functionCaller,
     AuthGoogleSignOut? googleSignOut,
+    bool isWeb = kIsWeb,
   }) {
     return AuthService._(
       auth: auth,
@@ -53,6 +56,7 @@ class AuthService {
       functions: functions,
       functionCaller: functionCaller,
       googleSignOut: googleSignOut,
+      isWeb: isWeb,
     );
   }
 
@@ -61,6 +65,7 @@ class AuthService {
   final FirebaseFunctions? _functionsOverride;
   final AuthFunctionCaller? _functionCaller;
   final AuthGoogleSignOut? _googleSignOut;
+  final bool _isWeb;
 
   FirebaseFunctions get _functions =>
       _functionsOverride ?? prestoFirebaseFunctions;
@@ -387,7 +392,7 @@ class AuthService {
   Future<UserCredential> signInWithGoogle() async {
     await _auth.setLanguageCode('fr');
 
-    if (kIsWeb) {
+    if (_isWeb) {
       final provider = GoogleAuthProvider();
       final credential = await _auth.signInWithPopup(provider);
       await _afterSocialLogin(credential, providerName: 'google');
@@ -411,7 +416,7 @@ class AuthService {
 
     final provider = AppleAuthProvider();
 
-    final credential = kIsWeb
+    final credential = _isWeb
         ? await _auth.signInWithPopup(provider)
         : await _auth.signInWithProvider(provider);
 
