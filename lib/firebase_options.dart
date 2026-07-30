@@ -36,7 +36,7 @@ class DefaultFirebaseOptions {
       'https://presto-app-74abe-default-rtdb.europe-west1.firebasedatabase.app';
   static const String _webApiKey = 'AIzaSyCXzhQcvFnlcApEhk8A-Y57IdQC8uO728c';
   static const String _webAppId = '1:151421230024:web:1f974719da2f98822b3efd';
-  static const String _authDomain = 'presto-app-74abe.firebaseapp.com';
+  static const String _authDomain = 'ilipresto.fr';
   static const String _androidApiKey =
       'AIzaSyDAKDN2nDDad4BKxbBVgfYyOqhy7nrtZsQ';
   static const String _androidAppId =
@@ -54,7 +54,7 @@ class DefaultFirebaseOptions {
     appId: '1:151421230024:web:1f974719da2f98822b3efd',
     messagingSenderId: '151421230024',
     projectId: 'presto-app-74abe',
-    authDomain: 'presto-app-74abe.firebaseapp.com',
+    authDomain: 'ilipresto.fr',
     databaseURL:
         'https://presto-app-74abe-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'presto-app-74abe.firebasestorage.app',
