@@ -1,17 +1,16 @@
 name: Coverage auth 1072 executor
 
 on:
-  push:
+  pull_request:
     branches:
-      - coverage/w2-authentication-20260729-123102
-    paths:
-      - .github/workflows/coverage-auth-1072-executor.yml
+      - main
 
 permissions:
   contents: write
 
 jobs:
   execute:
+    if: github.head_ref == 'coverage/w2-authentication-20260729-123102'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -19,6 +18,7 @@ jobs:
         with:
           ref: coverage/w2-authentication-20260729-123102
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: subosito/flutter-action@v2
         with:
@@ -33,32 +33,15 @@ jobs:
 
           auth_path = Path('lib/services/auth_service.dart')
           auth = auth_path.read_text()
-
           replacements = [
-              (
-                  "    AuthGoogleSignOut? googleSignOut,\n  })  : _auth = auth ?? FirebaseAuth.instance,",
-                  "    AuthGoogleSignOut? googleSignOut,\n    bool isWeb = kIsWeb,\n  })  : _auth = auth ?? FirebaseAuth.instance,",
-              ),
-              (
-                  "        _functionCaller = functionCaller,\n        _googleSignOut = googleSignOut;",
-                  "        _functionCaller = functionCaller,\n        _googleSignOut = googleSignOut,\n        _isWeb = isWeb;",
-              ),
-              (
-                  "    AuthGoogleSignOut? googleSignOut,\n  }) {\n    return AuthService._(",
-                  "    AuthGoogleSignOut? googleSignOut,\n    bool isWeb = kIsWeb,\n  }) {\n    return AuthService._(",
-              ),
-              (
-                  "      functionCaller: functionCaller,\n      googleSignOut: googleSignOut,\n    );",
-                  "      functionCaller: functionCaller,\n      googleSignOut: googleSignOut,\n      isWeb: isWeb,\n    );",
-              ),
-              (
-                  "  final AuthGoogleSignOut? _googleSignOut;\n",
-                  "  final AuthGoogleSignOut? _googleSignOut;\n  final bool _isWeb;\n",
-              ),
+              ("    AuthGoogleSignOut? googleSignOut,\n  })  : _auth = auth ?? FirebaseAuth.instance,", "    AuthGoogleSignOut? googleSignOut,\n    bool isWeb = kIsWeb,\n  })  : _auth = auth ?? FirebaseAuth.instance,"),
+              ("        _functionCaller = functionCaller,\n        _googleSignOut = googleSignOut;", "        _functionCaller = functionCaller,\n        _googleSignOut = googleSignOut,\n        _isWeb = isWeb;"),
+              ("    AuthGoogleSignOut? googleSignOut,\n  }) {\n    return AuthService._(", "    AuthGoogleSignOut? googleSignOut,\n    bool isWeb = kIsWeb,\n  }) {\n    return AuthService._("),
+              ("      functionCaller: functionCaller,\n      googleSignOut: googleSignOut,\n    );", "      functionCaller: functionCaller,\n      googleSignOut: googleSignOut,\n      isWeb: isWeb,\n    );"),
+              ("  final AuthGoogleSignOut? _googleSignOut;\n", "  final AuthGoogleSignOut? _googleSignOut;\n  final bool _isWeb;\n"),
               ("    if (kIsWeb) {\n      final provider = GoogleAuthProvider();", "    if (_isWeb) {\n      final provider = GoogleAuthProvider();"),
               ("    final credential = kIsWeb\n        ? await _auth.signInWithPopup(provider)", "    final credential = _isWeb\n        ? await _auth.signInWithPopup(provider)"),
           ]
-
           for old, new in replacements:
               count = auth.count(old)
               if count != 1:
@@ -68,7 +51,6 @@ jobs:
 
           test_path = Path('test/services/auth_service_completion_test.dart')
           test = test_path.read_text()
-
           old = "  var providerCalls = 0;\n  String? providerId;\n"
           new = "  var providerCalls = 0;\n  var popupCalls = 0;\n  String? providerId;\n  String? popupProviderId;\n"
           if test.count(old) != 1:
@@ -87,7 +69,7 @@ jobs:
               raise SystemExit('reset marker not found exactly once')
           test = test.replace(old, new, 1)
 
-          helper_marker = "  test('inscrit un utilisateur, normalise le profil et envoie la vérification',"
+          marker = "  test('inscrit un utilisateur, normalise le profil et envoie la vérification',"
           helper = """  AuthService webService() {
     return AuthService.forTesting(
       auth: FirebaseAuth.instance,
@@ -113,20 +95,15 @@ jobs:
   }
 
 """
-          if test.count(helper_marker) != 1:
+          if test.count(marker) != 1:
               raise SystemExit('helper insertion marker not found exactly once')
-          test = test.replace(helper_marker, helper + helper_marker, 1)
+          test = test.replace(marker, helper + marker, 1)
 
-          end_marker = "  test('connexion Apple avec user met à jour le profil social', () async {"
-          if test.count(end_marker) != 1:
-              raise SystemExit('apple test marker not found exactly once')
-
+          marker = "  test('connexion Apple avec user met à jour le profil social', () async {"
           web_tests = """  test('connexion Google Web utilise popup et met à jour le profil', () async {
     final current = user(provider: 'google.com');
     platform.user = current;
-
     final credential = await webService().signInWithGoogle();
-
     expect(credential.user?.uid, 'user-1');
     expect(platform.popupCalls, 1);
     expect(platform.popupProviderId, 'google.com');
@@ -138,9 +115,7 @@ jobs:
   test('connexion Apple Web utilise popup et met à jour le profil', () async {
     final current = user(provider: 'apple.com');
     platform.user = current;
-
     final credential = await webService().signInWithApple();
-
     expect(credential.user?.uid, 'user-1');
     expect(platform.popupCalls, 1);
     expect(platform.popupProviderId, 'apple.com');
@@ -150,7 +125,9 @@ jobs:
   });
 
 """
-          test = test.replace(end_marker, web_tests + end_marker, 1)
+          if test.count(marker) != 1:
+              raise SystemExit('apple test marker not found exactly once')
+          test = test.replace(marker, web_tests + marker, 1)
           test_path.write_text(test)
           PY
 
