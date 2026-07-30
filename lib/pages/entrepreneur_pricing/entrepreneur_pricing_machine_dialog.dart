@@ -5,11 +5,10 @@ import 'entrepreneur_pricing_models.dart';
 Future<ProductionMachineUsage?> showProductionMachineDialog(
   BuildContext context, {
   ProductionMachineUsage? initialValue,
-}) =>
-    showDialog<ProductionMachineUsage>(
-      context: context,
-      builder: (_) => _ProductionMachineDialog(initialValue: initialValue),
-    );
+}) => showDialog<ProductionMachineUsage>(
+  context: context,
+  builder: (_) => _ProductionMachineDialog(initialValue: initialValue),
+);
 
 class _ProductionMachineDialog extends StatefulWidget {
   const _ProductionMachineDialog({this.initialValue});
@@ -40,9 +39,7 @@ class _ProductionMachineDialogState extends State<_ProductionMachineDialog> {
     _minutes = TextEditingController(
       text: _editable(initialValue?.minutesPerUnit ?? 30),
     );
-    _quantity = TextEditingController(
-      text: '${initialValue?.quantity ?? 1}',
-    );
+    _quantity = TextEditingController(text: '${initialValue?.quantity ?? 1}');
   }
 
   @override
@@ -54,43 +51,12 @@ class _ProductionMachineDialogState extends State<_ProductionMachineDialog> {
     super.dispose();
   }
 
-  void _save() {
-    final machineName = _name.text.trim();
-    final machineWatts = _parse(_watts.text);
-    final machineMinutes = _parse(_minutes.text);
-    final machineQuantity = int.tryParse(_quantity.text.trim()) ?? 0;
-
-    if (machineName.isEmpty ||
-        machineWatts <= 0 ||
-        machineMinutes <= 0 ||
-        machineQuantity <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Renseigne un nom, une puissance, une durée et une quantité valides.',
-          ),
-        ),
-      );
-      return;
-    }
-
-    Navigator.of(context).pop(
-      ProductionMachineUsage(
-        name: machineName,
-        watts: machineWatts,
-        minutesPerUnit: machineMinutes,
-        quantity: machineQuantity,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final initialValue = widget.initialValue;
     return AlertDialog(
       title: Text(
-        widget.initialValue == null
-            ? 'Ajouter une machine'
-            : 'Modifier la machine',
+        initialValue == null ? 'Ajouter une machine' : 'Modifier la machine',
       ),
       content: SingleChildScrollView(
         child: Column(
@@ -136,7 +102,33 @@ class _ProductionMachineDialogState extends State<_ProductionMachineDialog> {
           child: const Text('Annuler'),
         ),
         FilledButton(
-          onPressed: _save,
+          onPressed: () {
+            final machineName = _name.text.trim();
+            final machineWatts = _parse(_watts.text);
+            final machineMinutes = _parse(_minutes.text);
+            final machineQuantity = int.tryParse(_quantity.text.trim()) ?? 0;
+            if (machineName.isEmpty ||
+                machineWatts <= 0 ||
+                machineMinutes <= 0 ||
+                machineQuantity <= 0) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Renseigne un nom, une puissance, une durée et une quantité valides.',
+                  ),
+                ),
+              );
+              return;
+            }
+            Navigator.of(context).pop(
+              ProductionMachineUsage(
+                name: machineName,
+                watts: machineWatts,
+                minutesPerUnit: machineMinutes,
+                quantity: machineQuantity,
+              ),
+            );
+          },
           child: const Text('Enregistrer'),
         ),
       ],
@@ -170,9 +162,8 @@ class _DialogNumberField extends StatelessWidget {
   }
 }
 
-double _parse(String value) => double.tryParse(
-      value.trim().replaceAll(' ', '').replaceAll(',', '.'),
-    ) ??
+double _parse(String value) =>
+    double.tryParse(value.trim().replaceAll(' ', '').replaceAll(',', '.')) ??
     0.0;
 
 String _editable(double value) => value == value.roundToDouble()
