@@ -68,6 +68,14 @@ void main() {
     },
   );
 
+  test('ferme le mode commercial si le service est indisponible', () async {
+    subscriptionOperatingModeServiceFactory = () {
+      throw StateError('service indisponible');
+    };
+
+    expect(await resolveSubscriptionCommercialModeForTesting(), isFalse);
+  });
+
   testWidgets('checkout payant passe au service en mode commercial', (
     tester,
   ) async {
