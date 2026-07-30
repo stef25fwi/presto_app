@@ -3,7 +3,7 @@ importScripts('https://www.gstatic.com/firebasejs/11.10.0/firebase-messaging-com
 
 firebase.initializeApp({
   apiKey: 'AIzaSyCXzhQcvFnlcApEhk8A-Y57IdQC8uO728c',
-  authDomain: 'presto-app-74abe.firebaseapp.com',
+  authDomain: 'ilipresto.fr',
   projectId: 'presto-app-74abe',
   storageBucket: 'presto-app-74abe.firebasestorage.app',
   messagingSenderId: '151421230024',
@@ -78,35 +78,21 @@ self.addEventListener('notificationclick', (event) => {
 
   const data = extractNotificationData(event.notification.data || {});
   const routeName = normalizeRoute(data);
-  const targetUrl = new URL(routeName, self.location.origin).href;
+  const url = new URL(routeName, self.location.origin).toString();
 
-  event.waitUntil(
-    self.clients.matchAll({
+  event.waitUntil((async () => {
+    const windowClients = await clients.matchAll({
       type: 'window',
       includeUncontrolled: true,
-    }).then((clientsArr) => {
-      for (const client of clientsArr) {
-        if ('navigate' in client) {
-          return client.navigate(targetUrl).then((navigatedClient) => {
-            const nextClient = navigatedClient || client;
-            if ('focus' in nextClient) {
-              return nextClient.focus();
-            }
-            return nextClient;
-          });
-        }
+    });
 
-        if ('focus' in client) {
-          client.postMessage({ routeName });
-          return client.focus();
-        }
+    for (const client of windowClients) {
+      if ('focus' in client) {
+        client.navigate(url);
+        return client.focus();
       }
+    }
 
-      if (self.clients.openWindow) {
-        return self.clients.openWindow(targetUrl);
-      }
-
-      return undefined;
-    }),
-  );
+    return clients.openWindow(url);
+  })());
 });
