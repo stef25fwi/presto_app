@@ -1,19 +1,15 @@
 import 'dart:typed_data';
 
 import 'package:cross_file/cross_file.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import 'journey_pdf_download.dart';
+import 'pdf/ilipresto_pdf_branding.dart';
 
 /// Génère et télécharge le PDF du parcours personnalisé.
 class JourneyPdfExportService {
   const JourneyPdfExportService();
-
-  static const _logoAssetPath = 'assets/images/logo_ilipresto.png';
-  static const _fontRegularPath = 'assets/fonts/Inter-Regular.ttf';
-  static const _fontBoldPath = 'assets/fonts/Inter-Bold.ttf';
 
   Future<XFile> generateJourneyPdf(Map<String, dynamic> journey) async {
     final bytes = await _buildPdfBytes(journey);
@@ -29,7 +25,6 @@ class JourneyPdfExportService {
     if (bytes.isEmpty) {
       throw StateError('Le document PDF généré est vide.');
     }
-
     return saveJourneyPdfBytes(
       bytes: bytes,
       fileName: _fileNameForJourney(journey),
@@ -37,24 +32,15 @@ class JourneyPdfExportService {
   }
 
   static String _fileNameForJourney(Map<String, dynamic> journey) {
-    final safeActivity = _sanitizeFilePart(
-      '${journey['selectedActivity'] ?? ''}',
-    );
+    final safeActivity = _sanitizeFilePart('${journey['selectedActivity'] ?? ''}');
     return 'ilipresto_${safeActivity.isEmpty ? 'parcours' : safeActivity}.pdf';
   }
 
   Future<Uint8List> _buildPdfBytes(Map<String, dynamic> journey) async {
-    final regular = pw.Font.ttf(await rootBundle.load(_fontRegularPath));
-    final bold = pw.Font.ttf(await rootBundle.load(_fontBoldPath));
-    final logoData = await rootBundle.load(_logoAssetPath);
-    final logo = pw.MemoryImage(logoData.buffer.asUint8List());
-
-    final document = pw.Document(
-      theme: pw.ThemeData.withFont(base: regular, bold: bold),
-    );
-
+    final branding = await IliprestoPdfBranding.load();
+    final document = pw.Document(theme: branding.theme);
     final widgets = <pw.Widget>[
-      _cover(logo, journey),
+      _cover(branding, journey),
       _section('Résumé de ma situation'),
       _kv('Projet', journey['projectLabel']),
       _kv('Région', journey['region']),
@@ -85,6 +71,13 @@ class JourneyPdfExportService {
     _appendTimeline(widgets, 'Plan d’action 30 jours', journey['plan30']);
     _appendTimeline(widgets, 'Étapes détaillées', journey['steps']);
     _appendMap(widgets, 'Progression guidée', journey['guidedProgress']);
+    widgets.add(
+      branding.disclaimer(
+        additionalText:
+            'Ce parcours est construit à partir des informations déclarées par '
+            'l’utilisateur et peut évoluer selon sa situation.',
+      ),
+    );
 
     document.addPage(
       pw.MultiPage(
@@ -93,13 +86,65 @@ class JourneyPdfExportService {
           margin: const pw.EdgeInsets.fromLTRB(30, 56, 30, 48),
           buildBackground: (_) => _watermark(),
         ),
-        header: (_) => _header(logo),
-        footer: (context) => _footer(context, logo),
+        header: (_) => branding.header(documentTitle: 'Mon parcours personnalisé'),
+        footer: branding.footer,
         build: (_) => widgets,
       ),
     );
-
     return document.save();
+  }
+
+  static pw.Widget _cover(
+    IliprestoPdfBranding branding,
+    Map<String, dynamic> journey,
+  ) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(16),
+      margin: const pw.EdgeInsets.only(bottom: 16),
+      decoration: pw.BoxDecoration(
+        color: PdfColors.orange50,
+        borderRadius: pw.BorderRadius.circular(14),
+        border: pw.Border.all(color: PdfColors.orange200),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            children: [
+              pw.Image(branding.logo, width: 44, height: 44),
+              pw.SizedBox(width: 12),
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'iliprestō',
+                      style: pw.TextStyle(
+                        fontSize: 20,
+                        fontWeight: pw.FontWeight.bold,
+                        color: IliprestoPdfBranding.orange,
+                      ),
+                    ),
+                    pw.Text(
+                      'Mon parcours personnalisé',
+                      style: pw.TextStyle(
+                        fontSize: 17,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blue900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 12),
+          _kv('Activité', journey['selectedActivity']),
+          _kv('Région', journey['region']),
+          _kv('Statut actuel', journey['currentStatus']),
+        ],
+      ),
+    );
   }
 
   static void _appendStringList(
@@ -122,7 +167,9 @@ class JourneyPdfExportService {
     if (map.isEmpty) return;
     target.add(_section(title));
     target.addAll(
-      map.entries.map((entry) => _kv(_prettyLabel(entry.key), _formatValue(entry.value))),
+      map.entries.map(
+        (entry) => _kv(_prettyLabel(entry.key), _formatValue(entry.value)),
+      ),
     );
   }
 
@@ -153,66 +200,6 @@ class JourneyPdfExportService {
     }
   }
 
-  static pw.Widget _cover(pw.ImageProvider logo, Map<String, dynamic> journey) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.all(16),
-      margin: const pw.EdgeInsets.only(bottom: 16),
-      decoration: pw.BoxDecoration(
-        color: PdfColors.orange50,
-        borderRadius: pw.BorderRadius.circular(14),
-        border: pw.Border.all(color: PdfColors.orange200),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Row(children: [
-            pw.Image(logo, width: 44, height: 44),
-            pw.SizedBox(width: 12),
-            pw.Expanded(
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  _brand(20),
-                  pw.Text(
-                    'Mon parcours personnalisé',
-                    style: pw.TextStyle(
-                      fontSize: 17,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.blue900,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ]),
-          pw.SizedBox(height: 12),
-          _kv('Activité', journey['selectedActivity']),
-          _kv('Région', journey['region']),
-          _kv('Statut actuel', journey['currentStatus']),
-        ],
-      ),
-    );
-  }
-
-  static pw.Widget _header(pw.ImageProvider logo) => pw.Row(children: [
-        pw.Image(logo, width: 22, height: 22),
-        pw.SizedBox(width: 8),
-        _brand(13),
-        pw.Spacer(),
-        pw.Text('Parcours personnalisé', style: const pw.TextStyle(fontSize: 9)),
-      ]);
-
-  static pw.Widget _footer(pw.Context context, pw.ImageProvider logo) => pw.Row(
-        children: [
-          pw.Image(logo, width: 15, height: 15),
-          pw.SizedBox(width: 6),
-          pw.Text('Document généré par iliprestō', style: const pw.TextStyle(fontSize: 8)),
-          pw.Spacer(),
-          pw.Text('Page ${context.pageNumber} / ${context.pagesCount}',
-              style: const pw.TextStyle(fontSize: 8)),
-        ],
-      );
-
   static pw.Widget _watermark() => pw.FullPage(
         ignoreMargins: true,
         child: pw.Center(
@@ -231,27 +218,6 @@ class JourneyPdfExportService {
             ),
           ),
         ),
-      );
-
-  static pw.Widget _brand(double size) => pw.RichText(
-        text: pw.TextSpan(children: [
-          pw.TextSpan(
-            text: 'ili',
-            style: pw.TextStyle(
-              fontSize: size,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.orange600,
-            ),
-          ),
-          pw.TextSpan(
-            text: 'prestō',
-            style: pw.TextStyle(
-              fontSize: size,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.blue700,
-            ),
-          ),
-        ]),
       );
 
   static pw.Widget _section(String text) => pw.Container(
@@ -291,7 +257,10 @@ class JourneyPdfExportService {
 
   static pw.Widget _paragraph(dynamic value) => pw.Padding(
         padding: const pw.EdgeInsets.only(bottom: 6),
-        child: pw.Text(_text(value), style: const pw.TextStyle(fontSize: 10, lineSpacing: 2)),
+        child: pw.Text(
+          _text(value),
+          style: const pw.TextStyle(fontSize: 10, lineSpacing: 2),
+        ),
       );
 
   static pw.Widget _kv(String label, dynamic value) {
@@ -300,13 +269,15 @@ class JourneyPdfExportService {
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 4),
       child: pw.RichText(
-        text: pw.TextSpan(children: [
-          pw.TextSpan(
-            text: '$label : ',
-            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
-          ),
-          pw.TextSpan(text: text, style: const pw.TextStyle(fontSize: 10)),
-        ]),
+        text: pw.TextSpan(
+          children: [
+            pw.TextSpan(
+              text: '$label : ',
+              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.TextSpan(text: text, style: const pw.TextStyle(fontSize: 10)),
+          ],
+        ),
       ),
     );
   }
@@ -317,7 +288,9 @@ class JourneyPdfExportService {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Text('• '),
-            pw.Expanded(child: pw.Text(value, style: const pw.TextStyle(fontSize: 10))),
+            pw.Expanded(
+              child: pw.Text(value, style: const pw.TextStyle(fontSize: 10)),
+            ),
           ],
         ),
       );
@@ -330,7 +303,9 @@ class JourneyPdfExportService {
       : const <Map<String, dynamic>>[];
 
   static List<String> _stringList(dynamic value) {
-    if (value is List) return value.map(_text).where((item) => item.isNotEmpty).toList();
+    if (value is List) {
+      return value.map(_text).where((item) => item.isNotEmpty).toList();
+    }
     final text = _text(value);
     return text.isEmpty ? const <String>[] : <String>[text];
   }
@@ -340,9 +315,14 @@ class JourneyPdfExportService {
   static String _prettyLabel(String raw) {
     final spaced = raw
         .replaceAll('_', ' ')
-        .replaceAllMapped(RegExp(r'([a-z])([A-Z])'), (match) => '${match[1]} ${match[2]}')
+        .replaceAllMapped(
+          RegExp(r'([a-z])([A-Z])'),
+          (match) => '${match[1]} ${match[2]}',
+        )
         .trim();
-    return spaced.isEmpty ? 'Information' : '${spaced[0].toUpperCase()}${spaced.substring(1)}';
+    return spaced.isEmpty
+        ? 'Information'
+        : '${spaced[0].toUpperCase()}${spaced.substring(1)}';
   }
 
   static String _formatValue(dynamic value) {
