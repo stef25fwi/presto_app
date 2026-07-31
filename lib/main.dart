@@ -688,8 +688,17 @@ Future<void> main() async {
         // signInWithRedirect précédent. Doit être appelé tôt pour ne pas
         // courir la course contre AccountPage qui appelle aussi
         // getRedirectResult dans son initState.
+        //
+        // Timeout défensif : juste après le retour de la redirection OAuth
+        // (mobile web), le stockage persistant peut être temporairement
+        // indisponible (Safari ITP, navigateur intégré) et faire pendre
+        // cet appel indéfiniment, ce qui bloquerait runApp() et laisserait
+        // l'utilisateur coincé sur le fond orange de démarrage.
         try {
-          pendingRedirectAuthResult = await auth.getRedirectResult();
+          pendingRedirectAuthResult =
+              await auth.getRedirectResult().timeout(
+                    const Duration(seconds: 10),
+                  );
           if (kDebugMode) {
             debugPrint(
               '[Auth] getRedirectResult: user='

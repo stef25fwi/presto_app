@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
@@ -5,6 +7,14 @@ import 'package:flutter/foundation.dart';
 import '../config/app_check_state.dart';
 import '../firebase_init.dart';
 import 'admin_web_debug_store.dart';
+
+/// Borne l'activation App Check : sur mobile web, le chargement de
+/// reCAPTCHA Enterprise peut ne jamais se résoudre (réseau lent, stockage
+/// restreint juste après une redirection OAuth cross-site, bloqueur de
+/// script). `activate()` n'a pas de timeout interne ; sans cette borne,
+/// `bootstrapAppCheck()` bloquerait indéfiniment `runApp()` dans main.dart
+/// et l'utilisateur resterait coincé sur le fond orange de démarrage.
+const Duration _appCheckActivationTimeout = Duration(seconds: 10);
 
 const String _webRecaptchaEnterpriseSiteKeyFromDefine = String.fromEnvironment(
   'RECAPTCHA_ENTERPRISE_SITE_KEY',
@@ -150,14 +160,17 @@ Future<void> bootstrapAppCheck() async {
             'host=$host hostClass=$hostClass provider=$kAppCheckWebRecaptchaProviderLabel',
       );
       appCheckActivationAttempted = true;
-      await FirebaseAppCheck.instance.activate(
-        webProvider: ReCaptchaEnterpriseProvider(
-            _effectiveWebRecaptchaEnterpriseSiteKey),
-        androidProvider:
-            kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-        appleProvider:
-            kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
-      );
+      await FirebaseAppCheck.instance
+          .activate(
+            webProvider: ReCaptchaEnterpriseProvider(
+                _effectiveWebRecaptchaEnterpriseSiteKey),
+            androidProvider: kDebugMode
+                ? AndroidProvider.debug
+                : AndroidProvider.playIntegrity,
+            appleProvider:
+                kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+          )
+          .timeout(_appCheckActivationTimeout);
       await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
       await refreshAppCheckToken(reason: 'bootstrap-web', forceRefresh: true);
       return;
@@ -169,11 +182,14 @@ Future<void> bootstrapAppCheck() async {
       message: 'activate-native',
       detail: 'platform=${firebaseInitPlatformLabel()}',
     );
-    await FirebaseAppCheck.instance.activate(
-      androidProvider:
-          kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-      appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
-    );
+    await FirebaseAppCheck.instance
+        .activate(
+          androidProvider:
+              kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+          appleProvider:
+              kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+        )
+        .timeout(_appCheckActivationTimeout);
     await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
     await refreshAppCheckToken(reason: 'bootstrap-native', forceRefresh: true);
   } catch (error, stackTrace) {
