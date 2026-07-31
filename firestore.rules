@@ -322,7 +322,9 @@ service cloud.firestore {
           'updatedAt',
           'createdBy',
           'scope',
-          'targetRegions'
+          'targetRegions',
+          'focalX',
+          'focalY'
         ])
         && data.id is string
         && data.id.size() > 0
@@ -349,7 +351,9 @@ service cloud.firestore {
         && data.createdAt is timestamp
         && data.updatedAt is timestamp
         && (!('scope' in data) || data.scope in ['global', 'regional'])
-        && (!('targetRegions' in data) || data.targetRegions is list);
+        && (!('targetRegions' in data) || data.targetRegions is list)
+        && (!('focalX' in data) || (data.focalX is number && data.focalX >= 0 && data.focalX <= 1))
+        && (!('focalY' in data) || (data.focalY is number && data.focalY >= 0 && data.focalY <= 1));
     }
 
     match /heroSlides/{slideId} {

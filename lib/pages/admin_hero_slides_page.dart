@@ -66,6 +66,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
     String slideScope = existing?.scope ?? 'global';
     List<String> selectedRegions =
         List<String>.from(existing?.targetRegions ?? const <String>[]);
+    double focalX = existing?.focalX ?? 0.5;
+    double focalY = existing?.focalY ?? 0.5;
     String previewWarning = '';
     String localError = '';
     bool isPickingFile = false;
@@ -172,6 +174,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                       _contentTypeForName(normalizedName, mediaType);
                   previewWarning = '';
                   localError = '';
+                  focalX = 0.5;
+                  focalY = 0.5;
                   if (existing == null) {
                     durationController.text = mediaType == 'video' ? '10' : '5';
                   }
@@ -189,6 +193,16 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                 setSheetState(() => isPickingFile = false);
               }
             }
+
+            final ImageProvider? focalImageProvider = selectedMediaType != 'image'
+                ? null
+                : selectedBytes.isNotEmpty
+                    ? MemoryImage(Uint8List.fromList(selectedBytes))
+                    : (existing != null &&
+                            existing.mediaType == 'image' &&
+                            existing.mediaUrl.trim().isNotEmpty)
+                        ? NetworkImage(existing.mediaUrl) as ImageProvider
+                        : null;
 
             return SafeArea(
               child: Padding(
@@ -373,6 +387,23 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                             ),
                           ),
                         ],
+                      ],
+                      if (focalImageProvider != null) ...[
+                        const SizedBox(height: 16),
+                        _HeroFocalPointPicker(
+                          key: ValueKey(
+                            'focal-${selectedFileName.isNotEmpty ? selectedFileName : existing?.id}',
+                          ),
+                          imageProvider: focalImageProvider,
+                          focalX: focalX,
+                          focalY: focalY,
+                          onChanged: (x, y) {
+                            setSheetState(() {
+                              focalX = x;
+                              focalY = y;
+                            });
+                          },
+                        ),
                       ],
                       const SizedBox(height: 16),
                       TextField(
@@ -669,6 +700,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                             scope: slideScope,
                                             targetRegions: List<String>.from(
                                                 selectedRegions),
+                                            focalX: focalX,
+                                            focalY: focalY,
                                             onUploadProgress: (progress) {
                                               if (!mounted) {
                                                 return;
@@ -713,6 +746,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                             scope: slideScope,
                                             targetRegions: List<String>.from(
                                                 selectedRegions),
+                                            focalX: focalX,
+                                            focalY: focalY,
                                             replacementFileBytes:
                                                 selectedBytes.isEmpty
                                                     ? null
@@ -1994,6 +2029,277 @@ class _SelectedHeroMediaPreview extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Outil d'ajustement du cadrage du Hero : l'admin fait glisser le repère
+/// pour choisir la zone de l'image à garder visible quand `BoxFit.cover`
+/// rogne l'image (notamment sur mobile web où le ratio du bandeau Hero
+/// est plus étroit que sur desktop).
+class _HeroFocalPointPicker extends StatefulWidget {
+  final ImageProvider imageProvider;
+  final double focalX;
+  final double focalY;
+  final void Function(double x, double y) onChanged;
+
+  const _HeroFocalPointPicker({
+    super.key,
+    required this.imageProvider,
+    required this.focalX,
+    required this.focalY,
+    required this.onChanged,
+  });
+
+  @override
+  State<_HeroFocalPointPicker> createState() => _HeroFocalPointPickerState();
+}
+
+class _HeroFocalPointPickerState extends State<_HeroFocalPointPicker> {
+  static const double _boxHeight = 200;
+
+  Size? _imageSize;
+  ImageStream? _imageStream;
+  ImageStreamListener? _imageStreamListener;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolveImage();
+  }
+
+  @override
+  void dispose() {
+    _detachListener();
+    super.dispose();
+  }
+
+  void _detachListener() {
+    if (_imageStream != null && _imageStreamListener != null) {
+      _imageStream!.removeListener(_imageStreamListener!);
+    }
+  }
+
+  void _resolveImage() {
+    final stream = widget.imageProvider.resolve(const ImageConfiguration());
+    final listener = ImageStreamListener(
+      (info, _) {
+        if (!mounted) return;
+        setState(() {
+          _imageSize = Size(
+            info.image.width.toDouble(),
+            info.image.height.toDouble(),
+          );
+        });
+      },
+      onError: (error, stackTrace) {
+        // Aperçu indisponible : le point focal reste réglable via le centre
+        // par défaut, la sélection réelle sera néanmoins prise en compte.
+      },
+    );
+    _detachListener();
+    _imageStream = stream;
+    _imageStreamListener = listener;
+    stream.addListener(listener);
+  }
+
+  _ContainRect _containRect(Size container, Size image) {
+    final containerAspect = container.width / container.height;
+    final imageAspect = image.width / image.height;
+    double renderWidth;
+    double renderHeight;
+    if (imageAspect > containerAspect) {
+      renderWidth = container.width;
+      renderHeight = container.width / imageAspect;
+    } else {
+      renderHeight = container.height;
+      renderWidth = container.height * imageAspect;
+    }
+    final dx = (container.width - renderWidth) / 2;
+    final dy = (container.height - renderHeight) / 2;
+    return _ContainRect(dx, dy, renderWidth, renderHeight);
+  }
+
+  void _handlePointer(Offset localPosition, Size containerSize) {
+    final imageSize = _imageSize;
+    if (imageSize == null) return;
+    final rect = _containRect(containerSize, imageSize);
+    if (rect.width <= 0 || rect.height <= 0) return;
+    final fx = ((localPosition.dx - rect.dx) / rect.width).clamp(0.0, 1.0);
+    final fy = ((localPosition.dy - rect.dy) / rect.height).clamp(0.0, 1.0);
+    widget.onChanged(fx.toDouble(), fy.toDouble());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final alignment = Alignment(widget.focalX * 2 - 1, widget.focalY * 2 - 1);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(Icons.center_focus_strong_rounded,
+                size: 18, color: _kAdminHeroBlue),
+            SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                "Ajuster le cadrage — glissez le repère sur l'élément à garder visible",
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF374151),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final containerSize = Size(constraints.maxWidth, _boxHeight);
+            final rect = _imageSize == null
+                ? null
+                : _containRect(containerSize, _imageSize!);
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onPanDown: (details) =>
+                    _handlePointer(details.localPosition, containerSize),
+                onPanUpdate: (details) =>
+                    _handlePointer(details.localPosition, containerSize),
+                child: Container(
+                  width: containerSize.width,
+                  height: containerSize.height,
+                  color: const Color(0xFF111827),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Image(
+                          image: widget.imageProvider,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      if (rect != null)
+                        Positioned(
+                          left: rect.dx + widget.focalX * rect.width - 12,
+                          top: rect.dy + widget.focalY * rect.height - 12,
+                          child: IgnorePointer(
+                            child: Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: _kAdminHeroOrange.withValues(alpha: 0.9),
+                                border:
+                                    Border.all(color: Colors.white, width: 2),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black45,
+                                    blurRadius: 4,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.add_rounded,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 10),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _HeroFocalPreviewBox(
+                label: 'Aperçu mobile',
+                aspectRatio: 360 / 223,
+                imageProvider: widget.imageProvider,
+                alignment: alignment,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _HeroFocalPreviewBox(
+                label: 'Aperçu desktop',
+                aspectRatio: 1200 / 456,
+                imageProvider: widget.imageProvider,
+                alignment: alignment,
+              ),
+            ),
+          ],
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: () => widget.onChanged(0.5, 0.5),
+            icon: const Icon(Icons.center_focus_weak_rounded, size: 16),
+            label: const Text('Recentrer'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ContainRect {
+  final double dx;
+  final double dy;
+  final double width;
+  final double height;
+
+  const _ContainRect(this.dx, this.dy, this.width, this.height);
+}
+
+class _HeroFocalPreviewBox extends StatelessWidget {
+  final String label;
+  final double aspectRatio;
+  final ImageProvider imageProvider;
+  final Alignment alignment;
+
+  const _HeroFocalPreviewBox({
+    required this.label,
+    required this.aspectRatio,
+    required this.imageProvider,
+    required this.alignment,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF6B7280),
+          ),
+        ),
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: AspectRatio(
+            aspectRatio: aspectRatio,
+            child: Image(
+              image: imageProvider,
+              fit: BoxFit.cover,
+              alignment: alignment,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

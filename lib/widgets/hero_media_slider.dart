@@ -342,7 +342,7 @@ class _HeroMediaSlideViewState extends State<_HeroMediaSlideView> {
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        alignment: Alignment.center,
+        alignment: widget.slide.focalAlignment,
         filterQuality: FilterQuality.high,
         errorBuilder: (_, __, ___) => const _HeroMediaErrorFallback(),
         frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
@@ -363,7 +363,7 @@ class _HeroMediaSlideViewState extends State<_HeroMediaSlideView> {
     return SizedBox.expand(
       child: FittedBox(
         fit: BoxFit.cover,
-        alignment: Alignment.center,
+        alignment: widget.slide.focalAlignment,
         clipBehavior: Clip.hardEdge,
         child: SizedBox(
           width: controller.value.size.width,
