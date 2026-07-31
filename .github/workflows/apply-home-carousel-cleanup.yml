@@ -25,181 +25,50 @@ jobs:
       - name: Remove inactive carousel ticker
         run: |
           python3 - <<'PY'
+          import re
           from pathlib import Path
 
           path = Path('lib/pages/home_page.dart')
           text = path.read_text(encoding='utf-8')
 
-          def replace_once(source: str, old: str, new: str, label: str) -> str:
-              count = source.count(old)
-              if count != 1:
-                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
-              return source.replace(old, new, 1)
+          replacements = [
+              (
+                  "class _AutoScrollingOffersCarouselState\n"
+                  "    extends State<_AutoScrollingOffersCarousel>\n"
+                  "    with SingleTickerProviderStateMixin {",
+                  "class _AutoScrollingOffersCarouselState\n"
+                  "    extends State<_AutoScrollingOffersCarousel> {",
+              ),
+              ("  late final Ticker _ticker;\n", ""),
+              ("  Duration _lastElapsed = Duration.zero;\n", ""),
+              ("  static const double _pixelsPerSecond = 44.0;\n", ""),
+              (
+                  "    // Le défilement continu coupait visuellement la première carte.\n"
+                  "    // Le carrousel reste maintenant aligné et se parcourt au geste.\n"
+                  "    _ticker = createTicker(_onTick);\n",
+                  "",
+              ),
+              ("      _lastElapsed = Duration.zero;\n", ""),
+              ("    _ticker.dispose();\n", ""),
+          ]
 
-          text = replace_once(
-              text,
-              "class _AutoScrollingOffersCarouselState\n"
-              "    extends State<_AutoScrollingOffersCarousel>\n"
-              "    with SingleTickerProviderStateMixin {",
-              "class _AutoScrollingOffersCarouselState\n"
-              "    extends State<_AutoScrollingOffersCarousel> {",
-              'remove ticker provider mixin',
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit(f'missing expected fragment: {old!r}')
+              text = text.replace(old, new, 1)
+
+          pattern = re.compile(
+              r"\n  void _onTick\(Duration elapsed\) \{.*?\n  \}\n\n"
+              r"  String _interventionDelayLabel",
+              re.DOTALL,
           )
-
-          text = replace_once(
+          text, count = pattern.subn(
+              "\n  String _interventionDelayLabel",
               text,
-              "  late final ScrollController _scrollController;\n"
-              "  late final Ticker _ticker;\n"
-              "  bool _isUserDragging = false;\n"
-              "  Duration _lastElapsed = Duration.zero;\n"
-              "  static const double _pixelsPerSecond = 44.0;",
-              "  late final ScrollController _scrollController;",
-              'remove inactive ticker fields',
+              count=1,
           )
-
-          text = replace_once(
-              text,
-              "    _scrollController = ScrollController();\n"
-              "    // Le défilement continu coupait visuellement la première carte.\n"
-              "    // Le carrousel reste maintenant aligné et se parcourt au geste.\n"
-              "    _ticker = createTicker(_onTick);\n"
-              "    _refreshRenderItemsIfNeeded();",
-              "    _scrollController = ScrollController();\n"
-              "    _refreshRenderItemsIfNeeded();",
-              'simplify carousel init',
-          )
-
-          text = replace_once(
-              text,
-              "    if (oldWidget.offers.length != widget.offers.length) {\n"
-              "      _lastElapsed = Duration.zero;\n"
-              "      if (_scrollController.hasClients) {",
-              "    if (oldWidget.offers.length != widget.offers.length) {\n"
-              "      if (_scrollController.hasClients) {",
-              'remove elapsed reset',
-          )
-
-          text = replace_once(
-              text,
-              "  void dispose() {\n"
-              "    _ticker.dispose();\n"
-              "    _scrollController.dispose();",
-              "  void dispose() {\n"
-              "    _scrollController.dispose();",
-              'remove ticker disposal',
-          )
-
-          text = replace_once(
-              text,
-              "  void _onTick(Duration elapsed) {\n"
-              "    if (!_scrollController.hasClients) {\n"
-              "      _lastElapsed = elapsed;\n"
-              "      return;\n"
-              "    }\n"
-              "\n"
-              "    // Ne pas interrompre le momentum post-fling utilisateur\n"
-              "    if (_isUserDragging ||\n"
-              "        _scrollController.position.isScrollingNotifier.value) {\n"
-              "      _lastElapsed = elapsed;\n"
-              "      return;\n"
-              "    }\n"
-              "\n"
-              "    // Plafonner à 2 frames max pour éviter un saut brutal après un long drag\n"
-              "    final dtMs = (elapsed - _lastElapsed).inMilliseconds.clamp(0, 32);\n"
-              "    _lastElapsed = elapsed;\n"
-              "    if (dtMs <= 0) return;\n"
-              "\n"
-              "    final maxScroll = _scrollController.position.maxScrollExtent;\n"
-              "    if (maxScroll <= 0) return;\n"
-              "\n"
-              "    final loopPoint = maxScroll / 2;\n"
-              "    if (loopPoint <= 0) return;\n"
-              "\n"
-              "    final delta = _pixelsPerSecond * (dtMs / 1000.0);\n"
-              "    var next = _scrollController.offset + delta;\n"
-              "    if (next >= loopPoint) {\n"
-              "      next -= loopPoint;\n"
-              "    }\n"
-              "\n"
-              "    _scrollController.jumpTo(next);\n"
-              "  }\n"
-              "\n",
-              "",
-              'delete inactive tick callback',
-          )
-
-          old_build = """  @override
-  Widget build(BuildContext context) {
-    _refreshRenderItemsIfNeeded();
-    final duplicatedItems = _renderItems.length > 1
-        ? [..._renderItems, ..._renderItems]
-        : _renderItems;
-
-    return NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        if (notification is ScrollStartNotification &&
-            notification.dragDetails != null) {
-          _isUserDragging = true;
-        } else if (notification is ScrollEndNotification) {
-          _isUserDragging = false;
-        }
-        return false;
-      },
-      child: SizedBox(
-        height: 110,
-        child: ListView.separated(
-          controller: _scrollController,
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          itemCount: duplicatedItems.length,
-          addAutomaticKeepAlives: false,
-          cacheExtent: 900,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
-          itemBuilder: (context, index) => RepaintBoundary(
-            child: duplicatedItems[index].isToolbox
-                ? SizedBox(
-                    width: _responsiveOfferCardWidth(context),
-                    child: const EntrepreneurToolboxSlide(),
-                  )
-                : _buildOfferCard(duplicatedItems[index].cardData!),
-          ),
-        ),
-      ),
-    );
-  }
-"""
-          new_build = """  @override
-  Widget build(BuildContext context) {
-    _refreshRenderItemsIfNeeded();
-    final duplicatedItems = _renderItems.length > 1
-        ? [..._renderItems, ..._renderItems]
-        : _renderItems;
-
-    return SizedBox(
-      height: 110,
-      child: ListView.separated(
-        controller: _scrollController,
-        padding: const EdgeInsets.symmetric(horizontal: 2),
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        itemCount: duplicatedItems.length,
-        addAutomaticKeepAlives: false,
-        cacheExtent: 900,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, index) => RepaintBoundary(
-          child: duplicatedItems[index].isToolbox
-              ? SizedBox(
-                  width: _responsiveOfferCardWidth(context),
-                  child: const EntrepreneurToolboxSlide(),
-                )
-              : _buildOfferCard(duplicatedItems[index].cardData!),
-        ),
-      ),
-    );
-  }
-"""
-          text = replace_once(text, old_build, new_build, 'simplify carousel build')
+          if count != 1:
+              raise SystemExit(f'_onTick removal expected 1 match, found {count}')
 
           path.write_text(text, encoding='utf-8')
           PY
