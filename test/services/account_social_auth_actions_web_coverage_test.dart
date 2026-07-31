@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/account_social_auth_actions.dart';
@@ -93,8 +94,16 @@ class _WebSocialAuthPlatform extends FirebaseAuthPlatform {
   UserPlatform? get currentUser => exposeCurrentUser ? user : null;
 
   @override
-  Stream<UserPlatform?> authStateChanges() =>
-      Stream<UserPlatform?>.value(currentUser);
+  Stream<UserPlatform?> authStateChanges() {
+    final authenticatedUser = currentUser;
+    if (authenticatedUser != null) {
+      return Stream<UserPlatform?>.value(authenticatedUser);
+    }
+    return Stream<UserPlatform?>.multi((_) {
+      // Flux volontairement silencieux et non terminé. Le timeout du code
+      // de production annule l'abonnement sans laisser de Timer périodique.
+    });
+  }
 
   @override
   Stream<UserPlatform?> userChanges() =>
@@ -156,34 +165,40 @@ void main() {
 
   Future<void> runAction(
     WidgetTester tester,
-    Future<void> Function(BuildContext context) action,
-  ) async {
-    final completed = Completer<void>();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: ElevatedButton(
-              onPressed: () async {
-                try {
-                  await action(context);
-                  completed.complete();
-                } catch (error, stackTrace) {
-                  completed.completeError(error, stackTrace);
-                }
-              },
-              child: const Text('Connexion'),
+    Future<void> Function(BuildContext context) action, {
+    TargetPlatform targetPlatform = TargetPlatform.linux,
+  }) async {
+    debugDefaultTargetPlatformOverride = targetPlatform;
+    try {
+      final completed = Completer<void>();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () async {
+                  try {
+                    await action(context);
+                    completed.complete();
+                  } catch (error, stackTrace) {
+                    completed.completeError(error, stackTrace);
+                  }
+                },
+                child: const Text('Connexion'),
+              ),
             ),
           ),
         ),
-      ),
-    );
-    await tester.tap(find.text('Connexion'));
-    for (var i = 0; i < 20 && !completed.isCompleted; i += 1) {
-      await tester.pump(const Duration(milliseconds: 100));
+      );
+      await tester.tap(find.text('Connexion'));
+      for (var i = 0; i < 40 && !completed.isCompleted; i += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await completed.future.timeout(const Duration(seconds: 5));
+      await tester.pump();
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
     }
-    await completed.future.timeout(const Duration(seconds: 5));
-    await tester.pump();
   }
 
   Future<void> googleAction(BuildContext context) =>
@@ -211,6 +226,21 @@ void main() {
     );
 
     await runAction(tester, googleAction);
+
+    expect(platform.popupCalls, 0);
+    expect(platform.redirectCalls, 1);
+    expect(platform.redirectProviderId, 'google.com');
+    expect(rememberedRoutes, 1);
+  });
+
+  testWidgets('Google utilise directement redirect sur navigateur mobile', (
+    tester,
+  ) async {
+    await runAction(
+      tester,
+      googleAction,
+      targetPlatform: TargetPlatform.android,
+    );
 
     expect(platform.popupCalls, 0);
     expect(platform.redirectCalls, 1);
