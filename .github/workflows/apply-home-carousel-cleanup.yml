@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   cleanup:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -90,11 +91,12 @@ jobs:
           echo "home_page.dart lines=$lines"
           test "$lines" -le 2792
 
-      - name: Commit cleanup and remove temporary workflow
+      - name: Commit cleanup and remove temporary files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git rm .github/workflows/apply-home-carousel-cleanup.yml
+          git rm tools/.home_cleanup_trigger
           git add lib/pages/home_page.dart
           git diff --cached --check
           git commit -m "refactor(home): remove inactive carousel ticker"
