@@ -16,8 +16,8 @@ import '../services/post_auth_navigation_intent_service.dart';
 import '../services/user_profile_bootstrap_service.dart';
 import '../utils/friendly_snackbar.dart';
 
-typedef AccountTrackLoginCallback =
-    Future<void> Function({String? authMethod, bool isNewUser});
+typedef AccountTrackLoginCallback = Future<void> Function(
+    {String? authMethod, bool isNewUser});
 
 class AccountSocialAuthActions {
   static bool? _debugIsWebOverride;
@@ -84,11 +84,18 @@ class AccountSocialAuthActions {
         // qui empêche le popup de communiquer avec l'opener → internal-error
         // systématique. On passe directement en redirect flow.
         final bool onGitHubPages = _baseHost.endsWith('.github.io');
-        if (onGitHubPages) {
+        final bool onMobileWeb =
+            defaultTargetPlatform == TargetPlatform.android ||
+                defaultTargetPlatform == TargetPlatform.iOS;
+        final bool useDirectRedirect = onGitHubPages || onMobileWeb;
+
+        if (useDirectRedirect) {
           googleAuthService.logFallback(
             'Popup',
             'Redirect',
-            reason: 'GitHub Pages COOP headers — redirect direct',
+            reason: onMobileWeb
+                ? 'Navigation mobile — redirect recommandé'
+                : 'GitHub Pages COOP headers — redirect direct',
           );
           try {
             await _rememberAccountRouteForWebRedirect();
@@ -134,12 +141,24 @@ class AccountSocialAuthActions {
           // avec rechargement de page après que l'utilisateur a fermé le
           // popup.
           if (googleAuthService.isUserCancelled(popupError)) {
-            if (!context.mounted) return;
-            showErrorSnackBar(context, 'Connexion annulée.');
-            return;
-          }
+            if (auth.currentUser == null) {
+              try {
+                await auth
+                    .authStateChanges()
+                    .firstWhere((user) => user != null)
+                    .timeout(const Duration(seconds: 3));
+              } on TimeoutException {
+                if (!context.mounted) return;
+                showErrorSnackBar(context, 'Connexion annulée.');
+                return;
+              }
+            }
 
-          if (googleAuthService.shouldFallbackToRedirect(popupError)) {
+            googleAuthService.logSuccess(
+              'Popup/AuthStateRecovered',
+              auth.currentUser?.email,
+            );
+          } else if (googleAuthService.shouldFallbackToRedirect(popupError)) {
             // Previously we refused the redirect when App Check activation had
             // failed (to avoid a guaranteed server rejection). That guard
             // permanently locked out any user whose browser blocked
@@ -172,15 +191,15 @@ class AccountSocialAuthActions {
               }
               return;
             }
-          }
+          } else {
+            if (!context.mounted) return;
 
-          if (!context.mounted) return;
-
-          final msg = googleAuthService.getErrorMessage(popupError);
-          if (msg.isNotEmpty) {
-            showErrorSnackBar(context, msg);
+            final msg = googleAuthService.getErrorMessage(popupError);
+            if (msg.isNotEmpty) {
+              showErrorSnackBar(context, msg);
+            }
+            return;
           }
-          return;
         }
       } else {
         final provider = _buildGoogleProvider();
@@ -356,11 +375,10 @@ class AccountSocialAuthActions {
 
       final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
       if (userCredential.additionalUserInfo?.isNewUser == true) {
-        final fullName =
-            appleCredential.givenName != null ||
+        final fullName = appleCredential.givenName != null ||
                 appleCredential.familyName != null
             ? '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'
-                  .trim()
+                .trim()
             : null;
 
         if (fullName != null && fullName.isNotEmpty) {
@@ -528,11 +546,9 @@ class AccountSocialAuthActions {
 
   static bool _shouldFallbackToRedirect(Object error) {
     final message = error.toString().toLowerCase();
-    final hasCoopSignal =
-        message.contains('cross-origin-opener-policy') ||
+    final hasCoopSignal = message.contains('cross-origin-opener-policy') ||
         message.contains('cross-origin');
-    final hasPopupBlockedSignal =
-        message.contains('popup-blocked') ||
+    final hasPopupBlockedSignal = message.contains('popup-blocked') ||
         message.contains('popup blocked') ||
         message.contains('popup-blocked-by-browser');
 
