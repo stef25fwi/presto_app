@@ -16,22 +16,22 @@ class _TestMultiFactorPlatform extends MultiFactorPlatform {
 
 class _WebUserPlatform extends UserPlatform {
   _WebUserPlatform(FirebaseAuthPlatform auth)
-    : super(
-        auth,
-        _TestMultiFactorPlatform(auth),
-        InternalUserDetails(
-          userInfo: InternalUserInfo(
-            uid: 'web-social-user',
-            email: 'web@ilipresto.fr',
-            displayName: 'Web User',
-            isAnonymous: false,
-            isEmailVerified: true,
-            creationTimestamp: DateTime(2026, 7, 1).millisecondsSinceEpoch,
-            lastSignInTimestamp: DateTime(2026, 7, 22).millisecondsSinceEpoch,
+      : super(
+          auth,
+          _TestMultiFactorPlatform(auth),
+          InternalUserDetails(
+            userInfo: InternalUserInfo(
+              uid: 'web-social-user',
+              email: 'web@ilipresto.fr',
+              displayName: 'Web User',
+              isAnonymous: false,
+              isEmailVerified: true,
+              creationTimestamp: DateTime(2026, 7, 1).millisecondsSinceEpoch,
+              lastSignInTimestamp: DateTime(2026, 7, 22).millisecondsSinceEpoch,
+            ),
+            providerData: const <Map<String, dynamic>?>[],
           ),
-          providerData: const <Map<String, dynamic>?>[],
-        ),
-      );
+        );
 
   @override
   Future<String?> getIdToken(bool forceRefresh) async {
@@ -49,8 +49,8 @@ class _WebCredentialPlatform extends UserCredentialPlatform {
     required super.user,
     bool isNewUser = false,
   }) : super(
-         additionalUserInfo: AdditionalUserInfo(isNewUser: isNewUser),
-       );
+          additionalUserInfo: AdditionalUserInfo(isNewUser: isNewUser),
+        );
 }
 
 class _WebSocialAuthPlatform extends FirebaseAuthPlatform {
@@ -88,7 +88,8 @@ class _WebSocialAuthPlatform extends FirebaseAuthPlatform {
   FirebaseAuthPlatform setInitialValues({
     InternalUserDetails? currentUser,
     String? languageCode,
-  }) => this;
+  }) =>
+      this;
 
   @override
   UserPlatform? get currentUser => exposeCurrentUser ? user : null;
@@ -246,6 +247,23 @@ void main() {
     expect(platform.redirectCalls, 1);
     expect(platform.redirectProviderId, 'google.com');
     expect(rememberedRoutes, 1);
+  });
+
+  testWidgets('Google privilégie le popup sur Safari iPadOS', (
+    tester,
+  ) async {
+    platform.popupReturnsUser = true;
+
+    await runAction(
+      tester,
+      googleAction,
+      targetPlatform: TargetPlatform.iOS,
+    );
+
+    expect(platform.popupCalls, 1);
+    expect(platform.popupProviderId, 'google.com');
+    expect(platform.redirectCalls, 0);
+    expect(find.text('✓ Connecté avec Google'), findsOneWidget);
   });
 
   testWidgets('Google finalise un popup Web réussi', (tester) async {
