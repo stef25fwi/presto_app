@@ -1,6 +1,11 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../core/connectivity/connectivity_status.dart';
+import '../pages/public_prelaunch_page.dart';
+import '../services/public_landing_config_service.dart';
 import '../widgets/cookie_consent_banner.dart';
 import '../widgets/offline_banner.dart';
 import 'typography_settings.dart';
@@ -8,13 +13,68 @@ import 'typography_settings.dart';
 /// Habillage commun à toutes les pages : réglages typographiques de
 /// l'utilisateur (police, graisse, échelle) puis les bandeaux superposés —
 /// consentement cookies en bas, état hors-ligne en haut.
-class PrestoAppChrome extends StatelessWidget {
+///
+/// Sur les domaines publics uniquement, ce composant peut remplacer
+/// temporairement toute l'application par la page de pré-lancement pilotée
+/// depuis Firebase Remote Config. Les canaux Hosting de prévisualisation et les
+/// routes d'administration/authentification restent accessibles pour continuer
+/// les travaux pendant la période de préparation.
+class PrestoAppChrome extends StatefulWidget {
   final Widget child;
 
   const PrestoAppChrome({super.key, required this.child});
 
   @override
+  State<PrestoAppChrome> createState() => _PrestoAppChromeState();
+}
+
+class _PrestoAppChromeState extends State<PrestoAppChrome>
+    with WidgetsBindingObserver {
+  final PublicLandingConfigService _publicLanding =
+      PublicLandingConfigService.instance;
+
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _publicLanding.addListener(_handlePublicLandingChanged);
+    unawaited(_publicLanding.initialize());
+
+    if (kIsWeb) {
+      _refreshTimer = Timer.periodic(
+        const Duration(minutes: 5),
+        (_) => unawaited(_publicLanding.refresh()),
+      );
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (kIsWeb && state == AppLifecycleState.resumed) {
+      unawaited(_publicLanding.refresh());
+    }
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    _publicLanding.removeListener(_handlePublicLandingChanged);
+    super.dispose();
+  }
+
+  void _handlePublicLandingChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_publicLanding.shouldShowFor(Uri.base)) {
+      return PublicPrelaunchPage(config: _publicLanding);
+    }
+
     return ListenableBuilder(
       listenable: typographySettings,
       builder: (ctx, _) {
@@ -43,7 +103,7 @@ class PrestoAppChrome extends StatelessWidget {
             ),
             child: Stack(
               children: [
-                child,
+                widget.child,
                 // CookieConsentBanner renvoie lui-même un Positioned.fill
                 // lorsque le consentement doit être affiché. Il doit donc être
                 // un enfant direct du Stack. Le wrapper Positioned/Align
