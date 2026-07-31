@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/config/app_check_state.dart';
@@ -167,6 +168,7 @@ void main() {
   });
 
   tearDown(() {
+    debugDefaultTargetPlatformOverride = null;
     appCheckActivationAttempted = false;
     appCheckActivationSucceeded = false;
     AccountSocialAuthActions.resetTestingOverrides();
@@ -176,32 +178,37 @@ void main() {
     WidgetTester tester,
     Future<void> Function(BuildContext context) action,
   ) async {
-    final completed = Completer<void>();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: ElevatedButton(
-              onPressed: () async {
-                try {
-                  await action(context);
-                  completed.complete();
-                } catch (error, stackTrace) {
-                  completed.completeError(error, stackTrace);
-                }
-              },
-              child: const Text('Connexion'),
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    try {
+      final completed = Completer<void>();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () async {
+                  try {
+                    await action(context);
+                    completed.complete();
+                  } catch (error, stackTrace) {
+                    completed.completeError(error, stackTrace);
+                  }
+                },
+                child: const Text('Connexion'),
+              ),
             ),
           ),
         ),
-      ),
-    );
-    await tester.tap(find.text('Connexion'));
-    for (var i = 0; i < 45 && !completed.isCompleted; i += 1) {
-      await tester.pump(const Duration(milliseconds: 100));
+      );
+      await tester.tap(find.text('Connexion'));
+      for (var i = 0; i < 45 && !completed.isCompleted; i += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await completed.future.timeout(const Duration(seconds: 5));
+      await tester.pump();
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
     }
-    await completed.future.timeout(const Duration(seconds: 5));
-    await tester.pump();
   }
 
   Future<void> googleAction(BuildContext context) =>
