@@ -4,7 +4,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -2431,7 +2430,7 @@ class OfferDeepLinkPage extends StatelessWidget {
 }
 
 // ============================================================================
-// CARROUSEL AUTO-DÉFILANT POUR LES DERNIÈRES OFFRES (ligne unique)
+// CARROUSEL DES DERNIÈRES OFFRES (ligne unique, défilement manuel)
 // ============================================================================
 class _AutoScrollingOffersCarousel extends StatefulWidget {
   final List<QueryDocumentSnapshot<Map<String, dynamic>>> offers;
@@ -2445,13 +2444,8 @@ class _AutoScrollingOffersCarousel extends StatefulWidget {
 }
 
 class _AutoScrollingOffersCarouselState
-    extends State<_AutoScrollingOffersCarousel>
-    with SingleTickerProviderStateMixin {
+    extends State<_AutoScrollingOffersCarousel> {
   late final ScrollController _scrollController;
-  late final Ticker _ticker;
-  bool _isUserDragging = false;
-  Duration _lastElapsed = Duration.zero;
-  static const double _pixelsPerSecond = 44.0;
   String? _renderItemsSignature;
   List<_CarouselRenderItem> _renderItems = const <_CarouselRenderItem>[];
 
@@ -2459,62 +2453,23 @@ class _AutoScrollingOffersCarouselState
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    // Le défilement continu coupait visuellement la première carte.
-    // Le carrousel reste maintenant aligné et se parcourt au geste.
-    _ticker = createTicker(_onTick);
     _refreshRenderItemsIfNeeded();
   }
 
   @override
   void didUpdateWidget(covariant _AutoScrollingOffersCarousel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.offers.length != widget.offers.length) {
-      _lastElapsed = Duration.zero;
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(0);
-      }
+    if (oldWidget.offers.length != widget.offers.length &&
+        _scrollController.hasClients) {
+      _scrollController.jumpTo(0);
     }
     _refreshRenderItemsIfNeeded();
   }
 
   @override
   void dispose() {
-    _ticker.dispose();
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _onTick(Duration elapsed) {
-    if (!_scrollController.hasClients) {
-      _lastElapsed = elapsed;
-      return;
-    }
-
-    // Ne pas interrompre le momentum post-fling utilisateur
-    if (_isUserDragging ||
-        _scrollController.position.isScrollingNotifier.value) {
-      _lastElapsed = elapsed;
-      return;
-    }
-
-    // Plafonner à 2 frames max pour éviter un saut brutal après un long drag
-    final dtMs = (elapsed - _lastElapsed).inMilliseconds.clamp(0, 32);
-    _lastElapsed = elapsed;
-    if (dtMs <= 0) return;
-
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    if (maxScroll <= 0) return;
-
-    final loopPoint = maxScroll / 2;
-    if (loopPoint <= 0) return;
-
-    final delta = _pixelsPerSecond * (dtMs / 1000.0);
-    var next = _scrollController.offset + delta;
-    if (next >= loopPoint) {
-      next -= loopPoint;
-    }
-
-    _scrollController.jumpTo(next);
   }
 
   String _interventionDelayLabel(Map<String, dynamic> data) {
@@ -2677,35 +2632,24 @@ class _AutoScrollingOffersCarouselState
         ? [..._renderItems, ..._renderItems]
         : _renderItems;
 
-    return NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        if (notification is ScrollStartNotification &&
-            notification.dragDetails != null) {
-          _isUserDragging = true;
-        } else if (notification is ScrollEndNotification) {
-          _isUserDragging = false;
-        }
-        return false;
-      },
-      child: SizedBox(
-        height: 110,
-        child: ListView.separated(
-          controller: _scrollController,
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          itemCount: duplicatedItems.length,
-          addAutomaticKeepAlives: false,
-          cacheExtent: 900,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
-          itemBuilder: (context, index) => RepaintBoundary(
-            child: duplicatedItems[index].isToolbox
-                ? SizedBox(
-                    width: _responsiveOfferCardWidth(context),
-                    child: const EntrepreneurToolboxSlide(),
-                  )
-                : _buildOfferCard(duplicatedItems[index].cardData!),
-          ),
+    return SizedBox(
+      height: 110,
+      child: ListView.separated(
+        controller: _scrollController,
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: duplicatedItems.length,
+        addAutomaticKeepAlives: false,
+        cacheExtent: 900,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) => RepaintBoundary(
+          child: duplicatedItems[index].isToolbox
+              ? SizedBox(
+                  width: _responsiveOfferCardWidth(context),
+                  child: const EntrepreneurToolboxSlide(),
+                )
+              : _buildOfferCard(duplicatedItems[index].cardData!),
         ),
       ),
     );
