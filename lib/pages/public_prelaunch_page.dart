@@ -14,7 +14,8 @@ class PublicPrelaunchPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final width = MediaQuery.sizeOf(context).width;
-    final horizontalPadding = width < 420 ? 20.0 : 32.0;
+    final compact = width < 420;
+    final horizontalPadding = compact ? 20.0 : 32.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDF4EC),
@@ -50,11 +51,11 @@ class PublicPrelaunchPage extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
-                          _BrandHeader(compact: width < 420),
+                          _BrandHeader(compact: compact),
                           const SizedBox(height: 30),
                           Container(
                             width: double.infinity,
-                            padding: EdgeInsets.all(width < 420 ? 22 : 36),
+                            padding: EdgeInsets.all(compact ? 22 : 36),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.94),
                               borderRadius: BorderRadius.circular(28),
@@ -93,7 +94,7 @@ class PublicPrelaunchPage extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 26),
-                                const Wrap(
+                                Wrap(
                                   alignment: WrapAlignment.center,
                                   spacing: 10,
                                   runSpacing: 10,
@@ -101,14 +102,17 @@ class PublicPrelaunchPage extends StatelessWidget {
                                     _FeatureChip(
                                       icon: Icons.auto_awesome_rounded,
                                       label: 'Annonces assistées par IA',
+                                      expanded: compact,
                                     ),
                                     _FeatureChip(
                                       icon: Icons.record_voice_over_rounded,
                                       label: 'Saisie texte ou vocale',
+                                      expanded: compact,
                                     ),
                                     _FeatureChip(
                                       icon: Icons.percent_rounded,
                                       label: '0 % de commission',
+                                      expanded: compact,
                                     ),
                                   ],
                                 ),
@@ -206,14 +210,19 @@ class _BrandHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          Text(
-            'iliprestō',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: compact ? 32 : 40,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -1.4,
-              color: const Color(0xFFFF6600),
+          Flexible(
+            child: Text(
+              'iliprestō',
+              maxLines: 1,
+              overflow: TextOverflow.fade,
+              softWrap: false,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: compact ? 32 : 40,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -1.4,
+                color: const Color(0xFFFF6600),
+              ),
             ),
           ),
         ],
@@ -237,6 +246,7 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           const SizedBox(
             width: 8,
@@ -249,12 +259,15 @@ class _StatusBadge extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFF175DB8),
-              fontWeight: FontWeight.w800,
-              fontSize: 13,
+          Flexible(
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFF175DB8),
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
             ),
           ),
         ],
@@ -267,14 +280,27 @@ class _FeatureChip extends StatelessWidget {
   const _FeatureChip({
     required this.icon,
     required this.label,
+    required this.expanded,
   });
 
   final IconData icon;
   final String label;
+  final bool expanded;
 
   @override
   Widget build(BuildContext context) {
+    final labelWidget = Text(
+      label,
+      textAlign: expanded ? TextAlign.center : TextAlign.start,
+      style: const TextStyle(
+        color: Color(0xFF33485E),
+        fontWeight: FontWeight.w700,
+        fontSize: 13,
+      ),
+    );
+
     return Container(
+      width: expanded ? double.infinity : null,
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFFF7F9FC),
@@ -282,18 +308,13 @@ class _FeatureChip extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE5EAF0)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
+        mainAxisAlignment:
+            expanded ? MainAxisAlignment.center : MainAxisAlignment.start,
         children: <Widget>[
           Icon(icon, size: 18, color: const Color(0xFF1A73E8)),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFF33485E),
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-            ),
-          ),
+          if (expanded) Expanded(child: labelWidget) else labelWidget,
         ],
       ),
     );
