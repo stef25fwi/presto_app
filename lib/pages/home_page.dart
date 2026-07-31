@@ -823,7 +823,7 @@ class _HomePageState extends State<HomePage>
   Widget _buildLatestOffersSection() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(6, 4, 6, 0),
+      padding: const EdgeInsets.fromLTRB(10, 4, 10, 0),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -1070,7 +1070,7 @@ class _HomePageState extends State<HomePage>
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white,
-              hintText: "Que cherchez-vous ? (ex: jardinage aujourd’hui)",
+              hintText: "Que recherchez-vous ? (ex. jardinage)",
               hintStyle: const TextStyle(
                 fontSize: 14,
                 color: Colors.black45,
@@ -1928,43 +1928,41 @@ class _HomePageState extends State<HomePage>
 
             const SizedBox(height: 6),
 
-            // ── Hero slider — prend tout l'espace restant ──────────────
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
-                      color: const Color(0x331A73E8),
-                      width: 1.2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.16),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                      BoxShadow(
-                        color: const Color(0x331A73E8),
-                        blurRadius: 26,
-                        spreadRadius: 1,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
+            // ── Hero slider — hauteur responsive stable ─────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: const Color(0x331A73E8),
+                    width: 1.2,
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(22),
-                    child: _HeroSliderWithStableHeight(
-                      cachedSlides: _heroSlidesService.filterSlidesForRegion(
-                        _cachedHeroSlides,
-                        _userRegion,
-                      ),
-                      heroSlidesStream: _heroSlidesStream,
-                      userRegion: _userRegion,
-                      fallbackBuilder: _buildFallbackHomeHeroSlider,
-                      carouselController: _carouselController,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.16),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
                     ),
+                    BoxShadow(
+                      color: const Color(0x331A73E8),
+                      blurRadius: 26,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: _HeroSliderWithStableHeight(
+                    cachedSlides: _heroSlidesService.filterSlidesForRegion(
+                      _cachedHeroSlides,
+                      _userRegion,
+                    ),
+                    heroSlidesStream: _heroSlidesStream,
+                    userRegion: _userRegion,
+                    fallbackBuilder: _buildFallbackHomeHeroSlider,
+                    carouselController: _carouselController,
                   ),
                 ),
               ),
@@ -2461,7 +2459,9 @@ class _AutoScrollingOffersCarouselState
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    _ticker = createTicker(_onTick)..start();
+    // Le défilement continu coupait visuellement la première carte.
+    // Le carrousel reste maintenant aligné et se parcourt au geste.
+    _ticker = createTicker(_onTick);
     _refreshRenderItemsIfNeeded();
   }
 
@@ -2565,11 +2565,16 @@ class _AutoScrollingOffersCarouselState
     return cleanedTitle.isEmpty ? trimmedTitle : cleanedTitle;
   }
 
+  double _responsiveOfferCardWidth(BuildContext context) {
+    final viewportWidth = MediaQuery.sizeOf(context).width;
+    return (viewportWidth - 32).clamp(260.0, 340.0).toDouble();
+  }
+
   Widget _buildOfferCard(_CarouselOfferCardData cardData) {
     return GestureDetector(
       onTap: () => widget.onOfferTap?.call(cardData.doc),
       child: Container(
-        width: 280,
+        width: _responsiveOfferCardWidth(context),
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: Colors.white,
@@ -2686,15 +2691,19 @@ class _AutoScrollingOffersCarouselState
         height: 110,
         child: ListView.separated(
           controller: _scrollController,
+          padding: const EdgeInsets.symmetric(horizontal: 2),
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
           itemCount: duplicatedItems.length,
           addAutomaticKeepAlives: false,
           cacheExtent: 900,
           separatorBuilder: (_, __) => const SizedBox(width: 8),
-          itemBuilder: (_, index) => RepaintBoundary(
+          itemBuilder: (context, index) => RepaintBoundary(
             child: duplicatedItems[index].isToolbox
-                ? const SizedBox(width: 280, child: EntrepreneurToolboxSlide())
+                ? SizedBox(
+                    width: _responsiveOfferCardWidth(context),
+                    child: const EntrepreneurToolboxSlide(),
+                  )
                 : _buildOfferCard(duplicatedItems[index].cardData!),
           ),
         ),
