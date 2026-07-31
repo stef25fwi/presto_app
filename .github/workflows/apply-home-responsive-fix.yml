@@ -1,0 +1,179 @@
+name: Apply responsive home repair
+
+on:
+  push:
+    branches:
+      - fix/home-responsive-overflow-20260731
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-home-responsive-fix
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/home-responsive-overflow-20260731
+          fetch-depth: 0
+
+      - name: Apply targeted responsive fixes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('lib/pages/home_page.dart')
+          text = path.read_text(encoding='utf-8')
+
+          def replace_once(source: str, old: str, new: str, label: str) -> str:
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              return source.replace(old, new, 1)
+
+          text = replace_once(
+              text,
+              'hintText: "Que cherchez-vous ? (ex: jardinage aujourd’hui)",',
+              'hintText: "Que recherchez-vous ? (ex. jardinage)",',
+              'compact search hint',
+          )
+
+          text = replace_once(
+              text,
+              "  Widget _buildLatestOffersSection() {\n"
+              "    return Container(\n"
+              "      width: double.infinity,\n"
+              "      padding: const EdgeInsets.fromLTRB(6, 4, 6, 0),",
+              "  Widget _buildLatestOffersSection() {\n"
+              "    return Container(\n"
+              "      width: double.infinity,\n"
+              "      padding: const EdgeInsets.fromLTRB(10, 4, 10, 0),",
+              'latest offers horizontal margins',
+          )
+
+          text = replace_once(
+              text,
+              "            // ── Hero slider — prend tout l'espace restant ──────────────\n"
+              "            Expanded(\n"
+              "              child: Padding(\n"
+              "                padding: const EdgeInsets.symmetric(horizontal: 6),\n"
+              "                child: Container(",
+              "            // ── Hero slider — hauteur responsive stable ─────────────────\n"
+              "            Padding(\n"
+              "              padding: const EdgeInsets.symmetric(horizontal: 6),\n"
+              "              child: Container(",
+              'hero must not inherit all remaining height',
+          )
+
+          text = replace_once(
+              text,
+              "                    ),\n"
+              "                  ),\n"
+              "                ),\n"
+              "              ),\n"
+              "            ),\n"
+              "\n"
+              "            const SizedBox(height: 6),\n"
+              "\n"
+              "            _buildHomeCategoriesSection(),",
+              "                    ),\n"
+              "                  ),\n"
+              "                ),\n"
+              "              ),\n"
+              "\n"
+              "            const SizedBox(height: 6),\n"
+              "\n"
+              "            _buildHomeCategoriesSection(),",
+              'remove expanded hero closing wrapper',
+          )
+
+          text = replace_once(
+              text,
+              "    _scrollController = ScrollController();\n"
+              "    _ticker = createTicker(_onTick)..start();",
+              "    _scrollController = ScrollController();\n"
+              "    // Le défilement continu coupait visuellement la première carte.\n"
+              "    // Le carrousel reste maintenant aligné et se parcourt au geste.\n"
+              "    _ticker = createTicker(_onTick);",
+              'disable continuous partial-card scrolling',
+          )
+
+          text = replace_once(
+              text,
+              "  Widget _buildOfferCard(_CarouselOfferCardData cardData) {\n"
+              "    return GestureDetector(\n"
+              "      onTap: () => widget.onOfferTap?.call(cardData.doc),\n"
+              "      child: Container(\n"
+              "        width: 280,",
+              "  double _responsiveOfferCardWidth(BuildContext context) {\n"
+              "    final viewportWidth = MediaQuery.sizeOf(context).width;\n"
+              "    return (viewportWidth - 32).clamp(260.0, 340.0).toDouble();\n"
+              "  }\n"
+              "\n"
+              "  Widget _buildOfferCard(_CarouselOfferCardData cardData) {\n"
+              "    return GestureDetector(\n"
+              "      onTap: () => widget.onOfferTap?.call(cardData.doc),\n"
+              "      child: Container(\n"
+              "        width: _responsiveOfferCardWidth(context),",
+              'responsive offer card width',
+          )
+
+          text = replace_once(
+              text,
+              "        child: ListView.separated(\n"
+              "          controller: _scrollController,\n"
+              "          scrollDirection: Axis.horizontal,",
+              "        child: ListView.separated(\n"
+              "          controller: _scrollController,\n"
+              "          padding: const EdgeInsets.symmetric(horizontal: 2),\n"
+              "          scrollDirection: Axis.horizontal,",
+              'carousel edge padding',
+          )
+
+          text = replace_once(
+              text,
+              "          itemBuilder: (_, index) => RepaintBoundary(\n"
+              "            child: duplicatedItems[index].isToolbox\n"
+              "                ? const SizedBox(width: 280, child: EntrepreneurToolboxSlide())\n"
+              "                : _buildOfferCard(duplicatedItems[index].cardData!),",
+              "          itemBuilder: (context, index) => RepaintBoundary(\n"
+              "            child: duplicatedItems[index].isToolbox\n"
+              "                ? SizedBox(\n"
+              "                    width: _responsiveOfferCardWidth(context),\n"
+              "                    child: const EntrepreneurToolboxSlide(),\n"
+              "                  )\n"
+              "                : _buildOfferCard(duplicatedItems[index].cardData!),",
+              'responsive toolbox card width',
+          )
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Format and validate repaired files
+        run: |
+          flutter pub get
+          dart format lib/pages/home_page.dart
+          dart format --output=none --set-exit-if-changed lib/pages/home_page.dart
+          flutter analyze lib/pages/home_page.dart
+
+      - name: Commit repair and remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/apply-home-responsive-fix.yml
+          git add lib/pages/home_page.dart
+          git diff --cached --check
+          git commit -m "fix(home): repair responsive hero and offer carousel"
+          git push origin HEAD:fix/home-responsive-overflow-20260731
