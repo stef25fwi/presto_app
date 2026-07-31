@@ -32,16 +32,20 @@ class HeroMediaSlider extends StatefulWidget {
 }
 
 class _HeroMediaSliderState extends State<HeroMediaSlider> {
+  static const Duration _seoIntroDuration = Duration(seconds: 9);
+
   final PageController _pageController = PageController();
+  Timer? _introTimer;
   Timer? _slideTimer;
   int _currentIndex = 0;
   bool _isMuted = false;
+  bool _showSeoIntro = true;
 
   @override
   void initState() {
     super.initState();
     _loadMutePreference();
-    _scheduleNextSlide();
+    _scheduleSeoIntro();
     WidgetsBinding.instance.addPostFrameCallback((_) => _precacheSlideImages());
   }
 
@@ -58,7 +62,18 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
     } else if (_currentIndex >= widget.slides.length) {
       _currentIndex = 0;
     }
-    _scheduleNextSlide();
+    if (!_showSeoIntro) {
+      _scheduleNextSlide();
+    }
+  }
+
+  void _scheduleSeoIntro() {
+    _introTimer?.cancel();
+    _introTimer = Timer(_seoIntroDuration, () {
+      if (!mounted) return;
+      setState(() => _showSeoIntro = false);
+      _scheduleNextSlide();
+    });
   }
 
   void _precacheSlideImages() {
@@ -71,6 +86,7 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
 
   @override
   void dispose() {
+    _introTimer?.cancel();
     _slideTimer?.cancel();
     _pageController.dispose();
     super.dispose();
@@ -122,6 +138,15 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
 
   @override
   Widget build(BuildContext context) {
+    if (_showSeoIntro) {
+      return _PrestoStableHeroViewport(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          child: const _SeoIntroSlide(),
+        ),
+      );
+    }
+
     final activeSlides = widget.slides
         .where((slide) => slide.mediaUrl.trim().isNotEmpty)
         .toList(growable: false);
@@ -219,6 +244,109 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SeoIntroSlide extends StatelessWidget {
+  const _SeoIntroSlide();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final compact = width < 430;
+        final titleSize = width < 360 ? 19.0 : (compact ? 22.0 : 29.0);
+        final bodySize = width < 360 ? 11.5 : (compact ? 12.5 : 14.5);
+        final footerSize = width < 360 ? 11.0 : (compact ? 12.0 : 14.0);
+
+        return Semantics(
+          container: true,
+          header: true,
+          label:
+              'Trouvez rapidement un particulier ou un professionnel près de chez vous',
+          child: Container(
+            color: const Color(0xFFFF6600),
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 16 : 24,
+              vertical: compact ? 12 : 18,
+            ),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                width: width - (compact ? 32 : 48),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Trouvez rapidement un particulier ou un professionnel près de chez vous',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: titleSize,
+                        fontWeight: FontWeight.w900,
+                        height: 1.12,
+                        shadows: const [
+                          Shadow(
+                            color: Color(0x40000000),
+                            blurRadius: 6,
+                            offset: Offset(0, 1.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: compact ? 8 : 12),
+                    Text(
+                      'iliprestō est une plateforme de mise en relation entre particuliers, indépendants et professionnels, conçue pour apporter une réponse rapide à vos besoins de services et de micro-services du quotidien.',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: bodySize,
+                        fontWeight: FontWeight.w600,
+                        height: 1.32,
+                      ),
+                    ),
+                    SizedBox(height: compact ? 6 : 9),
+                    Text(
+                      'Publiez facilement une annonce assistée et préremplie par l’IA : les utilisateurs disponibles et intéressés peuvent vous répondre directement, sans commission.',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        fontSize: bodySize,
+                        fontWeight: FontWeight.w600,
+                        height: 1.32,
+                      ),
+                    ),
+                    SizedBox(height: compact ? 8 : 12),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: compact ? 10 : 13,
+                        vertical: compact ? 6 : 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.48),
+                        ),
+                      ),
+                      child: Text(
+                        'Besoin d’un coup de main ou d’un professionnel ? Sur iliprestō, l’offre et la demande se rencontrent rapidement, simplement et près de chez vous.',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: footerSize,
+                          fontWeight: FontWeight.w700,
+                          height: 1.25,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
