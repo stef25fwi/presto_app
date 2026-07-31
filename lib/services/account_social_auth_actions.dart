@@ -84,17 +84,29 @@ class AccountSocialAuthActions {
         // qui empêche le popup de communiquer avec l'opener → internal-error
         // systématique. On passe directement en redirect flow.
         final bool onGitHubPages = _baseHost.endsWith('.github.io');
-        final bool onMobileWeb =
-            defaultTargetPlatform == TargetPlatform.android ||
-                defaultTargetPlatform == TargetPlatform.iOS;
-        final bool useDirectRedirect = onGitHubPages || onMobileWeb;
+        final bool onAndroidWeb =
+            defaultTargetPlatform == TargetPlatform.android;
+        final bool onAppleMobileWeb =
+            defaultTargetPlatform == TargetPlatform.iOS;
+        final bool useDirectRedirect = onGitHubPages || onAndroidWeb;
+
+        // Safari/iPadOS peut perdre l'état OAuth pendant un redirect lorsque
+        // le stockage du navigateur est partitionné. Le popup déclenché par
+        // le geste utilisateur est donc prioritaire sur les appareils Apple.
+        if (onAppleMobileWeb) {
+          googleAuthService.logAttempt(
+            'Popup',
+            details:
+                'Safari/iPadOS — popup prioritaire pour éviter le stockage partitionné',
+          );
+        }
 
         if (useDirectRedirect) {
           googleAuthService.logFallback(
             'Popup',
             'Redirect',
-            reason: onMobileWeb
-                ? 'Navigation mobile — redirect recommandé'
+            reason: onAndroidWeb
+                ? 'Navigation Android Web — redirect direct'
                 : 'GitHub Pages COOP headers — redirect direct',
           );
           try {
