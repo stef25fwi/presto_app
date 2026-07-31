@@ -131,6 +131,8 @@ class HeroSlidesService {
     bool isFirst = false,
     String scope = 'global',
     List<String> targetRegions = const [],
+    double focalX = 0.5,
+    double focalY = 0.5,
     void Function(double progress)? onUploadProgress,
   }) async {
     final user = _requireSignedInUser();
@@ -178,6 +180,8 @@ class HeroSlidesService {
       'createdBy': user.uid,
       'scope': normalizedScope,
       'targetRegions': targetRegions,
+      'focalX': focalX.clamp(0.0, 1.0).toDouble(),
+      'focalY': focalY.clamp(0.0, 1.0).toDouble(),
     });
 
     try {
@@ -197,6 +201,8 @@ class HeroSlidesService {
     bool? isFirst,
     String? scope,
     List<String>? targetRegions,
+    double? focalX,
+    double? focalY,
     Uint8List? replacementFileBytes,
     String? replacementFileName,
     String? replacementMediaType,
@@ -271,6 +277,8 @@ class HeroSlidesService {
       'updatedAt': FieldValue.serverTimestamp(),
       'scope': nextScope,
       'targetRegions': nextTargetRegions,
+      'focalX': (focalX ?? slide.focalX).clamp(0.0, 1.0).toDouble(),
+      'focalY': (focalY ?? slide.focalY).clamp(0.0, 1.0).toDouble(),
     });
 
     if (slide.isFirst && !shouldBeFirst) {

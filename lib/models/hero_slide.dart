@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart' show Alignment;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HeroSlide {
@@ -16,6 +17,13 @@ class HeroSlide {
   final String scope;
   final List<String> targetRegions;
 
+  /// Point focal de recadrage, en fractions [0.0, 1.0] de la largeur/hauteur
+  /// de l'image (0.5, 0.5 = centre). Permet de garder le sujet/texte
+  /// important visible quand `BoxFit.cover` rogne l'image sur les écrans
+  /// étroits (mobile web).
+  final double focalX;
+  final double focalY;
+
   const HeroSlide({
     required this.id,
     required this.title,
@@ -31,12 +39,21 @@ class HeroSlide {
     required this.createdBy,
     this.scope = 'global',
     this.targetRegions = const [],
+    this.focalX = 0.5,
+    this.focalY = 0.5,
   });
 
   bool get isVideo => mediaType == 'video';
   bool get isImage => mediaType == 'image';
   bool get isGlobal => scope == 'global';
   bool get isRegional => scope == 'regional';
+
+  /// Alignement Flutter correspondant au point focal, utilisable directement
+  /// avec `BoxFit.cover` (Image, FittedBox...).
+  Alignment get focalAlignment => Alignment(
+        focalX.clamp(0.0, 1.0).toDouble() * 2 - 1,
+        focalY.clamp(0.0, 1.0).toDouble() * 2 - 1,
+      );
 
   factory HeroSlide.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
@@ -66,6 +83,8 @@ class HeroSlide {
           .map((e) => e.toString().trim())
           .where((e) => e.isNotEmpty)
           .toList(),
+      focalX: _readDouble(data, const ['focalX'], fallback: 0.5),
+      focalY: _readDouble(data, const ['focalY'], fallback: 0.5),
     );
   }
 
@@ -85,6 +104,8 @@ class HeroSlide {
       'createdBy': createdBy,
       'scope': scope,
       'targetRegions': targetRegions,
+      'focalX': focalX,
+      'focalY': focalY,
     };
   }
 
@@ -104,6 +125,8 @@ class HeroSlide {
       'createdBy': createdBy,
       'scope': scope,
       'targetRegions': targetRegions,
+      'focalX': focalX,
+      'focalY': focalY,
     };
   }
 
@@ -122,6 +145,8 @@ class HeroSlide {
     String? createdBy,
     String? scope,
     List<String>? targetRegions,
+    double? focalX,
+    double? focalY,
   }) {
     return HeroSlide(
       id: id ?? this.id,
@@ -138,6 +163,8 @@ class HeroSlide {
       createdBy: createdBy ?? this.createdBy,
       scope: scope ?? this.scope,
       targetRegions: targetRegions ?? this.targetRegions,
+      focalX: focalX ?? this.focalX,
+      focalY: focalY ?? this.focalY,
     );
   }
 
@@ -207,6 +234,24 @@ class HeroSlide {
       }
       if (normalized == 'false') {
         return false;
+      }
+    }
+    return fallback;
+  }
+
+  static double _readDouble(
+    Map<String, dynamic> data,
+    List<String> keys, {
+    double fallback = 0.0,
+  }) {
+    for (final key in keys) {
+      final value = data[key];
+      if (value is num) {
+        return value.toDouble().clamp(0.0, 1.0).toDouble();
+      }
+      final parsed = double.tryParse(value?.toString() ?? '');
+      if (parsed != null) {
+        return parsed.clamp(0.0, 1.0).toDouble();
       }
     }
     return fallback;
