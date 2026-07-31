@@ -99,10 +99,10 @@ class _WebSocialAuthPlatform extends FirebaseAuthPlatform {
     if (authenticatedUser != null) {
       return Stream<UserPlatform?>.value(authenticatedUser);
     }
-    return Stream<UserPlatform?>.periodic(
-      const Duration(seconds: 30),
-      (_) => null,
-    );
+    return Stream<UserPlatform?>.multi((_) {
+      // Flux volontairement silencieux et non terminé. Le timeout du code
+      // de production annule l'abonnement sans laisser de Timer périodique.
+    });
   }
 
   @override
