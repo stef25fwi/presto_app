@@ -48,8 +48,15 @@ class PublicLandingConfigService extends ChangeNotifier {
     PublicLandingRemoteConfigAdapter? adapter,
   }) : _adapter = adapter ?? _tryCreateAdapter();
 
-  static final PublicLandingConfigService instance =
-      PublicLandingConfigService();
+  static PublicLandingConfigService? _instance;
+
+  /// Singleton créé uniquement au premier accès depuis l'application.
+  ///
+  /// L'initialisation paresseuse évite de toucher Firebase Remote Config lors
+  /// du simple import de cette bibliothèque, notamment dans les tests widget
+  /// qui injectent leur propre adaptateur avant Firebase.initializeApp().
+  static PublicLandingConfigService get instance =>
+      _instance ??= PublicLandingConfigService();
 
   static const String enabledKey = 'public_landing_enabled';
   static const String badgeKey = 'public_landing_badge';
