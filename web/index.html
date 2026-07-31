@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -27,6 +27,7 @@
   -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Particuliers et professionnels répondent rapidement aux besoins près de chez vous. Publiez une annonce préremplie automatiquement avec l’IA et échangez directement, avec 0 % de commission.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
 
   <!-- Open Graph (partages réseaux sociaux) -->
   <link rel="canonical" href="https://ilipresto.fr/">
@@ -39,6 +40,32 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="iliprestō — Les services du quotidien assistés par IA">
   <meta name="twitter:description" content="Particuliers et professionnels répondent rapidement aux besoins près de chez vous. Publiez une annonce préremplie automatiquement avec l’IA et échangez directement, avec 0 % de commission.">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://ilipresto.fr/#organization",
+        "name": "iliprestō",
+        "url": "https://ilipresto.fr/",
+        "logo": "https://ilipresto.fr/icons/Icon-512.png",
+        "description": "Plateforme de mise en relation pour les services et micro-services du quotidien, avec annonces assistées par l’intelligence artificielle et 0 % de commission."
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://ilipresto.fr/#website",
+        "url": "https://ilipresto.fr/",
+        "name": "iliprestō",
+        "inLanguage": "fr-FR",
+        "publisher": {
+          "@id": "https://ilipresto.fr/#organization"
+        }
+      }
+    ]
+  }
+  </script>
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -89,16 +116,89 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #FF6600;
+      background: #FFFFFF;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    #seo-shell {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      box-sizing: border-box;
+      padding: 18px;
+      background: #FFFFFF;
+    }
+
+    #seo-hero {
+      width: min(920px, 100%);
+      box-sizing: border-box;
+      margin-top: 72px;
+      padding: clamp(22px, 5vw, 48px);
+      color: #FFFFFF;
+      background: #FF6600;
+      border-radius: 24px;
+      box-shadow: 0 16px 38px rgba(0, 0, 0, 0.18);
+    }
+
+    #seo-hero h1 {
+      margin: 0 0 18px;
+      font-size: clamp(28px, 5vw, 52px);
+      line-height: 1.08;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    #seo-hero p {
+      margin: 0;
+      font-size: clamp(16px, 2.3vw, 21px);
+      line-height: 1.5;
+      font-weight: 600;
+    }
+
+    #seo-hero p + p {
+      margin-top: 14px;
+    }
+
+    #seo-hero .seo-highlight {
+      margin-top: 20px;
+      padding: 12px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      font-size: clamp(14px, 2vw, 18px);
+      font-weight: 800;
+    }
+
+    flutter-view {
+      position: relative;
+      z-index: 1;
     }
   </style>
 
 </head>
 <body>
+  <main id="seo-shell" aria-label="Présentation d’iliprestō">
+    <section id="seo-hero">
+      <h1>Trouvez rapidement un particulier ou un professionnel près de chez vous</h1>
+      <p>iliprestō est une plateforme de mise en relation entre particuliers, indépendants et professionnels, conçue pour apporter une réponse rapide à vos besoins de services et de micro-services du quotidien.</p>
+      <p>Publiez facilement une annonce assistée et préremplie par l’IA : les utilisateurs disponibles et intéressés peuvent vous répondre directement, sans commission.</p>
+      <p class="seo-highlight">Besoin d’un coup de main ou d’un professionnel ? Sur iliprestō, l’offre et la demande se rencontrent rapidement, simplement et près de chez vous.</p>
+    </section>
+  </main>
+
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      const seoShell = document.getElementById('seo-shell');
+      if (seoShell) seoShell.remove();
+    }, { once: true });
+  </script>
+
   <script>
     (function () {
       let recaptchaLoader = null;
