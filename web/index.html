@@ -22,24 +22,28 @@
     NE PAS forcer le mode overlays content : cela empeche Flutter de
     calculer viewInsets.bottom quand le clavier s'ouvre. On laisse la valeur par
     defaut (resizes-visual) pour que Flutter recoive l'inset du clavier et que la
-    mise en page (champs + bottom bar) se redimensionne puis se restaure
-    correctement a la fermeture du clavier.
+    mise en page se redimensionne correctement a la fermeture du clavier.
   -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Particuliers et professionnels répondent rapidement aux besoins près de chez vous. Publiez une annonce préremplie automatiquement avec l’IA et échangez directement, avec 0 % de commission.">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <meta name="theme-color" content="#FF6600">
+
+  <link rel="canonical" href="https://ilipresto.fr/">
 
   <!-- Open Graph (partages réseaux sociaux) -->
-  <link rel="canonical" href="https://ilipresto.fr/">
   <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
   <meta property="og:site_name" content="iliprestō">
   <meta property="og:url" content="https://ilipresto.fr/">
   <meta property="og:title" content="iliprestō — Les services du quotidien assistés par IA">
   <meta property="og:description" content="Particuliers et professionnels répondent rapidement aux besoins près de chez vous. Publiez une annonce préremplie automatiquement avec l’IA et échangez directement, avec 0 % de commission.">
   <meta property="og:image" content="https://ilipresto.fr/icons/Icon-512.png">
+  <meta property="og:image:alt" content="Logo iliprestō">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="iliprestō — Les services du quotidien assistés par IA">
   <meta name="twitter:description" content="Particuliers et professionnels répondent rapidement aux besoins près de chez vous. Publiez une annonce préremplie automatiquement avec l’IA et échangez directement, avec 0 % de commission.">
+  <meta name="twitter:image" content="https://ilipresto.fr/icons/Icon-512.png">
 
   <script type="application/ld+json">
   {
@@ -51,7 +55,7 @@
         "name": "iliprestō",
         "url": "https://ilipresto.fr/",
         "logo": "https://ilipresto.fr/icons/Icon-512.png",
-        "description": "Plateforme de mise en relation pour les services et micro-services du quotidien, avec annonces assistées par l’intelligence artificielle et 0 % de commission."
+        "description": "Plateforme de mise en relation pour les services et microservices du quotidien, avec annonces assistées par l’intelligence artificielle et 0 % de commission."
       },
       {
         "@type": "WebSite",
@@ -61,7 +65,8 @@
         "inLanguage": "fr-FR",
         "publisher": {
           "@id": "https://ilipresto.fr/#organization"
-        }
+        },
+        "description": "Les services du quotidien assistés par IA, près de chez vous."
       }
     ]
   }
@@ -74,19 +79,16 @@
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" href="favicon.png">
 
   <!-- Google Sign-In Web Client ID -->
   <meta name="google-signin-client_id" content="151421230024-lung00ghpcc0qgbukvo29og1kuapnggf.apps.googleusercontent.com">
 
   <title>iliprestō — Les services du quotidien assistés par IA</title>
   <link rel="manifest" href="manifest.json">
+
   <script>
     (function () {
-      // Hôte canonique public = ilipresto.fr. Les hôtes techniques Firebase
-      // restent autorisés uniquement comme miroirs de sécurité et sont rabattus
-      // vers le domaine public pour conserver une origine de session unique,
-      // notamment pour Firebase Auth / Google Sign-In Web.
       const canonicalHost = 'ilipresto.fr';
       const host = window.location.hostname.toLowerCase();
       const redirectHosts = new Set([
@@ -110,93 +112,289 @@
       }
     })();
   </script>
+
   <style>
-    html, body {
+    :root {
+      color-scheme: light;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #fff8f2;
+    }
+
+    html,
+    body {
       margin: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #FFFFFF;
+      background: #fff8f2;
     }
 
-    body {
-      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
-
-    #seo-shell {
+    #prelaunch-seo-shell {
       position: fixed;
       inset: 0;
       z-index: 0;
+      overflow: auto;
+      box-sizing: border-box;
+      padding: 24px;
+      color: #12345b;
+      background:
+        radial-gradient(circle at 12% 12%, rgba(255, 102, 0, 0.10), transparent 32%),
+        radial-gradient(circle at 88% 88%, rgba(26, 115, 232, 0.10), transparent 34%),
+        linear-gradient(135deg, #fff8f2 0%, #fdf4ec 52%, #f5f9ff 100%);
+    }
+
+    #prelaunch-seo-shell[hidden] {
+      display: none !important;
+    }
+
+    .prelaunch-wrap {
+      width: min(100%, 820px);
+      min-height: calc(100vh - 48px);
+      min-height: calc(100dvh - 48px);
+      margin: 0 auto;
       display: flex;
-      align-items: flex-start;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
       box-sizing: border-box;
-      padding: 18px;
-      background: #FFFFFF;
     }
 
-    #seo-hero {
-      width: min(920px, 100%);
-      box-sizing: border-box;
-      margin-top: 72px;
-      padding: clamp(22px, 5vw, 48px);
-      color: #FFFFFF;
-      background: #FF6600;
-      border-radius: 24px;
-      box-shadow: 0 16px 38px rgba(0, 0, 0, 0.18);
+    .prelaunch-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 28px;
     }
 
-    #seo-hero h1 {
-      margin: 0 0 18px;
-      font-size: clamp(28px, 5vw, 52px);
-      line-height: 1.08;
-      font-weight: 900;
-      letter-spacing: -0.02em;
+    .prelaunch-brand img {
+      width: 76px;
+      height: 76px;
+      object-fit: contain;
     }
 
-    #seo-hero p {
+    .prelaunch-brand-name {
       margin: 0;
-      font-size: clamp(16px, 2.3vw, 21px);
-      line-height: 1.5;
-      font-weight: 600;
-    }
-
-    #seo-hero p + p {
-      margin-top: 14px;
-    }
-
-    #seo-hero .seo-highlight {
-      margin-top: 20px;
-      padding: 12px 16px;
-      border: 1px solid rgba(255, 255, 255, 0.55);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.14);
-      font-size: clamp(14px, 2vw, 18px);
+      color: #ff6600;
+      font-size: clamp(2rem, 6vw, 2.5rem);
       font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .prelaunch-card {
+      width: 100%;
+      box-sizing: border-box;
+      padding: clamp(22px, 5vw, 36px);
+      border: 1px solid rgba(26, 115, 232, 0.10);
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 16px 34px rgba(12, 49, 95, 0.09);
+      text-align: center;
+    }
+
+    .prelaunch-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      color: #175db8;
+      background: #eaf2ff;
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .prelaunch-badge::before {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #1a73e8;
+      content: "";
+    }
+
+    .prelaunch-card h1 {
+      max-width: 720px;
+      margin: 0 auto 16px;
+      color: #12345b;
+      font-size: clamp(1.85rem, 6vw, 2.7rem);
+      line-height: 1.12;
+      letter-spacing: -0.025em;
+    }
+
+    .prelaunch-card p {
+      max-width: 700px;
+      margin: 0 auto;
+      color: #526477;
+      font-size: clamp(1rem, 2.8vw, 1.12rem);
+      line-height: 1.6;
+    }
+
+    .prelaunch-features {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 26px 0 28px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .prelaunch-features li {
+      padding: 10px 13px;
+      border: 1px solid #e5eaf0;
+      border-radius: 14px;
+      color: #33485e;
+      background: #f7f9fc;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .prelaunch-message {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 15px 18px;
+      border-radius: 18px;
+      color: #7a3a0d;
+      background: #fff3e8;
+      font-weight: 700;
+    }
+
+    .prelaunch-domain {
+      margin-top: 24px;
+      color: #6a7785;
+      font-size: 0.92rem;
+      font-weight: 700;
     }
 
     flutter-view {
       position: relative;
       z-index: 1;
     }
-  </style>
 
+    @media (max-width: 420px) {
+      #prelaunch-seo-shell {
+        padding: 20px;
+      }
+
+      .prelaunch-wrap {
+        min-height: calc(100vh - 40px);
+        min-height: calc(100dvh - 40px);
+      }
+
+      .prelaunch-brand img {
+        width: 64px;
+        height: 64px;
+      }
+
+      .prelaunch-card {
+        border-radius: 24px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
 </head>
 <body>
-  <main id="seo-shell" aria-label="Présentation d’iliprestō">
-    <section id="seo-hero">
-      <h1>Trouvez rapidement un particulier ou un professionnel près de chez vous</h1>
-      <p>iliprestō est une plateforme de mise en relation entre particuliers, indépendants et professionnels, conçue pour apporter une réponse rapide à vos besoins de services et de micro-services du quotidien.</p>
-      <p>Publiez facilement une annonce assistée et préremplie par l’IA : les utilisateurs disponibles et intéressés peuvent vous répondre directement, sans commission.</p>
-      <p class="seo-highlight">Besoin d’un coup de main ou d’un professionnel ? Sur iliprestō, l’offre et la demande se rencontrent rapidement, simplement et près de chez vous.</p>
-    </section>
-  </main>
+  <div id="prelaunch-seo-shell">
+    <div class="prelaunch-wrap">
+      <header class="prelaunch-brand" aria-label="iliprestō">
+        <img src="assets/assets/images/ilipresto_splash_logo.webp" alt="Logo iliprestō" width="76" height="76">
+        <p class="prelaunch-brand-name">iliprestō</p>
+      </header>
+
+      <main class="prelaunch-card">
+        <div class="prelaunch-badge">Bientôt disponible</div>
+        <h1>Trouvez rapidement un particulier ou un professionnel disponible près de chez vous</h1>
+        <p>
+          iliprestō est une plateforme de mise en relation entre particuliers,
+          indépendants et professionnels. Publiez une annonce assistée et
+          préremplie par l’IA, puis échangez directement avec les personnes
+          disponibles et intéressées, avec 0 % de commission.
+        </p>
+        <ul class="prelaunch-features" aria-label="Fonctionnalités principales">
+          <li>Annonces assistées par IA</li>
+          <li>Saisie texte ou vocale</li>
+          <li>0 % de commission</li>
+        </ul>
+        <div class="prelaunch-message">
+          Ouverture prochaine en Guadeloupe, Martinique et Guyane.
+        </div>
+      </main>
+
+      <footer class="prelaunch-domain">ilipresto.fr</footer>
+    </div>
+  </div>
 
   <script>
-    window.addEventListener('flutter-first-frame', function () {
-      const seoShell = document.getElementById('seo-shell');
-      if (seoShell) seoShell.remove();
-    }, { once: true });
+    (function () {
+      const shell = document.getElementById('prelaunch-seo-shell');
+      if (!shell) return;
+
+      const publicHosts = new Set([
+        'ilipresto.fr',
+        'www.ilipresto.fr',
+        'ilipresto.web.app',
+        'ilipresto.firebaseapp.com',
+        'presto-app-74abe.web.app',
+        'presto-app-74abe.firebaseapp.com',
+      ]);
+      const bypassPaths = [
+        '/admin',
+        '/auth',
+        '/login',
+        '/register',
+        '/forgot-password',
+        '/verify-email',
+        '/reset-password-success',
+        '/__/auth',
+      ];
+
+      function normalizePath(value) {
+        let path = String(value || '').trim() || '/';
+        if (!path.startsWith('/')) path = '/' + path;
+        if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
+        return path;
+      }
+
+      function effectivePath() {
+        const path = normalizePath(window.location.pathname);
+        if (path !== '/') return path;
+
+        const fragment = String(window.location.hash || '').replace(/^#/, '').trim();
+        if (!fragment) return path;
+
+        try {
+          const route = fragment.startsWith('/') ? fragment : '/' + fragment;
+          return normalizePath(new URL(route, window.location.origin).pathname);
+        } catch (_) {
+          return path;
+        }
+      }
+
+      function isBypassPath(path) {
+        return bypassPaths.some(function (allowedPath) {
+          return path === allowedPath || path.startsWith(allowedPath + '/');
+        });
+      }
+
+      if (!publicHosts.has(window.location.hostname.toLowerCase()) || isBypassPath(effectivePath())) {
+        shell.hidden = true;
+      }
+
+      window.addEventListener('flutter-first-frame', function () {
+        shell.remove();
+      }, { once: true });
+    })();
   </script>
 
   <script>
