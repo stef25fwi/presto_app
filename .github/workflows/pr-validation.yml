@@ -254,10 +254,17 @@ jobs:
             required_outcomes="$required_outcomes ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}"
           fi
 
-          if echo "$required_outcomes" | grep -Eq 'failure|cancelled|skipped'; then
-            echo "Validation failed: $required_outcomes"
-            exit 1
-          fi
+          for outcome in $required_outcomes; do
+            case "$outcome" in
+              success)
+                ;;
+              *)
+                echo "::error::Pull request validation failed (outcome: $outcome). Inspect the logs and artifacts above."
+                exit 1
+                ;;
+            esac
+          done
+
           echo "Validation succeeded: $required_outcomes"
 
   preview:
