@@ -30,8 +30,6 @@ class AdConfig {
   static const String iosTestBannerId =
       'ca-app-pub-3940256099942544/2934735716';
 
-  static const String webAdSlotId = 'ca-app-pub-1792076968124623';
-
   /// Bloc bannière à utiliser pour une plateforme donnée.
   ///
   /// `releaseMode` est un paramètre plutôt qu'une lecture directe de

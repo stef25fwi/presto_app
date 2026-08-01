@@ -88,7 +88,17 @@ void main() {
     test('les blocs réels appartiennent au compte déclaré aux manifestes', () {
       expect(AdConfig.androidBannerId, startsWith('$_realAccount/'));
       expect(AdConfig.iosBannerId, startsWith('$_realAccount/'));
-      expect(AdConfig.webAdSlotId, _realAccount);
+    });
+
+    test('le web ne se voit proposer aucun bloc', () {
+      // `google_mobile_ads` ne diffuse pas sur le web, et AdMob non plus : une
+      // bannière web relèverait d'AdSense, avec un identifiant `ca-pub-…` et
+      // un emplacement numérique qui n'existent nulle part ici.
+      expect(
+        AdConfig.bannerIdFor(TargetPlatform.android, releaseMode: true),
+        isNot(AdConfig.unsupportedAdUnitId),
+      );
+      expect(AdConfig.unsupportedAdUnitId, 'unsupported');
     });
 
     test('release et développement ne partagent jamais un bloc', () {
