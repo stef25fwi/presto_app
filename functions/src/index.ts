@@ -178,6 +178,7 @@ export {
   listMyJourneys,
 } from "./modules/billing/subscription_credits";
 export { handleStripeWebhook } from "./modules/billing/stripe_webhook";
+export { reconcileStripeSubscriptions } from "./modules/billing/reconciliation";
 
 export {
   enqueueEmailJobsFromEventTrigger,

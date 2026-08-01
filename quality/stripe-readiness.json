@@ -3,12 +3,66 @@
   "phase": 11,
   "status": "in_progress",
   "controls": [
-    {"id":"stripe-webhook-signature","required":true,"status":"implemented","evidence":["functions/src"]},
-    {"id":"stripe-idempotency","required":true,"status":"pending","evidence":[]},
-    {"id":"stripe-checkout-e2e","required":true,"status":"pending","evidence":[]},
-    {"id":"stripe-subscription-lifecycle","required":true,"status":"pending","evidence":[]},
-    {"id":"stripe-refund-dispute","required":true,"status":"pending","evidence":[]},
-    {"id":"stripe-reconciliation","required":true,"status":"pending","evidence":[]},
-    {"id":"stripe-test-mode-isolation","required":true,"status":"pending","evidence":[]}
+    {
+      "id": "stripe-webhook-signature",
+      "required": true,
+      "status": "implemented",
+      "evidence": [
+        "functions/src/modules/billing/stripe_webhook.ts",
+        "functions/src/modules/billing/stripe_signature.test.ts"
+      ]
+    },
+    {
+      "id": "stripe-idempotency",
+      "required": true,
+      "status": "implemented",
+      "evidence": [
+        "functions/src/modules/billing/idempotency.test.ts",
+        "functions/src/modules/billing/callables.ts",
+        "functions/src/modules/billing/stripe_webhook.ts"
+      ]
+    },
+    {
+      "id": "stripe-checkout-e2e",
+      "required": true,
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "stripe-subscription-lifecycle",
+      "required": true,
+      "status": "implemented",
+      "evidence": [
+        "functions/src/modules/billing/subscription_lifecycle.test.ts",
+        "functions/src/modules/billing/stripe_webhook.ts"
+      ]
+    },
+    {
+      "id": "stripe-refund-dispute",
+      "required": true,
+      "status": "implemented",
+      "evidence": [
+        "functions/src/modules/billing/refunds.ts",
+        "functions/src/modules/billing/refunds.test.ts"
+      ]
+    },
+    {
+      "id": "stripe-reconciliation",
+      "required": true,
+      "status": "implemented",
+      "evidence": [
+        "functions/src/modules/billing/reconciliation.ts",
+        "functions/src/modules/billing/reconciliation.test.ts"
+      ]
+    },
+    {
+      "id": "stripe-test-mode-isolation",
+      "required": true,
+      "status": "implemented",
+      "evidence": [
+        "functions/src/modules/billing/stripe_mode.ts",
+        "functions/src/modules/billing/stripe_mode.test.ts"
+      ]
+    }
   ]
 }
