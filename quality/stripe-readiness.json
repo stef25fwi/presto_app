@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "phase": 11,
-  "status": "in_progress",
+  "status": "complete",
   "controls": [
     {
       "id": "stripe-webhook-signature",
@@ -25,8 +25,12 @@
     {
       "id": "stripe-checkout-e2e",
       "required": true,
-      "status": "pending",
-      "evidence": []
+      "status": "implemented",
+      "evidence": [
+        "functions/scripts/stripe_checkout_e2e.mjs",
+        "functions/scripts/stripe_checkout_e2e_verify.mjs",
+        "docs/production/PHASE_11_STRIPE_READINESS.md"
+      ]
     },
     {
       "id": "stripe-subscription-lifecycle",
