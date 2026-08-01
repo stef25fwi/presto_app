@@ -97,8 +97,14 @@ void main() {
         find.text(PublicLandingConfigService.defaultLaunchMessage);
     expect(launchMessage, findsOneWidget);
 
-    await tester.tap(launchMessage);
-    await tester.pumpAndSettle();
+    Future<void> tapVisibleLaunchMessage() async {
+      await tester.ensureVisible(launchMessage);
+      await tester.pumpAndSettle();
+      await tester.tap(launchMessage);
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    await tapVisibleLaunchMessage();
 
     expect(find.text('Accès test : 1/8'), findsOneWidget);
     expect(
@@ -110,8 +116,7 @@ void main() {
     for (var index = 1;
         index < PublicPrelaunchPage.developerAccessTapCount;
         index += 1) {
-      await tester.tap(launchMessage);
-      await tester.pump(const Duration(milliseconds: 100));
+      await tapVisibleLaunchMessage();
     }
     await tester.pumpAndSettle();
 
