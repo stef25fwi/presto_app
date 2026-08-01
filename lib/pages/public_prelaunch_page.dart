@@ -24,8 +24,11 @@ class _PublicPrelaunchPageState extends State<PublicPrelaunchPage> {
 
   int _tapCount = 0;
   DateTime? _lastTapAt;
+  bool _accessGranted = false;
 
   void _handleStatusTap() {
+    if (_accessGranted) return;
+
     final now = DateTime.now();
     final lastTapAt = _lastTapAt;
 
@@ -38,6 +41,7 @@ class _PublicPrelaunchPageState extends State<PublicPrelaunchPage> {
 
     if (_tapCount < PublicPrelaunchPage.developerAccessTapCount) return;
 
+    _accessGranted = true;
     _tapCount = 0;
     _lastTapAt = null;
     widget.onDeveloperAccessGranted?.call();
