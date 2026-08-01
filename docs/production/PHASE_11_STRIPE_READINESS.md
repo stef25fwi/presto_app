@@ -20,7 +20,7 @@ Six contrôles sur sept sont `implemented`. Le détail de ce qui les couvre :
 |---|---|
 | `stripe-webhook-signature` | HMAC SHA-256 à comparaison à temps constant, fenêtre de tolérance de 5 min, rotation de secret (deux `v1=`) — `stripe_signature.test.ts` |
 | `stripe-idempotency` | Sortante : en-tête `Idempotency-Key` dérivé d'un condensat stable, fenêtre fixe de 10 min pour Checkout. Entrante : bail transactionnel sur `stripe_webhook_events`, doublon détecté, bail expirable — `idempotency.test.ts` |
-| `stripe-checkout-e2e` | **En attente.** Le script existe (`functions/scripts/stripe_checkout_e2e.mjs`) mais n'a jamais été exécuté contre Stripe — voir ci-dessous |
+| `stripe-checkout-e2e` | **Partiel.** Script exécuté le 1er août 2026 contre le compte de test : compte, catalogue et création de session validés. Le paiement et la chaîne webhook → Firestore restent à constater — voir ci-dessous |
 | `stripe-subscription-lifecycle` | Traduction des sept statuts Stripe, plan déduit des métadonnées puis du tarif, refus d'activer un plan inconnu, protection contre les événements hors séquence et les comptes supprimés — `subscription_lifecycle.test.ts` |
 | `stripe-refund-dispute` | Remboursements totaux et partiels, litiges et alertes réseau, issue déduite du mouvement de fonds, signalement du compte pour revue — `refunds.ts` |
 | `stripe-reconciliation` | Recoupement quotidien Stripe ↔ Firestore sur statut, résiliation programmée, fin de période et tarif — `reconciliation.ts` |
@@ -31,6 +31,28 @@ Six contrôles sur sept sont `implemented`. Le détail de ce qui les couvre :
 Le contrôle `stripe-checkout-e2e` demande un vrai parcours de paiement. Aucun
 test automatisé ne peut le prouver : il faut une clé Stripe de test, une carte
 de test et le webhook déployé.
+
+**Exécution du 1er août 2026** (compte `acct_1Tr9UpCMctJ3ssHG`, mode test) :
+
+| Vérification | Résultat |
+|---|---|
+| Clé de test valide, compte joignable | ✅ `iliprestō` |
+| Tarif `ilipresto_plus` conforme | ✅ 1,99 EUR/mois |
+| Tarif `ilipro` conforme | ✅ 9,99 EUR/mois |
+| Session Checkout créée et ouverte | ✅ |
+| Paiement carte 4242 | ⏳ à faire |
+| Abonnement actif dans Firestore et `subscriptionPlan` posé | ⏳ à faire |
+| Événement en `processed`, rejeu marqué `duplicate` | ⏳ à faire |
+
+La moitié automatisable est donc acquise : les identifiants de tarif des
+secrets Functions correspondent bien aux montants attendus par
+`EXPECTED_PRICE_BY_PLAN` dans `callables.ts`. Le reste demande un navigateur et
+le webhook déployé.
+
+**Attention au nettoyage.** Le client de test est conservé par défaut : la
+session Checkout lui appartient, et la supprimer rendrait l'URL de paiement
+inutilisable pour les étapes manuelles. `--cleanup` force la suppression
+immédiate, pour un simple contrôle de catalogue sans paiement.
 
 ```bash
 STRIPE_SECRET_KEY=sk_test_... \
