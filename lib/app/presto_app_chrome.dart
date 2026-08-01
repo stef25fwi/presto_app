@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../core/connectivity/connectivity_status.dart';
+import '../pages/home_page.dart';
 import '../pages/public_prelaunch_page.dart';
 import '../services/public_landing_config_service.dart';
 import '../widgets/cookie_consent_banner.dart';
@@ -13,14 +14,18 @@ import 'typography_settings.dart';
 
 @visibleForTesting
 bool resetNavigatorToHomeAfterPublicLandingAccess(
-  GlobalKey<NavigatorState> navigatorKey,
-) {
+  GlobalKey<NavigatorState> navigatorKey, {
+  WidgetBuilder? homeBuilder,
+}) {
   final navigator = navigatorKey.currentState;
   if (navigator == null) return false;
 
   unawaited(
-    navigator.pushNamedAndRemoveUntil<void>(
-      '/',
+    navigator.pushAndRemoveUntil<void>(
+      MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/'),
+        builder: homeBuilder ?? (_) => const HomePage(),
+      ),
       (route) => false,
     ),
   );

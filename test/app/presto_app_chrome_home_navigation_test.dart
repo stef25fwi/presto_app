@@ -25,7 +25,7 @@ class _NoopRemoteConfigAdapter
 
 void main() {
   testWidgets(
-    'le huitième appui vide la pile et ouvre une seule page Home',
+    'le huitième appui ouvre directement une seule Home sans Splash',
     (tester) async {
       final navigatorKey = GlobalKey<NavigatorState>();
       final config = PublicLandingConfigService(
@@ -38,12 +38,17 @@ void main() {
           initialRoute: '/prelaunch',
           routes: <String, WidgetBuilder>{
             '/': (_) => const Scaffold(
-                  body: Center(child: Text('APP_HOME_COMPLETE')),
+                  body: Center(child: Text('SPLASH_SHOULD_NOT_APPEAR')),
                 ),
             '/prelaunch': (_) => PublicPrelaunchPage(
                   config: config,
                   onDeveloperAccessGranted: () {
-                    resetNavigatorToHomeAfterPublicLandingAccess(navigatorKey);
+                    resetNavigatorToHomeAfterPublicLandingAccess(
+                      navigatorKey,
+                      homeBuilder: (_) => const Scaffold(
+                        body: Center(child: Text('APP_HOME_COMPLETE')),
+                      ),
+                    );
                   },
                 ),
           },
@@ -64,6 +69,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(PublicPrelaunchPage), findsNothing);
+      expect(find.text('SPLASH_SHOULD_NOT_APPEAR'), findsNothing);
       expect(find.text('APP_HOME_COMPLETE'), findsOneWidget);
       expect(navigatorKey.currentState?.canPop(), isFalse);
       expect(tester.takeException(), isNull);
