@@ -220,11 +220,28 @@ async function main() {
   const checkout = events.docs.find((doc) =>
     String(doc.data()?.event_type ?? "").startsWith("checkout.session.completed"),
   );
+  // Présent ne suffit pas : un événement reçu puis rejeté laisse une trace
+  // identique à un événement traité. Seul `processed` prouve que la chaîne a
+  // abouti.
   record(
-    "Firestore — checkout.session.completed reçu",
-    Boolean(checkout),
+    "Firestore — checkout.session.completed traité",
+    checkout ? checkout.data()?.status === "processed" : false,
     checkout ? `${checkout.id} statut ${checkout.data()?.status}` : "absent",
   );
+
+  // Le webhook consigne la cause de l'échec : la remonter évite d'aller la
+  // chercher à la main dans la console Firebase.
+  const failed = events.docs.filter((doc) => doc.data()?.status === "failed");
+  if (failed.length > 0) {
+    console.log("");
+    console.log(`${failed.length} événement(s) en échec parmi les 20 derniers :`);
+    for (const doc of failed) {
+      const data = doc.data() ?? {};
+      console.log(`  ${doc.id} — ${data.event_type}`);
+      console.log(`    tentatives : ${data.attempts ?? "?"}`);
+      console.log(`    erreur : ${data.error ?? "(non consignée)"}`);
+    }
+  }
 
   summarize();
 }
