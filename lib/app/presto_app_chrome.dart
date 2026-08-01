@@ -8,7 +8,24 @@ import '../pages/public_prelaunch_page.dart';
 import '../services/public_landing_config_service.dart';
 import '../widgets/cookie_consent_banner.dart';
 import '../widgets/offline_banner.dart';
+import 'app_globals.dart';
 import 'typography_settings.dart';
+
+@visibleForTesting
+bool resetNavigatorToHomeAfterPublicLandingAccess(
+  GlobalKey<NavigatorState> navigatorKey,
+) {
+  final navigator = navigatorKey.currentState;
+  if (navigator == null) return false;
+
+  unawaited(
+    navigator.pushNamedAndRemoveUntil<void>(
+      '/',
+      (route) => false,
+    ),
+  );
+  return true;
+}
 
 /// Habillage commun à toutes les pages : réglages typographiques de
 /// l'utilisateur (police, graisse, échelle) puis les bandeaux superposés —
@@ -72,10 +89,20 @@ class _PrestoAppChromeState extends State<PrestoAppChrome>
     if (mounted) setState(() {});
   }
 
+  void _openApplicationHome({int remainingAttempts = 3}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (resetNavigatorToHomeAfterPublicLandingAccess(appNavigatorKey)) return;
+      if (remainingAttempts <= 1) return;
+      _openApplicationHome(remainingAttempts: remainingAttempts - 1);
+    });
+  }
+
   void _grantTemporaryDeveloperAccess() {
     if (!mounted || _publicLandingBypassed) return;
     _temporaryDeveloperAccessGranted = true;
     setState(() => _publicLandingBypassed = true);
+    _openApplicationHome();
   }
 
   @override
