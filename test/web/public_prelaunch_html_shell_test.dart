@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('web/index.html public prelaunch shell', () {
+  group('web public prelaunch shell', () {
     late String html;
+    late String bootstrap;
 
     setUpAll(() {
       html = File('web/index.html').readAsStringSync();
+      bootstrap = File('web/flutter_bootstrap.js').readAsStringSync();
     });
 
     test('expose le contenu essentiel sans dépendre du rendu Flutter', () {
@@ -45,6 +47,17 @@ void main() {
     test('retire la coquille après la première frame Flutter', () {
       expect(html, contains("window.addEventListener('flutter-first-frame'"));
       expect(html, contains('shell.remove();'));
+    });
+
+    test('prévoit un retrait de secours après le démarrage Flutter', () {
+      expect(bootstrap, contains('removePrelaunchSeoShell'));
+      expect(bootstrap, contains('onEntrypointLoaded'));
+      expect(bootstrap, contains('await appRunner.runApp();'));
+      expect(bootstrap, contains('window.requestAnimationFrame'));
+      expect(
+        bootstrap,
+        contains("document.getElementById('prelaunch-seo-shell')"),
+      );
     });
 
     test('préserve les routes administration et authentification', () {
