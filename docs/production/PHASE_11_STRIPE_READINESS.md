@@ -66,8 +66,30 @@ montant, ouvre une session Checkout réelle et imprime les vérifications
 manuelles restantes (paiement, activation dans Firestore, statut de
 l'événement, rejeu marqué en doublon). Il refuse toute clé `sk_live_`.
 
+### Constater la suite du paiement
+
+Une fois le paiement effectué, la moitié qui compte reste à vérifier : un
+paiement réussi chez Stripe ne prouve rien tant que l'abonnement n'est pas
+arrivé dans Firestore.
+
+```bash
+STRIPE_SECRET_KEY=sk_test_... \
+npm --prefix functions run stripe:checkout:e2e:verify
+```
+
+Le script retrouve seul le dernier client de test, puis contrôle l'abonnement
+côté Stripe, `subscriptions/<id>`, les droits sur `users/<uid>` et le statut de
+l'événement dans `stripe_webhook_events`. Les lectures Firestore demandent des
+credentials (`gcloud auth application-default login`) ; sans elles, le script
+le signale et s'en tient à la partie Stripe.
+
+`users/<uid>` sera légitimement absent : l'uid `e2e_…` ne correspond à aucun
+compte Firebase réel. C'est attendu et rapporté comme tel, pas comme un échec —
+le webhook n'écrit les droits que sur un utilisateur existant
+(`syncSubscription` vérifie `userSnapshot.exists`).
+
 Une fois le parcours constaté, passer le contrôle à `implemented` avec pour
-preuve le script et la trace d'exécution.
+preuve les deux scripts et leurs traces d'exécution.
 
 ## Choix assumés
 
