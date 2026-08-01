@@ -34,6 +34,7 @@ class _PrestoAppChromeState extends State<PrestoAppChrome>
       PublicLandingConfigService.instance;
 
   Timer? _refreshTimer;
+  bool _publicLandingBypassed = false;
 
   @override
   void initState() {
@@ -69,10 +70,18 @@ class _PrestoAppChromeState extends State<PrestoAppChrome>
     if (mounted) setState(() {});
   }
 
+  void _grantTemporaryDeveloperAccess() {
+    if (!mounted) return;
+    setState(() => _publicLandingBypassed = true);
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_publicLanding.shouldShowFor(Uri.base)) {
-      return PublicPrelaunchPage(config: _publicLanding);
+    if (!_publicLandingBypassed && _publicLanding.shouldShowFor(Uri.base)) {
+      return PublicPrelaunchPage(
+        config: _publicLanding,
+        onDeveloperAccessGranted: _grantTemporaryDeveloperAccess,
+      );
     }
 
     return ListenableBuilder(

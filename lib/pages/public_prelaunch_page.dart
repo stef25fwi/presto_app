@@ -2,16 +2,50 @@ import 'package:flutter/material.dart';
 
 import '../services/public_landing_config_service.dart';
 
-class PublicPrelaunchPage extends StatelessWidget {
+class PublicPrelaunchPage extends StatefulWidget {
   const PublicPrelaunchPage({
     super.key,
     required this.config,
+    this.onDeveloperAccessGranted,
   });
 
+  static const accessTriggerKey = Key('public-prelaunch-access-trigger');
+  static const developerAccessTapCount = 8;
+
   final PublicLandingConfigService config;
+  final VoidCallback? onDeveloperAccessGranted;
+
+  @override
+  State<PublicPrelaunchPage> createState() => _PublicPrelaunchPageState();
+}
+
+class _PublicPrelaunchPageState extends State<PublicPrelaunchPage> {
+  static const _tapSequenceTimeout = Duration(seconds: 4);
+
+  int _tapCount = 0;
+  DateTime? _lastTapAt;
+
+  void _handleStatusTap() {
+    final now = DateTime.now();
+    final lastTapAt = _lastTapAt;
+
+    if (lastTapAt == null || now.difference(lastTapAt) > _tapSequenceTimeout) {
+      _tapCount = 0;
+    }
+
+    _lastTapAt = now;
+    _tapCount += 1;
+
+    if (_tapCount < PublicPrelaunchPage.developerAccessTapCount) return;
+
+    _tapCount = 0;
+    _lastTapAt = null;
+    widget.onDeveloperAccessGranted?.call();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final config = widget.config;
     final theme = Theme.of(context);
     final width = MediaQuery.sizeOf(context).width;
     final compact = width < 420;
@@ -72,7 +106,12 @@ class PublicPrelaunchPage extends StatelessWidget {
                             ),
                             child: Column(
                               children: <Widget>[
-                                _StatusBadge(label: config.badge),
+                                GestureDetector(
+                                  key: PublicPrelaunchPage.accessTriggerKey,
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: _handleStatusTap,
+                                  child: _StatusBadge(label: config.badge),
+                                ),
                                 const SizedBox(height: 20),
                                 Text(
                                   config.title,
