@@ -49,6 +49,15 @@
     );
   };
 
+  function removePrelaunchSeoShell() {
+    const shell = document.getElementById('prelaunch-seo-shell');
+    if (shell) shell.remove();
+  }
+
+  window.addEventListener('flutter-first-frame', removePrelaunchSeoShell, {
+    once: true,
+  });
+
   const params = new URLSearchParams(window.location.search);
   const host = window.location.hostname;
 
@@ -79,5 +88,15 @@
         : {
             serviceWorkerVersion: {{flutter_service_worker_version}},
           },
+    onEntrypointLoaded: async function (engineInitializer) {
+      const appRunner = await engineInitializer.initializeEngine();
+      await appRunner.runApp();
+
+      // Fallback fiable si le navigateur ne relaie pas flutter-first-frame.
+      // Deux frames laissent Flutter peindre avant de retirer la coquille SEO.
+      window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(removePrelaunchSeoShell);
+      });
+    },
   });
 })();
