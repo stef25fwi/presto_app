@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart' show TargetPlatform;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:presto_app/widgets/ad_banner.dart';
+import 'package:presto_app/widgets/ad_config.dart';
 
 /// Préfixe du compte de démonstration publié par Google. Tout bloc qui le
 /// porte renvoie une publicité de test et ne rapporte rien.

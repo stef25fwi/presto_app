@@ -15,9 +15,13 @@
  *   STRIPE_SECRET_KEY=sk_test_... \
  *   STRIPE_PRICE_ILIPRESTO_PLUS=price_... \
  *   STRIPE_PRICE_ILIPRO=price_... \
- *   node scripts/stripe_checkout_e2e.mjs [--keep]
+ *   node scripts/stripe_checkout_e2e.mjs [--cleanup]
  *
- * `--keep` conserve le client de test créé ; par défaut il est supprimé.
+ * Le client de test est **conservé** par défaut : la session Checkout lui
+ * appartient, et les étapes manuelles qui closent le contrôle (payer, vérifier
+ * l'activation dans Firestore, rejouer l'événement) supposent qu'il existe
+ * encore. `--cleanup` le supprime immédiatement, pour un simple contrôle de
+ * catalogue sans paiement.
  */
 
 const API = "https://api.stripe.com";
@@ -135,9 +139,14 @@ async function main() {
     console.log("  3. Vérifier que stripe_webhook_events contient l'événement, en statut processed.");
     console.log("  4. Rejouer l'événement depuis le dashboard Stripe et vérifier qu'il est marqué duplicate.");
   } finally {
-    if (!process.argv.includes("--keep")) {
+    if (process.argv.includes("--cleanup")) {
       await stripe("DELETE", `/v1/customers/${customer.id}`, null, secret).catch(() => {});
       console.log(`Client de test supprimé : ${customer.id}`);
+    } else {
+      console.log("");
+      console.log(`Client de test conservé : ${customer.id}`);
+      console.log("  Le supprimer une fois le contrôle terminé :");
+      console.log(`  curl -X DELETE https://api.stripe.com/v1/customers/${customer.id} -u "$STRIPE_SECRET_KEY:"`);
     }
   }
 }
