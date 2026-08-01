@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../services/public_landing_config_service.dart';
@@ -10,6 +12,7 @@ class PublicPrelaunchPage extends StatefulWidget {
   });
 
   static const accessTriggerKey = Key('public-prelaunch-access-trigger');
+  static const accessProgressKey = Key('public-prelaunch-access-progress');
   static const developerAccessTapCount = 8;
 
   final PublicLandingConfigService config;
@@ -20,31 +23,54 @@ class PublicPrelaunchPage extends StatefulWidget {
 }
 
 class _PublicPrelaunchPageState extends State<PublicPrelaunchPage> {
-  static const _tapSequenceTimeout = Duration(seconds: 4);
+  static const _tapSequenceTimeout = Duration(seconds: 8);
 
+  Timer? _tapResetTimer;
   int _tapCount = 0;
   DateTime? _lastTapAt;
   bool _accessGranted = false;
+
+  @override
+  void dispose() {
+    _tapResetTimer?.cancel();
+    super.dispose();
+  }
+
+  void _resetTapSequence() {
+    if (!mounted || _accessGranted || _tapCount == 0) return;
+    setState(() {
+      _tapCount = 0;
+      _lastTapAt = null;
+    });
+  }
 
   void _handleStatusTap() {
     if (_accessGranted) return;
 
     final now = DateTime.now();
     final lastTapAt = _lastTapAt;
+    final sequenceExpired = lastTapAt == null ||
+        now.difference(lastTapAt) > _tapSequenceTimeout;
+    final nextTapCount = sequenceExpired ? 1 : _tapCount + 1;
 
-    if (lastTapAt == null || now.difference(lastTapAt) > _tapSequenceTimeout) {
-      _tapCount = 0;
+    _tapResetTimer?.cancel();
+
+    if (nextTapCount >= PublicPrelaunchPage.developerAccessTapCount) {
+      setState(() {
+        _accessGranted = true;
+        _tapCount = PublicPrelaunchPage.developerAccessTapCount;
+        _lastTapAt = now;
+      });
+      widget.onDeveloperAccessGranted?.call();
+      return;
     }
 
-    _lastTapAt = now;
-    _tapCount += 1;
+    setState(() {
+      _tapCount = nextTapCount;
+      _lastTapAt = now;
+    });
 
-    if (_tapCount < PublicPrelaunchPage.developerAccessTapCount) return;
-
-    _accessGranted = true;
-    _tapCount = 0;
-    _lastTapAt = null;
-    widget.onDeveloperAccessGranted?.call();
+    _tapResetTimer = Timer(_tapSequenceTimeout, _resetTapSequence);
   }
 
   @override
@@ -91,109 +117,148 @@ class _PublicPrelaunchPageState extends State<PublicPrelaunchPage> {
                         children: <Widget>[
                           _BrandHeader(compact: compact),
                           const SizedBox(height: 30),
-                          Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.all(compact ? 22 : 36),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.94),
-                              borderRadius: BorderRadius.circular(28),
-                              border: Border.all(
-                                color: const Color(0x1A1A73E8),
-                              ),
-                              boxShadow: const <BoxShadow>[
-                                BoxShadow(
-                                  color: Color(0x160C315F),
-                                  blurRadius: 34,
-                                  offset: Offset(0, 16),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              children: <Widget>[
-                                GestureDetector(
-                                  key: PublicPrelaunchPage.accessTriggerKey,
-                                  behavior: HitTestBehavior.opaque,
-                                  onTap: _handleStatusTap,
-                                  child: _StatusBadge(label: config.badge),
-                                ),
-                                const SizedBox(height: 20),
-                                Text(
-                                  config.title,
-                                  textAlign: TextAlign.center,
-                                  style: theme.textTheme.headlineMedium?.copyWith(
-                                    color: const Color(0xFF12345B),
-                                    fontWeight: FontWeight.w800,
-                                    height: 1.12,
-                                    letterSpacing: -0.7,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  config.description,
-                                  textAlign: TextAlign.center,
-                                  style: theme.textTheme.bodyLarge?.copyWith(
-                                    color: const Color(0xFF526477),
-                                    height: 1.55,
-                                  ),
-                                ),
-                                const SizedBox(height: 26),
-                                Wrap(
-                                  alignment: WrapAlignment.center,
-                                  spacing: 10,
-                                  runSpacing: 10,
-                                  children: <Widget>[
-                                    _FeatureChip(
-                                      icon: Icons.auto_awesome_rounded,
-                                      label: 'Annonces assistées par IA',
-                                      expanded: compact,
-                                    ),
-                                    _FeatureChip(
-                                      icon: Icons.record_voice_over_rounded,
-                                      label: 'Saisie texte ou vocale',
-                                      expanded: compact,
-                                    ),
-                                    _FeatureChip(
-                                      icon: Icons.percent_rounded,
-                                      label: '0 % de commission',
-                                      expanded: compact,
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 28),
-                                Container(
+                          Semantics(
+                            button: true,
+                            label: 'Zone ouverture prochaine',
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                key: PublicPrelaunchPage.accessTriggerKey,
+                                behavior: HitTestBehavior.opaque,
+                                onTap: _handleStatusTap,
+                                child: Container(
                                   width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 18,
-                                    vertical: 15,
-                                  ),
+                                  padding: EdgeInsets.all(compact ? 22 : 36),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFFF3E8),
-                                    borderRadius: BorderRadius.circular(18),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: <Widget>[
-                                      const Icon(
-                                        Icons.rocket_launch_rounded,
-                                        size: 20,
-                                        color: Color(0xFFFF6600),
+                                    color: Colors.white.withValues(alpha: 0.94),
+                                    borderRadius: BorderRadius.circular(28),
+                                    border: Border.all(
+                                      color: const Color(0x1A1A73E8),
+                                    ),
+                                    boxShadow: const <BoxShadow>[
+                                      BoxShadow(
+                                        color: Color(0x160C315F),
+                                        blurRadius: 34,
+                                        offset: Offset(0, 16),
                                       ),
-                                      const SizedBox(width: 10),
-                                      Flexible(
-                                        child: Text(
-                                          config.launchMessage,
-                                          textAlign: TextAlign.center,
-                                          style: theme.textTheme.bodyMedium
-                                              ?.copyWith(
-                                            color: const Color(0xFF7A3A0D),
-                                            fontWeight: FontWeight.w700,
+                                    ],
+                                  ),
+                                  child: Column(
+                                    children: <Widget>[
+                                      _StatusBadge(label: config.badge),
+                                      AnimatedSwitcher(
+                                        duration:
+                                            const Duration(milliseconds: 160),
+                                        child: _tapCount == 0 || _accessGranted
+                                            ? const SizedBox.shrink()
+                                            : Padding(
+                                                key: PublicPrelaunchPage
+                                                    .accessProgressKey,
+                                                padding: const EdgeInsets.only(
+                                                  top: 10,
+                                                ),
+                                                child: Text(
+                                                  'Accès test : $_tapCount/${PublicPrelaunchPage.developerAccessTapCount}',
+                                                  style: theme
+                                                      .textTheme.bodySmall
+                                                      ?.copyWith(
+                                                    color: const Color(
+                                                      0xFF175DB8,
+                                                    ),
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
+                                                ),
+                                              ),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      Text(
+                                        config.title,
+                                        textAlign: TextAlign.center,
+                                        style: theme.textTheme.headlineMedium
+                                            ?.copyWith(
+                                          color: const Color(0xFF12345B),
+                                          fontWeight: FontWeight.w800,
+                                          height: 1.12,
+                                          letterSpacing: -0.7,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        config.description,
+                                        textAlign: TextAlign.center,
+                                        style:
+                                            theme.textTheme.bodyLarge?.copyWith(
+                                          color: const Color(0xFF526477),
+                                          height: 1.55,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 26),
+                                      Wrap(
+                                        alignment: WrapAlignment.center,
+                                        spacing: 10,
+                                        runSpacing: 10,
+                                        children: <Widget>[
+                                          _FeatureChip(
+                                            icon: Icons.auto_awesome_rounded,
+                                            label: 'Annonces assistées par IA',
+                                            expanded: compact,
                                           ),
+                                          _FeatureChip(
+                                            icon:
+                                                Icons.record_voice_over_rounded,
+                                            label: 'Saisie texte ou vocale',
+                                            expanded: compact,
+                                          ),
+                                          _FeatureChip(
+                                            icon: Icons.percent_rounded,
+                                            label: '0 % de commission',
+                                            expanded: compact,
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 28),
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 18,
+                                          vertical: 15,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFFF3E8),
+                                          borderRadius:
+                                              BorderRadius.circular(18),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: <Widget>[
+                                            const Icon(
+                                              Icons.rocket_launch_rounded,
+                                              size: 20,
+                                              color: Color(0xFFFF6600),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Flexible(
+                                              child: Text(
+                                                config.launchMessage,
+                                                textAlign: TextAlign.center,
+                                                style: theme
+                                                    .textTheme.bodyMedium
+                                                    ?.copyWith(
+                                                  color: const Color(
+                                                    0xFF7A3A0D,
+                                                  ),
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                           const SizedBox(height: 24),

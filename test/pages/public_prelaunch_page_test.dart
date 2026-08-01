@@ -83,6 +83,46 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+      'toute la carte compte les appuis et affiche la progression visible',
+      (tester) async {
+    var accessGrantCount = 0;
+    await pumpPage(
+      tester,
+      size: const Size(390, 844),
+      onDeveloperAccessGranted: () => accessGrantCount += 1,
+    );
+
+    final launchMessage =
+        find.text(PublicLandingConfigService.defaultLaunchMessage);
+    expect(launchMessage, findsOneWidget);
+
+    Future<void> tapVisibleLaunchMessage() async {
+      await tester.ensureVisible(launchMessage);
+      await tester.pumpAndSettle();
+      await tester.tap(launchMessage);
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    await tapVisibleLaunchMessage();
+
+    expect(find.text('Accès test : 1/8'), findsOneWidget);
+    expect(
+      find.byKey(PublicPrelaunchPage.accessProgressKey),
+      findsOneWidget,
+    );
+    expect(accessGrantCount, 0);
+
+    for (var index = 1;
+        index < PublicPrelaunchPage.developerAccessTapCount;
+        index += 1) {
+      await tapVisibleLaunchMessage();
+    }
+    await tester.pumpAndSettle();
+
+    expect(accessGrantCount, 1);
+  });
+
   testWidgets('accorde l’accès développeur une seule fois au huitième appui',
       (tester) async {
     var accessGrantCount = 0;
@@ -103,6 +143,7 @@ void main() {
     }
 
     expect(accessGrantCount, 0);
+    expect(find.text('Accès test : 7/8'), findsOneWidget);
 
     await tester.tap(trigger);
     await tester.pump();
@@ -117,6 +158,21 @@ void main() {
     }
 
     expect(accessGrantCount, 1);
+  });
+
+  testWidgets('réinitialise la progression après huit secondes sans appui',
+      (tester) async {
+    await pumpPage(tester, size: const Size(390, 844));
+
+    final trigger = find.byKey(PublicPrelaunchPage.accessTriggerKey);
+    await tester.tap(trigger);
+    await tester.pumpAndSettle();
+    expect(find.text('Accès test : 1/8'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 9));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(PublicPrelaunchPage.accessProgressKey), findsNothing);
   });
 
   testWidgets('remplace la préouverture par une seule page application',
