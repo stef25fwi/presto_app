@@ -23,6 +23,12 @@ class _NoopRemoteConfigAdapter
 }
 
 void main() {
+  PublicLandingConfigService createConfig() {
+    return PublicLandingConfigService(
+      adapter: _NoopRemoteConfigAdapter(),
+    );
+  }
+
   Future<void> pumpPage(
     WidgetTester tester, {
     required Size size,
@@ -37,14 +43,10 @@ void main() {
         ..resetDevicePixelRatio();
     });
 
-    final config = PublicLandingConfigService(
-      adapter: _NoopRemoteConfigAdapter(),
-    );
-
     await tester.pumpWidget(
       MaterialApp(
         home: PublicPrelaunchPage(
-          config: config,
+          config: createConfig(),
           onDeveloperAccessGranted: onDeveloperAccessGranted,
         ),
       ),
@@ -81,7 +83,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('accorde l’accès développeur après exactement huit appuis',
+  testWidgets('accorde l’accès développeur une seule fois au huitième appui',
       (tester) async {
     var accessGrantCount = 0;
     await pumpPage(
@@ -106,5 +108,54 @@ void main() {
     await tester.pump();
 
     expect(accessGrantCount, 1);
+
+    for (var index = 0;
+        index < PublicPrelaunchPage.developerAccessTapCount;
+        index += 1) {
+      await tester.tap(trigger);
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(accessGrantCount, 1);
+  });
+
+  testWidgets('remplace la préouverture par une seule page application',
+      (tester) async {
+    var showPrelaunch = true;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: StatefulBuilder(
+          builder: (context, setState) {
+            if (!showPrelaunch) {
+              return const Scaffold(
+                body: Center(child: Text('APP_HOME_UNIQUE')),
+              );
+            }
+
+            return PublicPrelaunchPage(
+              config: createConfig(),
+              onDeveloperAccessGranted: () {
+                setState(() => showPrelaunch = false);
+              },
+            );
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final trigger = find.byKey(PublicPrelaunchPage.accessTriggerKey);
+    for (var index = 0;
+        index < PublicPrelaunchPage.developerAccessTapCount;
+        index += 1) {
+      await tester.tap(trigger);
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PublicPrelaunchPage), findsNothing);
+    expect(find.text('APP_HOME_UNIQUE'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
