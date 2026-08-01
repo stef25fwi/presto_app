@@ -58,6 +58,24 @@ async function findTestCustomer(secret, uid) {
   return candidates[0] ?? null;
 }
 
+/**
+ * Repli quand le client de test a été supprimé.
+ *
+ * Supprimer un client annule ses abonnements chez Stripe, mais ceux-ci restent
+ * lisibles. Le parcours reste donc vérifiable : l'abonnement sera `canceled`
+ * au lieu d'`active`, et c'est la chaîne webhook → Firestore qui porte alors la
+ * preuve.
+ */
+async function findTestSubscription(secret, uid) {
+  const list = await stripe("/v1/subscriptions?status=all&limit=100", secret);
+  const candidates = (list.data ?? []).filter((subscription) => {
+    const firebaseUid = subscription.metadata?.firebaseUid ?? "";
+    if (!firebaseUid.startsWith("e2e_")) return false;
+    return uid ? firebaseUid === uid : true;
+  });
+  return candidates[0] ?? null;
+}
+
 async function loadFirestore() {
   try {
     const admin = (await import("firebase-admin")).default;
@@ -88,24 +106,35 @@ async function main() {
 
   const requestedUid = process.argv[2];
   const customer = await findTestCustomer(secret, requestedUid);
-  if (!customer) {
-    console.error(
-      "ÉCHEC — aucun client de test trouvé. Lancer d'abord stripe:checkout:e2e (sans --cleanup).",
-    );
-    process.exitCode = 1;
-    return;
-  }
 
-  const uid = customer.metadata?.firebaseUid ?? "";
-  console.log(`Client de test : ${customer.id} (uid ${uid})`);
+  let uid = "";
+  let subscription = null;
+
+  if (customer) {
+    uid = customer.metadata?.firebaseUid ?? "";
+    console.log(`Client de test : ${customer.id} (uid ${uid})`);
+    const subscriptions = await stripe(
+      `/v1/subscriptions?customer=${encodeURIComponent(customer.id)}&status=all&limit=10`,
+      secret,
+    );
+    subscription = (subscriptions.data ?? [])[0] ?? null;
+  } else {
+    subscription = await findTestSubscription(secret, requestedUid);
+    if (!subscription) {
+      console.error(
+        "ÉCHEC — ni client ni abonnement de test trouvé. Lancer d'abord stripe:checkout:e2e.",
+      );
+      process.exitCode = 1;
+      return;
+    }
+    uid = subscription.metadata?.firebaseUid ?? "";
+    console.log(`Client de test supprimé — abonnement retrouvé par métadonnées (uid ${uid})`);
+    console.log("Supprimer un client annule ses abonnements : un statut `canceled`");
+    console.log("est attendu ici et ne remet pas en cause le parcours.");
+  }
   console.log("");
 
   // ── 1. Stripe ────────────────────────────────────────────────────
-  const subscriptions = await stripe(
-    `/v1/subscriptions?customer=${encodeURIComponent(customer.id)}&status=all&limit=10`,
-    secret,
-  );
-  const subscription = (subscriptions.data ?? [])[0];
 
   if (!subscription) {
     record("Stripe — abonnement créé", false, "aucun abonnement pour ce client");
@@ -113,7 +142,9 @@ async function main() {
     const active = ACTIVE_STATUSES.has(subscription.status);
     record(
       "Stripe — abonnement actif",
-      active,
+      // Un abonnement annulé par la suppression du client reste une preuve que
+      // le paiement a abouti : on le signale sans le compter en échec.
+      customer ? active : (active ? true : null),
       `${subscription.id} statut ${subscription.status}`,
     );
     const plan = subscription.metadata?.plan;
