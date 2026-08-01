@@ -41,6 +41,7 @@
     "test": "npm run build && node --test $(find lib -name '*.test.js' -print)",
     "email:audit:new-events": "node scripts/audit_new_email_events.mjs",
     "brevo:webhook:smoke": "node scripts/brevo_webhook_smoke_test.mjs",
+    "stripe:checkout:e2e": "node scripts/stripe_checkout_e2e.mjs",
     "messaging:backfill:mirror:dry-run": "npm run build && node scripts/backfill_conversation_mirror_fields.mjs --dry-run",
     "messaging:backfill:mirror": "npm run build && node scripts/backfill_conversation_mirror_fields.mjs",
     "offers:backfill:indexes:dry-run": "node scripts/backfill_offer_indexes.mjs --dry-run",

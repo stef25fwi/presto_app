@@ -158,6 +158,30 @@ jobs:
           path: dist/${{ steps.artifact.outputs.name }}.aab
           retention-days: 30
 
+      - name: Check Play Console credentials
+        if: ${{ inputs.upload }}
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          set -euo pipefail
+
+          # Échouer ici avec un message explicite plutôt que dans l'action
+          # d'envoi, dont l'erreur ne dit pas que le secret est simplement
+          # absent. Voir docs/deployment/mobile-release.md pour l'obtenir.
+          if [[ -z "${PLAY_SERVICE_ACCOUNT_JSON:-}" ]]; then
+            echo "::error::Secret PLAY_SERVICE_ACCOUNT_JSON absent de l'environnement 'recaptcha'. Créer un compte de service Play Console, générer une clé JSON et la coller dans ce secret."
+            exit 1
+          fi
+
+          # Ne jamais afficher le contenu : on ne contrôle que la forme.
+          if ! printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" \
+              | jq -e '.type == "service_account" and (.client_email | length > 0) and (.private_key | length > 0)' > /dev/null; then
+            echo "::error::PLAY_SERVICE_ACCOUNT_JSON n'est pas une clé de compte de service valide (champs type/client_email/private_key attendus)."
+            exit 1
+          fi
+
+          echo "Compte de service Play présent et bien formé."
+
       - name: Upload to Play Console
         if: ${{ inputs.upload }}
         uses: r0adkll/upload-google-play@v1

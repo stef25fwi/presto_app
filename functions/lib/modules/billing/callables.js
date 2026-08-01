@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createSubscriptionPortalSession = exports.getSubscriptionCheckoutStatus = exports.auditStripeCatalog = exports.createSubscriptionCheckoutSession = void 0;
 exports.normalizePlan = normalizePlan;
 exports.checkoutSuccessUrl = checkoutSuccessUrl;
+exports.idempotencyKey = idempotencyKey;
 exports.checkoutIdempotencyBucket = checkoutIdempotencyBucket;
 exports.isBlockingSubscriptionStatus = isBlockingSubscriptionStatus;
 exports.isCheckoutIntentFresh = isCheckoutIntentFresh;
@@ -145,6 +146,13 @@ function stripeSecret() {
 function stripeMode() {
     return stripeSecret().startsWith("sk_live_") ? "live" : "test";
 }
+/**
+ * Clé d'idempotence Stripe dérivée d'éléments stables de la requête.
+ *
+ * Stripe déduplique sur cette clé pendant 24 h : deux appels identiques (double
+ * clic, rejeu réseau, nouvelle tentative du client) ne créent qu'un objet. Le
+ * condensat garantit une longueur bornée et ne fuit aucun identifiant en clair.
+ */
 function idempotencyKey(parts) {
     const digest = (0, crypto_1.createHash)("sha256")
         .update(parts.map((part) => String(part)).join(":"))

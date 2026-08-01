@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fond de l'icône adaptative : blanc, comme la marge de l'icône
+         historique, pour que le carré arrondi du logo reste lisible sur tous
+         les masques constructeurs. -->
+    <color name="ic_launcher_background">#FFFFFFFF</color>
+</resources>

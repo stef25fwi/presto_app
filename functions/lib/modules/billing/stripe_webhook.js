@@ -1,15 +1,23 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleStripeWebhook = void 0;
+exports.verifyStripeSignature = verifyStripeSignature;
+exports.planFromStripe = planFromStripe;
+exports.appPlan = appPlan;
+exports.appStatus = appStatus;
 exports.isDeletedAccountStatus = isDeletedAccountStatus;
 exports.shouldApplyStripeEvent = shouldApplyStripeEvent;
 exports.normalizedInvoiceStatus = normalizedInvoiceStatus;
+exports.latestRefundOfCharge = latestRefundOfCharge;
+exports.evaluateEventLease = evaluateEventLease;
 const crypto_1 = require("crypto");
 const firestore_1 = require("firebase-admin/firestore");
 const https_1 = require("firebase-functions/v2/https");
 const env_1 = require("../../config/env");
 const firestore_2 = require("../../core/firestore");
 const constants_1 = require("../../shared/constants");
+const refunds_1 = require("./refunds");
+const stripe_mode_1 = require("./stripe_mode");
 const WEBHOOK_EVENTS_COLLECTION = "stripe_webhook_events";
 const SIGNATURE_TOLERANCE_SECONDS = 5 * 60;
 const PROCESSING_LEASE_MS = 2 * 60 * 1000;
@@ -66,7 +74,15 @@ function safeHexEqual(left, right) {
         return false;
     }
 }
-function verifyStripeSignature(rawBody, signatureHeader) {
+/**
+ * Vérifie l'en-tête `Stripe-Signature` d'un corps brut.
+ *
+ * Le secret est lu à l'appel plutôt qu'injecté pour rester aligné sur le reste
+ * du module ; `secretOverride` n'existe que pour les tests, qui n'ont pas de
+ * secret Firebase à disposition.
+ */
+function verifyStripeSignature(rawBody, signatureHeader, secretOverride) {
+    const secret = secretOverride ?? webhookSecret();
     const { timestamp, signatures } = parseStripeSignature(signatureHeader);
     if (!timestamp || signatures.length === 0) {
         throw new WebhookSignatureError("Signature Stripe absente ou invalide");
@@ -80,7 +96,7 @@ function verifyStripeSignature(rawBody, signatureHeader) {
         throw new WebhookSignatureError("Signature Stripe expirée");
     }
     const signedPayload = `${timestamp}.${rawBody.toString("utf8")}`;
-    const expected = (0, crypto_1.createHmac)("sha256", webhookSecret()).update(signedPayload).digest("hex");
+    const expected = (0, crypto_1.createHmac)("sha256", secret).update(signedPayload).digest("hex");
     if (!signatures.some((signature) => safeHexEqual(signature, expected))) {
         throw new WebhookSignatureError("Signature Stripe incorrecte");
     }
@@ -366,24 +382,94 @@ async function processEvent(event) {
         case "invoice.voided":
             await syncInvoice(object, event.id, event.type, eventCreatedAtMs);
             return;
+        case "charge.refunded":
+        case "charge.refund.updated":
+        case "refund.created":
+        case "refund.updated":
+        case "refund.failed": {
+            // `charge.*` porte la charge, `refund.*` porte le remboursement : on
+            // ramène les deux à un couple (remboursement, charge) avant traitement.
+            const isChargeEvent = event.type.startsWith("charge.refunded");
+            const charge = isChargeEvent
+                ? object
+                : await chargeForRefund(object);
+            const refund = isChargeEvent ? latestRefundOfCharge(object) : object;
+            if (!asString(refund.id))
+                return;
+            await (0, refunds_1.syncRefund)(refund, {
+                eventId: event.id,
+                eventType: event.type,
+                eventCreatedAtMs,
+                userId: await findUserId(charge),
+                charge,
+            });
+            return;
+        }
+        case "charge.dispute.created":
+        case "charge.dispute.updated":
+        case "charge.dispute.closed":
+        case "charge.dispute.funds_withdrawn":
+        case "charge.dispute.funds_reinstated": {
+            const chargeId = asString(object.charge);
+            const charge = chargeId
+                ? await stripeGet(`/v1/charges/${encodeURIComponent(chargeId)}`)
+                : {};
+            await (0, refunds_1.syncDispute)(object, {
+                eventId: event.id,
+                eventType: event.type,
+                eventCreatedAtMs,
+                userId: await findUserId(charge),
+            });
+            return;
+        }
         default:
             return;
     }
+}
+/** Dernier remboursement attaché à une charge, le plus récent d'abord. */
+function latestRefundOfCharge(charge) {
+    const refunds = asMap(charge.refunds);
+    const rows = Array.isArray(refunds.data) ? refunds.data : [];
+    const sorted = rows
+        .map(asMap)
+        .sort((left, right) => asNumber(right.created) - asNumber(left.created));
+    return sorted[0] ?? {};
+}
+async function chargeForRefund(refund) {
+    const chargeId = asString(refund.charge);
+    if (!chargeId)
+        return {};
+    return stripeGet(`/v1/charges/${encodeURIComponent(chargeId)}`);
+}
+/**
+ * Décide du sort d'un événement à partir de son état déjà enregistré.
+ *
+ * Stripe rejoue chaque événement jusqu'à obtenir un 2xx : c'est ici que se
+ * joue l'idempotence d'entrée. Un événement déjà traité est un doublon ; un
+ * événement en cours l'est aussi tant que le bail n'a pas expiré, ce qui évite
+ * deux traitements concurrents sans bloquer définitivement si une exécution
+ * meurt avant d'avoir libéré son bail.
+ */
+function evaluateEventLease(existing, nowMs, leaseMs = PROCESSING_LEASE_MS) {
+    const data = existing ?? {};
+    if (data.status === "processed")
+        return "duplicate";
+    const processingStartedAtMs = asNumber(data.processing_started_at_ms);
+    if (data.status === "processing" &&
+        processingStartedAtMs > 0 &&
+        nowMs - processingStartedAtMs < leaseMs) {
+        return "busy";
+    }
+    return "process";
 }
 async function acquireEventLease(event) {
     const eventRef = firestore_2.db.collection(WEBHOOK_EVENTS_COLLECTION).doc(event.id);
     const now = Date.now();
     return firestore_2.db.runTransaction(async (transaction) => {
         const snap = await transaction.get(eventRef);
-        const data = snap.data() || {};
-        if (data.status === "processed")
-            return "duplicate";
-        const processingStartedAtMs = asNumber(data.processing_started_at_ms);
-        if (data.status === "processing" &&
-            processingStartedAtMs > 0 &&
-            now - processingStartedAtMs < PROCESSING_LEASE_MS) {
-            return "busy";
-        }
+        const verdict = evaluateEventLease(snap.data(), now);
+        if (verdict !== "process")
+            return verdict;
         transaction.set(eventRef, {
             event_id: event.id,
             event_type: event.type,
@@ -422,6 +508,13 @@ exports.handleStripeWebhook = (0, https_1.onRequest)({
         event = JSON.parse(rawBody.toString("utf8"));
         if (!event.id || !event.type) {
             throw new WebhookSignatureError("Événement Stripe invalide");
+        }
+        // Cloisonnement test/réel : un secret de webhook recopié d'un
+        // environnement à l'autre produit une signature valide pour des données
+        // du mauvais monde. Le drapeau `livemode` est la seule barrière restante.
+        const keyMode = (0, stripe_mode_1.stripeModeFromSecret)(env_1.STRIPE_SECRET_KEY.value()) ?? "test";
+        if ((0, stripe_mode_1.livemodeVerdict)(event.livemode, keyMode) === "mismatch") {
+            throw new WebhookSignatureError((0, stripe_mode_1.describeModeMismatch)(event.livemode, keyMode));
         }
     }
     catch (error) {

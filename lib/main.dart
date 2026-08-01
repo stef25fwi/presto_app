@@ -44,6 +44,8 @@ import 'pages/account/account_security_page.dart';
 import 'pages/account/change_email_page.dart';
 import 'pages/account/change_password_page.dart';
 import 'pages/account/delete_account_page.dart';
+import 'pages/legal/account_deletion_info_page.dart';
+import 'pages/legal_info_page.dart';
 import 'services/app_monitoring_service.dart';
 import 'services/cookie_consent_service.dart';
 import 'app/presto_app_chrome.dart';
@@ -910,6 +912,31 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
       ];
     }
 
+    // Routes légales publiques : une URL ouverte directement doit afficher le
+    // document, sans splash ni connexion — c'est la condition pour qu'elle
+    // puisse servir d'URL de confidentialité ou de suppression de compte dans
+    // les consoles Play et App Store.
+    final legalTab = LegalInfoPage.tabForRoute(normalizedPath);
+    if (legalTab != null) {
+      return <Route<dynamic>>[
+        MaterialPageRoute(
+          settings: RouteSettings(name: normalizedPath),
+          builder: (_) => LegalInfoPage(initialTab: legalTab),
+        ),
+      ];
+    }
+
+    if (normalizedPath == AccountDeletionInfoPage.routeName) {
+      return <Route<dynamic>>[
+        MaterialPageRoute(
+          settings: const RouteSettings(
+            name: AccountDeletionInfoPage.routeName,
+          ),
+          builder: (_) => const AccountDeletionInfoPage(),
+        ),
+      ];
+    }
+
     if (normalizedPath == '/account') {
       pendingPostAuthRoute = null;
       return <Route<dynamic>>[
@@ -1032,6 +1059,14 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
         ChangeEmailPage.routeName: (_) => const ChangeEmailPage(),
         ChangePasswordPage.routeName: (_) => const ChangePasswordPage(),
         DeleteAccountPage.routeName: (_) => const DeleteAccountPage(),
+        // Routes légales publiques : consultables sans compte, exigées par les
+        // fiches Play Store et App Store.
+        LegalInfoPage.legalNoticesRouteName: (_) => const LegalInfoPage(),
+        LegalInfoPage.privacyRouteName: (_) =>
+            const LegalInfoPage(initialTab: 1),
+        LegalInfoPage.termsRouteName: (_) => const LegalInfoPage(initialTab: 2),
+        AccountDeletionInfoPage.routeName: (_) =>
+            const AccountDeletionInfoPage(),
         '/publish': (_) => const PublishOfferPage(),
         '/messages': (_) => const MessagesPageV2(),
         '/messages-2': (_) => const MessagesPageV2(),

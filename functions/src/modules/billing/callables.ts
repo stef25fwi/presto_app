@@ -198,7 +198,14 @@ function stripeMode(): "test" | "live" {
   return stripeSecret().startsWith("sk_live_") ? "live" : "test";
 }
 
-function idempotencyKey(parts: Array<string | number>): string {
+/**
+ * Clé d'idempotence Stripe dérivée d'éléments stables de la requête.
+ *
+ * Stripe déduplique sur cette clé pendant 24 h : deux appels identiques (double
+ * clic, rejeu réseau, nouvelle tentative du client) ne créent qu'un objet. Le
+ * condensat garantit une longueur bornée et ne fuit aucun identifiant en clair.
+ */
+export function idempotencyKey(parts: Array<string | number>): string {
   const digest = createHash("sha256")
     .update(parts.map((part) => String(part)).join(":"))
     .digest("hex");
