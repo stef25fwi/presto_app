@@ -1,0 +1,68 @@
+name: Firebase deployment commit status
+
+on:
+  workflow_run:
+    workflows:
+      - Validate and Deploy Firebase
+    types:
+      - requested
+      - completed
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: firebase-deployment-status-${{ github.event.workflow_run.id }}
+  cancel-in-progress: true
+
+jobs:
+  publish-status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Publish deployment status on commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_ACTION: ${{ github.event.action }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_HTML_URL: ${{ github.event.workflow_run.html_url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -z "$RUN_HEAD_SHA" ]; then
+            echo '::error::Le workflow de déploiement ne fournit aucun commit cible.'
+            exit 1
+          fi
+
+          state='pending'
+          description='Validation et déploiement Firebase en cours'
+
+          if [ "$EVENT_ACTION" = 'completed' ]; then
+            case "$RUN_CONCLUSION" in
+              success)
+                state='success'
+                description='Déploiement Firebase de production validé'
+                ;;
+              cancelled)
+                state='error'
+                description='Déploiement Firebase annulé'
+                ;;
+              *)
+                state='failure'
+                description="Déploiement Firebase en échec (${RUN_CONCLUSION:-unknown})"
+                ;;
+            esac
+          fi
+
+          gh api \
+            --method POST \
+            "repos/${GITHUB_REPOSITORY}/statuses/${RUN_HEAD_SHA}" \
+            -f state="$state" \
+            -f context='deployment/firebase-production' \
+            -f description="$description" \
+            -f target_url="$RUN_HTML_URL"
+
+          echo "Statut publié : $state pour $RUN_HEAD_SHA"
