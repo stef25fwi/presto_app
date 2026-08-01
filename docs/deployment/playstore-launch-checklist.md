@@ -15,7 +15,7 @@ Légende : 🔴 bloquant · 🟠 à faire avant publication en production · �
 | # | Point | État |
 |---|---|---|
 | 1.1 | 🔴 **Aucun AAB release n'a jamais été produit.** `release_android.yml` existe mais n'apparaît dans aucun run GitHub Actions. Le build release active `isMinifyEnabled` + `isShrinkResources` (`android/app/build.gradle.kts:69`) avec un `proguard-rules.pro` minimal : les régressions R8 (réflexion Firebase/UMP/reCAPTCHA) ne se voient qu'en release. Premier passage obligatoire avec `upload` décoché. | à faire |
-| 1.2 | 🔴 **Secret `PLAY_SERVICE_ACCOUNT_JSON` absent** de l'environnement `recaptcha` (documenté « à créer »). Sans lui, l'étape `Upload to Play Console` échoue. | à faire |
+| 1.2 | 🔴 **Secret `PLAY_SERVICE_ACCOUNT_JSON` absent** de l'environnement `recaptcha` (documenté « à créer »). Le workflow le contrôle désormais avant l'envoi (étape *Check Play Console credentials*) et échoue avec un message explicite plutôt qu'au fond de l'action d'upload — mais **le secret reste à créer**. | à faire |
 | 1.3 | 🔴 **Premier dépôt manuel obligatoire** : l'API Play refuse tout envoi tant qu'aucune version n'existe pour le package. Récupérer l'artefact `.aab` et le déposer à la main sur la piste interne. | à faire |
 | 1.4 | 🟠 Créer la fiche Play Console avec le package `fr.ilipresto.app` — **irréversible**, il doit correspondre exactement à `applicationId`. | à faire |
 | 1.5 | 🟢 Keystore d'upload et secrets `KEYSTORE_B64` / `KEYSTORE_PASSWORD` / `KEY_PASSWORD` / `KEY_ALIAS` déjà configurés. | fait |
@@ -35,8 +35,8 @@ Légende : 🔴 bloquant · 🟠 à faire avant publication en production · �
 | # | Point | État |
 |---|---|---|
 | 3.1 | 🔴 **IDs AdMob de test en production.** Dans `lib/widgets/ad_banner.dart`, `androidNativeId`, `androidInterstitialId`, `iosNativeId` et `iosInterstitialId` valent `ca-app-pub-3940256099942544/...`, c'est-à-dire les blocs de démonstration Google. Seules les bannières utilisent de vrais blocs. À remplacer par les blocs réels du compte AdMob, ou à retirer si ces formats ne sont pas diffusés. | à corriger |
-| 3.2 | 🔴 **Aucune URL publique pour la politique de confidentialité / les CGU.** `LegalInfoPage` n'est enregistrée dans aucune route (table de routes `lib/main.dart:1024`) : le contenu légal n'est atteignable qu'en navigation interne. Play Console exige une **URL publique**, ouvrable sans installer l'application. Ajouter des routes web (`/confidentialite`, `/cgu`, `/mentions-legales`) et vérifier qu'elles répondent en production. | à faire |
-| 3.3 | 🔴 **URL de suppression de compte** exigée par la section *Suppression des données* : une page web décrivant la procédure et permettant la demande hors application. La suppression in-app existe (`lib/pages/account/delete_account_page.dart`) mais ne suffit pas pour le formulaire. | à faire |
+| 3.2 | 🟠 **Routes publiques ajoutées** : `/confidentialite`, `/cgu` et `/mentions-legales` sont enregistrées, atteignables par URL directe (`_onGenerateInitialRoutes`) et exclues de la page de préouverture (`PublicLandingConfigService.bypassPaths`). **Reste à vérifier en production après déploiement web.** | code fait |
+| 3.3 | 🟠 **Page publique `/suppression-compte` ajoutée** (`lib/pages/legal/account_deletion_info_page.dart`) : procédure in-app, demande par e-mail hors application, données supprimées et durées de conservation. **Reste à vérifier en production après déploiement web.** | code fait |
 | 3.4 | 🟠 **Compte de démonstration pour la revue.** L'application est intégralement derrière authentification : fournir identifiants de test + instructions dans *Accès à l'application*, sinon rejet quasi certain. | à faire |
 | 3.5 | 🟢 Le mode pré-lancement ne concerne **pas** le mobile : le rendu de `PublicPrelaunchPage` est conditionné par `kIsWeb` (`lib/app/presto_app_chrome.dart:46`). Le reviewer voit bien l'application complète. À revérifier si ce garde-fou change. | vérifié |
 | 3.6 | 🟢 Contenu généré par les utilisateurs : signalement d'annonce et de conversation, blocage d'utilisateur et outils de modération admin présents. | fait |
@@ -44,12 +44,16 @@ Légende : 🔴 bloquant · 🟠 à faire avant publication en production · �
 
 ## 4. Déclarations Play Console
 
+Réponses préparées à partir de l'inventaire du code dans
+`docs/deployment/playstore-declarations.md` — à valider et saisir dans la
+console, la déclaration restant un acte de l'éditeur.
+
 | # | Point | État |
 |---|---|---|
-| 4.1 | 🔴 **Formulaire Sécurité des données** à remplir intégralement. À déclarer d'après le code : identité et coordonnées (compte, téléphone), messages, photos et vidéos (`image_picker`), enregistrements audio (`record`), localisation approximative (ville / code postal saisis), **identifiant publicitaire** (`google_mobile_ads` fusionne la permission `AD_ID`), diagnostics et performances (Crashlytics, Performance), analytics (Firebase Analytics), contenus IA (`firebase_ai`). | à faire |
-| 4.2 | 🔴 **Questionnaire de classification du contenu** (IARC) + public cible et âge. Application avec messagerie et UGC → réponses à préparer. | à faire |
-| 4.3 | 🔴 **Déclaration « Contient des annonces » = oui** (AdMob actif, App ID déclaré au manifeste). | à faire |
-| 4.4 | 🟠 **Justification des permissions sensibles** : `RECORD_AUDIO` et `CAMERA` (`android/app/src/main/AndroidManifest.xml`) exigent une divulgation proéminente dans l'app et une explication dans la fiche. `POST_NOTIFICATIONS` est bien demandé au runtime (`lib/services/notification_service.dart:297`). | à faire |
+| 4.1 | 🟠 **Formulaire Sécurité des données** — tableau de réponses prêt dans `playstore-declarations.md`, à saisir. À déclarer d'après le code : identité et coordonnées (compte, téléphone), messages, photos et vidéos (`image_picker`), enregistrements audio (`record`), localisation approximative (ville / code postal saisis), **identifiant publicitaire** (`google_mobile_ads` fusionne la permission `AD_ID`), diagnostics et performances (Crashlytics, Performance), analytics (Firebase Analytics), contenus IA (`firebase_ai`). | à faire |
+| 4.2 | 🟠 **Questionnaire de classification du contenu** (IARC) — réponses préparées dans `playstore-declarations.md`, public cible et âge à trancher. | à faire |
+| 4.3 | 🟠 **Déclaration « Contient des annonces » = oui** (AdMob actif, App ID déclaré au manifeste). | à faire |
+| 4.4 | 🟠 **Justification des permissions sensibles** (rédigée dans `playstore-declarations.md`) : `RECORD_AUDIO` et `CAMERA` (`android/app/src/main/AndroidManifest.xml`) exigent une divulgation proéminente dans l'app et une explication dans la fiche. `POST_NOTIFICATIONS` est bien demandé au runtime (`lib/services/notification_service.dart:297`). | à faire |
 | 4.5 | 🟠 **Test fermé préalable** : un compte développeur personnel créé après novembre 2023 doit réunir 12 testeurs pendant 14 jours continus avant d'accéder à la production. À lancer très tôt — c'est le délai le plus long de la liste. | à planifier |
 | 4.6 | 🟠 Fiche « Application et services financiers », déclaration santé, publicité ciblée : à répondre même si non applicable. | à faire |
 
@@ -57,9 +61,9 @@ Légende : 🔴 bloquant · 🟠 à faire avant publication en production · �
 
 | # | Point | État |
 |---|---|---|
-| 5.1 | 🔴 **Aucun visuel de store dans le dépôt.** `marketing/` ne contient que des notes de méthode. À produire : icône 512×512 PNG, image de mise en avant 1024×500, au moins 4 captures téléphone (min. 320 px de côté), captures tablette 7"/10" si la tablette est déclarée, vidéo optionnelle. | à produire |
-| 5.2 | 🔴 Textes de fiche : titre (30 car.), description courte (80 car.), description longue (4000 car.), en français, cohérents avec le positionnement de `web/index.html`. | à rédiger |
-| 5.3 | 🟠 **Icône adaptative absente** : pas de `mipmap-anydpi-v26`, seulement les `ic_launcher.png` legacy (192×192 max en xxxhdpi). Ajouter `ic_launcher` adaptatif (foreground + background) et une version `monochrome` pour les icônes thématiques Android 13+. | à faire |
+| 5.1 | 🟠 **Icône 512×512 générée** (`marketing/play-store/graphics/icon-512.png`, via `tools/android/generate_adaptive_icon.py`). Restent à produire : image de mise en avant 1024×500, au moins 4 captures téléphone (min. 320 px de côté), captures tablette 7"/10" si la tablette est déclarée, vidéo optionnelle. Les captures doivent venir d'un build réel. | partiel |
+| 5.2 | 🟠 **Textes rédigés** dans `marketing/play-store/listing-fr.md`, alignés sur le positionnement de `web/index.html`. Les limites de caractères sont vérifiées par `node tools/quality/check_play_listing.mjs`. **À relire avant saisie.** | brouillon prêt |
+| 5.3 | 🟢 **Icône adaptative ajoutée** : `mipmap-anydpi-v26/ic_launcher.xml` avec calques `foreground`, `background` (blanc) et `monochrome` pour les icônes thématiques Android 13+, générés aux cinq densités par `tools/android/generate_adaptive_icon.py`. | fait |
 | 5.4 | 🟠 Traductions de la fiche si d'autres marchés que la France sont visés. | à décider |
 
 ## 6. Qualité et validations techniques restantes
@@ -95,7 +99,9 @@ Légende : 🔴 bloquant · 🟠 à faire avant publication en production · �
 ## Ordre d'exécution conseillé
 
 1. Corriger la CI rouge (6.1) et les IDs AdMob de test (3.1).
-2. Publier les pages légales et la page de suppression de compte (3.2, 3.3).
+2. Déployer le web pour que les pages légales et la page de suppression de
+   compte répondent réellement en production, puis vérifier les quatre URL
+   (3.2, 3.3) — les routes existent, la vérification reste à faire.
 3. Créer la fiche Play Console (1.4), récupérer les empreintes de la clé de
    signature Play et mettre à jour Firebase (2.1, 2.2).
 4. Produire un premier AAB sans upload, le tester sur appareil (1.1, 1.6).

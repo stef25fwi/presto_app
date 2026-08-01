@@ -12,6 +12,28 @@ class LegalInfoPage extends StatefulWidget {
     this.operatingModeService,
   });
 
+  /// Routes publiques exigées par les stores et par le RGPD : elles doivent
+  /// rester atteignables par URL directe, sans compte et sans passer par la
+  /// page de pré-lancement (cf. `PublicLandingConfigService.bypassPaths`).
+  static const String legalNoticesRouteName = '/mentions-legales';
+  static const String privacyRouteName = '/confidentialite';
+  static const String termsRouteName = '/cgu';
+
+  /// Onglet à ouvrir pour une route publique donnée, ou `null` si la route
+  /// n'est pas une route légale.
+  static int? tabForRoute(String routeName) {
+    switch (routeName) {
+      case legalNoticesRouteName:
+        return 0;
+      case privacyRouteName:
+        return 1;
+      case termsRouteName:
+        return 2;
+      default:
+        return null;
+    }
+  }
+
   final int initialTab;
   final AppOperatingModeService? operatingModeService;
 

@@ -84,7 +84,14 @@ class PublicLandingConfigService extends ChangeNotifier {
     'presto-app-74abe.firebaseapp.com',
   };
 
-  static const Set<String> _bypassPaths = <String>{
+  /// Chemins qui restent servis normalement même quand la page de
+  /// pré-lancement est active.
+  ///
+  /// Les routes légales en font partie : les consoles Play Store et App Store
+  /// exigent des URL de confidentialité et de suppression de compte
+  /// consultables publiquement, y compris pendant la période de préparation.
+  /// Les masquer derrière la page de pré-lancement ferait échouer la revue.
+  static const Set<String> bypassPaths = <String>{
     '/admin',
     '/auth',
     '/login',
@@ -93,6 +100,10 @@ class PublicLandingConfigService extends ChangeNotifier {
     '/verify-email',
     '/reset-password-success',
     '/__/auth',
+    '/mentions-legales',
+    '/confidentialite',
+    '/cgu',
+    '/suppression-compte',
   };
 
   final PublicLandingRemoteConfigAdapter? _adapter;
@@ -250,7 +261,7 @@ class PublicLandingConfigService extends ChangeNotifier {
   }
 
   static bool _isBypassPath(String path) {
-    for (final allowedPath in _bypassPaths) {
+    for (final allowedPath in bypassPaths) {
       if (path == allowedPath || path.startsWith('$allowedPath/')) {
         return true;
       }
