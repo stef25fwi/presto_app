@@ -30,11 +30,13 @@ class PrestoAppChrome extends StatefulWidget {
 
 class _PrestoAppChromeState extends State<PrestoAppChrome>
     with WidgetsBindingObserver {
+  static bool _temporaryDeveloperAccessGranted = false;
+
   final PublicLandingConfigService _publicLanding =
       PublicLandingConfigService.instance;
 
   Timer? _refreshTimer;
-  bool _publicLandingBypassed = false;
+  bool _publicLandingBypassed = _temporaryDeveloperAccessGranted;
 
   @override
   void initState() {
@@ -71,7 +73,8 @@ class _PrestoAppChromeState extends State<PrestoAppChrome>
   }
 
   void _grantTemporaryDeveloperAccess() {
-    if (!mounted) return;
+    if (!mounted || _publicLandingBypassed) return;
+    _temporaryDeveloperAccessGranted = true;
     setState(() => _publicLandingBypassed = true);
   }
 
