@@ -26,6 +26,7 @@ void main() {
   Future<void> pumpPage(
     WidgetTester tester, {
     required Size size,
+    VoidCallback? onDeveloperAccessGranted,
   }) async {
     tester.view
       ..physicalSize = size
@@ -42,7 +43,10 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: PublicPrelaunchPage(config: config),
+        home: PublicPrelaunchPage(
+          config: config,
+          onDeveloperAccessGranted: onDeveloperAccessGranted,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -75,5 +79,32 @@ void main() {
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('accorde l’accès développeur après exactement huit appuis',
+      (tester) async {
+    var accessGrantCount = 0;
+    await pumpPage(
+      tester,
+      size: const Size(390, 844),
+      onDeveloperAccessGranted: () => accessGrantCount += 1,
+    );
+
+    final trigger = find.byKey(PublicPrelaunchPage.accessTriggerKey);
+    expect(trigger, findsOneWidget);
+
+    for (var index = 0;
+        index < PublicPrelaunchPage.developerAccessTapCount - 1;
+        index += 1) {
+      await tester.tap(trigger);
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(accessGrantCount, 0);
+
+    await tester.tap(trigger);
+    await tester.pump();
+
+    expect(accessGrantCount, 1);
   });
 }
