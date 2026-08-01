@@ -34,7 +34,7 @@ Légende : 🔴 bloquant · 🟠 à faire avant publication en production · �
 
 | # | Point | État |
 |---|---|---|
-| 3.1 | 🔴 **IDs AdMob de test en production.** Dans `lib/widgets/ad_banner.dart`, `androidNativeId`, `androidInterstitialId`, `iosNativeId` et `iosInterstitialId` valent `ca-app-pub-3940256099942544/...`, c'est-à-dire les blocs de démonstration Google. Seules les bannières utilisent de vrais blocs. À remplacer par les blocs réels du compte AdMob, ou à retirer si ces formats ne sont pas diffusés. | à corriger |
+| 3.1 | 🟢 **IDs AdMob corrigés.** Les quatre constantes portant des blocs de démonstration Google (`androidNativeId`, `androidInterstitialId`, `iosNativeId`, `iosInterstitialId`) n'étaient référencées nulle part : supprimées. Le défaut symétrique a été corrigé au passage — les blocs bannière réels étaient chargés y compris en debug, ce qui produit du trafic invalide sur le compte AdMob. `AdConfig.bannerIdFor` sert désormais les blocs de démonstration hors release et les blocs réels en release, sous test (`test/widgets/ad_config_test.dart`). | fait |
 | 3.2 | 🟠 **Routes publiques ajoutées** : `/confidentialite`, `/cgu` et `/mentions-legales` sont enregistrées, atteignables par URL directe (`_onGenerateInitialRoutes`) et exclues de la page de préouverture (`PublicLandingConfigService.bypassPaths`). **Reste à vérifier en production après déploiement web.** | code fait |
 | 3.3 | 🟠 **Page publique `/suppression-compte` ajoutée** (`lib/pages/legal/account_deletion_info_page.dart`) : procédure in-app, demande par e-mail hors application, données supprimées et durées de conservation. **Reste à vérifier en production après déploiement web.** | code fait |
 | 3.4 | 🟠 **Compte de démonstration pour la revue.** L'application est intégralement derrière authentification : fournir identifiants de test + instructions dans *Accès à l'application*, sinon rejet quasi certain. | à faire |
@@ -98,7 +98,7 @@ console, la déclaration restant un acte de l'éditeur.
 
 ## Ordre d'exécution conseillé
 
-1. Corriger la CI rouge (6.1) et les IDs AdMob de test (3.1).
+1. Corriger la CI rouge (6.1).
 2. Déployer le web pour que les pages légales et la page de suppression de
    compte répondent réellement en production, puis vérifier les quatre URL
    (3.2, 3.3) — les routes existent, la vérification reste à faire.
