@@ -26,11 +26,7 @@ import 'package:presto_app/pages/offers/widgets/animated_payment_info_pill.dart'
 import 'package:presto_app/pages/offers/widgets/payment_info_popup.dart';
 import 'package:presto_app/widgets/deleted_user_profile.dart';
 import 'package:presto_app/pages/fiche_pro_page.dart';
-
-// ─── Data models ─────────────────────────────────────────────────────────────
-
 enum OfferActionType { booking, contact }
-
 String _extractOfferDetailImageUrl(dynamic entry) {
   if (entry == null) return '';
   if (entry is Map) {
@@ -53,10 +49,8 @@ String _extractOfferDetailImageUrl(dynamic entry) {
     }
     return '';
   }
-
   return entry.toString().trim();
 }
-
 String _firstOfferDetailPhotoField(dynamic data, List<String> keys) {
   if (data is! Map) return '';
   for (final key in keys) {
@@ -67,7 +61,6 @@ String _firstOfferDetailPhotoField(dynamic data, List<String> keys) {
   }
   return '';
 }
-
 List<String> _collectOfferDetailImageUrls({
   dynamic imageUrls,
   dynamic media,
@@ -75,7 +68,6 @@ List<String> _collectOfferDetailImageUrls({
   dynamic thumbnailUrl,
 }) {
   final orderedUrls = <String>[];
-
   void addUrl(dynamic value) {
     final url = _extractOfferDetailImageUrl(value);
     if (url.isEmpty || orderedUrls.contains(url)) {
@@ -83,26 +75,20 @@ List<String> _collectOfferDetailImageUrls({
     }
     orderedUrls.add(url);
   }
-
-  // Prioriser media[] : c'est la source normalisée la plus fiable côté listing.
   if (media is List) {
     for (final entry in media) {
       addUrl(entry);
     }
   }
-
   if (imageUrls is List) {
     for (final entry in imageUrls) {
       addUrl(entry);
     }
   }
-
   addUrl(imageUrl);
   addUrl(thumbnailUrl);
-
   return orderedUrls;
 }
-
 class PracticalInfo {
   final String category;
   final String serviceArea;
@@ -112,7 +98,6 @@ class PracticalInfo {
   final String averageDelay;
   final String paymentMethod;
   final String serviceType;
-
   const PracticalInfo({
     required this.category,
     required this.serviceArea,
@@ -124,7 +109,6 @@ class PracticalInfo {
     required this.serviceType,
   });
 }
-
 class Advertiser {
   final String id;
   final String name;
@@ -138,7 +122,6 @@ class Advertiser {
   final String avatarUrl;
   final bool isOnline;
   final String lastSeenLabel;
-
   const Advertiser({
     required this.id,
     required this.name,
@@ -154,7 +137,6 @@ class Advertiser {
     required this.lastSeenLabel,
   });
 }
-
 String _normalizeBudgetDisplayText(String value) {
   return value
       .toLowerCase()
@@ -166,13 +148,10 @@ String _normalizeBudgetDisplayText(String value) {
       .replaceAll(RegExp(r'\s+'), ' ')
       .trim();
 }
-
 bool _isNegotiableBudgetValue(Object? value) {
   final raw = (value ?? '').toString().trim();
   if (raw.isEmpty) return false;
-
   final normalized = _normalizeBudgetDisplayText(raw);
-
   return normalized.contains('negocier') ||
       normalized.contains('negociable') ||
       normalized.contains('negotiate') ||
@@ -180,24 +159,19 @@ bool _isNegotiableBudgetValue(Object? value) {
       normalized == 'a negocier' ||
       normalized == 'à négocier';
 }
-
 num? _asBudgetNumber(Object? value) {
   if (value == null) return null;
   if (value is num) return value;
-
   final raw = value.toString().trim();
   if (raw.isEmpty) return null;
-
   final cleaned = raw
       .replaceAll('€', '')
       .replaceAll('EUR', '')
       .replaceAll('eur', '')
       .replaceAll(',', '.')
       .trim();
-
   return num.tryParse(cleaned);
 }
-
 bool _shouldHideBudgetOnOfferDetails(Map<String, dynamic> data) {
   final possibleLabels = <Object?>[
     data['budgetLabel'],
@@ -210,30 +184,25 @@ bool _shouldHideBudgetOnOfferDetails(Map<String, dynamic> data) {
     data['budget'],
     data['price'],
   ];
-
   for (final value in possibleLabels) {
     if (_isNegotiableBudgetValue(value)) {
       return true;
     }
   }
-
   final possibleAmounts = <Object?>[
     data['budgetAmount'],
     data['budget'],
     data['price'],
     data['amount'],
   ];
-
   for (final value in possibleAmounts) {
     final amount = _asBudgetNumber(value);
     if (amount != null && amount <= 0) {
       return true;
     }
   }
-
   return false;
 }
-
 class Offer {
   final String id;
   final String listingId;
@@ -265,7 +234,6 @@ class Offer {
   final Advertiser advertiser;
   final OfferActionType actionType;
   final List<Offer> similarOffers;
-
   const Offer({
     required this.id,
     String? listingId,
@@ -299,21 +267,16 @@ class Offer {
     required this.similarOffers,
   }) : listingId = listingId ?? id;
 }
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 class OfferDetailsPage extends StatelessWidget {
   final Object? offer;
   final String currentUserId;
   final VoidCallback? onBackToConsult;
-
   const OfferDetailsPage({
     super.key,
     this.offer,
     this.currentUserId = 'buyer_demo_001',
     this.onBackToConsult,
   });
-
   @override
   Widget build(BuildContext context) {
     return PrestoOfferDetailsPage(
@@ -323,23 +286,19 @@ class OfferDetailsPage extends StatelessWidget {
     );
   }
 }
-
 class PrestoOfferDetailsPage extends StatefulWidget {
   final Object? offer;
   final String currentUserId;
   final VoidCallback? onBackToConsult;
-
   const PrestoOfferDetailsPage({
     super.key,
     this.offer,
     required this.currentUserId,
     this.onBackToConsult,
   });
-
   @override
   State<PrestoOfferDetailsPage> createState() => _PrestoOfferDetailsPageState();
 }
-
 class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
   static const Color _headerOrange = Color(0xFFFF6600);
   static const SystemUiOverlayStyle _statusBarStyle = SystemUiOverlayStyle(
@@ -352,18 +311,15 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
   static const MarketplaceHumanVerification _verification =
       MarketplaceHumanVerification();
   final AdminAccessResolver _adminAccessResolver = AdminAccessResolver();
-
   Future<Map<String, dynamic>?>? _marketplaceFuture;
   bool _isAdminViewer = false;
   bool _isDeletingListingAsAdmin = false;
-
   @override
   void initState() {
     super.initState();
     _initMarketplaceFuture();
     unawaited(_loadAdminAccess());
   }
-
   @override
   void didUpdateWidget(PrestoOfferDetailsPage old) {
     super.didUpdateWidget(old);
@@ -371,7 +327,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       _initMarketplaceFuture();
     }
   }
-
   void _initMarketplaceFuture() {
     final listingId = _extractMarketplaceListingId(widget.offer);
     _marketplaceFuture = (listingId.isNotEmpty &&
@@ -379,7 +334,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         ? _fetchMarketplaceOffer(listingId)
         : null;
   }
-
   Future<void> _loadAdminAccess() async {
     try {
       final state = await _adminAccessResolver.resolveAdminAccess(
@@ -396,7 +350,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       });
     }
   }
-
   Future<void> _confirmAdminDeleteOffer(
     BuildContext context,
     _OfferUiData data,
@@ -404,7 +357,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     if (_isDeletingListingAsAdmin || data.offerId.trim().isEmpty) {
       return;
     }
-
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -428,15 +380,12 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         ],
       ),
     );
-
     if (confirmed != true || !mounted) {
       return;
     }
-
     setState(() {
       _isDeletingListingAsAdmin = true;
     });
-
     try {
       final callable = prestoFirebaseFunctions.httpsCallable(
         'deleteListing',
@@ -446,7 +395,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         'listingId': data.offerId,
         'reason': 'admin_deleted_by_team',
       });
-
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -479,7 +427,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       }
     }
   }
-
   String _extractMarketplaceListingId(Object? source) {
     final dynamic dynamicSource = source;
     final rawId = ((source is Map
@@ -493,14 +440,11 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     if (rawId.isEmpty) {
       return '';
     }
-
     return rawId;
   }
-
   String _extractImageUrl(dynamic entry) {
     return _extractOfferDetailImageUrl(entry);
   }
-
   List<String> _collectImageUrls({
     dynamic imageUrls,
     dynamic media,
@@ -514,7 +458,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       thumbnailUrl: thumbnailUrl,
     );
   }
-
   Object? _mergeMarketplaceOffer(
     Object? source,
     Map<String, dynamic>? fetchedData,
@@ -523,7 +466,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     if (fetchedData == null || fetchedData.isEmpty) {
       return source;
     }
-
     final merged = <String, dynamic>{
       if (source is Map)
         ...Map<String, dynamic>.from(source.cast<dynamic, dynamic>()),
@@ -533,7 +475,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       'listingId': listingId,
       'isMarketplace': true,
     };
-
     final imageUrls = _collectImageUrls(
       imageUrls: merged['imageUrls'],
       media: merged['media'],
@@ -543,23 +484,18 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     if (imageUrls.isNotEmpty) {
       merged['imageUrls'] = imageUrls;
     }
-
     return merged;
   }
-
   bool _shouldHydrateMarketplaceOffer(Object? source, String listingId) {
     if (listingId.isEmpty) {
       return false;
     }
-
     if (source == null) {
       return true;
     }
-
     if (source is! Map) {
       return true;
     }
-
     final dynamicSource = Map<String, dynamic>.from(
       source.cast<dynamic, dynamic>(),
     );
@@ -578,34 +514,28 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       imageUrl: dynamicSource['imageUrl'],
       thumbnailUrl: dynamicSource['thumbnailUrl'],
     );
-
     return title.isEmpty ||
         description.isEmpty ||
         advertiserId.isEmpty ||
         imageUrls.isEmpty;
   }
-
   Future<Map<String, dynamic>?> _fetchMarketplaceOffer(String listingId) async {
     if (listingId.isEmpty) {
       return null;
     }
-
     final snapshot = await FirebaseFirestore.instance
         .collection('listings')
         .doc(listingId)
         .get();
     return snapshot.data();
   }
-
   String _toE164Like(String raw) {
     final trimmed = raw.trim();
     if (trimmed.isEmpty) return '';
-
     if (trimmed.startsWith('+')) {
       final digits = trimmed.replaceAll(RegExp(r'\D'), '');
       return digits.isEmpty ? trimmed : '+$digits';
     }
-
     final digits = trimmed.replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) return '';
     if (digits.length == 10 && digits.startsWith('0')) {
@@ -617,19 +547,14 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     }
     return digits;
   }
-
   Future<User?> _resolveSignedInUser() async {
     final auth = FirebaseAuth.instance;
     final currentUser = auth.currentUser;
     if (currentUser != null) {
       return currentUser;
     }
-    // Auth state is fully settled by the time the user interacts with a button.
-    // Waiting on authStateChanges() here would block for up to 5 s when the
-    // user is simply not signed in, delaying the auth popup unnecessarily.
     return null;
   }
-
   Future<User?> _ensureSignedInForOfferAction(
     BuildContext context, {
     required String area,
@@ -642,7 +567,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       return user;
     }
     if (!context.mounted) return null;
-
     final overlayTheme = context.prestoOverlayTheme;
     final startInSignup = await showModalBottomSheet<bool>(
       context: context,
@@ -712,7 +636,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         );
       },
     );
-
     if (startInSignup == null || !context.mounted) {
       logRuntimeAction(
         area: area,
@@ -721,7 +644,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       );
       return null;
     }
-
     logRuntimeAction(
       area: area,
       action: 'auth-handoff-opened',
@@ -730,18 +652,15 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         'startInSignup': startInSignup,
       },
     );
-
     await Navigator.of(context).push(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => AccountPage(startInSignup: startInSignup),
       ),
     );
-
     if (!context.mounted) {
       return null;
     }
-
     final resolvedUser = await _resolveSignedInUser();
     logRuntimeAction(
       area: area,
@@ -754,7 +673,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     );
     return resolvedUser;
   }
-
   Future<void> _openInternalMessaging(
     BuildContext context,
     _OfferUiData data,
@@ -764,7 +682,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     User? authUser = FirebaseAuth.instance.currentUser;
     var me =
         authUser?.uid.isNotEmpty == true ? authUser!.uid : widget.currentUserId;
-
     logRuntimeAction(
       area: 'messaging',
       action: 'open-from-offer',
@@ -774,7 +691,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         'currentUserId': me,
       },
     );
-
     if (me.isEmpty || me == 'buyer_demo_001') {
       logRuntimeAction(
         area: 'messaging',
@@ -794,7 +710,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       authUser = signedInUser;
       me = signedInUser.uid;
     }
-
     if (data.advertiserId.isEmpty) {
       logRuntimeAction(
         area: 'messaging',
@@ -806,7 +721,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       );
       return;
     }
-
     if (data.advertiserId == me) {
       logRuntimeAction(
         area: 'messaging',
@@ -820,13 +734,11 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       );
       return;
     }
-
     final currentUserName = authUser?.displayName?.trim().isNotEmpty == true
         ? authUser!.displayName!.trim()
         : (authUser?.email ?? 'Utilisateur');
     final initialDraftText =
         'Bonjour ${data.advertiserName}, je vous contacte au sujet de votre annonce "${data.title}".';
-
     try {
       unawaited(
         UserProfileBootstrapService.prepareProfileFirestoreAccess(
@@ -851,7 +763,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       );
       return;
     }
-
     final resolvedConversationId = await ConversationService.ensureConversation(
       offerId: data.offerId,
       offerTitle: data.title,
@@ -860,7 +771,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       currentUserName: currentUserName,
       otherUserName: data.advertiserName,
     );
-
     if (!context.mounted) return;
     final targetRoute = buildMessagesRoute(
       conversationId: resolvedConversationId,
@@ -877,7 +787,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     );
     navigator.pushNamed(targetRoute);
   }
-
   Future<void> _callPhone(BuildContext context, String phone) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
     if (phone.trim().isEmpty) {
@@ -886,7 +795,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       );
       return;
     }
-
     final dial = _toE164Like(phone);
     final uri = Uri(scheme: 'tel', path: dial.isNotEmpty ? dial : phone.trim());
     final ok = await canLaunchUrl(uri);
@@ -899,15 +807,12 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       );
       return;
     }
-
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
-
   Future<String> _resolveCallablePhoneForOffer(_OfferUiData data) async {
     if (!data.isMarketplace || data.offerId.trim().isEmpty) {
       return data.phone.trim();
     }
-
     try {
       final callable = prestoFirebaseFunctions.httpsCallable(
         'getListingContactPhone',
@@ -928,7 +833,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       return data.phone.trim();
     }
   }
-
   Future<void> _openExternalShareTarget(
     BuildContext context, {
     required Uri uri,
@@ -943,7 +847,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     }
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
-
   Future<void> _showShareOptionsSheet(
     BuildContext context,
     _OfferUiData data,
@@ -953,7 +856,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     final detailPath = data.isMarketplace ? 'listings' : 'offers';
     final offerUrl = '${prestoPublicAppOrigin()}/#/$detailPath/${data.offerId}';
     final shareText = '${data.title} - ${data.city}\n$offerUrl';
-
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: overlayTheme.surfaceColor,
@@ -968,7 +870,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
             const SnackBar(content: Text('Lien de l\'annonce copié.')),
           );
         }
-
         Future<void> openInstagram() async {
           await Clipboard.setData(ClipboardData(text: shareText));
           if (!sheetContext.mounted) return;
@@ -985,7 +886,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
             ),
           );
         }
-
         return SafeArea(
           top: false,
           child: Container(
@@ -1131,7 +1031,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       },
     );
   }
-
   Future<void> _showContactOptionsSheet(
     BuildContext context,
     _OfferUiData data,
@@ -1176,8 +1075,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
                     label: const Text('Envoyer un message'),
                   ),
                 ),
-                // Pour les listings marketplace, le numéro peut rester stocké
-                // côté contact privé et être résolu au clic via callable.
                 if (!data.hidePhone &&
                     (data.phone.trim().isNotEmpty ||
                         (data.isMarketplace &&
@@ -1188,8 +1085,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
                     child: ElevatedButton.icon(
                       onPressed: () async {
                         Navigator.of(sheetContext).pop();
-                        // Connexion requise avant de composer, cohérent avec la
-                        // révélation du numéro par l'œil.
                         final signedInUser =
                             await _ensureSignedInForOfferAction(
                           context,
@@ -1232,7 +1127,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       },
     );
   }
-
   Future<void> _toggleFavorite(
     BuildContext context,
     _OfferUiData data,
@@ -1240,7 +1134,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
   ) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
     var uid = FirebaseAuth.instance.currentUser?.uid.trim() ?? '';
-
     logRuntimeAction(
       area: 'favorites',
       action: 'toggle-from-offer',
@@ -1251,7 +1144,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         'isMarketplace': data.isMarketplace,
       },
     );
-
     if (uid.isEmpty) {
       logRuntimeAction(
         area: 'favorites',
@@ -1270,7 +1162,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       if (!context.mounted) return;
       uid = signedInUser.uid.trim();
     }
-
     final offerId = data.offerId.trim();
     if (offerId.isEmpty) {
       logRuntimeAction(area: 'favorites', action: 'blocked-missing-offer');
@@ -1279,10 +1170,8 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       );
       return;
     }
-
     try {
       final active = await _favoriteRepository.toggleFavorite(offerId);
-
       logRuntimeAction(
         area: 'favorites',
         action: 'toggle-success',
@@ -1292,7 +1181,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
           'source': data.isMarketplace ? 'marketplace' : 'canonical-callable',
         },
       );
-
       if (!context.mounted) return;
       messenger?.showSnackBar(
         SnackBar(
@@ -1342,11 +1230,9 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       );
     }
   }
-
   Future<void> _showReportSheet(BuildContext context, _OfferUiData data) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
     var uid = FirebaseAuth.instance.currentUser?.uid.trim() ?? '';
-
     logRuntimeAction(
       area: 'offers',
       action: 'report-open',
@@ -1356,7 +1242,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         'isMarketplace': data.isMarketplace,
       },
     );
-
     if (uid.isEmpty) {
       logRuntimeAction(
         area: 'offers',
@@ -1375,7 +1260,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       if (!context.mounted) return;
       uid = signedInUser.uid.trim();
     }
-
     if (!data.isMarketplace || data.offerId.trim().isEmpty) {
       logRuntimeAction(
         area: 'offers',
@@ -1394,7 +1278,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       );
       return;
     }
-
     if (data.advertiserId.trim().isNotEmpty &&
         data.advertiserId.trim() == uid) {
       logRuntimeAction(
@@ -1409,7 +1292,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       );
       return;
     }
-
     final overlayTheme = context.prestoOverlayTheme;
     final reason = await showModalBottomSheet<ListingReportReasonCode>(
       context: context,
@@ -1444,7 +1326,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         );
       },
     );
-
     if (reason == null) {
       logRuntimeAction(
         area: 'offers',
@@ -1453,11 +1334,9 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       );
       return;
     }
-
     if (!context.mounted) {
       return;
     }
-
     String? reasonText;
     if (reason == ListingReportReasonCode.other) {
       final controller = TextEditingController();
@@ -1496,12 +1375,10 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       } finally {
         controller.dispose();
       }
-
       if (!context.mounted) {
         return;
       }
     }
-
     try {
       final recaptchaToken = await _verification.obtainToken(
         MarketplaceHumanVerificationAction.listingReport,
@@ -1515,7 +1392,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         ),
         recaptchaToken: recaptchaToken,
       );
-
       logRuntimeAction(
         area: 'offers',
         action: ok ? 'report-success' : 'report-rejected',
@@ -1524,7 +1400,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
           'reason': reason.name,
         },
       );
-
       if (!context.mounted) return;
       messenger?.showSnackBar(
         SnackBar(
@@ -1551,7 +1426,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       );
     }
   }
-
   String _reportReasonLabel(ListingReportReasonCode reason) {
     return switch (reason) {
       ListingReportReasonCode.spam => 'Spam',
@@ -1564,7 +1438,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       ListingReportReasonCode.other => 'Autre motif',
     };
   }
-
   Map<String, dynamic> _buildFavoriteOfferPayload(_OfferUiData data) {
     final dynamic rawOffer = widget.offer;
     final imageUrls = ((_OfferUiData._read(() => rawOffer['imageUrls']) ??
@@ -1575,7 +1448,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         .where((e) => e.isNotEmpty)
         .toList(growable: false);
     final createdAt = _OfferUiData._read(() => rawOffer.createdAt);
-
     return {
       'offerId': data.offerId,
       'title': data.title,
@@ -1610,11 +1482,9 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       if (createdAt is Timestamp) 'createdAt': createdAt,
     };
   }
-
   Widget _buildFavoriteAction(BuildContext context, _OfferUiData data) {
     final authUser = FirebaseAuth.instance.currentUser;
     final uid = authUser?.uid.trim() ?? '';
-
     if (uid.isEmpty) {
       return IconButton(
         tooltip: 'Ajouter aux favoris',
@@ -1624,14 +1494,12 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         splashRadius: 20,
       );
     }
-
     return StreamBuilder<Set<String>>(
       stream: _favoriteRepository.watchFavoriteListingIds(uid),
       builder: (context, snapshot) {
         final favoriteIds = snapshot.data ?? const <String>{};
         final isFavorite = data.offerId.trim().isNotEmpty &&
             favoriteIds.contains(data.offerId.trim());
-
         return IconButton(
           tooltip: isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris',
           onPressed: () => _toggleFavorite(context, data, isFavorite),
@@ -1644,7 +1512,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       },
     );
   }
-
   @override
   Widget build(BuildContext context) {
     Widget buildPage(Object? resolvedOffer) {
@@ -1653,7 +1520,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       final screenWidth = MediaQuery.sizeOf(context).width;
       final isCompactMobile = screenWidth <= 360;
       final sectionGap = isCompactMobile ? 12.0 : 14.0;
-
       return Scaffold(
         backgroundColor: bg,
         appBar: AppBar(
@@ -1745,11 +1611,9 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         ),
       );
     }
-
     if (_marketplaceFuture == null) {
       return buildPage(widget.offer);
     }
-
     return FutureBuilder<Map<String, dynamic>?>(
       future: _marketplaceFuture,
       builder: (context, snapshot) {
@@ -1764,37 +1628,30 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     );
   }
 }
-
 class _ListingViewTracker {
   static final Set<String> _countedListingIds = <String>{};
   static final String _sessionViewerKey =
       'session-${DateTime.now().millisecondsSinceEpoch}-${identityHashCode(_countedListingIds)}';
-
   static Future<void> trackOnce({
     required String listingId,
     required bool isMarketplace,
   }) async {
     final id = listingId.trim();
-
     if (id.isEmpty || !isMarketplace) return;
-
     if (!_countedListingIds.add(id)) {
       debugPrint('[listing-views] déjà comptée session listingId=$id');
       return;
     }
-
     try {
       final callable = prestoFirebaseFunctions.httpsCallable(
         'incrementListingView',
         options: HttpsCallableOptions(timeout: Duration(seconds: 10)),
       );
-
       await callable.call<dynamic>({
         'listingId': id,
         'viewerKey': _sessionViewerKey,
         'source': 'offer_details_page',
       });
-
       debugPrint('[listing-views] increment-ok listingId=$id');
     } catch (error) {
       _countedListingIds.remove(id);
@@ -1802,7 +1659,6 @@ class _ListingViewTracker {
     }
   }
 }
-
 class _OfferUiData {
   final String offerId;
   final bool isMarketplace;
@@ -1824,7 +1680,6 @@ class _OfferUiData {
   final double price;
   final OfferActionType actionType;
   final List<String> statusBadges;
-
   final String advertiserId;
   final String advertiserName;
   final String advertiserRole;
@@ -1832,7 +1687,6 @@ class _OfferUiData {
   final double advertiserRating;
   final int advertiserReviewCount;
   final bool verified;
-
   final String serviceArea;
   final bool canTravel;
   final String schedule;
@@ -1845,7 +1699,6 @@ class _OfferUiData {
   final int phoneViewCount;
   final bool hidePhone;
   final bool hideBudget;
-
   const _OfferUiData({
     required this.offerId,
     required this.isMarketplace,
@@ -1887,13 +1740,11 @@ class _OfferUiData {
     this.hidePhone = false,
     this.hideBudget = false,
   });
-
   String get sanitizedTitle {
     var out = title.trim();
     if (out.isEmpty) return 'Annonce';
     final cityTrim = city.trim();
     final postalTrim = postalCode.trim();
-
     if (cityTrim.isNotEmpty) {
       out = out.replaceAll(
         RegExp(RegExp.escape(cityTrim), caseSensitive: false),
@@ -1906,29 +1757,23 @@ class _OfferUiData {
         ' ',
       );
     }
-
     out = out
         .replaceAll(RegExp(r'\s+'), ' ')
         .replaceAll(RegExp(r'\s*[-–|/]\s*$'), '')
         .trim();
     return out.isEmpty ? title.trim() : out;
   }
-
   bool get hasPhotos => mediaCount > 0;
-
   bool get isListingActive {
     final status = listingStatus.trim().toLowerCase();
     return status == 'active' || status == 'published';
   }
-
   bool get showPendingPhotoNotice {
     return isMarketplace && hasPhotos && !isListingActive;
   }
-
   bool get isMediaStillProcessing {
     return mediaProcessingStatus.trim().toLowerCase() == 'processing';
   }
-
   String get publishedAtExactLabel {
     final value = publishedAt;
     if (value == null) return publishedAtLabel;
@@ -1939,7 +1784,6 @@ class _OfferUiData {
     final minute = value.minute.toString().padLeft(2, '0');
     return '$day/$month/$year à $hour:$minute';
   }
-
   factory _OfferUiData.fromOffer(Object? offer) {
     final dynamic o = offer;
     dynamic readValue(String key, [dynamic Function()? getter]) {
@@ -1948,7 +1792,6 @@ class _OfferUiData {
       }
       return getter == null ? null : _read(getter);
     }
-
     dynamic readNestedValue(
       dynamic source,
       String key, [
@@ -1959,10 +1802,8 @@ class _OfferUiData {
       }
       return getter == null ? null : _read(getter);
     }
-
     final dynamic advertiser = readValue('advertiser', () => o.advertiser);
     final dynamic practical = readValue('practicalInfo', () => o.practicalInfo);
-
     final offerId = _asString(
       readValue('id', () => o.id) ??
           readValue('offerId') ??
@@ -2033,7 +1874,6 @@ class _OfferUiData {
       readValue('category', () => o.category),
       fallback: '',
     );
-
     final fullDescription = _asString(
       readValue('description', () => o.description),
       fallback: '',
@@ -2059,12 +1899,10 @@ class _OfferUiData {
     final isUrgent = urgentRaw is bool
         ? urgentRaw
         : statusBadges.any((badge) => badge.toLowerCase().contains('urgent'));
-
     final price = _asDouble(
       readValue('price', () => o.price) ?? readValue('budget'),
       fallback: 0,
     );
-
     final advertiserId = _asString(
       readNestedValue(advertiser, 'id', () => advertiser.id) ??
           readValue('userId', () => o.userId) ??
@@ -2123,7 +1961,6 @@ class _OfferUiData {
           readValue('verified'),
       fallback: true,
     );
-
     final serviceArea = _asString(
       readNestedValue(practical, 'serviceArea', () => practical.serviceArea),
       fallback: city,
@@ -2167,14 +2004,12 @@ class _OfferUiData {
       readNestedValue(practical, 'serviceType', () => practical.serviceType),
       fallback: 'Prestation ponctuelle',
     );
-
     final rawImageUrlsList = _collectOfferDetailImageUrls(
       imageUrls: rawImageUrls,
       media: rawMedia,
       imageUrl: readValue('imageUrl'),
       thumbnailUrl: readValue('thumbnailUrl', () => o.thumbnailUrl),
     );
-
     final uiData = _OfferUiData(
       offerId: offerId,
       isMarketplace: isMarketplace,
@@ -2223,17 +2058,14 @@ class _OfferUiData {
           ? _shouldHideBudgetOnOfferDetails(Map<String, dynamic>.from(o))
           : price <= 0,
     );
-
     unawaited(
       _ListingViewTracker.trackOnce(
         listingId: uiData.offerId,
         isMarketplace: uiData.isMarketplace,
       ),
     );
-
     return uiData;
   }
-
   static dynamic _read(dynamic Function() getter) {
     try {
       return getter();
@@ -2241,13 +2073,11 @@ class _OfferUiData {
       return null;
     }
   }
-
   static String _asString(dynamic value, {required String fallback}) {
     if (value == null) return fallback;
     final s = value.toString().trim();
     return s.isEmpty ? fallback : s;
   }
-
   static double _asDouble(dynamic value, {required double fallback}) {
     if (value is num) return value.toDouble();
     if (value is String) {
@@ -2256,7 +2086,6 @@ class _OfferUiData {
     }
     return fallback;
   }
-
   static int _asInt(dynamic value, {required int fallback}) {
     if (value is int) return value;
     if (value is num) return value.toInt();
@@ -2266,12 +2095,10 @@ class _OfferUiData {
     }
     return fallback;
   }
-
   static bool _asBool(dynamic value, {required bool fallback}) {
     if (value is bool) return value;
     return fallback;
   }
-
   static DateTime? _asDateTime(dynamic value) {
     if (value is Timestamp) return value.toDate().toLocal();
     if (value is DateTime) return value.toLocal();
@@ -2284,7 +2111,6 @@ class _OfferUiData {
     }
     return null;
   }
-
   static List<String> _asStringList(dynamic value) {
     if (value is List) {
       return value
@@ -2295,10 +2121,8 @@ class _OfferUiData {
     return const [];
   }
 }
-
 class _BackgroundDecor extends StatelessWidget {
   const _BackgroundDecor();
-
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -2328,18 +2152,14 @@ class _BackgroundDecor extends StatelessWidget {
     );
   }
 }
-
 class _TopHeader extends StatelessWidget {
   final String title;
   final bool compact;
-
   const _TopHeader({required this.title, required this.compact});
-
   @override
   Widget build(BuildContext context) {
     const orange = Color(0xFFFF8A00);
     const blue = Color(0xFF1565D8);
-
     return SizedBox(
       height: compact ? 42 : 46,
       child: Row(
@@ -2398,20 +2218,16 @@ class _TopHeader extends StatelessWidget {
       ),
     );
   }
-
   String _truncatedTitle(String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) return 'Montage me...';
     return trimmed.length > 12 ? '${trimmed.substring(0, 10)}...' : trimmed;
   }
 }
-
 class _HeroCard extends StatelessWidget {
   final _OfferUiData data;
   final bool compact;
-
   const _HeroCard({required this.data, this.compact = false});
-
   void _openGallery(BuildContext context, int initialIndex) {
     if (data.imageUrls.isEmpty) return;
     _showPhotoGalleryPopup(
@@ -2420,7 +2236,6 @@ class _HeroCard extends StatelessWidget {
       initialIndex: initialIndex,
     );
   }
-
   @override
   Widget build(BuildContext context) {
     const card = Colors.white;
@@ -2436,7 +2251,6 @@ class _HeroCard extends StatelessWidget {
         : data.description.trim();
     final hasPhotos = data.imageUrls.isNotEmpty;
     final mainPhotoUrl = hasPhotos ? data.imageUrls.first : '';
-
     return Container(
       decoration: BoxDecoration(
         color: card,
@@ -2453,7 +2267,6 @@ class _HeroCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Photo principale ──
           if (hasPhotos)
             ClipRRect(
               borderRadius: BorderRadius.vertical(
@@ -2499,7 +2312,6 @@ class _HeroCard extends StatelessWidget {
                 ),
               ),
             ),
-          // ── Miniatures additionnelles ──
           if (data.imageUrls.length > 1)
             Padding(
               padding: EdgeInsets.fromLTRB(
@@ -2558,7 +2370,6 @@ class _HeroCard extends StatelessWidget {
                 ),
               ),
             ),
-          // ── Contenu texte ──
           Padding(
             padding: EdgeInsets.fromLTRB(
               compact ? 15 : 18,
@@ -2725,18 +2536,15 @@ class _HeroCard extends StatelessWidget {
     );
   }
 }
-
 class _PendingPhotoNotice extends StatelessWidget {
   final bool compact;
   final bool isProcessing;
   final String moderationStatus;
-
   const _PendingPhotoNotice({
     required this.compact,
     required this.isProcessing,
     required this.moderationStatus,
   });
-
   @override
   Widget build(BuildContext context) {
     const border = Color(0xFFFFC78F);
@@ -2744,7 +2552,6 @@ class _PendingPhotoNotice extends StatelessWidget {
     const accent = Color(0xFFFF7A00);
     const titleColor = Color(0xFF8A3B00);
     const bodyColor = Color(0xFF7A4A21);
-
     final normalizedModeration = moderationStatus.trim().toLowerCase();
     final message = isProcessing
         ? 'Photos en traitement. Publication automatique une fois les photos prêtes.'
@@ -2752,7 +2559,6 @@ class _PendingPhotoNotice extends StatelessWidget {
                 normalizedModeration == 'pending'
             ? 'Annonce en cours de vérification avant publication.'
             : 'Cette annonce reste temporairement hors ligne avant publication.';
-
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
@@ -2815,18 +2621,15 @@ class _PendingPhotoNotice extends StatelessWidget {
     );
   }
 }
-
 class _HeroInfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool compact;
-
   const _HeroInfoChip({
     required this.icon,
     required this.label,
     required this.compact,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -2858,12 +2661,9 @@ class _HeroInfoChip extends StatelessWidget {
     );
   }
 }
-
 class _PhotoGalleryTapOverlay extends StatelessWidget {
   final VoidCallback onTap;
-
   const _PhotoGalleryTapOverlay({required this.onTap});
-
   @override
   Widget build(BuildContext context) {
     return Positioned.fill(
@@ -2878,21 +2678,14 @@ class _PhotoGalleryTapOverlay extends StatelessWidget {
     );
   }
 }
-
-// ─── Photo gallery ───────────────────────────────────────────────────────────
-
 class _PhotoThumbnailStrip extends StatelessWidget {
   final List<String> imageUrls;
-
   const _PhotoThumbnailStrip({required this.imageUrls});
-
   @override
   Widget build(BuildContext context) {
     if (imageUrls.isEmpty) return const SizedBox.shrink();
-
     const double thumbSize = 76;
     const double borderRadius = 14;
-
     return SizedBox(
       height: thumbSize,
       child: ListView.separated(
@@ -2956,7 +2749,6 @@ class _PhotoThumbnailStrip extends StatelessWidget {
       ),
     );
   }
-
   void _openFullScreenGallery(BuildContext context, int initialIndex) {
     _showPhotoGalleryPopup(
       context,
@@ -2965,7 +2757,6 @@ class _PhotoThumbnailStrip extends StatelessWidget {
     );
   }
 }
-
 Future<void> _showPhotoGalleryPopup(
   BuildContext context, {
   required List<String> imageUrls,
@@ -2985,37 +2776,30 @@ Future<void> _showPhotoGalleryPopup(
     },
   );
 }
-
 class _PhotoGalleryPopup extends StatefulWidget {
   final List<String> imageUrls;
   final int initialIndex;
-
   const _PhotoGalleryPopup({
     required this.imageUrls,
     required this.initialIndex,
   });
-
   @override
   State<_PhotoGalleryPopup> createState() => _PhotoGalleryPopupState();
 }
-
 class _PhotoGalleryPopupState extends State<_PhotoGalleryPopup> {
   late final PageController _pageController;
   late int _currentPage;
-
   @override
   void initState() {
     super.initState();
     _currentPage = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
   }
-
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -3090,10 +2874,8 @@ class _PhotoGalleryPopupState extends State<_PhotoGalleryPopup> {
     );
   }
 }
-
 final Map<String, Future<String?>> _offerImageUrlCache =
     <String, Future<String?>>{};
-
 Future<String?> _resolveOfferImageUrl(String rawUrl) {
   final trimmed = rawUrl.trim();
   if (trimmed.isEmpty) {
@@ -3107,12 +2889,10 @@ Future<String?> _resolveOfferImageUrl(String rawUrl) {
   if (trimmed.startsWith('//')) {
     return Future<String?>.value('https:$trimmed');
   }
-
   final cached = _offerImageUrlCache[trimmed];
   if (cached != null) {
     return cached;
   }
-
   final future = () async {
     try {
       if (trimmed.startsWith('gs://')) {
@@ -3124,14 +2904,12 @@ Future<String?> _resolveOfferImageUrl(String rawUrl) {
         }
         return resolved;
       }
-
       final normalizedPath =
           trimmed.startsWith('/') ? trimmed.substring(1) : trimmed;
       if (normalizedPath.isEmpty) {
         _offerImageUrlCache.remove(trimmed);
         return null;
       }
-
       final resolved = await FirebaseStorage.instance
           .ref()
           .child(normalizedPath)
@@ -3142,41 +2920,33 @@ Future<String?> _resolveOfferImageUrl(String rawUrl) {
       }
       return resolved;
     } catch (_) {
-      // Ne pas retourner un path Storage brut à Image.network.
       _offerImageUrlCache.remove(trimmed);
       return null;
     }
   }();
-
   _offerImageUrlCache[trimmed] = future;
   return future;
 }
-
 class _OfferImage extends StatelessWidget {
   final String rawUrl;
   final BoxFit fit;
   final Widget errorChild;
   final Widget? loadingChild;
-
   const _OfferImage({
     required this.rawUrl,
     required this.fit,
     required this.errorChild,
     this.loadingChild,
   });
-
   static bool _isDirectUrl(String url) {
     return url.startsWith('https://') ||
         url.startsWith('http://') ||
         url.startsWith('data:image/') ||
         url.startsWith('//');
   }
-
   @override
   Widget build(BuildContext context) {
     final trimmed = rawUrl.trim();
-
-    // URL déjà résolue — pas de FutureBuilder, pas de clignotement
     if (trimmed.isEmpty) return errorChild;
     if (_isDirectUrl(trimmed)) {
       final url = trimmed.startsWith('//') ? 'https:$trimmed' : trimmed;
@@ -3187,8 +2957,6 @@ class _OfferImage extends StatelessWidget {
         loadingChild: loadingChild,
       );
     }
-
-    // Chemin Storage → résolution async nécessaire
     return FutureBuilder<String?>(
       future: _resolveOfferImageUrl(rawUrl),
       builder: (context, snapshot) {
@@ -3207,13 +2975,10 @@ class _OfferImage extends StatelessWidget {
     );
   }
 }
-
 class _AdminDeleteListingButton extends StatelessWidget {
   final bool compact;
   final VoidCallback onTap;
-
   const _AdminDeleteListingButton({required this.compact, required this.onTap});
-
   @override
   Widget build(BuildContext context) {
     return Tooltip(
@@ -3241,29 +3006,24 @@ class _AdminDeleteListingButton extends StatelessWidget {
     );
   }
 }
-
 class _PracticalInfoCard extends StatelessWidget {
   final _OfferUiData data;
   final bool compact;
   final VoidCallback onContactTap;
   final VoidCallback? onAdminDeleteTap;
-
   const _PracticalInfoCard({
     required this.data,
     this.compact = false,
     required this.onContactTap,
     this.onAdminDeleteTap,
   });
-
   Widget _paymentInfoPill(BuildContext context) {
     return AnimatedPaymentInfoPill(onTap: () => showPaymentInfoPopup(context));
   }
-
   @override
   Widget build(BuildContext context) {
     const blueSoft = Color(0xFFDCEBFF);
     const line = Color(0xFFE6E3E6);
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -3368,10 +3128,8 @@ class _PracticalInfoCard extends StatelessWidget {
     );
   }
 }
-
 class _OfferDetailsAdMobBannerSpace extends StatelessWidget {
   const _OfferDetailsAdMobBannerSpace();
-
   @override
   Widget build(BuildContext context) {
     return Semantics(
@@ -3403,18 +3161,15 @@ class _OfferDetailsAdMobBannerSpace extends StatelessWidget {
     );
   }
 }
-
 class _AdvertiserContactCard extends StatelessWidget {
   final _OfferUiData data;
   final bool compact;
   final VoidCallback onContactTap;
-
   const _AdvertiserContactCard({
     required this.data,
     this.compact = false,
     required this.onContactTap,
   });
-
   Future<void> _openProfile(BuildContext context) async {
     final uid = data.advertiserId.trim();
     if (uid.isEmpty) return;
@@ -3427,11 +3182,9 @@ class _AdvertiserContactCard extends StatelessWidget {
       MaterialPageRoute(builder: (_) => FicheProPage(uid: uid, isOwner: false)),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     const blueSoft = Color(0xFFDCEBFF);
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -3497,25 +3250,21 @@ class _AdvertiserContactCard extends StatelessWidget {
     );
   }
 }
-
 class _AdvertiserHeaderLine extends StatelessWidget {
   final String advertiserName;
   final bool verified;
   final bool compact;
-
   const _AdvertiserHeaderLine({
     required this.advertiserName,
     required this.verified,
     this.compact = false,
   });
-
   @override
   Widget build(BuildContext context) {
     const navy = Color(0xFF18233D);
     const muted = Color(0xFF6F7282);
     const green = Color(0xFF45B36B);
     const line = Color(0xFFE6E3E6);
-
     return Column(
       children: [
         Padding(
@@ -3596,14 +3345,12 @@ class _AdvertiserHeaderLine extends StatelessWidget {
     );
   }
 }
-
 class _InfoLine extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
   final bool compact;
   final Widget? labelSuffix;
-
   const _InfoLine({
     required this.icon,
     required this.label,
@@ -3611,13 +3358,11 @@ class _InfoLine extends StatelessWidget {
     this.compact = false,
     this.labelSuffix,
   });
-
   @override
   Widget build(BuildContext context) {
     const navy = Color(0xFF18233D);
     const muted = Color(0xFF6F7282);
     const line = Color(0xFFE6E3E6);
-
     return Column(
       children: [
         Padding(
@@ -3626,7 +3371,6 @@ class _InfoLine extends StatelessWidget {
             builder: (context, constraints) {
               final shouldStack =
                   labelSuffix != null || constraints.maxWidth < 360;
-
               if (shouldStack) {
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -3674,7 +3418,6 @@ class _InfoLine extends StatelessWidget {
                   ],
                 );
               }
-
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -3721,20 +3464,17 @@ class _InfoLine extends StatelessWidget {
     );
   }
 }
-
 class _AdvertiserMetaLine extends StatelessWidget {
   final double advertiserRating;
   final int advertiserReviewCount;
   final bool verified;
   final bool compact;
-
   const _AdvertiserMetaLine({
     required this.advertiserRating,
     required this.advertiserReviewCount,
     required this.verified,
     this.compact = false,
   });
-
   @override
   Widget build(BuildContext context) {
     const navy = Color(0xFF18233D);
@@ -3742,7 +3482,6 @@ class _AdvertiserMetaLine extends StatelessWidget {
     const orange = Color(0xFFFF7B12);
     const green = Color(0xFF45B36B);
     const line = Color(0xFFE6E3E6);
-
     return Column(
       children: [
         Padding(
@@ -3845,36 +3584,30 @@ class _AdvertiserMetaLine extends StatelessWidget {
     );
   }
 }
-
 class _MaskedPhoneInfoLine extends StatefulWidget {
   final String phone;
   final bool compact;
   final bool hidePhone;
   final String offerId;
-
   const _MaskedPhoneInfoLine({
     required this.phone,
     required this.offerId,
     this.compact = false,
     this.hidePhone = false,
   });
-
   @override
   State<_MaskedPhoneInfoLine> createState() => _MaskedPhoneInfoLineState();
 }
-
 class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
   bool _isPhoneVisible = false;
   bool _isResolvingContact = false;
   String? _resolvedPhone;
   String? _resolvedDialingCode;
-
   @override
   void initState() {
     super.initState();
     _prefetchContactPreviewIfNeeded();
   }
-
   @override
   void didUpdateWidget(covariant _MaskedPhoneInfoLine oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -3887,36 +3620,28 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
       _prefetchContactPreviewIfNeeded();
     }
   }
-
   Future<void> _prefetchContactPreviewIfNeeded() async {
     if (widget.offerId.trim().isEmpty) return;
     if (widget.phone.trim().isNotEmpty && !widget.hidePhone) return;
     await _resolveListingContact(allowFullPhone: false);
   }
-
   Future<void> _resolveListingContact({required bool allowFullPhone}) async {
     if (_isResolvingContact || widget.offerId.trim().isEmpty) return;
-
     setState(() {
       _isResolvingContact = true;
     });
-
     try {
       final callable = prestoFirebaseFunctions.httpsCallable(
         'getListingContactPhone',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 10)),
       );
-
       final result = await callable.call<Map<String, dynamic>>({
         'listingId': widget.offerId,
       });
-
       final payload = result.data;
       final dialingCode = (payload['dialingCode'] ?? '').toString().trim();
       final phone = (payload['phone'] ?? '').toString().trim();
-
       if (!mounted) return;
-
       setState(() {
         if (dialingCode.isNotEmpty) {
           _resolvedDialingCode = dialingCode;
@@ -3926,9 +3651,7 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
         }
       });
     } on FirebaseFunctionsException {
-      // L'échec de résolution ne doit pas casser l'UI contact.
     } catch (_) {
-      // Best effort.
     } finally {
       if (mounted) {
         setState(() {
@@ -3937,39 +3660,29 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
       }
     }
   }
-
   String _effectivePhone() {
     final resolved = (_resolvedPhone ?? '').trim();
     if (resolved.isNotEmpty) return resolved;
     return widget.phone.trim();
   }
-
   Future<void> _handlePhoneVisibility() async {
-    // L'utilisateur peut toujours remasquer un numéro déjà affiché.
     if (_isPhoneVisible) {
       if (!mounted) return;
-
       setState(() {
         _isPhoneVisible = false;
       });
       return;
     }
-
-    // Le choix de l'annonceur reste prioritaire.
     if (widget.hidePhone) {
       return;
     }
-
     if (_effectivePhone().isEmpty) {
       await _resolveListingContact(allowFullPhone: true);
     }
-
     final effectivePhone = _effectivePhone();
     if (effectivePhone.isEmpty) {
       return;
     }
-
-    // La révélation du numéro nécessite un compte connecté.
     if (FirebaseAuth.instance.currentUser == null) {
       final shouldConnect = await showDialog<bool>(
         context: context,
@@ -3993,38 +3706,28 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
           );
         },
       );
-
       if (shouldConnect != true || !mounted) {
         return;
       }
-
       await Navigator.of(context).push<void>(
         MaterialPageRoute<void>(
           fullscreenDialog: true,
           builder: (_) => const AccountPage(),
         ),
       );
-
       if (!mounted) {
         return;
       }
-
-      // Double sécurité : la route ne doit jamais autoriser la révélation
-      // si Firebase Auth ne contient finalement aucun utilisateur.
       if (FirebaseAuth.instance.currentUser == null) {
         return;
       }
     }
-
     if (!mounted || widget.hidePhone) {
       return;
     }
-
     setState(() {
       _isPhoneVisible = true;
     });
-
-    // Increment the view counter asynchronously; ignore errors silently.
     if (widget.offerId.isNotEmpty) {
       FirebaseFirestore.instance
           .collection('listings')
@@ -4032,15 +3735,11 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
           .update({'phoneViewCount': FieldValue.increment(1)}).ignore();
     }
   }
-
   String _phoneIndicatif(String rawPhone) {
     final compact = rawPhone.trim().replaceAll(RegExp(r'[\s().-]+'), '');
-
     if (compact.isEmpty) {
       return '';
     }
-
-    // Indicatifs internationaux principalement utilisés par iliprestō.
     const supportedDialingCodes = <String>[
       '+590', // Guadeloupe, Saint-Martin, Saint-Barthélemy
       '+596', // Martinique
@@ -4052,18 +3751,13 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
       '+687', // Nouvelle-Calédonie
       '+33', // France métropolitaine
     ];
-
     for (final dialingCode in supportedDialingCodes) {
       if (compact.startsWith(dialingCode)) {
         return dialingCode;
       }
     }
-
-    // Repli pour un numéro international non encore répertorié.
     final fallback = RegExp(r'^(\+\d{1,3})').firstMatch(compact);
     if (fallback != null) return fallback.group(1)!;
-
-    // Inférence depuis le format local (numéro sans préfixe +).
     const localPrefixToDialingCode = <String, String>{
       '0590': '+590', // Guadeloupe
       '0596': '+596', // Martinique
@@ -4075,68 +3769,52 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
       '0689': '+689', // Polynésie française
       '0687': '+687', // Nouvelle-Calédonie
     };
-
     for (final entry in localPrefixToDialingCode.entries) {
       if (compact.startsWith(entry.key)) {
         return entry.value;
       }
     }
-
-    // Numéro à 10 chiffres commençant par 0 → France métropolitaine.
     if (compact.length == 10 && compact.startsWith('0')) {
       return '+33';
     }
-    // Numéro à 9 chiffres commençant par 6 ou 7 → France mobile.
     if (compact.length == 9 &&
         (compact.startsWith('6') || compact.startsWith('7'))) {
       return '+33';
     }
-
     return '';
   }
-
   String _indicatifOnly(String rawPhone) {
     final dialingCode = _phoneIndicatif(rawPhone);
-
     if (dialingCode.isEmpty) {
       if ((_resolvedDialingCode ?? '').isNotEmpty) {
         return '${_resolvedDialingCode!} ••••••';
       }
       return '••••••';
     }
-
     return '$dialingCode ••••••';
   }
-
   String _maskedLabel(String rawPhone) {
     final normalized = rawPhone.trim();
-
     if (normalized.isEmpty) {
       if ((_resolvedDialingCode ?? '').isNotEmpty) {
         return '${_resolvedDialingCode!} ••••••';
       }
       return 'Non renseigné';
     }
-
     final dialingCode = _phoneIndicatif(normalized);
-
     if (dialingCode.isEmpty) {
       return '••••••';
     }
-
     return '$dialingCode ••••••';
   }
-
   @override
   Widget build(BuildContext context) {
     const navy = Color(0xFF18233D);
     const muted = Color(0xFF6F7282);
     const line = Color(0xFFE6E3E6);
-
     final effectivePhone = _effectivePhone();
     final canRequestReveal = !widget.hidePhone &&
         (effectivePhone.isNotEmpty || widget.offerId.trim().isNotEmpty);
-
     final String displayedValue;
     if (widget.hidePhone) {
       displayedValue = _indicatifOnly(effectivePhone);
@@ -4144,7 +3822,6 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
       displayedValue =
           _isPhoneVisible ? effectivePhone : _maskedLabel(effectivePhone);
     }
-
     return Column(
       children: [
         Padding(
@@ -4223,12 +3900,9 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     );
   }
 }
-
 class _UrgentBadge extends StatelessWidget {
   final bool compact;
-
   const _UrgentBadge({this.compact = false});
-
   @override
   Widget build(BuildContext context) {
     return _HeaderPillBadge(
@@ -4263,14 +3937,12 @@ class _UrgentBadge extends StatelessWidget {
     );
   }
 }
-
 class _HeaderPillBadge extends StatelessWidget {
   final bool compact;
   final double minWidth;
   final EdgeInsetsGeometry padding;
   final BoxDecoration decoration;
   final Widget child;
-
   const _HeaderPillBadge({
     required this.compact,
     required this.minWidth,
@@ -4278,7 +3950,6 @@ class _HeaderPillBadge extends StatelessWidget {
     required this.decoration,
     required this.child,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -4291,18 +3962,15 @@ class _HeaderPillBadge extends StatelessWidget {
     );
   }
 }
-
 class _InlineCta extends StatelessWidget {
   final String label;
   final bool compact;
   final VoidCallback onTap;
-
   const _InlineCta({
     required this.label,
     this.compact = false,
     required this.onTap,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -4352,20 +4020,17 @@ class _InlineCta extends StatelessWidget {
     );
   }
 }
-
 class _ShareOptionTile extends StatelessWidget {
   final Widget icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
-
   const _ShareOptionTile({
     required this.icon,
     required this.label,
     required this.color,
     required this.onTap,
   });
-
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -4424,12 +4089,9 @@ class _ShareOptionTile extends StatelessWidget {
     );
   }
 }
-
 class _AvatarFallback extends StatelessWidget {
   final String initials;
-
   const _AvatarFallback({required this.initials});
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -4490,11 +4152,9 @@ class _AvatarFallback extends StatelessWidget {
     );
   }
 }
-
 bool _isDeletedUserMap(Map<String, dynamic>? data) {
   return DeletedUserProfile.isDeletedMap(data);
 }
-
 String _deletedAwareDisplayName(
   Map<String, dynamic>? data,
   String? fallbackName,
@@ -4504,7 +4164,6 @@ String _deletedAwareDisplayName(
     fallbackName: fallbackName,
   );
 }
-
 Widget _deletedAwareAvatar({
   required Map<String, dynamic>? data,
   required Widget fallback,
@@ -4513,6 +4172,5 @@ Widget _deletedAwareAvatar({
   if (_isDeletedUserMap(data)) {
     return DeletedUserAvatar(radius: radius);
   }
-
   return fallback;
 }

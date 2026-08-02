@@ -1,21 +1,17 @@
 // ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
-
 import '../app/app_globals.dart';
 import '../main.dart' show prestoOverlayStyleFor;
 import 'home_page.dart' show HomePage;
@@ -58,10 +54,8 @@ import '../features/offers/presentation/widgets/publish_offer_contact_fields.dar
 import '../features/offers/presentation/widgets/publish_offer_mission_fields.dart';
 import '../widgets/phone_input_field.dart';
 import '../widgets/orbiting_ai_visual.dart';
-
 final AdminAudioRuntimeStore _adminAudioRuntimeStore =
     AdminAudioRuntimeStore.instance;
-
 enum PublishOfferAiFlowStep {
   chooseMethod,
   voiceSelected,
@@ -70,31 +64,24 @@ enum PublishOfferAiFlowStep {
   textAnalyzing,
   completed,
 }
-
 class PublishOfferPage extends StatefulWidget {
   final Function(double)? onScroll;
-
   const PublishOfferPage({super.key, this.onScroll});
-
   @override
   State<PublishOfferPage> createState() => _PublishOfferPageState();
 }
-
 class _PublishOfferPageState extends State<PublishOfferPage> {
   MarketplacePublishService? _marketplacePublishService;
   static const int _publishPhotoHardLimit = 2;
   static const int _defaultMaxListingPhotos = _publishPhotoHardLimit;
   static const int _minimumMaxListingPhotos = 1;
-
   final MarketplaceRemoteConfigService _marketplaceRemoteConfigService =
       MarketplaceRemoteConfigService();
   int _maxListingPhotos = _defaultMaxListingPhotos;
-
   String formatMicroIaRuntimeError(Object error) {
     if (error is MicroIaClientAuthException) {
       return error.message;
     }
-
     if (error is FirebaseFunctionsException) {
       final code = error.code.trim();
       final message = (error.message ?? '').trim();
@@ -115,7 +102,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
       return translatePublishIssue(code);
     }
-
     if (error is FirebaseException) {
       if (error.code == 'network-error' ||
           error.code == 'retry-limit-exceeded' ||
@@ -127,7 +113,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
       return 'Erreur de stockage (${error.code}). Réessaie.';
     }
-
     final message = error
         .toString()
         .replaceFirst('Exception: ', '')
@@ -162,13 +147,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return message;
   }
-
   Future<bool> _ensureAppCheckReady({
     required String flow,
     bool showBlockingMessage = true,
   }) async {
     if (!_useCloudStt) return true;
-
     if (appCheckActivationSucceeded) {
       _appendPublishAiTrace(
         'appcheck',
@@ -177,7 +160,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
       return true;
     }
-
     try {
       if (!appCheckActivationAttempted) {
         throw StateError(
@@ -206,13 +188,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       appCheckActivationError = e;
       appCheckActivationStackTrace = st;
     }
-
     final activationError = appCheckActivationError;
     final activationStackTrace = appCheckActivationStackTrace;
     final exception = Exception(
       'App Check activation unavailable: ${activationError ?? 'unknown error'}',
     );
-
     try {
       await CrashlyticsContext.recordError(
         exception,
@@ -227,16 +207,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           'activationSucceeded': appCheckActivationSucceeded.toString(),
         },
       );
-
       debugPrint('[AppCheck] blocking $flow: $activationError');
     } catch (_) {}
-
     _appendPublishAiTrace(
       'appcheck',
       'Blocage sur $flow: ${activationError ?? 'activation indisponible'}',
       level: PublishAiTraceLevel.error,
     );
-
     if (mounted && showBlockingMessage) {
       showErrorSnackBar(
         context,
@@ -245,7 +222,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return false;
   }
-
   /// Uploade l'audio, appelle microIaProcessAudio avec generateDraft:true pour
   /// obtenir transcription + brouillon en un seul round-trip, et retourne les
   /// deux dans une Map {text, draft?}.
@@ -263,13 +239,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       'UPLOAD',
       'chunk=final bytes=${audioBytes.length} contentType=$contentType extension=$extension',
     );
-
     // ⚡ Chemin rapide : l'audio part en base64 directement dans le callable,
     // sans passer par Firebase Storage (upload client + re-download serveur
     // évités, ~1-2,5 s gagnées). Fallback Storage pour les gros audios.
     const inlineAudioLimitBytes = 2 * 1024 * 1024;
     final useInlineAudio = audioBytes.length <= inlineAudioLimitBytes;
-
     String? storagePath;
     if (useInlineAudio) {
       _appendPublishAiTrace(
@@ -290,12 +264,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         level: PublishAiTraceLevel.success,
       );
     }
-
     _appendPublishAiTrace(
       'microia_callable',
       'Appel microIaProcessAudio (mode combiné STT+draft) en cours',
     );
-
     // Mode combiné : transcription + brouillon en un seul appel (~1-2 s gagnés)
     final currentCity = _locationController.text.trim();
     final out = await MicroIaService.processAudio(
@@ -308,7 +280,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       draftCategory: _category,
       debugLabel: 'publish_final_audio',
     ).timeout(const Duration(seconds: 90));
-
     final transcript = (out['text'] ?? '').toString().trim();
     if (transcript.isEmpty) {
       _appendPublishAiTrace(
@@ -318,7 +289,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
       throw Exception('Aucun texte reconnu');
     }
-
     final modeUsed = (out['modeUsed'] ?? '').toString().trim();
     if (modeUsed.isNotEmpty) {
       _adminAudioRuntimeStore.confirmLatestBackendResult(
@@ -328,7 +298,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         transcriptLength: transcript.length,
       );
     }
-
     final hasCombinedDraft = out['draft'] is Map;
     _appendPublishAiTrace(
       'microia_callable',
@@ -337,7 +306,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           : 'Transcription reçue via $modeUsed (${transcript.length} car.) — draft=${hasCombinedDraft ? 'ok' : 'absent'}',
       level: PublishAiTraceLevel.success,
     );
-
     return {
       'text': transcript,
       'draft': hasCombinedDraft
@@ -345,7 +313,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           : null,
     };
   }
-
   /// Applique la transcription au formulaire.
   /// Si [combinedDraft] est fourni (mode combiné), l'utilise directement sans
   /// appel réseau supplémentaire. Sinon, appelle generateOfferDraftV2 en fallback.
@@ -359,7 +326,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       'Pré-remplissage local depuis la transcription (${transcript.length} caractères)',
     );
     _applyFastDraftFromTranscript(transcript);
-
     final Map<String, dynamic> draft;
     if (combinedDraft != null) {
       // Draft déjà généré par microIaProcessAudio — aucun appel réseau supplémentaire
@@ -384,9 +350,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             : PublishAiTraceLevel.warning,
       );
     }
-
     if (!mounted) return;
-
     if (draft['success'] == true) {
       _applyDraftToForm(draft);
       _appendPublishAiTrace(
@@ -397,7 +361,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
       return;
     }
-
     final code = (draft['code'] ?? '').toString();
     throw Exception(
       code == 'deadline-exceeded'
@@ -405,20 +368,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           : (draft['error'] ?? 'Erreur IA inconnue').toString(),
     );
   }
-
   /// Bouton micro: utiliser le flux audio classique, qui traite l'audio au stop
   /// et remplit les champs via le pipeline STT + draft.
-
   final _formKey = GlobalKey<FormState>();
   final ScrollController _scrollController = ScrollController();
   final LayerLink _publishAiMicAnchorLink = LayerLink();
-
   bool _isUrgent = false;
   bool _hidePhone = false;
-
   // ✅ Analytics
   // late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
-
   /// ✅ Enregistre la publication d'une offre
   Future<void> _logOfferPublished({
     required String offerId,
@@ -446,7 +404,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           ],
         },
       );
-
       // ✅ Event personnalisé supplémentaire
       await _analytics.logEvent(
         name: 'offer_published',
@@ -465,7 +422,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       debugPrint('[Analytics] logOfferPublished error: $e');
     }
   }
-
   // Champs texte
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -475,21 +431,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _budgetController = TextEditingController();
   late final FocusNode _descriptionFocusNode = FocusNode();
-
   // Indicatif téléphonique sélectionné
   String _selectedPhoneCountryCode = '+33';
-
   // Catégories / sous-catégories
   String? _category;
   String? _selectedSubCategory;
-
   List<String> get _categories =>
       kCategorySubcategories.keys.toList(); // Map<String, List<String>>
-
   // Budget: type (fixe / à négocier)
   final List<String> _budgetTypes = const ['Fixe', 'À négocier'];
   String _budgetType = 'Fixe';
-
   // Délai pour effectuer la mission
   final List<String> _missionDelayOptions = const [
     'Urgent',
@@ -500,25 +451,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     'À convenir',
   ];
   String? _missionDelay;
-
   // Photos marketplace
   final List<XFile> _selectedPhotos = [];
   final List<Uint8List?> _selectedPhotoBytes = [];
-
   FirebaseFunctions get _functions => prestoFirebaseFunctions;
-
   // Autocomplétion villes
   List<CityRecord> _citySuggestions = [];
   int _highlightedIndex = -1;
-
   // Région / département (optionnel à exploiter dans le futur)
   String? _selectedRegionCode;
   String? _selectedDeptCode;
-
   bool _isSubmitting = false;
   bool _isAnalyzing = false;
   bool _isListening = false;
-
   bool _attemptedSubmit = false; // affiche erreurs après tentative
   bool _publishLocked = false; // lock après tentative invalide
   bool _canPublish = false;
@@ -544,7 +489,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   int _publishAiTraceAttempt = 0;
   String? _shakingPublishFieldId;
   int _publishShakeTick = 0;
-
   FirebaseAuth? get _authOrNull {
     try {
       return FirebaseAuth.instance;
@@ -552,7 +496,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return null;
     }
   }
-
   FirebaseFirestore? get _firestoreOrNull {
     try {
       return FirebaseFirestore.instance;
@@ -560,7 +503,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return null;
     }
   }
-
   final GlobalKey _titleFieldKey = GlobalKey();
   final GlobalKey _categoryFieldKey = GlobalKey();
   final GlobalKey _publishAiFlowHintKey = GlobalKey();
@@ -569,7 +511,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final GlobalKey _phoneFieldKey = GlobalKey();
   final GlobalKey _delayFieldKey = GlobalKey();
   final GlobalKey _budgetFieldKey = GlobalKey();
-
   // Service IA structuré pour le formulaire publier
   final AiDraftService _aiService = AiDraftService();
   final ListingAudioAiService _listingAudioAiService = ListingAudioAiService();
@@ -587,7 +528,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   String _adminAudioRuntimeMode = 'HYBRID';
   String _adminAudioRuntimeLabel = 'Mode serveur';
   String _adminAudioRuntimeDetail = 'En attente de verification admin';
-
   void _runWithoutMarkingUserEdits(VoidCallback action) {
     final previous = _isApplyingProgrammaticPublishUpdate;
     _isApplyingProgrammaticPublishUpdate = true;
@@ -597,12 +537,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _isApplyingProgrammaticPublishUpdate = previous;
     }
   }
-
   void _notifyPublishAiTraceChanged() {
     if (_publishAiTraceDisposed) return;
     _publishAiTraceVersion.value++;
   }
-
   void _resetPublishAiTrace(String flowLabel) {
     _publishAiTraceAttempt += 1;
     _publishAiTraceEntries
@@ -617,7 +555,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
     _notifyPublishAiTraceChanged();
   }
-
   void _appendPublishAiTrace(
     String stage,
     String detail, {
@@ -647,19 +584,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
     _notifyPublishAiTraceChanged();
   }
-
   void _clearPublishAiTrace() {
     _publishAiTraceEntries.clear();
     _notifyPublishAiTraceChanged();
   }
-
   String publishAiDebugValue(Object? value) {
     if (value == null) return '-';
     if (value is bool) return value ? 'yes' : 'no';
     final text = value.toString().trim();
     return text.isEmpty ? '-' : text;
   }
-
   void _appendAdminAccessDiagnosticTrace(
     String stage,
     Map<String, dynamic> payload, {
@@ -673,7 +607,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       'isAdmin=${publishAiDebugValue(payload['isAdmin'])}',
       'source=${publishAiDebugValue(payload['source'])}',
     ];
-
     if (debug.isNotEmpty) {
       parts.addAll(<String>[
         'tokenAdmin=${publishAiDebugValue(debug['tokenHasAdmin'])}',
@@ -683,10 +616,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         'adminEnabled=${publishAiDebugValue(debug['adminDocEnabled'])}',
       ]);
     }
-
     _appendPublishAiTrace(stage, parts.join(' | '), level: level);
   }
-
   void _appendAdminAccessStateTrace(
     String stage,
     AdminAccessState state, {
@@ -701,14 +632,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       'serverOk=${publishAiDebugValue(state.serverCheckSucceeded)}',
       'serverAdmin=${publishAiDebugValue(state.serverIsAdmin)}',
     ];
-
     if ((state.serverErrorCode ?? '').trim().isNotEmpty) {
       parts.add('serverError=${publishAiDebugValue(state.serverErrorCode)}');
     }
-
     _appendPublishAiTrace(stage, parts.join(' | '), level: level);
   }
-
   String _publishAdminRuntimeDetail(AdminAccessState state) {
     if (state.serverCheckSucceeded && state.serverIsAdmin == true) {
       return 'Accès admin confirmé';
@@ -727,13 +655,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return 'Accès admin non confirmé';
   }
-
   String _currentPublishAiRuntimeState() {
     if (_isListening) return 'Ecoute micro';
     if (_isAnalyzing) return 'Analyse en cours';
     return 'En attente';
   }
-
   void _logMicroIaDebug(String stage, String message) {
     AdminWebDebugStore.instance.recordEvent(
       area: 'publish-ai',
@@ -742,7 +668,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
     debugPrint('[MICIA][$stage] $message');
   }
-
   Future<MicroIaSecureContext?> _requirePublishAiSecureContext({
     required String stage,
     bool forceRefreshToken = false,
@@ -789,7 +714,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return null;
     }
   }
-
   String adminAudioModeLabel(String mode) {
     switch (mode.toUpperCase()) {
       case 'GOOGLE_ONLY':
@@ -801,7 +725,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         return 'Hybride';
     }
   }
-
   String _classicAdminAudioRuntimeDetail() {
     switch (_adminAudioRuntimeMode.toUpperCase()) {
       case 'GOOGLE_ONLY':
@@ -813,7 +736,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         return 'Micro classique -> Google STT puis nettoyage IA, avec fallback Whisper/Google';
     }
   }
-
   Future<void> _refreshAdminAudioRuntimeAccess() async {
     // Test-safe + UX-safe :
     // ne pas attendre authStateChanges().timeout(5s) au simple montage de la page.
@@ -826,7 +748,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       });
       return;
     }
-
     final user = await _ensureProtectedSessionReady(forceRefreshToken: true);
     if (user == null) {
       _appendPublishAiTrace(
@@ -840,7 +761,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       });
       return;
     }
-
     try {
       final accessState = await _publishAdminAccessResolver.resolveAdminAccess(
         forceRefresh: true,
@@ -852,7 +772,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             ? PublishAiTraceLevel.success
             : PublishAiTraceLevel.warning,
       );
-
       if (!accessState.effectiveIsAdmin) {
         if (!mounted) return;
         setState(() {
@@ -863,7 +782,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         });
         return;
       }
-
       if (!mounted) return;
       setState(() {
         _adminAudioRuntimeAccessState = 1;
@@ -872,7 +790,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         }
       });
       unawaited(_adminAudioRuntimeStore.enableCloudSync());
-
       try {
         await MicroIaService.prepareSecureCallableContext(
           forceRefreshToken: true,
@@ -907,7 +824,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           'mode=${publishAiDebugValue(mode)} source=${publishAiDebugValue(data['source'])}',
           level: PublishAiTraceLevel.success,
         );
-
         if (!mounted) return;
         setState(() {
           _adminAudioRuntimeMode = mode;
@@ -1009,7 +925,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       });
     }
   }
-
   void _rememberAdminAudioRuntime({
     required String flowKey,
     required String label,
@@ -1027,10 +942,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       backendModeUsed: backendModeUsed,
     );
   }
-
   Future<void> _showPublishAiTraceDialog() async {
     if (!mounted) return;
-
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -1050,7 +963,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       },
     );
   }
-
   void _setControllerText(TextEditingController controller, String value) {
     if (controller.text == value) return;
     _runWithoutMarkingUserEdits(() {
@@ -1061,52 +973,42 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
     });
   }
-
   void _handlePublishTitleChanged() {
     if (_isApplyingProgrammaticPublishUpdate) return;
     _titleEditedByUser = true;
   }
-
   void _handlePublishDescriptionChanged() {
     if (_isApplyingProgrammaticPublishUpdate) return;
     _descriptionEditedByUser = true;
   }
-
   void _handlePublishLocationChanged() {
     if (_isApplyingProgrammaticPublishUpdate) return;
     _locationEditedByUser = true;
   }
-
   void _handlePublishPostalCodeChanged() {
     if (_isApplyingProgrammaticPublishUpdate) return;
     _postalCodeEditedByUser = true;
   }
-
   void _handlePublishBudgetChanged() {
     if (_isApplyingProgrammaticPublishUpdate) return;
     _budgetEditedByUser = true;
   }
-
   AiPublishState get _aiPublishState {
     if (_isListening) return AiPublishState.recording;
     if (_isAnalyzing) return AiPublishState.analyzing;
     return AiPublishState.ready;
   }
-
   bool get _isPublishFlowCompleted {
     return _publishAiFlowStep == PublishOfferAiFlowStep.completed;
   }
-
   bool get _isVoiceFlowActive {
     return _publishAiFlowStep == PublishOfferAiFlowStep.voiceSelected ||
         _publishAiFlowStep == PublishOfferAiFlowStep.voiceAnalyzing;
   }
-
   bool get _isTextFlowActive {
     return _publishAiFlowStep == PublishOfferAiFlowStep.textSelected ||
         _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
   }
-
   void _setPublishAiFlowStep(
     PublishOfferAiFlowStep nextStep, {
     String? reason,
@@ -1123,7 +1025,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _publishAiFlowStep = nextStep;
     });
   }
-
   void _onSelectVoiceMethod() {
     if (_descriptionTapToEditPrimed) {
       setState(() {
@@ -1136,7 +1037,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       reason: 'voice-tab-selected',
     );
   }
-
   Future<void> _onSelectTextMethod() async {
     if (mounted) {
       setState(() {
@@ -1152,7 +1052,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     await WidgetsBinding.instance.endOfFrame;
     await _scrollToDescription();
   }
-
   void _markPublishAiFlowCompleted(String reason) {
     if (_descriptionTapToEditPrimed) {
       setState(() {
@@ -1161,7 +1060,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     _setPublishAiFlowStep(PublishOfferAiFlowStep.completed, reason: reason);
   }
-
   void _restorePublishAiFlowAfterError({required bool fromVoice}) {
     _setPublishAiFlowStep(
       fromVoice
@@ -1170,12 +1068,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       reason: fromVoice ? 'voice-error' : 'text-error',
     );
   }
-
   String get _publishAiGuidanceText {
     if (_isListening) {
       return 'Enregistrement en cours. Parlez à l\'IA puis arrêtez pour lancer l\'analyse.';
     }
-
     switch (_publishAiFlowStep) {
       case PublishOfferAiFlowStep.chooseMethod:
         return 'Choisissez une méthode pour créer votre annonce.';
@@ -1191,19 +1087,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         return 'Votre annonce est prête. Vous pouvez vérifier les informations avant publication.';
     }
   }
-
   Widget _buildPublishAiFlowHint() {
     if (_publishAiFlowStep == PublishOfferAiFlowStep.chooseMethod ||
         _publishAiFlowStep == PublishOfferAiFlowStep.voiceSelected ||
         _publishAiFlowStep == PublishOfferAiFlowStep.voiceAnalyzing) {
       return const SizedBox.shrink();
     }
-
     final isCompleted = _isPublishFlowCompleted;
     final isAnalyzing =
         _publishAiFlowStep == PublishOfferAiFlowStep.voiceAnalyzing ||
         _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
-
     return AnimatedContainer(
       key: _publishAiFlowHintKey,
       duration: const Duration(milliseconds: 220),
@@ -1246,7 +1139,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       ),
     );
   }
-
   Widget _guidedSection({
     required Widget child,
     required bool isActive,
@@ -1256,7 +1148,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final showNeon = isActive && neonBorder;
     final borderRadius = BorderRadius.circular(22);
     Widget sectionChild = child;
-
     if (isDimmed) {
       sectionChild = ClipRRect(
         borderRadius: borderRadius,
@@ -1290,7 +1181,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         ),
       );
     }
-
     return IgnorePointer(
       ignoring: isDimmed,
       child: AnimatedOpacity(
@@ -1343,7 +1233,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       ),
     );
   }
-
   String? normalizeDraftMissionDelay(String? rawUrgency) {
     final urgency = (rawUrgency ?? '').trim().toLowerCase();
     switch (urgency) {
@@ -1363,7 +1252,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         return null;
     }
   }
-
   bool transcriptMentionsBudget(String transcript) {
     final lower = transcript.toLowerCase();
     return RegExp(
@@ -1375,7 +1263,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         lower.contains('à négocier') ||
         lower.contains('a negocier');
   }
-
   bool transcriptMentionsUrgency(String transcript) {
     final lower = transcript.toLowerCase();
     return lower.contains('urgent') ||
@@ -1392,10 +1279,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         lower.contains('immédiat') ||
         lower.contains('immediat');
   }
-
   String? extractMissionDelayFromTranscript(String transcript) {
     final lower = transcript.toLowerCase();
-
     if (lower.contains('urgent') ||
         lower.contains('urgence') ||
         lower.contains('immédiat') ||
@@ -1429,10 +1314,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         lower.contains('pas urgent')) {
       return 'À convenir';
     }
-
     return null;
   }
-
   bool transcriptRequestsNegotiatedBudget(String transcript) {
     final lower = transcript.toLowerCase();
     return lower.contains('à négocier') ||
@@ -1442,13 +1325,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         lower.contains('prix flexible') ||
         lower.contains('budget flexible');
   }
-
   double? extractBudgetAmountFromTranscript(String transcript) {
     final matches = RegExp(
       r'\b(\d{2,5}(?:[.,]\d{1,2})?)\s*(€|euros?)\b',
       caseSensitive: false,
     ).allMatches(transcript);
-
     for (final match in matches) {
       final raw = (match.group(1) ?? '').replaceAll(',', '.');
       final value = double.tryParse(raw);
@@ -1456,10 +1337,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         return value;
       }
     }
-
     return null;
   }
-
   /// Mots trop génériques pour compter comme information nouvelle dans une
   /// puce "details" (liaison, remplissage, localisation générique).
   static const Set<String> _kDetailFillerWords = {
@@ -1499,7 +1378,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     'commune',
     'quartier',
   };
-
   String normalizeDetailText(String input) {
     const accents = 'àâäáãåçèéêëìíîïñòóôöõùúûüýÿ';
     const plain = 'aaaaaaceeeeiiiinooooouuuuyy';
@@ -1517,14 +1395,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return buffer.toString();
   }
-
   List<String> significantDetailWords(String text) {
     return normalizeDetailText(text)
         .split(RegExp(r'\s+'))
         .where((w) => w.length >= 4 && !_kDetailFillerWords.contains(w))
         .toList();
   }
-
   /// Deux mots comptent comme la même information s'ils sont identiques,
   /// si l'un contient l'autre (recherché/cherche) ou s'ils partagent une
   /// racine d'au moins 5 caractères (réparation/réparer).
@@ -1538,7 +1414,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return common >= 5;
   }
-
   /// Filtre anti-doublon : écarte les puces "details" qui ne font que
   /// reformuler la description (ou une puce déjà retenue). Une puce est
   /// jugée redondante quand au moins 60 % de ses mots significatifs sont
@@ -1561,7 +1436,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return kept;
   }
-
   String buildRichDraftDescription(Map<String, dynamic> draft) {
     final shortDescription =
         ((draft['description_courte'] ?? draft['description']) as String? ?? '')
@@ -1574,12 +1448,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         : const <String>[];
     final availabilities =
         ((draft['disponibilites'] ?? '') as String?)?.trim() ?? '';
-
     // Anti-doublon : le modèle peut renvoyer des puces qui paraphrasent la
     // transcription déjà présente dans la description — on ne garde que
     // celles qui apportent une information réellement nouvelle.
     final uniqueDetails = filterRedundantDetails(shortDescription, details);
-
     final lines = <String>[];
     if (shortDescription.isNotEmpty) {
       lines.add(shortDescription);
@@ -1592,7 +1464,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return lines.join('\n').trim();
   }
-
   String firstNonEmptyDraftValue(
     Map<String, dynamic> draft,
     List<String> keys,
@@ -1605,7 +1476,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return '';
   }
-
   void _applyRichDraftToForm(Map<String, dynamic> draft) {
     final title = firstNonEmptyDraftValue(draft, const [
       'title',
@@ -1651,7 +1521,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       'zip',
       'cp',
     ]);
-
     if (detectedCity.isEmpty && rawLocation.isNotEmpty) {
       detectedCity = rawLocation;
     }
@@ -1670,7 +1539,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         detectedCity = cityWithoutCp;
       }
     }
-
     final missionDelay = normalizeDraftMissionDelay(
       (draft['urgence'] ?? '').toString(),
     );
@@ -1690,7 +1558,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         rawBudgetType == 'negotiable' ||
         rawBudgetType == 'a_negocier' ||
         rawBudgetType == 'à négocier';
-
     // The user-edited flags only block auto-fill when the field still holds
     // user input. If the field is empty (user typed then cleared, or never
     // typed), we still apply the AI suggestion — otherwise the IA button
@@ -1698,7 +1565,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     bool canFillController(TextEditingController controller, bool editedFlag) {
       return controller.text.trim().isEmpty || !editedFlag;
     }
-
     setState(() {
       if (canFillController(_titleController, _titleEditedByUser) &&
           title.isNotEmpty) {
@@ -1742,7 +1608,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         }
       }
     });
-
     _applyDetectedCityData(
       city: detectedCity,
       postalCode: detectedPostalCode,
@@ -1765,7 +1630,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (mounted) _recompute();
     });
   }
-
   // ✅ Extraction rapide CP (FR + DROM) depuis la transcription
   String? extractPostalCodeFromTranscript(String transcript) {
     final t = transcript;
@@ -1773,7 +1637,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final m = RegExp(r'\b(97[0-9]{3}|98[0-9]{3}|[0-9]{5})\b').firstMatch(t);
     return m?.group(1);
   }
-
   // ✅ Extraction ville: soit via CP (fiable), soit via motif "à <ville>"
   CityRecord? _extractCityRecordFromTranscript(
     String transcript, {
@@ -1785,26 +1648,21 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         postalCode: cp.trim(),
       );
     }
-
     // ✅ FIX: raw string + apostrophes => utiliser guillemets doubles
     final m = RegExp(
       r"\b(?:a|à|sur|vers|près de|proche de)\s+([A-Za-zÀ-ÖØ-öø-ÿ''\-\s]{2,40})\b",
       caseSensitive: false,
     ).firstMatch(transcript);
-
     final rawCity = m?.group(1)?.trim();
     if (rawCity == null || rawCity.isEmpty) return null;
-
     return FrenchCityPostalValidator.instance.resolveCanonicalCity(
       city: rawCity,
       postalCode: '',
     );
   }
-
   String? resolvePublishCategoryLabel(String? rawCategory) {
     final canonical = canonicalizeOfferCategory(rawCategory);
     if (canonical == null || canonical.trim().isEmpty) return null;
-
     final normalizedCanonical = normalizeOfferText(canonical);
     for (final category in _categories) {
       if (normalizeOfferText(category) == normalizedCanonical) {
@@ -1825,28 +1683,23 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return null;
   }
-
   CityRecord? _resolveCanonicalCityRecord({String? city, String? postalCode}) {
     return FrenchCityPostalValidator.instance.resolveCanonicalCity(
       city: city,
       postalCode: postalCode,
     );
   }
-
   void _canonicalizeLocationInputs() {
     final best = _resolveCanonicalCityRecord(
       city: _locationController.text,
       postalCode: _postalCodeController.text,
     );
     if (best == null) return;
-
     final sameCity = _locationController.text.trim() == best.name;
     final samePostalCode = _postalCodeController.text.trim() == best.cp;
     if (sameCity && samePostalCode) return;
-
     _applyCity(best, forceApply: true);
   }
-
   String normalizeAiGeoHint(String value) {
     return normalizeLocationLookupKey(value)
         .replaceAll(RegExp(r'\bdepartement\b'), '')
@@ -1855,7 +1708,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
-
   bool geoCommuneMatchesAiHint(
     GeoApiGouvCommune commune, {
     required String departmentHint,
@@ -1864,17 +1716,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }) {
     final dept = commune.departmentCode.trim();
     final region = commune.regionCode.trim();
-
     final hints = <String>[
       departmentHint,
       regionHint,
       locationHint,
     ].map(normalizeAiGeoHint).where((v) => v.isNotEmpty).toList();
-
     if (hints.isEmpty) {
       return true;
     }
-
     final departmentAliases = <String, Set<String>>{
       '971': {'971', 'guadeloupe', 'gwada'},
       '972': {'972', 'martinique'},
@@ -1882,7 +1731,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       '974': {'974', 'reunion', 'la reunion'},
       '976': {'976', 'mayotte'},
     };
-
     final regionAliases = <String, Set<String>>{
       '01': {'01', 'guadeloupe', 'gwada'},
       '02': {'02', 'martinique'},
@@ -1890,29 +1738,23 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       '04': {'04', 'reunion', 'la reunion'},
       '06': {'06', 'mayotte'},
     };
-
     bool hintMatchesAliases(String hint, Set<String> aliases) {
       return aliases.any((alias) => hint == alias || hint.contains(alias));
     }
-
     for (final hint in hints) {
       if (hint == dept || hint.contains(dept)) return true;
       if (hint == region || hint.contains(region)) return true;
-
       final deptAliases = departmentAliases[dept];
       if (deptAliases != null && hintMatchesAliases(hint, deptAliases)) {
         return true;
       }
-
       final regAliases = regionAliases[region];
       if (regAliases != null && hintMatchesAliases(hint, regAliases)) {
         return true;
       }
     }
-
     return false;
   }
-
   Future<void> _resolveAiCityWithGeoApiGouv({
     required String rawCity,
     required String rawPostalCode,
@@ -1922,28 +1764,20 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }) async {
     final city = rawCity.trim();
     final postalCode = rawPostalCode.trim();
-
     if (city.isEmpty) return;
-
     try {
       final communes = postalCode.length == 5
           ? await _geoApiGouvService.findCommunesByPostalCode(postalCode)
           : await _geoApiGouvService.searchCommunesByName(city);
-
       if (!mounted || communes.isEmpty) return;
-
       final normalizedCity = normalizeLocationLookupKey(city);
-
       final candidates = communes.where((commune) {
         final normalizedCommune = normalizeLocationLookupKey(commune.name);
-
         final nameMatches =
             normalizedCommune == normalizedCity ||
             normalizedCommune.contains(normalizedCity) ||
             normalizedCity.contains(normalizedCommune);
-
         if (!nameMatches) return false;
-
         return geoCommuneMatchesAiHint(
           commune,
           departmentHint: departmentHint,
