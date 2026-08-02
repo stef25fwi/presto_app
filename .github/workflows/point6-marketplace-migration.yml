@@ -55,3 +55,5 @@ jobs:
             tools/quality/check_marketplace_readiness.test.mjs
           git commit -m "Point 6 — Certifier la Marketplace d’annonces [point6-generated]"
           git push origin HEAD:agent/point-6-marketplace-readiness
+
+# Trigger retained only while the generated implementation is being prepared.
