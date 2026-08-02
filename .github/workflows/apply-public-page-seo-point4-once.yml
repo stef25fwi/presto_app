@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - agent/seo-public-pages-point-4
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -37,19 +34,19 @@ jobs:
       - name: Validate patch formatting
         run: git diff --check
 
-      - name: Commit generated changes
+      - name: Commit application changes
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "ilipresto-seo-agent"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git restore \
+            .github/workflows/seo-acquisition-readiness.yml \
+            .github/workflows/deploy.yml
           git rm tools/migrations/apply_public_page_seo_point4.py
-          git rm .github/workflows/apply-public-page-seo-point4-once.yml
           git add \
             web/index.html \
             web/sitemap.xml \
-            firebase.json \
-            .github/workflows/seo-acquisition-readiness.yml \
-            .github/workflows/deploy.yml
-          git commit -m "Optimiser toutes les pages publiques pour le SEO"
+            firebase.json
+          git commit -m "Optimiser les routes publiques pour le SEO"
           git push origin HEAD:agent/seo-public-pages-point-4
