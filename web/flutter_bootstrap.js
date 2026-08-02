@@ -49,10 +49,38 @@
     );
   };
 
+  function getPrelaunchSeoShell() {
+    return document.getElementById('prelaunch-seo-shell');
+  }
+
+  function preparePrelaunchSeoShellForFlutter() {
+    const shell = getPrelaunchSeoShell();
+    if (!shell || shell.hidden) return;
+
+    // The HTML shell contains the complete page for SEO/no-JavaScript use.
+    // Once JavaScript starts, keep only the centered brand while Flutter loads.
+    // This prevents users from seeing the same full page once in HTML and then
+    // a second time when the real Flutter screen paints.
+    const card = shell.querySelector('.prelaunch-card');
+    const domain = shell.querySelector('.prelaunch-domain');
+    const brand = shell.querySelector('.prelaunch-brand');
+
+    if (card) card.hidden = true;
+    if (domain) domain.hidden = true;
+    if (brand) brand.style.marginBottom = '0';
+
+    shell.setAttribute('aria-hidden', 'true');
+    shell.dataset.flutterLoading = 'true';
+  }
+
   function removePrelaunchSeoShell() {
-    const shell = document.getElementById('prelaunch-seo-shell');
+    const shell = getPrelaunchSeoShell();
     if (shell) shell.remove();
   }
+
+  // Run immediately when this same-origin bootstrap is evaluated, well before
+  // the Flutter engine and application bundle finish loading.
+  preparePrelaunchSeoShellForFlutter();
 
   window.addEventListener('flutter-first-frame', removePrelaunchSeoShell, {
     once: true,

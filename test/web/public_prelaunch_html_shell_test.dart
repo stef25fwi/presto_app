@@ -44,13 +44,27 @@ void main() {
       expect(html, contains('"@type": "Organization"'));
     });
 
+    test('réduit immédiatement la coquille HTML à un chargement de marque', () {
+      expect(bootstrap, contains('preparePrelaunchSeoShellForFlutter'));
+      expect(bootstrap, contains("shell.querySelector('.prelaunch-card')"));
+      expect(bootstrap, contains("shell.querySelector('.prelaunch-domain')"));
+      expect(bootstrap, contains('if (card) card.hidden = true;'));
+      expect(bootstrap, contains('if (domain) domain.hidden = true;'));
+      expect(bootstrap, contains("shell.setAttribute('aria-hidden', 'true')"));
+      expect(
+        bootstrap.indexOf('preparePrelaunchSeoShellForFlutter();'),
+        lessThan(bootstrap.indexOf('_flutter.loader.load({')),
+      );
+    });
+
     test('retire la coquille après la première frame Flutter', () {
       expect(html, contains("window.addEventListener('flutter-first-frame'"));
       expect(html, contains('shell.remove();'));
+      expect(bootstrap, contains("window.addEventListener('flutter-first-frame'"));
+      expect(bootstrap, contains('removePrelaunchSeoShell'));
     });
 
     test('prévoit un retrait de secours après le démarrage Flutter', () {
-      expect(bootstrap, contains('removePrelaunchSeoShell'));
       expect(bootstrap, contains('onEntrypointLoaded'));
       expect(bootstrap, contains('await appRunner.runApp();'));
       expect(bootstrap, contains('window.requestAnimationFrame'));
