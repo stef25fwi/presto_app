@@ -1,0 +1,21 @@
+name: Structured data readiness
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate public pages
+        run: node tools/quality/check_public_page_seo.mjs
+      - name: Validate JSON-LD graphs
+        run: node tools/quality/check_structured_data.mjs

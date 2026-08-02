@@ -263,9 +263,35 @@
               "value": "no-cache, must-revalidate"
             }
           ]
+        },
+        {
+          "source": "/a-propos",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/guides/comment-fonctionne-ilipresto",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
         }
       ],
       "rewrites": [
+        {
+          "source": "/a-propos",
+          "destination": "/a-propos.html"
+        },
+        {
+          "source": "/guides/comment-fonctionne-ilipresto",
+          "destination": "/guides/comment-fonctionne-ilipresto.html"
+        },
         {
           "source": "/guadeloupe",
           "destination": "/guadeloupe.html"
@@ -284,6 +310,26 @@
         }
       ],
       "redirects": [
+        {
+          "source": "/a-propos/",
+          "destination": "/a-propos",
+          "type": 301
+        },
+        {
+          "source": "/a-propos.html",
+          "destination": "/a-propos",
+          "type": 301
+        },
+        {
+          "source": "/guides/comment-fonctionne-ilipresto/",
+          "destination": "/guides/comment-fonctionne-ilipresto",
+          "type": 301
+        },
+        {
+          "source": "/guides/comment-fonctionne-ilipresto.html",
+          "destination": "/guides/comment-fonctionne-ilipresto",
+          "type": 301
+        },
         {
           "source": "/guadeloupe/",
           "destination": "/guadeloupe",
@@ -555,9 +601,35 @@
               "value": "no-cache, must-revalidate"
             }
           ]
+        },
+        {
+          "source": "/a-propos",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/guides/comment-fonctionne-ilipresto",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
         }
       ],
       "rewrites": [
+        {
+          "source": "/a-propos",
+          "destination": "/a-propos.html"
+        },
+        {
+          "source": "/guides/comment-fonctionne-ilipresto",
+          "destination": "/guides/comment-fonctionne-ilipresto.html"
+        },
         {
           "source": "/guadeloupe",
           "destination": "/guadeloupe.html"
@@ -576,6 +648,26 @@
         }
       ],
       "redirects": [
+        {
+          "source": "/a-propos/",
+          "destination": "/a-propos",
+          "type": 301
+        },
+        {
+          "source": "/a-propos.html",
+          "destination": "/a-propos",
+          "type": 301
+        },
+        {
+          "source": "/guides/comment-fonctionne-ilipresto/",
+          "destination": "/guides/comment-fonctionne-ilipresto",
+          "type": 301
+        },
+        {
+          "source": "/guides/comment-fonctionne-ilipresto.html",
+          "destination": "/guides/comment-fonctionne-ilipresto",
+          "type": 301
+        },
         {
           "source": "/guadeloupe/",
           "destination": "/guadeloupe",

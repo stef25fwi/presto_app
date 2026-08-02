@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "baseUrl": "https://ilipresto.fr",
+  "organizationId": "https://ilipresto.fr/#organization",
+  "websiteId": "https://ilipresto.fr/#website",
+  "logoId": "https://ilipresto.fr/#logo",
+  "forbiddenTypes": [
+    "Product",
+    "Offer",
+    "AggregateOffer",
+    "LocalBusiness",
+    "AggregateRating",
+    "Review"
+  ],
+  "staticRoutes": {
+    "/": {
+      "file": "web/index.html",
+      "requiredTypes": ["Organization", "WebSite", "WebPage", "Service"]
+    },
+    "/guadeloupe": {
+      "file": "web/guadeloupe.html",
+      "requiredTypes": ["WebPage", "Service", "BreadcrumbList"]
+    },
+    "/martinique": {
+      "file": "web/martinique.html",
+      "requiredTypes": ["WebPage", "Service", "BreadcrumbList"]
+    },
+    "/guyane": {
+      "file": "web/guyane.html",
+      "requiredTypes": ["WebPage", "Service", "BreadcrumbList"]
+    },
+    "/a-propos": {
+      "file": "web/a-propos.html",
+      "requiredTypes": ["ProfilePage", "Organization", "BreadcrumbList"]
+    },
+    "/guides/comment-fonctionne-ilipresto": {
+      "file": "web/guides/comment-fonctionne-ilipresto.html",
+      "requiredTypes": ["Article", "WebPage", "Organization", "BreadcrumbList"]
+    }
+  },
+  "dynamicLegalRoutes": [
+    "/mentions-legales",
+    "/confidentialite",
+    "/cgu",
+    "/suppression-compte"
+  ]
+}

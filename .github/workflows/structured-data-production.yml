@@ -1,0 +1,31 @@
+name: Structured data production
+
+on:
+  workflow_run:
+    workflows:
+      - Validate and Deploy Firebase
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-production:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate repository JSON-LD
+        run: node tools/quality/check_structured_data.mjs
+      - name: Validate live JSON-LD
+        run: node tools/quality/check_live_structured_data.mjs
