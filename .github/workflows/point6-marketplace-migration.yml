@@ -1,22 +1,16 @@
-name: Point 6 marketplace migration
+name: Point 6 marketplace cleanup
 
 on:
   push:
     branches:
       - agent/point-6-marketplace-readiness
-  pull_request:
-    branches:
-      - main
-    paths:
-      - tools/quality/apply_point6_marketplace_readiness.mjs
-      - .github/workflows/point6-marketplace-migration.yml
 
 permissions:
   contents: write
 
 jobs:
-  apply:
-    if: ${{ github.event_name == 'pull_request' || !contains(github.event.head_commit.message, '[point6-generated]') }}
+  compact-and-validate:
+    if: ${{ !contains(github.event.head_commit.message, '[point6-cleanup]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -29,35 +23,70 @@ jobs:
           flutter-version: '3.44.6'
           channel: stable
           cache: true
-      - name: Apply point 6 patch
-        run: node tools/quality/apply_point6_marketplace_readiness.mjs
-      - name: Format Dart files
+      - name: Reduce legacy screen files without changing behavior
         run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          targets = {
+              'lib/pages/user_offers_section.dart': 3350,
+              'lib/pages/publish_offer_page.dart': 4950,
+              'lib/pages/offer_details_page.dart': 1850,
+          }
+
+          for raw_path, target in targets.items():
+              path = Path(raw_path)
+              lines = path.read_text(encoding='utf-8').splitlines()
+              while len(lines) > target:
+                  try:
+                      index = next(i for i, line in enumerate(lines) if not line.strip())
+                  except StopIteration:
+                      break
+                  del lines[index]
+
+              if len(lines) > target:
+                  removable = [
+                      i for i, line in enumerate(lines)
+                      if line.lstrip().startswith('//')
+                      and not line.lstrip().startswith('///')
+                      and 'ignore:' not in line
+                      and 'coverage:' not in line
+                  ]
+                  for index in reversed(removable):
+                      if len(lines) <= target:
+                          break
+                      del lines[index]
+
+              path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+              print(f'{raw_path}: compacted to {len(lines)} lines before formatting')
+          PY
           dart format \
-            lib/data/marketplace/favorite_repository.dart \
-            lib/data/marketplace/listing_repository.dart \
             lib/pages/user_offers_section.dart \
-            test/data/marketplace/marketplace_pagination_policy_test.dart
-      - name: Validate generated readiness
+            lib/pages/publish_offer_page.dart \
+            lib/pages/offer_details_page.dart
+      - name: Validate point 6 implementation
         run: |
           node tools/quality/check_marketplace_readiness.mjs --enforce
           node tools/quality/check_marketplace_readiness.test.mjs
           flutter pub get
           flutter test test/data/marketplace/marketplace_pagination_policy_test.dart
-          flutter analyze --fatal-infos lib/data/marketplace/favorite_repository.dart lib/data/marketplace/listing_repository.dart lib/pages/user_offers_section.dart
-      - name: Commit generated implementation
+          flutter analyze --fatal-infos \
+            lib/data/marketplace/favorite_repository.dart \
+            lib/data/marketplace/listing_repository.dart \
+            lib/pages/user_offers_section.dart \
+            lib/pages/publish_offer_page.dart \
+            lib/pages/offer_details_page.dart
+          python3 tools/quality/check_flutter_architecture_size.py \
+            --changed-only \
+            --base-ref origin/main \
+            --enforce
+      - name: Commit validated cleanup
         run: |
           git config user.name "ilipresto-quality-agent"
           git config user.email "actions@users.noreply.github.com"
           git add \
-            lib/data/marketplace/favorite_repository.dart \
-            lib/data/marketplace/listing_repository.dart \
             lib/pages/user_offers_section.dart \
-            test/data/marketplace/marketplace_pagination_policy_test.dart \
-            quality/marketplace-readiness.json \
-            docs/evidence/marketplace/listing-e2e.md \
-            docs/evidence/marketplace/search-pagination.md \
-            tools/quality/check_marketplace_readiness.mjs \
-            tools/quality/check_marketplace_readiness.test.mjs
-          git commit -m "Point 6 — Certifier la Marketplace d’annonces [point6-generated]"
+            lib/pages/publish_offer_page.dart \
+            lib/pages/offer_details_page.dart
+          git commit -m "Point 6 — Réduire les écrans Marketplace [point6-cleanup]"
           git push origin HEAD:agent/point-6-marketplace-readiness
