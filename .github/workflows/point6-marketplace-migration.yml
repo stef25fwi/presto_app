@@ -31,7 +31,7 @@ jobs:
           targets = {
               'lib/pages/user_offers_section.dart': 3350,
               'lib/pages/publish_offer_page.dart': 4950,
-              'lib/pages/offer_details_page.dart': 1850,
+              'lib/pages/offers/offer_details_page.dart': 1850,
           }
 
           for raw_path, target in targets.items():
@@ -67,6 +67,6 @@ jobs:
           git add \
             lib/pages/user_offers_section.dart \
             lib/pages/publish_offer_page.dart \
-            lib/pages/offer_details_page.dart
+            lib/pages/offers/offer_details_page.dart
           git commit -m "Point 6 — Réduire les écrans Marketplace [point6-cleanup]"
           git push origin HEAD:agent/point-6-marketplace-readiness
