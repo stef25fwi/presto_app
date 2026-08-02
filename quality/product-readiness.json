@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "phase": 1,
+  "name": "product-readiness",
+  "updatedAt": "2026-08-02",
+  "controls": [
+    {
+      "id": "personas-and-roles-approved",
+      "description": "Les utilisateurs, rôles et besoins prioritaires sont documentés et approuvés.",
+      "required": true,
+      "status": "pending",
+      "evidence": ["docs/product/product-requirements.md"]
+    },
+    {
+      "id": "business-model-approved",
+      "description": "Le modèle bêta gratuite, les offres futures et les règles de monétisation sont figés.",
+      "required": true,
+      "status": "pending",
+      "evidence": ["docs/product/business-model.md"]
+    },
+    {
+      "id": "release-scope-approved",
+      "description": "Le périmètre du lancement, les exclusions et les critères go/no-go sont approuvés.",
+      "required": true,
+      "status": "pending",
+      "evidence": ["docs/product/release-scope.md"]
+    },
+    {
+      "id": "kpi-framework-approved",
+      "description": "Les KPI acquisition, activation, rétention, mise en relation, revenus et coûts sont définis.",
+      "required": true,
+      "status": "pending",
+      "evidence": ["docs/product/kpi-framework.md"]
+    },
+    {
+      "id": "product-contradictions-closed",
+      "description": "Les textes, fonctionnalités et modes d’exploitation ne présentent aucune contradiction produit.",
+      "required": true,
+      "status": "pending",
+      "evidence": ["docs/product/product-requirements.md", "docs/product/business-model.md"]
+    }
+  ]
+}
