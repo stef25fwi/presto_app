@@ -5,7 +5,7 @@
   "display": "standalone",
   "background_color": "#FF8A1D",
   "theme_color": "#FF8A1D",
-  "description": "Services et micro-services du quotidien partout en France, avec annonces assistées par l’IA et 0 % de commission.",
+  "description": "Trouvez rapidement un particulier, un indépendant ou un professionnel partout en France. Publiez une annonce assistée par IA et échangez directement, avec 0 % de commission.",
   "orientation": "portrait-primary",
   "prefer_related_applications": false,
   "icons": [
