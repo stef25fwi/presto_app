@@ -7,6 +7,18 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://ilipresto.fr/a-propos</loc>
+    <lastmod>2026-08-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ilipresto.fr/guides/comment-fonctionne-ilipresto</loc>
+    <lastmod>2026-08-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://ilipresto.fr/guadeloupe</loc>
     <lastmod>2026-08-02</lastmod>
     <changefreq>weekly</changefreq>
