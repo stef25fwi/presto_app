@@ -23,6 +23,14 @@ Le programme est piloté par :
 
 La présence préalable de code dans un point futur est conservée comme acquis technique, mais elle ne vaut pas validation officielle et ne permet pas de sauter l’ordre.
 
+## État d’exécution au 2 août 2026
+
+- point actif : **1. Cadrage produit** ;
+- quatre preuves produit créées ;
+- cinq contrôles `product-readiness` au statut `verified` ;
+- promotion du point 1 en attente de la validation CI, de la fusion du dispositif sur `main`, puis de l’action contrôlée `advance` ;
+- points 2 à 18 maintenus `blocked`.
+
 ## Fonctionnement de l’agent
 
 ### Surveillance automatique
