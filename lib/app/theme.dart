@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'presto_overlay_theme.dart';
 import '../constants.dart';
 
+const double kPrestoMinInteractiveDimension = 48;
+
 /// Theme singleton — built once, reused across rebuilds.
 final ThemeData _prestoThemeSingleton = _buildPrestoThemeData();
 
@@ -12,12 +14,13 @@ ThemeData buildPrestoTheme() => _prestoThemeSingleton;
 ThemeData _buildPrestoThemeData() {
   const prestoOrange = Color(0xFFFF6600);
   const prestoBlue = Color(0xFF1A73E8);
+  const appBackground = Color(0xFFF7F9FC);
   const overlayTheme = PrestoOverlayTheme(
     surfaceColor: Colors.white,
     surfaceTintColor: Colors.white,
     borderColor: Color(0xFFD7DEE8),
     selectionFillColor: Color(0xFFEAF2FF),
-    selectionAccentColor: Color(0xFF1A73E8),
+    selectionAccentColor: prestoBlue,
     shadowColor: Color(0x140F172A),
     dialogRadius: BorderRadius.all(Radius.circular(24)),
     sheetRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -34,10 +37,23 @@ ThemeData _buildPrestoThemeData() {
     primary: prestoBlue,
   );
 
+  final sharedButtonStyle = ButtonStyle(
+    minimumSize: const WidgetStatePropertyAll<Size>(
+      Size(kPrestoMinInteractiveDimension, kPrestoMinInteractiveDimension),
+    ),
+    tapTargetSize: MaterialTapTargetSize.padded,
+    visualDensity: VisualDensity.standard,
+    shape: WidgetStatePropertyAll<OutlinedBorder>(
+      RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    ),
+  );
+
   return ThemeData(
     fontFamily: 'Inter',
     useMaterial3: true,
     colorScheme: colorScheme,
+    visualDensity: VisualDensity.standard,
+    materialTapTargetSize: MaterialTapTargetSize.padded,
     extensions: const <ThemeExtension<dynamic>>[
       overlayTheme,
     ],
@@ -46,14 +62,14 @@ ThemeData _buildPrestoThemeData() {
     splashColor: overlayTheme.selectionFillColor,
     highlightColor: overlayTheme.selectionFillColor,
     hoverColor: const Color(0xFFF1F5F9),
-    focusColor: const Color(0xFFE2E8F0),
+    focusColor: const Color(0x331A73E8),
     appBarTheme: AppBarTheme(
       elevation: 0,
       centerTitle: true,
       backgroundColor: prestoBlue,
       foregroundColor: Colors.white,
       systemOverlayStyle: const SystemUiOverlayStyle(
-        statusBarColor: Color(0xFF1A73E8),
+        statusBarColor: prestoBlue,
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness: Brightness.dark,
         systemNavigationBarColor: Colors.white,
@@ -86,7 +102,7 @@ ThemeData _buildPrestoThemeData() {
       surfaceTintColor: overlayTheme.surfaceTintColor,
       shape: overlayTheme.sheetShape,
       showDragHandle: true,
-      dragHandleColor: const Color(0xFF94A3B8),
+      dragHandleColor: const Color(0xFF64748B),
       modalBarrierColor: const Color(0x660F172A),
       elevation: 10,
     ),
@@ -120,6 +136,7 @@ ThemeData _buildPrestoThemeData() {
       ),
     ),
     listTileTheme: ListTileThemeData(
+      minVerticalPadding: 12,
       tileColor: overlayTheme.surfaceColor,
       selectedColor: overlayTheme.selectionAccentColor,
       selectedTileColor: overlayTheme.selectionFillColor,
@@ -130,29 +147,39 @@ ThemeData _buildPrestoThemeData() {
       ),
     ),
     snackBarTheme: SnackBarThemeData(
-      backgroundColor: const Color(0xFFF2F3F5),
+      backgroundColor: const Color(0xFF1E293B),
       contentTextStyle: const TextStyle(
-        color: Color(0xFF1A202C),
+        color: Colors.white,
         fontSize: 14,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
       ),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
       ),
     ),
-    scaffoldBackgroundColor: const Color(0xFFFDF4EC),
+    scaffoldBackgroundColor: appBackground,
     inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Colors.black26),
+        borderSide: const BorderSide(color: Color(0xFF94A3B8)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: prestoBlue, width: 1.4),
+        borderSide: const BorderSide(color: prestoBlue, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFB91C1C), width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFB91C1C), width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       labelStyle: const TextStyle(
@@ -162,21 +189,40 @@ ThemeData _buildPrestoThemeData() {
       hintStyle: const TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w500,
+        color: Color(0xFF64748B),
+      ),
+    ),
+    iconButtonTheme: IconButtonThemeData(
+      style: sharedButtonStyle.copyWith(
+        foregroundColor: const WidgetStatePropertyAll<Color>(prestoBlue),
       ),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        textStyle: kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w700),
+      style: sharedButtonStyle.copyWith(
+        textStyle: WidgetStatePropertyAll<TextStyle>(
+          kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w700),
+        ),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: sharedButtonStyle.copyWith(
+        textStyle: WidgetStatePropertyAll<TextStyle>(
+          kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w700),
+        ),
       ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        textStyle: kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w800),
+      style: sharedButtonStyle.copyWith(
+        textStyle: WidgetStatePropertyAll<TextStyle>(
+          kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w800),
+        ),
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        textStyle: kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w800),
+      style: sharedButtonStyle.copyWith(
+        textStyle: WidgetStatePropertyAll<TextStyle>(
+          kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w800),
+        ),
       ),
     ),
   );
