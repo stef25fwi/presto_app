@@ -1,57 +1,13 @@
 name: Apply structured data point 5 once
 
 on:
-  push:
-    branches:
-      - agent/seo-structured-data-point-5
-    paths:
-      - tools/migrations/apply_structured_data_point5.py
-      - .github/workflows/apply-structured-data-point5-once.yml
   workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: structured-data-point-5
-  cancel-in-progress: true
+  contents: read
 
 jobs:
-  apply:
+  completed:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: agent/seo-structured-data-point-5
-          fetch-depth: 0
-
-      - name: Validate migration syntax
-        run: python3 -m py_compile tools/migrations/apply_structured_data_point5.py
-
-      - name: Apply structured data migration
-        run: python3 tools/migrations/apply_structured_data_point5.py
-
-      - name: Validate public pages
-        run: node tools/quality/check_public_page_seo.mjs
-
-      - name: Validate structured data
-        run: node tools/quality/check_structured_data.mjs
-
-      - name: Validate patch formatting
-        run: git diff --check
-
-      - name: Commit generated application changes
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "ilipresto-seo-agent"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add \
-            web/index.html \
-            web/guadeloupe.html \
-            web/martinique.html \
-            web/guyane.html \
-            web/guides/comment-fonctionne-ilipresto.html \
-            firebase.json
-          git commit -m "Finaliser les graphes JSON-LD publics"
-          git push origin HEAD:agent/seo-structured-data-point-5
+      - run: echo "Migration du point 5 déjà appliquée."
