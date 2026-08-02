@@ -68,6 +68,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('0 % de commission'), findsOneWidget);
+    expect(find.textContaining('Accès test'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -80,11 +81,11 @@ void main() {
       find.text(PublicLandingConfigService.defaultLaunchMessage),
       findsOneWidget,
     );
+    expect(find.textContaining('Accès test'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets(
-      'toute la carte compte les appuis et affiche la progression visible',
+  testWidgets('toute la carte compte huit appuis sans afficher de compteur',
       (tester) async {
     var accessGrantCount = 0;
     await pumpPage(
@@ -104,26 +105,22 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    await tapVisibleLaunchMessage();
-
-    expect(find.text('Accès test : 1/8'), findsOneWidget);
-    expect(
-      find.byKey(PublicPrelaunchPage.accessProgressKey),
-      findsOneWidget,
-    );
-    expect(accessGrantCount, 0);
-
-    for (var index = 1;
-        index < PublicPrelaunchPage.developerAccessTapCount;
+    for (var index = 0;
+        index < PublicPrelaunchPage.developerAccessTapCount - 1;
         index += 1) {
       await tapVisibleLaunchMessage();
+      expect(find.textContaining('Accès test'), findsNothing);
     }
-    await tester.pumpAndSettle();
+
+    expect(accessGrantCount, 0);
+
+    await tapVisibleLaunchMessage();
 
     expect(accessGrantCount, 1);
+    expect(find.textContaining('Accès test'), findsNothing);
   });
 
-  testWidgets('accorde l’accès développeur une seule fois au huitième appui',
+  testWidgets('accorde l’accès une seule fois au huitième appui silencieux',
       (tester) async {
     var accessGrantCount = 0;
     await pumpPage(
@@ -132,7 +129,7 @@ void main() {
       onDeveloperAccessGranted: () => accessGrantCount += 1,
     );
 
-    final trigger = find.byKey(PublicPrelaunchPage.accessTriggerKey);
+    final trigger = find.text(PublicLandingConfigService.defaultBadge);
     expect(trigger, findsOneWidget);
 
     for (var index = 0;
@@ -143,7 +140,7 @@ void main() {
     }
 
     expect(accessGrantCount, 0);
-    expect(find.text('Accès test : 7/8'), findsOneWidget);
+    expect(find.textContaining('Accès test'), findsNothing);
 
     await tester.tap(trigger);
     await tester.pump();
@@ -158,21 +155,39 @@ void main() {
     }
 
     expect(accessGrantCount, 1);
+    expect(find.textContaining('Accès test'), findsNothing);
   });
 
-  testWidgets('réinitialise la progression après huit secondes sans appui',
+  testWidgets('réinitialise silencieusement la séquence après huit secondes',
       (tester) async {
-    await pumpPage(tester, size: const Size(390, 844));
+    var accessGrantCount = 0;
+    await pumpPage(
+      tester,
+      size: const Size(390, 844),
+      onDeveloperAccessGranted: () => accessGrantCount += 1,
+    );
 
-    final trigger = find.byKey(PublicPrelaunchPage.accessTriggerKey);
+    final trigger = find.text(PublicLandingConfigService.defaultBadge);
     await tester.tap(trigger);
-    await tester.pumpAndSettle();
-    expect(find.text('Accès test : 1/8'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.textContaining('Accès test'), findsNothing);
 
     await tester.pump(const Duration(seconds: 9));
-    await tester.pumpAndSettle();
 
-    expect(find.byKey(PublicPrelaunchPage.accessProgressKey), findsNothing);
+    for (var index = 0;
+        index < PublicPrelaunchPage.developerAccessTapCount - 1;
+        index += 1) {
+      await tester.tap(trigger);
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(accessGrantCount, 0);
+    expect(find.textContaining('Accès test'), findsNothing);
+
+    await tester.tap(trigger);
+    await tester.pump();
+
+    expect(accessGrantCount, 1);
   });
 
   testWidgets('remplace la préouverture par une seule page application',
@@ -201,7 +216,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final trigger = find.byKey(PublicPrelaunchPage.accessTriggerKey);
+    final trigger = find.text(PublicLandingConfigService.defaultBadge);
     for (var index = 0;
         index < PublicPrelaunchPage.developerAccessTapCount;
         index += 1) {
@@ -212,6 +227,7 @@ void main() {
 
     expect(find.byType(PublicPrelaunchPage), findsNothing);
     expect(find.text('APP_HOME_UNIQUE'), findsOneWidget);
+    expect(find.textContaining('Accès test'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
