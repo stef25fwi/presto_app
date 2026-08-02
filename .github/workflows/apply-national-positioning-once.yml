@@ -7,9 +7,16 @@ on:
     paths:
       - tools/migrations/apply_national_positioning.py
       - .github/workflows/apply-national-positioning-once.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - tools/migrations/apply_national_positioning.py
+      - .github/workflows/apply-national-positioning-once.yml
 
 permissions:
   contents: write
+  pull-requests: read
 
 jobs:
   apply:
@@ -17,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/seo-national-positioning
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
           fetch-depth: 0
 
       - name: Apply strict national positioning migration
