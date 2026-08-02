@@ -2,14 +2,76 @@
   "schema_version": 1,
   "phase": 13,
   "title": "Accessibilité, UX et design system",
+  "updated_at": "2026-08-02",
+  "status": "in_progress",
   "controls": [
-    {"id":"design-system","title":"Design system centralisé","status":"pending","evidence":[]},
-    {"id":"contrast-aa","title":"Contrastes conformes WCAG AA","status":"pending","evidence":[]},
-    {"id":"keyboard-focus","title":"Navigation clavier et focus visibles","status":"pending","evidence":[]},
-    {"id":"screen-reader","title":"Lecteur d’écran et sémantique","status":"pending","evidence":[]},
-    {"id":"touch-targets","title":"Cibles tactiles accessibles","status":"pending","evidence":[]},
-    {"id":"responsive-text-scale","title":"Responsive et tailles de texte élevées","status":"pending","evidence":[]},
-    {"id":"states-consistency","title":"États loading, empty et error cohérents","status":"pending","evidence":[]},
-    {"id":"accessibility-audit","title":"Audit accessibilité des parcours principaux","status":"pending","evidence":[]}
+    {
+      "id": "design-system",
+      "title": "Design system centralisé",
+      "status": "in_progress",
+      "evidence": [
+        "docs/design/design-system.md",
+        "lib/app/theme.dart",
+        "lib/constants.dart",
+        "test/app/presto_theme_accessibility_test.dart"
+      ]
+    },
+    {
+      "id": "contrast-aa",
+      "title": "Contrastes conformes WCAG AA",
+      "status": "in_progress",
+      "evidence": [
+        "lib/app/theme.dart",
+        "docs/evidence/ux/accessibility-audit.md"
+      ]
+    },
+    {
+      "id": "keyboard-focus",
+      "title": "Navigation clavier et focus visibles",
+      "status": "in_progress",
+      "evidence": [
+        "lib/app/theme.dart",
+        "test/app/presto_theme_accessibility_test.dart",
+        "docs/evidence/ux/accessibility-audit.md"
+      ]
+    },
+    {
+      "id": "screen-reader",
+      "title": "Lecteur d’écran et sémantique",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "touch-targets",
+      "title": "Cibles tactiles accessibles",
+      "status": "in_progress",
+      "evidence": [
+        "lib/app/theme.dart",
+        "test/app/presto_theme_accessibility_test.dart",
+        "docs/evidence/ux/accessibility-audit.md"
+      ]
+    },
+    {
+      "id": "responsive-text-scale",
+      "title": "Responsive et tailles de texte élevées",
+      "status": "in_progress",
+      "evidence": [
+        "docs/evidence/ux/responsive-matrix.md"
+      ]
+    },
+    {
+      "id": "states-consistency",
+      "title": "États loading, empty et error cohérents",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "accessibility-audit",
+      "title": "Audit accessibilité des parcours principaux",
+      "status": "in_progress",
+      "evidence": [
+        "docs/evidence/ux/accessibility-audit.md"
+      ]
+    }
   ]
 }
