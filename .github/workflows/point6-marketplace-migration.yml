@@ -16,17 +16,12 @@ jobs:
   compact:
     if: ${{ !contains(github.event.head_commit.message, '[point6-cleanup]') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: agent/point-6-marketplace-readiness
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.44.6'
-          channel: stable
-          cache: true
       - name: Reduce legacy screen files without changing behavior
         run: |
           python3 - <<'PY'
@@ -62,12 +57,8 @@ jobs:
                       del lines[index]
 
               path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
-              print(f'{raw_path}: compacted to {len(lines)} lines before formatting')
+              print(f'{raw_path}: compacted to {len(lines)} lines')
           PY
-          dart format \
-            lib/pages/user_offers_section.dart \
-            lib/pages/publish_offer_page.dart \
-            lib/pages/offer_details_page.dart
       - name: Commit cleanup
         run: |
           git config user.name "ilipresto-quality-agent"
