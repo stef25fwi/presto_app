@@ -66,7 +66,7 @@ for (const [route, page] of Object.entries(staticPages)) {
   assert.ok((html.match(/<a href=/g) || []).length >= 5, `${route}: maillage interne insuffisant`);
   if (route !== '/') {
     assert.ok(html.includes('aria-label="Fil d’Ariane"'), `${route}: fil d’Ariane absent`);
-    assert.ok(html.includes('"@type":"BreadcrumbList"'), `${route}: BreadcrumbList absent`);
+    assert.ok(/"@type"\s*:\s*"BreadcrumbList"/.test(html), `${route}: BreadcrumbList absent`);
   }
   assert.ok(!titles.has(title), `${route}: title dupliqué`);
   assert.ok(!descriptions.has(description), `${route}: description dupliquée`);
@@ -125,9 +125,10 @@ for (const hosting of firebase.hosting) {
   }
 }
 
-const deploy = read('.github/workflows/deploy.yml');
-for (const route of routes) {
-  assert.ok(deploy.includes(canonicalFor(route)), `Smoke test absent: ${canonicalFor(route)}`);
-}
+const productionWorkflow = read('.github/workflows/structured-data-production.yml');
+assert.ok(
+  productionWorkflow.includes('node tools/quality/check_live_structured_data.mjs'),
+  'Smoke test des dix pages publiques absent',
+);
 
 console.log('Point 4 SEO: 10 pages publiques validées.');
