@@ -2,6 +2,9 @@
   'use strict';
 
   const baseUrl = 'https://ilipresto.fr';
+  const organizationId = baseUrl + '/#organization';
+  const websiteId = baseUrl + '/#website';
+  const logoId = baseUrl + '/#logo';
   const pages = {
     '/mentions-legales': {
       title: 'Mentions légales | iliprestō',
@@ -59,6 +62,7 @@
 
   const structuredData = document.createElement('script');
   structuredData.type = 'application/ld+json';
+  structuredData.dataset.iliprestoStructuredData = 'legal-page';
   structuredData.textContent = JSON.stringify({
     '@context': 'https://schema.org',
     '@graph': [
@@ -68,8 +72,12 @@
         url: canonical,
         name: page.title,
         description: page.description,
+        dateModified: '2026-08-02T18:00:00Z',
         inLanguage: 'fr-FR',
-        isPartOf: {'@id': baseUrl + '/#website'},
+        isPartOf: {'@id': websiteId},
+        publisher: {'@id': organizationId},
+        about: {'@id': organizationId},
+        primaryImageOfPage: {'@id': logoId},
         breadcrumb: {'@id': canonical + '#breadcrumb'}
       },
       {
@@ -97,6 +105,8 @@
       '<p>' + page.lead + '</p>',
       '<nav class="prelaunch-public-links" aria-label="Pages publiques iliprestō">',
       '<a href="/">Accueil</a>',
+      '<a href="/a-propos">À propos</a>',
+      '<a href="/guides/comment-fonctionne-ilipresto">Guide d’utilisation</a>',
       '<a href="/guadeloupe">Guadeloupe</a>',
       '<a href="/martinique">Martinique</a>',
       '<a href="/guyane">Guyane</a>',
