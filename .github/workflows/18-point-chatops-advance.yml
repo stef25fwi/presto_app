@@ -1,0 +1,170 @@
+name: 18-Point ChatOps Advance
+
+on:
+  issue_comment:
+    types:
+      - created
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: 18-point-chatops-advance
+  cancel-in-progress: false
+
+jobs:
+  advance:
+    name: Vérifier et promouvoir le point actif
+    if: >-
+      github.event.issue.pull_request == null &&
+      github.event.issue.number == 1119 &&
+      github.event.comment.body == '/advance-18-point' &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Accuser réception de la commande
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api \
+            --method POST \
+            "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" \
+            -f content='eyes'
+
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Lire le point actif
+        id: state
+        shell: bash
+        run: |
+          node tools/quality/check_18_point_completion.mjs --json > /tmp/18-point-state.json
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const fs = require('fs');
+          const state = JSON.parse(fs.readFileSync('/tmp/18-point-state.json', 'utf8'));
+          console.log(`active_id=${state.activePoint?.id ?? ''}`);
+          console.log(`active_name=${state.activePoint?.name ?? ''}`);
+          console.log(`profile=${state.activePoint?.environmentProfile ?? 'none'}`);
+          console.log(`all_verified=${state.allVerified}`);
+          NODE
+
+      - name: Refuser une commande après clôture du programme
+        if: steps.state.outputs.all_verified == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment 1119 --body 'Les 18 points sont déjà vérifiés. Aucune promotion supplémentaire n’est nécessaire.'
+          exit 1
+
+      - name: Setup Flutter 3.44.6
+        if: >-
+          steps.state.outputs.profile == 'flutter' ||
+          steps.state.outputs.profile == 'full' ||
+          steps.state.outputs.profile == 'mobile'
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Préparer Flutter
+        if: >-
+          steps.state.outputs.profile == 'flutter' ||
+          steps.state.outputs.profile == 'full' ||
+          steps.state.outputs.profile == 'mobile'
+        run: |
+          flutter config --enable-web
+          flutter pub get
+
+      - name: Installer les dépendances Functions
+        if: steps.state.outputs.profile == 'full'
+        run: npm --prefix functions ci
+
+      - name: Installer Firebase CLI
+        if: steps.state.outputs.profile == 'full'
+        run: npm install -g firebase-tools@13
+
+      - name: Valider les preuves et promouvoir le registre
+        shell: bash
+        run: |
+          mkdir -p quality_reports/18-point
+          node tools/quality/check_18_point_completion.mjs \
+            --promote \
+            --json \
+            --report-path quality_reports/18-point/promotion.md \
+            > quality_reports/18-point/promotion-state.json
+
+      - name: Créer la PR de promotion
+        id: promotion
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTIVE_ID: ${{ steps.state.outputs.active_id }}
+          ACTIVE_NAME: ${{ steps.state.outputs.active_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="agent/18-point-promote-${ACTIVE_ID}-${GITHUB_RUN_ID}"
+          next_id=$((ACTIVE_ID + 1))
+
+          git config user.name 'ilipresto-18-point-agent'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$branch"
+          git add quality/18-point-completion.json
+          git commit -m "chore(quality): valider le point ${ACTIVE_ID} et activer le suivant"
+          git push origin "$branch"
+
+          if [ "$ACTIVE_ID" -eq 18 ]; then
+            title='Clore le programme 18/18 à 100 %'
+            next_text='aucun : le programme est terminé'
+          else
+            title="Valider le point ${ACTIVE_ID} et activer le point ${next_id}"
+            next_text="point ${next_id}"
+          fi
+
+          {
+            echo '## Promotion produite par l’agent séquentiel'
+            echo
+            echo "- Point validé : **${ACTIVE_ID}. ${ACTIVE_NAME}**"
+            echo "- Prochaine étape : **${next_text}**"
+            echo '- Toutes les preuves, tous les registres et toutes les commandes du point actif ont réussi.'
+            echo '- Le point suivant ne devient actif sur `main` qu’après fusion de cette PR.'
+            echo
+            cat quality_reports/18-point/promotion.md
+          } > /tmp/promotion-pr.md
+
+          pr_url=$(gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "$title" \
+            --body-file /tmp/promotion-pr.md)
+
+          echo "pr_url=$pr_url" >> "$GITHUB_OUTPUT"
+          gh issue comment 1119 --body "Promotion validée pour le point ${ACTIVE_ID}. PR créée : ${pr_url}"
+
+      - name: Confirmer la commande
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api \
+            --method POST \
+            "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" \
+            -f content='+1'
+
+      - name: Signaler un blocage
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment 1119 --body "La promotion du point actif a été refusée ou a échoué. Consultez l’exécution GitHub Actions ${GITHUB_RUN_ID} pour identifier la preuve, le contrôle ou la commande bloquante."
