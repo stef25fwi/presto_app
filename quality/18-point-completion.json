@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "program": "ilipresto-18-point-100-percent",
-  "updatedAt": "2026-08-02",
+  "updatedAt": "2026-08-02T11:39:02.571Z",
   "autoAdvance": false,
   "rules": {
     "singleActivePoint": true,
@@ -16,7 +16,7 @@
       "id": 1,
       "name": "Cadrage produit",
       "baselinePercent": 85,
-      "status": "active",
+      "status": "verified",
       "environmentProfile": "docs",
       "objective": "Figer le produit, son modèle, son périmètre de lancement et ses indicateurs de succès.",
       "requiredFiles": [
@@ -29,7 +29,9 @@
       "controlFiles": [
         {
           "path": "quality/product-readiness.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
@@ -41,13 +43,14 @@
         "Le périmètre de lancement et les exclusions sont approuvés.",
         "Les KPI acquisition, activation, rétention, mise en relation, MRR et coûts sont définis.",
         "Tous les contrôles product-readiness sont verified."
-      ]
+      ],
+      "verifiedAt": "2026-08-02T11:39:02.570Z"
     },
     {
       "id": 2,
       "name": "UX/UI et design system",
       "baselinePercent": 68,
-      "status": "blocked",
+      "status": "active",
       "environmentProfile": "flutter",
       "objective": "Obtenir une interface cohérente, responsive et accessible sur tous les parcours principaux.",
       "requiredFiles": [
@@ -59,7 +62,9 @@
       "controlFiles": [
         {
           "path": "quality/accessibility_ux_readiness.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
@@ -72,7 +77,8 @@
         "Les tailles 320 à 1440 px et le texte agrandi sont testés.",
         "Les états loading, empty, error et success sont cohérents.",
         "Tous les contrôles accessibility_ux_readiness sont verified."
-      ]
+      ],
+      "activatedAt": "2026-08-02T11:39:02.571Z"
     },
     {
       "id": 3,
@@ -91,7 +97,9 @@
       "controlFiles": [
         {
           "path": "quality/architecture-readiness.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
@@ -123,7 +131,9 @@
       "controlFiles": [
         {
           "path": "quality/flutter-platform-readiness.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
@@ -154,7 +164,9 @@
       "controlFiles": [
         {
           "path": "quality/auth-readiness.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
@@ -185,7 +197,9 @@
       "controlFiles": [
         {
           "path": "quality/marketplace-readiness.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
@@ -218,7 +232,9 @@
       "controlFiles": [
         {
           "path": "quality/messaging-readiness.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
@@ -251,7 +267,9 @@
       "controlFiles": [
         {
           "path": "quality/ai-readiness.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
@@ -284,7 +302,9 @@
       "controlFiles": [
         {
           "path": "quality/admin-readiness.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
@@ -317,7 +337,9 @@
       "controlFiles": [
         {
           "path": "quality/guided-journey-readiness.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
@@ -348,8 +370,13 @@
       "controlFiles": [
         {
           "path": "quality/stripe-readiness.json",
-          "acceptedStatuses": ["implemented", "verified"],
-          "acceptedRootStatuses": ["complete"]
+          "acceptedStatuses": [
+            "implemented",
+            "verified"
+          ],
+          "acceptedRootStatuses": [
+            "complete"
+          ]
         }
       ],
       "validationCommands": [
@@ -385,7 +412,9 @@
       "controlFiles": [
         {
           "path": "quality/security-controls.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
@@ -419,7 +448,9 @@
       "controlFiles": [
         {
           "path": "quality/testing-readiness.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
@@ -454,7 +485,9 @@
       "controlFiles": [
         {
           "path": "quality/cicd-readiness.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
@@ -490,7 +523,9 @@
       "controlFiles": [
         {
           "path": "quality/seo-readiness.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
@@ -524,7 +559,9 @@
       "controlFiles": [
         {
           "path": "quality/mobile_readiness.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
@@ -557,7 +594,9 @@
       "controlFiles": [
         {
           "path": "quality/project-governance-readiness.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
@@ -590,7 +629,9 @@
       "controlFiles": [
         {
           "path": "quality/production_go_live_readiness.json",
-          "acceptedStatuses": ["verified"]
+          "acceptedStatuses": [
+            "verified"
+          ]
         }
       ],
       "validationCommands": [
