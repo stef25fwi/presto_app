@@ -58,6 +58,21 @@ class _FakePublicLandingRemoteConfigAdapter
 
 void main() {
   group('PublicLandingConfigService', () {
+    test('publie un positionnement national par défaut', () {
+      expect(
+        PublicLandingConfigService.defaultTitle,
+        'Trouvez rapidement un particulier, un indépendant ou un professionnel près de chez vous',
+      );
+      expect(
+        PublicLandingConfigService.defaultDescription,
+        'Trouvez rapidement un particulier, un indépendant ou un professionnel partout en France. Publiez une annonce assistée par IA et échangez directement, avec 0 % de commission.',
+      );
+      expect(
+        PublicLandingConfigService.defaultLaunchMessage,
+        'Plateforme nationale en cours de déploiement. Première ouverture en Guadeloupe, Martinique et Guyane.',
+      );
+    });
+
     test('est actif par défaut uniquement sur le domaine public', () {
       final service = PublicLandingConfigService(
         adapter: _FakePublicLandingRemoteConfigAdapter(),
@@ -189,6 +204,32 @@ void main() {
       expect(service.title, 'Bienvenue sur iliprestō');
       expect(service.description, 'La plateforme est maintenant accessible.');
       expect(service.launchMessage, 'Les inscriptions sont ouvertes.');
+    });
+
+    test('migre les anciennes valeurs Remote Config vers le national',
+        () async {
+      final service = PublicLandingConfigService(
+        adapter: _FakePublicLandingRemoteConfigAdapter(
+          title:
+              'Trouvez rapidement un particulier ou un professionnel près de chez vous',
+          description:
+              'iliprestō met en relation particuliers, indépendants et professionnels pour répondre rapidement à vos besoins en services et microservices du quotidien, avec des annonces assistées par IA et 0 % de commission.',
+          launchMessage:
+              'Ouverture prochaine en Guadeloupe, Martinique et Guyane.',
+        ),
+      );
+
+      await service.initialize();
+
+      expect(service.title, PublicLandingConfigService.defaultTitle);
+      expect(
+        service.description,
+        PublicLandingConfigService.defaultDescription,
+      );
+      expect(
+        service.launchMessage,
+        PublicLandingConfigService.defaultLaunchMessage,
+      );
     });
 
     test('remplace les valeurs distantes vides par les textes par défaut',

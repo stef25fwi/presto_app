@@ -67,12 +67,23 @@ class PublicLandingConfigService extends ChangeNotifier {
   static const bool defaultEnabled = true;
   static const String defaultBadge = 'Bientôt disponible';
   static const String defaultTitle =
-      'Trouvez rapidement un particulier ou un professionnel près de chez vous';
+      'Trouvez rapidement un particulier, un indépendant ou un professionnel '
+      'près de chez vous';
   static const String defaultDescription =
+      'Trouvez rapidement un particulier, un indépendant ou un professionnel '
+      'partout en France. Publiez une annonce assistée par IA et échangez '
+      'directement, avec 0 % de commission.';
+  static const String defaultLaunchMessage =
+      'Plateforme nationale en cours de déploiement. Première ouverture en '
+      'Guadeloupe, Martinique et Guyane.';
+
+  static const String _legacyDefaultTitle =
+      'Trouvez rapidement un particulier ou un professionnel près de chez vous';
+  static const String _legacyDefaultDescription =
       'iliprestō met en relation particuliers, indépendants et professionnels '
       'pour répondre rapidement à vos besoins en services et microservices du '
       'quotidien, avec des annonces assistées par IA et 0 % de commission.';
-  static const String defaultLaunchMessage =
+  static const String _legacyDefaultLaunchMessage =
       'Ouverture prochaine en Guadeloupe, Martinique et Guyane.';
 
   static const Set<String> _publicHosts = <String>{
@@ -213,6 +224,19 @@ class PublicLandingConfigService extends ChangeNotifier {
       adapter.getString(launchMessageKey),
       defaultLaunchMessage,
     );
+
+    // Remote Config peut encore contenir les anciennes valeurs publiées.
+    // Cette migration maintient immédiatement le positionnement national sans
+    // attendre une modification manuelle de la console Firebase.
+    if (_title == _legacyDefaultTitle) {
+      _title = defaultTitle;
+    }
+    if (_description == _legacyDefaultDescription) {
+      _description = defaultDescription;
+    }
+    if (_launchMessage == _legacyDefaultLaunchMessage) {
+      _launchMessage = defaultLaunchMessage;
+    }
   }
 
   void _logRemoteConfigError(Object error) {

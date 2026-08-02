@@ -17,7 +17,7 @@ void main() {
       expect(
         html,
         contains(
-          'Trouvez rapidement un particulier ou un professionnel disponible près de chez vous',
+          'Trouvez rapidement un particulier, un indépendant ou un professionnel près de chez vous',
         ),
       );
       expect(html, contains('Annonces assistées par IA'));
@@ -25,7 +25,7 @@ void main() {
       expect(
         html,
         contains(
-          'Ouverture prochaine en Guadeloupe, Martinique et Guyane.',
+          'Plateforme nationale en cours de déploiement. Première ouverture en Guadeloupe, Martinique et Guyane.',
         ),
       );
     });
@@ -42,6 +42,20 @@ void main() {
       expect(html, contains('type="application/ld+json"'));
       expect(html, contains('"@type": "WebSite"'));
       expect(html, contains('"@type": "Organization"'));
+      expect(html, contains('<title>iliprestō – Trouvez un service près de chez vous</title>'));
+      expect(
+        html,
+        contains(
+          '<meta name="description" content="Trouvez rapidement un particulier, un indépendant ou un professionnel partout en France. Publiez une annonce assistée par IA et échangez directement, avec 0 % de commission.">',
+        ),
+      );
+      expect(html, contains('"areaServed"'));
+      expect(html, contains('"@type": "Country"'));
+      expect(html, contains('"name": "France"'));
+      expect(
+        html,
+        isNot(contains('Ouverture prochaine en Guadeloupe, Martinique et Guyane.')),
+      );
     });
 
     test('réduit immédiatement la coquille HTML à un chargement de marque', () {
