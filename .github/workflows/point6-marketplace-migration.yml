@@ -1,9 +1,11 @@
 name: Point 6 marketplace cleanup
 
 on:
-  push:
+  pull_request:
     branches:
-      - agent/point-6-marketplace-readiness
+      - main
+    paths:
+      - .github/workflows/point6-marketplace-migration.yml
 
 permissions:
   contents: write
@@ -14,7 +16,6 @@ concurrency:
 
 jobs:
   compact:
-    if: ${{ !contains(github.event.head_commit.message, '[point6-cleanup]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
