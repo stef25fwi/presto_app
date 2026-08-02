@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../app/presto_design_tokens.dart';
+import 'presto_accessible_action.dart';
+
 class HomeBottomNavItem extends StatefulWidget {
   final IconData icon;
   final String label;
@@ -24,8 +27,6 @@ class HomeBottomNavItem extends StatefulWidget {
 
 class _HomeBottomNavItemState extends State<HomeBottomNavItem>
     with SingleTickerProviderStateMixin {
-  static const Color _kPrestoOrange = Color(0xFFFF6600);
-
   late final AnimationController _controller;
   late final Animation<double> _scaleAnimation;
 
@@ -61,14 +62,23 @@ class _HomeBottomNavItemState extends State<HomeBottomNavItem>
 
   @override
   Widget build(BuildContext context) {
-    final color = Colors.white;
+    const color = Colors.white;
     final fontWeight = widget.selected ? FontWeight.w700 : FontWeight.w500;
     final String? badgeLabel =
         widget.badgeCount <= 0 ? null : widget.badgeCount.toString();
+    final semanticValue = widget.badgeCount <= 0
+        ? (widget.selected ? 'Onglet actif' : null)
+        : '${widget.badgeCount} élément${widget.badgeCount > 1 ? 's' : ''} non lu${widget.badgeCount > 1 ? 's' : ''}${widget.selected ? ', onglet actif' : ''}';
 
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTap: widget.onTap,
+    return PrestoAccessibleAction(
+      onActivate: widget.onTap,
+      semanticLabel: widget.label,
+      semanticHint:
+          widget.selected ? 'Onglet actuellement sélectionné' : 'Ouvrir cet onglet',
+      semanticValue: semanticValue,
+      selected: widget.selected,
+      excludeChildSemantics: true,
+      borderRadius: BorderRadius.circular(PrestoRadii.md),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: Column(
@@ -114,32 +124,39 @@ class _HomeBottomNavItemState extends State<HomeBottomNavItem>
                         child: Icon(
                           widget.icon,
                           size: widget.isBig ? 32 : 27,
-                          color: widget.isBig ? _kPrestoOrange : color,
+                          color: widget.isBig
+                              ? PrestoColors.brandOrange
+                              : color,
                         ),
                       ),
                       if (badgeLabel != null)
                         Positioned(
                           right: -6,
                           top: -4,
-                          child: Container(
-                            constraints: const BoxConstraints(
-                              minWidth: 18,
-                              minHeight: 18,
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 5),
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.circular(999),
-                              border:
-                                  Border.all(color: Colors.white, width: 1.5),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              badgeLabel,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
+                          child: ExcludeSemantics(
+                            child: Container(
+                              constraints: const BoxConstraints(
+                                minWidth: 18,
+                                minHeight: 18,
+                              ),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 5),
+                              decoration: BoxDecoration(
+                                color: PrestoColors.danger,
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 1.5,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                badgeLabel,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ),
                           ),
