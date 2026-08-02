@@ -27,6 +27,21 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
           fetch-depth: 0
 
+      - name: Repair generator escaping
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tools/migrations/apply_national_positioning.py')
+          text = path.read_text(encoding='utf-8')
+          old = "      );\n    });\"\"\"\n    return replace_exact("
+          new = "      );\n    }});\"\"\"\n    return replace_exact("
+          if text.count(old) != 1:
+              raise SystemExit('Unexpected generator structure')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+          python3 -m py_compile tools/migrations/apply_national_positioning.py
+
       - name: Apply strict national positioning migration
         run: python3 tools/migrations/apply_national_positioning.py
 
