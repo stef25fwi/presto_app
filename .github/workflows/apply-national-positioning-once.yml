@@ -1,0 +1,45 @@
+name: Apply national SEO positioning once
+
+on:
+  push:
+    branches:
+      - agent/seo-national-positioning
+    paths:
+      - tools/migrations/apply_national_positioning.py
+      - .github/workflows/apply-national-positioning-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/seo-national-positioning
+          fetch-depth: 0
+
+      - name: Apply strict national positioning migration
+        run: python3 tools/migrations/apply_national_positioning.py
+
+      - name: Validate patch formatting
+        run: git diff --check
+
+      - name: Commit generated source changes
+        shell: bash
+        run: |
+          git config user.name "ilipresto-seo-agent"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            web/index.html \
+            lib/services/public_landing_config_service.dart \
+            test/web/public_prelaunch_html_shell_test.dart \
+            test/services/public_landing_config_service_test.dart \
+            docs/product/product-requirements.md
+          if git diff --cached --quiet; then
+            echo "No generated changes to commit."
+            exit 0
+          fi
+          git commit -m "Positionner iliprestō comme plateforme nationale"
+          git push origin HEAD:agent/seo-national-positioning
