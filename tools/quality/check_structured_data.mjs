@@ -135,6 +135,7 @@ function validateStaticRoute(route, config) {
   const profile = findType(nodes, 'ProfilePage');
   if (profile) {
     assert.equal(profile.mainEntity?.['@id'], registry.organizationId, `${route}: mainEntity ProfilePage`);
+    assert.equal(profile.isPartOf?.['@id'], registry.websiteId, `${route}: isPartOf ProfilePage`);
     assertIsoDate(profile.dateModified, `${route}: dateModified ProfilePage`);
   }
 
@@ -161,9 +162,9 @@ for (const route of registry.dynamicLegalRoutes) {
 for (const token of [
   "'@type': 'WebPage'",
   "'@type': 'BreadcrumbList'",
-  `publisher: {'@id': organizationId}`,
-  `about: {'@id': organizationId}`,
-  `isPartOf: {'@id': websiteId}`,
+  "publisher: {'@id': organizationId}",
+  "about: {'@id': organizationId}",
+  "isPartOf: {'@id': websiteId}",
 ]) {
   assert.ok(legalSource.includes(token), `Routes légales: ${token} absent`);
 }
@@ -173,14 +174,15 @@ const schemaSources = [
   legalSource,
 ];
 for (const forbidden of registry.forbiddenTypes) {
-  const pattern = new RegExp(`["']@type["']\\s*:\\s*["']${forbidden}["']`, 'g');
+  const pattern = new RegExp(`["']@type["']\\s*:\\s*["']${forbidden}["']`);
   assert.ok(!schemaSources.some((source) => pattern.test(source)), `Type structuré interdit détecté: ${forbidden}`);
 }
 
-const seoWorkflow = read('.github/workflows/seo-acquisition-readiness.yml');
-assert.ok(seoWorkflow.includes('node tools/quality/check_structured_data.mjs'), 'CI SEO: garde-fou structuré absent');
-const deployWorkflow = read('.github/workflows/deploy.yml');
-assert.ok(deployWorkflow.includes('node tools/quality/check_structured_data.mjs'), 'Déploiement: garde-fou structuré absent');
-assert.ok(deployWorkflow.includes('structured-data-registry.json'), 'Déploiement: registre non contrôlé en production');
+const readinessWorkflow = read('.github/workflows/structured-data-readiness.yml');
+assert.ok(readinessWorkflow.includes('node tools/quality/check_structured_data.mjs'), 'CI JSON-LD absente');
+assert.ok(readinessWorkflow.includes('node tools/quality/check_public_page_seo.mjs'), 'CI pages publiques absente');
+const productionWorkflow = read('.github/workflows/structured-data-production.yml');
+assert.ok(productionWorkflow.includes('Validate and Deploy Firebase'), 'Déclencheur post-déploiement absent');
+assert.ok(productionWorkflow.includes('node tools/quality/check_live_structured_data.mjs'), 'Contrôle JSON-LD de production absent');
 
 console.log(`Point 5 SEO: ${Object.keys(registry.staticRoutes).length} pages statiques et ${registry.dynamicLegalRoutes.length} routes légales validées.`);
