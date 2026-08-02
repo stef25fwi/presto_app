@@ -43,9 +43,25 @@ assert.ok(
   !index.includes(legacyRegionalOnlyMessage),
   'ancien message régional encore visible dans le HTML public',
 );
-assert.ok(index.includes('"areaServed"'), 'areaServed absent du JSON-LD');
-assert.ok(index.includes('"@type": "Country"'), 'Country absent du JSON-LD');
-assert.ok(index.includes('"name": "France"'), 'France absente du JSON-LD');
+
+const jsonLdMatch = index.match(
+  /<script\s+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i,
+);
+assert.ok(jsonLdMatch, 'JSON-LD national absent');
+const jsonLd = JSON.parse(jsonLdMatch[1]);
+const nodes = Array.isArray(jsonLd['@graph']) ? jsonLd['@graph'] : [jsonLd];
+const nationalAreas = nodes
+  .map((node) => node?.areaServed)
+  .filter(Boolean)
+  .flatMap((area) => Array.isArray(area) ? area : [area]);
+assert.ok(nationalAreas.length > 0, 'areaServed absent du JSON-LD');
+assert.ok(
+  nationalAreas.some(
+    (area) => area?.['@type'] === 'Country' && area?.name === 'France',
+  ),
+  'Country France absent du JSON-LD',
+);
+
 assert.equal(webManifest.description, seoDescription);
 assert.equal(docsManifest.description, seoDescription);
 
