@@ -15,6 +15,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Validate national positioning
+        run: node tools/quality/check_national_positioning.mjs
       - name: Validate registry
         run: node tools/quality/check_seo_acquisition_readiness.test.mjs
       - name: Build readiness report

@@ -161,7 +161,7 @@ Le mode `commercial` ne peut être activé qu’après validation de l’identit
 
 Le message de référence est :
 
-> iliprestō — Les services du quotidien assistés par IA. Particuliers et professionnels répondent rapidement aux besoins près de chez vous. Publiez une annonce préremplie automatiquement avec l’IA et échangez directement, avec 0 % de commission.
+> iliprestō – Trouvez un service près de chez vous. Trouvez rapidement un particulier, un indépendant ou un professionnel partout en France. Publiez une annonce assistée par IA et échangez directement, avec 0 % de commission.
 
 Les textes publics doivent respecter les règles suivantes :
 
