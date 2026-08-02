@@ -4,13 +4,19 @@ on:
   push:
     branches:
       - agent/point-6-marketplace-readiness
+  pull_request:
+    branches:
+      - main
+    paths:
+      - tools/quality/apply_point6_marketplace_readiness.mjs
+      - .github/workflows/point6-marketplace-migration.yml
 
 permissions:
   contents: write
 
 jobs:
   apply:
-    if: ${{ !contains(github.event.head_commit.message, '[point6-generated]') }}
+    if: ${{ github.event_name == 'pull_request' || !contains(github.event.head_commit.message, '[point6-generated]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -55,5 +61,3 @@ jobs:
             tools/quality/check_marketplace_readiness.test.mjs
           git commit -m "Point 6 — Certifier la Marketplace d’annonces [point6-generated]"
           git push origin HEAD:agent/point-6-marketplace-readiness
-
-# Trigger retained only while the generated implementation is being prepared.
