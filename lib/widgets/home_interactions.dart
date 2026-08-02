@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../app/presto_design_tokens.dart';
 import '../utils/friendly_snackbar.dart';
 import '../utils/runtime_action_logger.dart';
+import 'presto_accessible_action.dart';
 
-const _homePrestoOrange = Color(0xFFFF6600);
-const _homePrestoBlue = Color(0xFF1A73E8);
 const _homeMarketplaceOutlineWidth = 2.0;
 
 class HomeSlide {
@@ -23,25 +23,49 @@ class HomeSlide {
   });
 }
 
-class PrestoTapScale extends StatelessWidget {
+class PrestoTapScale extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
+  final String? semanticLabel;
+  final String? semanticHint;
+  final bool? selected;
+  final BorderRadius borderRadius;
 
   const PrestoTapScale({
     super.key,
     required this.child,
     this.onTap,
+    this.semanticLabel,
+    this.semanticHint,
+    this.selected,
+    this.borderRadius = const BorderRadius.all(
+      Radius.circular(PrestoRadii.md),
+    ),
   });
 
   @override
+  State<PrestoTapScale> createState() => _PrestoTapScaleState();
+}
+
+class _PrestoTapScaleState extends State<PrestoTapScale> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTap: onTap,
+    return PrestoAccessibleAction(
+      onActivate: widget.onTap,
+      enabled: widget.onTap != null,
+      semanticLabel: widget.semanticLabel,
+      semanticHint: widget.semanticHint,
+      selected: widget.selected,
+      borderRadius: widget.borderRadius,
+      excludeChildSemantics: widget.semanticLabel != null,
+      onPressedChanged: (value) => setState(() => _pressed = value),
       child: AnimatedScale(
-        scale: 1.0,
+        scale: _pressed ? 0.97 : 1,
         duration: const Duration(milliseconds: 120),
-        child: child,
+        curve: Curves.easeOut,
+        child: widget.child,
       ),
     );
   }
@@ -63,31 +87,36 @@ class HomeCategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final action = onTap ??
+        () {
+          logRuntimeAction(
+            area: 'home',
+            action: 'category-coming-soon',
+            details: <String, Object?>{
+              'category': label,
+            },
+          );
+          showSuccessSnackBar(
+            context,
+            'Catégorie "$label" : bientôt disponible',
+          );
+        };
+
     return PrestoTapScale(
-      onTap: onTap ??
-          () {
-            logRuntimeAction(
-              area: 'home',
-              action: 'category-coming-soon',
-              details: <String, Object?>{
-                'category': label,
-              },
-            );
-            showSuccessSnackBar(
-              context,
-              'Catégorie "$label" : bientôt disponible',
-            );
-          },
+      onTap: action,
+      semanticLabel: 'Catégorie $label',
+      semanticHint: 'Afficher les annonces de la catégorie $label',
+      borderRadius: BorderRadius.circular(PrestoRadii.md),
       child: Column(
         children: [
           Container(
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: _homePrestoOrange,
+              color: PrestoColors.brandOrange,
               shape: BoxShape.circle,
               border: Border.all(
-                color: _homePrestoBlue,
+                color: PrestoColors.brandBlue,
                 width: _homeMarketplaceOutlineWidth,
               ),
               boxShadow: [
