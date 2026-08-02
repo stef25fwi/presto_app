@@ -3,7 +3,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:presto_app/app_core.dart';
 
-/// Bouton "Infos" premium : double anneau + halo rotatif + tap feedback.
+import '../app/presto_design_tokens.dart';
+import 'presto_accessible_action.dart';
+
+/// Bouton "Infos" premium : double anneau + halo rotatif + retour d’appui.
 /// À placer dans un Stack via Positioned.
 class PremiumInfoButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -46,12 +49,17 @@ class _PremiumInfoButtonState extends State<PremiumInfoButton>
     final s = widget.size;
     final inner = s * 0.52;
     final ringW = s * 0.07;
+    final label = (widget.chipText ?? '').trim().isEmpty
+        ? 'Informations'
+        : widget.chipText!.trim();
 
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTap: widget.onTap,
+    return PrestoAccessibleAction(
+      onActivate: widget.onTap,
+      semanticLabel: label,
+      semanticHint: 'Ouvrir les informations',
+      excludeChildSemantics: true,
+      borderRadius: BorderRadius.circular(s),
+      onPressedChanged: (value) => setState(() => _pressed = value),
       child: AnimatedScale(
         duration: const Duration(milliseconds: 120),
         curve: Curves.easeOut,
@@ -91,40 +99,34 @@ class _PremiumInfoButtonState extends State<PremiumInfoButton>
             ),
             Material(
               color: Colors.transparent,
-              child: InkWell(
-                onTap: widget.onTap,
-                borderRadius: BorderRadius.circular(s),
-                splashColor: Colors.white.withValues(alpha: 0.18),
-                highlightColor: Colors.white.withValues(alpha: 0.08),
-                child: Container(
-                  width: s,
-                  height: s,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                    border: Border.all(color: kPrestoBlue, width: ringW),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x22000000),
-                        blurRadius: 16,
-                        offset: Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Container(
-                      width: inner,
-                      height: inner,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: kPrestoBlue,
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.info_rounded,
-                          color: Colors.white,
-                          size: 54,
-                        ),
+              child: Container(
+                width: s,
+                height: s,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  border: Border.all(color: kPrestoBlue, width: ringW),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x22000000),
+                      blurRadius: 16,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Container(
+                    width: inner,
+                    height: inner,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: kPrestoBlue,
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.info_rounded,
+                        color: Colors.white,
+                        size: 54,
                       ),
                     ),
                   ),
@@ -135,29 +137,35 @@ class _PremiumInfoButtonState extends State<PremiumInfoButton>
               Positioned(
                 top: -8,
                 right: -6,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: kPrestoOrange,
-                    borderRadius: BorderRadius.circular(999),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x22000000),
-                        blurRadius: 12,
-                        offset: Offset(0, 6),
+                child: ExcludeSemantics(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: PrestoColors.brandOrange,
+                      borderRadius: BorderRadius.circular(999),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x22000000),
+                          blurRadius: 12,
+                          offset: Offset(0, 6),
+                        ),
+                      ],
+                      border: Border.all(
+                        color: PrestoColors.brandBlue,
+                        width: 1,
                       ),
-                    ],
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.55), width: 1),
-                  ),
-                  child: Text(
-                    widget.chipText!,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                      letterSpacing: 0.2,
+                    ),
+                    child: Text(
+                      widget.chipText!,
+                      style: const TextStyle(
+                        color: PrestoColors.textOnOrange,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        letterSpacing: 0.2,
+                      ),
                     ),
                   ),
                 ),
