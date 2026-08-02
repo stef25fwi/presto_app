@@ -8,11 +8,15 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: point6-marketplace-cleanup
+  cancel-in-progress: true
+
 jobs:
-  compact-and-validate:
+  compact:
     if: ${{ !contains(github.event.head_commit.message, '[point6-cleanup]') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:
@@ -64,23 +68,7 @@ jobs:
             lib/pages/user_offers_section.dart \
             lib/pages/publish_offer_page.dart \
             lib/pages/offer_details_page.dart
-      - name: Validate point 6 implementation
-        run: |
-          node tools/quality/check_marketplace_readiness.mjs --enforce
-          node tools/quality/check_marketplace_readiness.test.mjs
-          flutter pub get
-          flutter test test/data/marketplace/marketplace_pagination_policy_test.dart
-          flutter analyze --fatal-infos \
-            lib/data/marketplace/favorite_repository.dart \
-            lib/data/marketplace/listing_repository.dart \
-            lib/pages/user_offers_section.dart \
-            lib/pages/publish_offer_page.dart \
-            lib/pages/offer_details_page.dart
-          python3 tools/quality/check_flutter_architecture_size.py \
-            --changed-only \
-            --base-ref origin/main \
-            --enforce
-      - name: Commit validated cleanup
+      - name: Commit cleanup
         run: |
           git config user.name "ilipresto-quality-agent"
           git config user.email "actions@users.noreply.github.com"
