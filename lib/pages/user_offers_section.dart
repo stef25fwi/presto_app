@@ -1,17 +1,14 @@
 // ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter
-
 import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-
 import '../app/presto_overlay_theme.dart';
 import '../app_core.dart';
 import '../data/marketplace/favorite_repository.dart';
+import '../data/marketplace/listing_repository.dart';
 import '../features/trust_score/trust_score_models.dart';
 import '../features/trust_score/trust_score_service.dart';
 import '../features/trust_score/trust_score_widgets.dart';
@@ -24,7 +21,6 @@ import '../utils/runtime_action_logger.dart';
 import '../services/public_offers_query_helpers.dart';
 import '../widgets/offer_network_image.dart';
 import '../widgets/phone_input_field.dart';
-
 import '../main.dart'
     show buildOfferDetailsOffer, kOfferDeleteReasonFoundOnIliPresto;
 
@@ -32,13 +28,11 @@ import '../main.dart'
 class UserOffersSection extends StatefulWidget {
   final String userId;
   final bool showTitle;
-
   const UserOffersSection({
     super.key,
     required this.userId,
     this.showTitle = true,
   });
-
   @override
   State<UserOffersSection> createState() => _UserOffersSectionState();
 }
@@ -46,13 +40,11 @@ class UserOffersSection extends StatefulWidget {
 class FavoriteOffersSection extends StatefulWidget {
   final String userId;
   final bool showTitle;
-
   const FavoriteOffersSection({
     super.key,
     required this.userId,
     this.showTitle = true,
   });
-
   @override
   State<FavoriteOffersSection> createState() => _FavoriteOffersSectionState();
 }
@@ -61,18 +53,19 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
   static final FavoriteRepository _favoriteRepository = FavoriteRepository();
   static const String _kFavoriteLoadErrorMessage =
       'Impossible de charger vos favoris pour le moment. Reessayez dans quelques instants.';
-
   List<_FavoriteOfferItem> _offers = const [];
   bool _isLoading = true;
+  bool _isLoadingMore = false;
+  bool _hasMore = false;
+  bool _usesLegacyFallback = false;
+  QueryDocumentSnapshot<Map<String, dynamic>>? _lastFavoriteDocument;
   String? _error;
   String? _selectedOfferId;
   StreamSubscription<Set<String>>? _favoritesSubscription;
-
   bool _isPermissionDeniedError(Object error) {
     if (error is FirebaseException) {
       return error.code == 'permission-denied';
     }
-
     final text = error.toString().toLowerCase();
     return text.contains('permission-denied') ||
         text.contains('permission denied');
@@ -114,15 +107,15 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
       _favoritesSubscription = null;
       return;
     }
-
-    _favoritesSubscription =
-        _favoriteRepository.watchFavoriteListingIds(userId).listen((_) {
-      if (!mounted) return;
-      _loadFavorites();
-    });
+    _favoritesSubscription = _favoriteRepository
+        .watchFavoriteListingIds(userId)
+        .listen((_) {
+          if (!mounted) return;
+          _loadFavorites();
+        });
   }
 
-  Future<void> _loadFavorites() async {
+  Future<void> _loadFavorites({bool loadMore = false}) async {
     final userId = widget.userId.trim();
     if (userId.isEmpty) {
       if (!mounted) return;
@@ -134,62 +127,75 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
       });
       return;
     }
-
+    if (loadMore && (_isLoadingMore || !_hasMore || _usesLegacyFallback)) {
+      return;
+    }
+    if (loadMore && mounted) setState(() => _isLoadingMore = true);
     try {
       final fs = FirebaseFirestore.instance;
       _debugFavoriteLog('[Favorites] uid: $userId');
-      final favorites = await _favoriteRepository
-          .loadFavoriteListingIdsWithLegacyFallback(userId);
-      final favoriteIds = favorites.listingIds;
-      final favoriteDates = favorites.favoriteDates;
-      _debugFavoriteLog(
-        '[Favorites] favoriteIds count: ${favoriteIds.length}',
+      final page = await _favoriteRepository.fetchFavoriteOfferRefsPage(
+        userId,
+        limit: 20,
+        startAfter: loadMore ? _lastFavoriteDocument : null,
       );
-
+      final favoriteIds = page.refs
+          .map((ref) => ref.offerId)
+          .toList(growable: false);
+      final favoriteDates = <String, Timestamp?>{
+        for (final ref in page.refs) ref.offerId: ref.createdAt,
+      };
+      _debugFavoriteLog('[Favorites] favoriteIds count: ${favoriteIds.length}');
       if (favoriteIds.isEmpty) {
         if (!mounted) return;
         setState(() {
-          _offers = const [];
+          if (!loadMore) {
+            _offers = const [];
+            _selectedOfferId = null;
+          }
+          _lastFavoriteDocument = page.lastDocument;
+          _hasMore = page.hasMore;
+          _usesLegacyFallback = page.usedLegacyFallback;
           _isLoading = false;
+          _isLoadingMore = false;
           _error = null;
-          _selectedOfferId = null;
         });
         return;
       }
-
-      final orphanFavoriteIds = <String>[];
-      final results = await Future.wait(
-        favoriteIds.map(
-          (id) => _loadFavoriteOfferItem(
-            fs,
-            offerId: id,
-            addedAt: favoriteDates[id],
-          ),
-        ),
+      final itemsById = await _loadFavoriteOfferItems(
+        fs,
+        offerIds: favoriteIds,
+        addedDates: favoriteDates,
       );
+      final orphanFavoriteIds = <String>[];
       final items = <_FavoriteOfferItem>[];
-      for (var i = 0; i < favoriteIds.length; i++) {
-        final item = results[i];
+      for (final favoriteId in favoriteIds) {
+        final item = itemsById[favoriteId];
         if (item == null) {
-          orphanFavoriteIds.add(favoriteIds[i]);
-          continue;
+          orphanFavoriteIds.add(favoriteId);
+        } else {
+          items.add(item);
         }
-        items.add(item);
       }
-
       for (final orphanFavoriteId in orphanFavoriteIds) {
         unawaited(_favoriteRepository.removeFavorite(userId, orphanFavoriteId));
       }
-
       _debugFavoriteLog('[Favorites] loaded offers count: ${items.length}');
-
       if (!mounted) return;
       setState(() {
-        _offers = items;
+        final merged = <String, _FavoriteOfferItem>{
+          if (loadMore)
+            for (final item in _offers) item.offerId: item,
+          for (final item in items) item.offerId: item,
+        };
+        _offers = merged.values.toList(growable: false);
+        _lastFavoriteDocument = page.lastDocument;
+        _hasMore = page.hasMore;
+        _usesLegacyFallback = page.usedLegacyFallback;
         _isLoading = false;
+        _isLoadingMore = false;
         _error = null;
-
-        final ids = items.map((item) => item.offerId).toSet();
+        final ids = _offers.map((item) => item.offerId).toSet();
         if (_selectedOfferId == null || !ids.contains(_selectedOfferId)) {
           _selectedOfferId = items.isNotEmpty ? items.first.offerId : null;
         }
@@ -200,69 +206,75 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
       setState(() {
         _error = _kFavoriteLoadErrorMessage;
         _isLoading = false;
+        _isLoadingMore = false;
       });
     }
   }
 
-  Future<_FavoriteOfferItem?> _loadFavoriteOfferItem(
+  Future<Map<String, _FavoriteOfferItem>> _loadFavoriteOfferItems(
     FirebaseFirestore firestore, {
-    required String offerId,
-    required Timestamp? addedAt,
+    required List<String> offerIds,
+    required Map<String, Timestamp?> addedDates,
   }) async {
-    final normalizedOfferId = offerId.trim();
-    if (normalizedOfferId.isEmpty) {
-      return null;
-    }
-
+    final pending = offerIds
+        .map((id) => id.trim())
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    final result = <String, _FavoriteOfferItem>{};
     for (final collectionName in const <String>[
       kListingsCollection,
-      'offers'
+      'offers',
     ]) {
+      if (pending.isEmpty) break;
+      final ids = pending.take(30).toList(growable: false);
       try {
         final snapshot = await firestore
             .collection(collectionName)
-            .doc(normalizedOfferId)
+            .where(FieldPath.documentId, whereIn: ids)
             .get();
-        if (!snapshot.exists) {
-          continue;
+        for (final doc in snapshot.docs) {
+          final data = doc.data();
+          final isMarketplace = collectionName == kListingsCollection;
+          if (isMarketplace) {
+            final status = (data['status'] ?? '')
+                .toString()
+                .trim()
+                .toLowerCase();
+            final visibility = (data['visibility'] ?? '')
+                .toString()
+                .trim()
+                .toLowerCase();
+            if (status != 'active' || visibility != 'public') {
+              pending.remove(doc.id);
+              continue;
+            }
+          }
+          result[doc.id] = _FavoriteOfferItem(
+            offerId: doc.id,
+            title: (data['title'] ?? 'Sans titre').toString().trim(),
+            city: (data['location'] ?? data['city'] ?? 'Lieu non précisé')
+                .toString()
+                .trim(),
+            category: (data['category'] ?? 'Catégorie non précisée')
+                .toString()
+                .trim(),
+            price: (data['budget'] as num?)?.toDouble(),
+            imageUrl: _primaryOfferImageUrl(data),
+            addedAt: addedDates[doc.id],
+            rawData: data,
+            isMarketplace: isMarketplace,
+          );
+          pending.remove(doc.id);
         }
-
-        final data = snapshot.data() ?? const <String, dynamic>{};
-        final isMarketplace = collectionName == kListingsCollection;
-        final status = (data['status'] ?? '').toString().trim().toLowerCase();
-        final visibility =
-            (data['visibility'] ?? '').toString().trim().toLowerCase();
-
-        if (isMarketplace && (status != 'active' || visibility != 'public')) {
-          return null;
-        }
-
-        return _FavoriteOfferItem(
-          offerId: snapshot.id,
-          title: (data['title'] ?? 'Sans titre').toString().trim(),
-          city: (data['location'] ?? data['city'] ?? 'Lieu non précisé')
-              .toString()
-              .trim(),
-          category:
-              (data['category'] ?? 'Catégorie non précisée').toString().trim(),
-          price: (data['budget'] as num?)?.toDouble(),
-          imageUrl: _primaryOfferImageUrl(data),
-          addedAt: addedAt,
-          rawData: data,
-          isMarketplace: isMarketplace,
-        );
       } catch (error) {
-        if (_isPermissionDeniedError(error)) {
-          continue;
-        }
+        if (_isPermissionDeniedError(error)) continue;
         _debugFavoriteLog(
-          '[Favorites] load offer failed offerId=$normalizedOfferId collection=$collectionName error: $error',
+          '[Favorites] batch load failed collection=$collectionName error: $error',
         );
-        return null;
+        rethrow;
       }
     }
-
-    return null;
+    return result;
   }
 
   Future<void> _removeFavorite(String offerId) async {
@@ -280,7 +292,6 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
     );
     try {
       await _favoriteRepository.removeFavorite(widget.userId, offerId);
-
       if (!mounted) return;
       showSuccessSnackBar(context, 'Annonce retirée des favoris');
       logRuntimeAction(
@@ -316,15 +327,12 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
         message: 'Connectez-vous pour voir vos favoris.',
       );
     }
-
     if (_isLoading) {
       return _buildFavoriteLoadingCard();
     }
-
     if (_error != null) {
       return _buildFavoriteErrorCard();
     }
-
     final docs = _offers;
     if (docs.isEmpty) {
       return _buildFavoriteInfoCard(
@@ -332,25 +340,21 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
         message: 'Vous n’avez pas encore ajoute d’annonces favorites.',
       );
     }
-
     final selectedId = _selectedOfferId;
     final selectedDoc = (selectedId == null)
         ? docs.first
         : docs.where((doc) => doc.offerId == selectedId).isNotEmpty
-            ? docs.firstWhere((doc) => doc.offerId == selectedId)
-            : docs.first;
-
+        ? docs.firstWhere((doc) => doc.offerId == selectedId)
+        : docs.first;
     final selectedData = selectedDoc.rawData;
     final selectedTitle = selectedDoc.title;
     final selectedLocation = selectedDoc.city;
     final selectedCategory = selectedDoc.category;
     final selectedBudget = selectedDoc.price;
-
     String subtitle = '$selectedLocation · $selectedCategory';
     if (selectedBudget != null) {
       subtitle += ' · ${selectedBudget.toStringAsFixed(0)} €';
     }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -360,10 +364,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
               const Expanded(
                 child: Text(
                   'Mes annonces favorites',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                 ),
               ),
               IconButton(
@@ -379,8 +380,10 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
                 icon: const Icon(Icons.refresh_rounded),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: kPrestoOrange.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(999),
@@ -400,11 +403,11 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
         InputDecorator(
           decoration: InputDecoration(
             labelText: 'Mes favoris',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 10,
             ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
@@ -490,6 +493,24 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
           ),
         ),
         const SizedBox(height: 10),
+        if (_hasMore && !_usesLegacyFallback) ...[
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: _isLoadingMore
+                ? null
+                : () => unawaited(_loadFavorites(loadMore: true)),
+            icon: _isLoadingMore
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.expand_more_rounded),
+            label: Text(
+              _isLoadingMore ? 'Chargement…' : 'Afficher plus de favoris',
+            ),
+          ),
+        ],
         Row(
           children: [
             Expanded(
@@ -542,13 +563,11 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
 
   String _favoriteAddedLabel(Timestamp? addedAt) {
     if (addedAt == null) return 'Favori enregistré';
-
     final diff = DateTime.now().difference(addedAt.toDate());
     if (diff.inMinutes < 1) return 'Ajouté à l’instant';
     if (diff.inMinutes < 60) return 'Ajouté il y a ${diff.inMinutes} min';
     if (diff.inHours < 24) return 'Ajouté il y a ${diff.inHours} h';
     if (diff.inDays < 7) return 'Ajouté il y a ${diff.inDays} j';
-
     final date = addedAt.toDate();
     final day = date.day.toString().padLeft(2, '0');
     final month = date.month.toString().padLeft(2, '0');
@@ -581,10 +600,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
         borderRadius: BorderRadius.circular(14),
       ),
       alignment: Alignment.center,
-      child: const Icon(
-        Icons.image_outlined,
-        color: Colors.black38,
-      ),
+      child: const Icon(Icons.image_outlined, color: Colors.black38),
     );
   }
 
@@ -688,10 +704,8 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
   String _primaryOfferImageUrl(Map<String, dynamic> data) {
     final thumbnailUrl = (data['thumbnailUrl'] ?? '').toString().trim();
     if (thumbnailUrl.isNotEmpty) return thumbnailUrl;
-
     final imageUrl = (data['imageUrl'] ?? '').toString().trim();
     if (imageUrl.isNotEmpty) return imageUrl;
-
     final imageUrls = data['imageUrls'];
     if (imageUrls is List) {
       for (final entry in imageUrls) {
@@ -699,7 +713,6 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
         if (value.isNotEmpty) return value;
       }
     }
-
     final media = data['media'];
     if (media is List) {
       for (final entry in media) {
@@ -711,7 +724,6 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
         if (candidate.isNotEmpty) return candidate;
       }
     }
-
     return '';
   }
 }
@@ -727,7 +739,6 @@ class _FavoriteOfferItem {
   final Map<String, dynamic> rawData;
   // true = annonce dans la collection 'listings' (marketplace)
   final bool isMarketplace;
-
   const _FavoriteOfferItem({
     required this.offerId,
     required this.title,
@@ -741,18 +752,12 @@ class _FavoriteOfferItem {
   });
 }
 
-enum _OfferManagementSection {
-  pending,
-  published,
-  rejected,
-  archived,
-}
+enum _OfferManagementSection { pending, published, rejected, archived }
 
 class _ManagedOfferItem {
   final String offerId;
   final Map<String, dynamic> data;
   final _OfferManagementSection section;
-
   const _ManagedOfferItem({
     required this.offerId,
     required this.data,
@@ -769,11 +774,14 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   bool _rejectedSectionExpanded = false;
   bool _archivedSectionExpanded = false;
   final TrustScoreService _trustScoreService = TrustScoreService();
-
+  final ListingRepository _listingRepository = ListingRepository();
+  static const int _ownerPageSize = 20;
+  QueryDocumentSnapshot<Map<String, dynamic>>? _lastOwnerDocument;
+  bool _hasMoreOwnerOffers = false;
+  bool _isLoadingMoreOwnerOffers = false;
   Set<String> _knownPublishedIds = {};
   bool _initialLoadDone = false;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _offersStream;
-
   void _logUserOffersLoad(
     String action, {
     Map<String, Object?> details = const <String, Object?>{},
@@ -789,7 +797,6 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     if (error is FirebaseException) {
       return error.code == 'permission-denied';
     }
-
     final text = error.toString().toLowerCase();
     return text.contains('permission-denied') ||
         text.contains('permission denied');
@@ -797,33 +804,29 @@ class _UserOffersSectionState extends State<UserOffersSection> {
 
   bool _isOfferPublished(Map<String, dynamic> data) {
     if (isOfferArchivedLike(data)) return false;
-
     final isPublished = data['isPublished'];
     if (isPublished is bool && isPublished) return true;
-
     final status = (data['status'] ?? '').toString().trim().toLowerCase();
     if (status == 'published' || status == 'active') return true;
-
     final visibility = data['visibility'];
     if (visibility is Map) {
       final isPublic = visibility['isPublic'];
       if (isPublic is bool && isPublic) return true;
     }
-
     final isActive = data['isActive'];
     if (isActive is bool && isActive) return true;
-
     return false;
   }
 
   bool _isOfferRejected(Map<String, dynamic> data) {
     final moderation = data['moderation'];
     if (moderation is Map) {
-      final moderationStatus =
-          (moderation['status'] ?? '').toString().trim().toLowerCase();
+      final moderationStatus = (moderation['status'] ?? '')
+          .toString()
+          .trim()
+          .toLowerCase();
       if (moderationStatus == 'rejected') return true;
     }
-
     final status = (data['status'] ?? '').toString().trim().toLowerCase();
     return status == 'rejected' || status == 'refused' || status == 'declined';
   }
@@ -838,16 +841,16 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         _isOfferPublished(data)) {
       return false;
     }
-
     final moderation = data['moderation'];
     if (moderation is Map) {
-      final moderationStatus =
-          (moderation['status'] ?? '').toString().trim().toLowerCase();
+      final moderationStatus = (moderation['status'] ?? '')
+          .toString()
+          .trim()
+          .toLowerCase();
       if (moderationStatus == 'pending' || moderationStatus == 'error') {
         return true;
       }
     }
-
     final status = (data['status'] ?? '').toString().trim().toLowerCase();
     return status == 'submitted' ||
         status == 'pending' ||
@@ -899,7 +902,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   }
 
   String _formatOfferDate(Map<String, dynamic> data) {
-    final date = _dateFromDynamic(
+    final date =
+        _dateFromDynamic(
           data['createdAt'] ?? data['updatedAt'] ?? data['archivedAt'],
         ) ??
         DateTime.now();
@@ -928,24 +932,22 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                 .trim();
         if (message.isNotEmpty) return message;
       }
-
-      final fallback = (data['rejectionReason'] ??
-              data['moderationReason'] ??
-              data['rejectedReason'] ??
-              '')
-          .toString()
-          .trim();
+      final fallback =
+          (data['rejectionReason'] ??
+                  data['moderationReason'] ??
+                  data['rejectedReason'] ??
+                  '')
+              .toString()
+              .trim();
       if (fallback.isNotEmpty) return fallback;
       return 'Annonce à corriger avant nouvelle publication.';
     }
-
     if (_isOfferArchived(data)) {
       final reason = (data['deletedReason'] ?? data['archiveReason'] ?? '')
           .toString()
           .trim();
       if (reason.isNotEmpty) return reason;
     }
-
     return null;
   }
 
@@ -965,8 +967,10 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   }
 
   bool _offerMediaStillProcessing(Map<String, dynamic> data) {
-    final raw =
-        (data['mediaProcessingStatus'] ?? '').toString().trim().toLowerCase();
+    final raw = (data['mediaProcessingStatus'] ?? '')
+        .toString()
+        .trim()
+        .toLowerCase();
     if (raw == 'processing') {
       return true;
     }
@@ -1001,8 +1005,10 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     if (!_isOfferPending(data) || !_offerHasPhotos(data)) {
       return null;
     }
-    final moderationStatus =
-        (data['moderationStatus'] ?? '').toString().trim().toLowerCase();
+    final moderationStatus = (data['moderationStatus'] ?? '')
+        .toString()
+        .trim()
+        .toLowerCase();
     final pendingHumanReviewCount = (data['pendingHumanReviewCount'] is num)
         ? (data['pendingHumanReviewCount'] as num).toInt()
         : 0;
@@ -1077,22 +1083,20 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   }
 
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
-      _loadOffersByOwnerField(
-    String field,
-  ) async {
+  _loadOffersByOwnerField(String field) async {
     try {
       // Prod marketplace contract:
       // listings est la source normale. offers legacy est un backfill lecture seule,
       // désactivé en prod par kEnableLegacyPublicOffersBackfill.
       final futures =
           <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
-        FirebaseFirestore.instance
-            .collection(kListingsCollection)
-            .where(field, isEqualTo: widget.userId)
-            .limit(120)
-            .get()
-            .then((snap) => snap.docs),
-      ];
+            FirebaseFirestore.instance
+                .collection(kListingsCollection)
+                .where(field, isEqualTo: widget.userId)
+                .limit(120)
+                .get()
+                .then((snap) => snap.docs),
+          ];
 
       if (kEnableLegacyPublicOffersBackfill) {
         futures.add(
@@ -1156,12 +1160,14 @@ class _UserOffersSectionState extends State<UserOffersSection> {
 
     _offersStream = FirebaseFirestore.instance
         .collection(kListingsCollection)
-        .where('userId', isEqualTo: userId)
+        .where('ownerId', isEqualTo: userId)
+        .orderBy('updatedAt', descending: true)
+        .limit(_ownerPageSize)
         .snapshots()
         .listen((snapshot) {
-      if (!mounted) return;
-      _onOffersSnapshot(snapshot);
-    }, onError: (_) {});
+          if (!mounted) return;
+          _onOffersSnapshot(snapshot);
+        }, onError: (_) {});
   }
 
   void _onOffersSnapshot(QuerySnapshot<Map<String, dynamic>> snapshot) {
@@ -1186,10 +1192,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
 
   Future<void> _loadOffers() async {
     final userId = widget.userId.trim();
-    _logUserOffersLoad(
-      'start',
-      details: <String, Object?>{'userId': userId},
-    );
+    _logUserOffersLoad('start', details: <String, Object?>{'userId': userId});
 
     if (userId.isEmpty) {
       if (mounted) {
@@ -1207,31 +1210,42 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     }
 
     try {
-      final snapshots = await Future.wait([
-        _loadOffersByOwnerField('userId'),
-        _loadOffersByOwnerField('uid'),
-        _loadOffersByOwnerField('ownerId'),
-      ]);
+      final page = await _listingRepository.fetchOwnerListingsPage(
+        userId: userId,
+        limit: _ownerPageSize,
+      );
+      final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{
+        for (final doc in page.documents) doc.id: doc,
+      };
+      _lastOwnerDocument = page.lastDocument;
+      _hasMoreOwnerOffers = page.hasMore;
 
-      final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
-      for (final docs in snapshots) {
-        for (final doc in docs) {
-          byId[doc.id] = doc;
+      if (kEnableLegacyPublicOffersBackfill) {
+        final legacySnapshots = await Future.wait([
+          _loadOffersByOwnerField('userId'),
+          _loadOffersByOwnerField('uid'),
+        ]);
+        for (final docs in legacySnapshots) {
+          for (final doc in docs.take(_ownerPageSize)) {
+            byId.putIfAbsent(doc.id, () => doc);
+          }
         }
       }
 
-      final docs = byId.values
-          .map(
-            (doc) => _ManagedOfferItem(
-              offerId: doc.id,
-              data: doc.data(),
-              section: _resolveSection(doc.data()),
-            ),
-          )
-          .toList(growable: false)
-        ..sort(
-          (a, b) => _offerSortValue(b.data).compareTo(_offerSortValue(a.data)),
-        );
+      final docs =
+          byId.values
+              .map(
+                (doc) => _ManagedOfferItem(
+                  offerId: doc.id,
+                  data: doc.data(),
+                  section: _resolveSection(doc.data()),
+                ),
+              )
+              .toList(growable: false)
+            ..sort(
+              (a, b) =>
+                  _offerSortValue(b.data).compareTo(_offerSortValue(a.data)),
+            );
 
       if (!mounted) return;
 
@@ -1252,10 +1266,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       });
       _logUserOffersLoad(
         'success',
-        details: <String, Object?>{
-          'count': docs.length,
-          'userId': userId,
-        },
+        details: <String, Object?>{'count': docs.length, 'userId': userId},
       );
     } catch (e) {
       _logUserOffersLoad(
@@ -1273,6 +1284,45 @@ class _UserOffersSectionState extends State<UserOffersSection> {
             : 'Impossible de charger vos annonces pour le moment.';
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _loadMoreOwnerOffers() async {
+    if (_isLoadingMoreOwnerOffers || !_hasMoreOwnerOffers) return;
+    final cursor = _lastOwnerDocument;
+    if (cursor == null) return;
+    setState(() => _isLoadingMoreOwnerOffers = true);
+    try {
+      final page = await _listingRepository.fetchOwnerListingsPage(
+        userId: widget.userId,
+        limit: _ownerPageSize,
+        startAfter: cursor,
+      );
+      if (!mounted) return;
+      final byId = <String, _ManagedOfferItem>{
+        for (final item in _offers) item.offerId: item,
+      };
+      for (final doc in page.documents) {
+        byId[doc.id] = _ManagedOfferItem(
+          offerId: doc.id,
+          data: doc.data(),
+          section: _resolveSection(doc.data()),
+        );
+      }
+      final merged = byId.values.toList(growable: false)
+        ..sort(
+          (a, b) => _offerSortValue(b.data).compareTo(_offerSortValue(a.data)),
+        );
+      setState(() {
+        _offers = merged;
+        _lastOwnerDocument = page.lastDocument;
+        _hasMoreOwnerOffers = page.hasMore;
+        _isLoadingMoreOwnerOffers = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoadingMoreOwnerOffers = false);
+      showErrorSnackBar(context, 'Impossible de charger plus d’annonces.');
     }
   }
 
@@ -1306,10 +1356,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
           children: [
             const Text(
               'Mes annonces publiées',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-              ),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
             Text(
@@ -1377,15 +1424,14 @@ class _UserOffersSectionState extends State<UserOffersSection> {
               const Expanded(
                 child: Text(
                   'Gérer mes annonces',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: kPrestoBlue.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(999),
@@ -1425,8 +1471,27 @@ class _UserOffersSectionState extends State<UserOffersSection> {
             _buildOfferSection(section, items),
             const SizedBox(height: 14),
           ];
-        }).toList()
-          ..removeLast(),
+        }).toList()..removeLast(),
+        if (_hasMoreOwnerOffers) ...[
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+            onPressed: _isLoadingMoreOwnerOffers
+                ? null
+                : () => unawaited(_loadMoreOwnerOffers()),
+            icon: _isLoadingMoreOwnerOffers
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.expand_more_rounded),
+            label: Text(
+              _isLoadingMoreOwnerOffers
+                  ? 'Chargement…'
+                  : 'Afficher plus d’annonces',
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -1454,10 +1519,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: color.withValues(alpha: 0.24),
-          width: 1.4,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.24), width: 1.4),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1474,18 +1536,17 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   '${items.length}',
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: TextStyle(color: color, fontWeight: FontWeight.w800),
                 ),
               ),
             ],
@@ -1524,10 +1585,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: color.withValues(alpha: 0.24),
-          width: 1.4,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.24), width: 1.4),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1655,10 +1713,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: color.withValues(alpha: 0.24),
-          width: 1.4,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.24), width: 1.4),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1786,10 +1841,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: color.withValues(alpha: 0.24),
-          width: 1.4,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.24), width: 1.4),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1941,8 +1993,10 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                 borderRadius: BorderRadius.circular(12),
                 onTap: () => _openOfferDetails(item),
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   child: Column(
                     children: [
                       Row(
@@ -2002,10 +2056,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => OfferDetailsPage(
-          offer: buildOfferDetailsOffer(
-            offerId: item.offerId,
-            data: item.data,
-          ),
+          offer: buildOfferDetailsOffer(offerId: item.offerId, data: item.data),
           currentUserId: FirebaseAuth.instance.currentUser?.uid ?? '',
         ),
       ),
@@ -2206,11 +2257,17 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                       runSpacing: 8,
                       children: [
                         _buildMetaChip(
-                            Icons.category_outlined, _offerCategory(data)),
+                          Icons.category_outlined,
+                          _offerCategory(data),
+                        ),
                         _buildMetaChip(
-                            Icons.event_outlined, _formatOfferDate(data)),
+                          Icons.event_outlined,
+                          _formatOfferDate(data),
+                        ),
                         _buildMetaChip(
-                            Icons.place_outlined, _offerLocation(data)),
+                          Icons.place_outlined,
+                          _offerLocation(data),
+                        ),
                       ],
                     ),
                   ],
@@ -2218,8 +2275,10 @@ class _UserOffersSectionState extends State<UserOffersSection> {
               ),
               const SizedBox(width: 10),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(999),
@@ -2279,7 +2338,9 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(999),
@@ -2358,8 +2419,9 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : const Icon(Icons.delete_outline, size: 18),
@@ -2406,8 +2468,9 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                             height: 16,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : const Icon(Icons.delete_outline, size: 18),
@@ -2489,13 +2552,14 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       text: _offerPhoneLocalNumber(data),
     );
     final budgetValue = _numericFromDynamic(
-        data['budget'] ?? data['price'] ?? data['budgetValue']);
+      data['budget'] ?? data['price'] ?? data['budgetValue'],
+    );
     final budgetController = TextEditingController(
       text: budgetValue == null
           ? ''
           : (budgetValue == budgetValue.roundToDouble()
-              ? budgetValue.toInt().toString()
-              : budgetValue.toString()),
+                ? budgetValue.toInt().toString()
+                : budgetValue.toString()),
     );
     final availabilityController = TextEditingController(
       text: (data['availability'] ?? '').toString().trim(),
@@ -2538,9 +2602,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     InputDecoration buildDecoration(String label) {
       return InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       );
     }
 
@@ -2642,8 +2704,9 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFFF3E6),
                                 borderRadius: BorderRadius.circular(12),
-                                border:
-                                    Border.all(color: const Color(0xFFFFC78F)),
+                                border: Border.all(
+                                  color: const Color(0xFFFFC78F),
+                                ),
                               ),
                               child: Text(
                                 pendingPhotoNotice,
@@ -2690,9 +2753,10 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                             selectedCategory = value;
                                             final validSubCategories =
                                                 kCategorySubcategories[value] ??
-                                                    const <String>[];
+                                                const <String>[];
                                             if (!validSubCategories.contains(
-                                                selectedSubCategory)) {
+                                              selectedSubCategory,
+                                            )) {
                                               selectedSubCategory = '';
                                             }
                                           });
@@ -2728,8 +2792,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                       ? null
                                       : (value) {
                                           setDialogState(() {
-                                            selectedSubCategory =
-                                                (value ?? '').trim();
+                                            selectedSubCategory = (value ?? '')
+                                                .trim();
                                           });
                                         },
                                 ),
@@ -2739,8 +2803,9 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                           const SizedBox(height: 12),
                           TextFormField(
                             controller: descController,
-                            decoration:
-                                buildDecoration('Description détaillée *'),
+                            decoration: buildDecoration(
+                              'Description détaillée *',
+                            ),
                             minLines: 5,
                             maxLines: 8,
                             validator: (value) {
@@ -2795,15 +2860,16 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                 flex: 2,
                                 child: DropdownButtonFormField<String>(
                                   initialValue: selectedBudgetType,
-                                  decoration:
-                                      buildDecoration('Budget / tarification'),
+                                  decoration: buildDecoration(
+                                    'Budget / tarification',
+                                  ),
                                   items: budgetTypes
                                       .map(
                                         (budgetType) =>
                                             DropdownMenuItem<String>(
-                                          value: budgetType,
-                                          child: Text(budgetType),
-                                        ),
+                                              value: budgetType,
+                                              child: Text(budgetType),
+                                            ),
                                       )
                                       .toList(growable: false),
                                   onChanged: isSaving
@@ -2828,8 +2894,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                   decoration: buildDecoration('Montant (€)'),
                                   keyboardType:
                                       const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
+                                        decimal: true,
+                                      ),
                                   enabled: selectedBudgetType == 'Fixe',
                                   validator: (value) {
                                     if (selectedBudgetType != 'Fixe') {
@@ -2875,8 +2941,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                       ? null
                                       : (value) {
                                           setDialogState(() {
-                                            selectedMissionDelay =
-                                                (value ?? '').trim();
+                                            selectedMissionDelay = (value ?? '')
+                                                .trim();
                                           });
                                         },
                                 ),
@@ -2995,26 +3061,28 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                           return;
                                         }
 
-                                        final newBudgetText =
-                                            budgetController.text.trim();
+                                        final newBudgetText = budgetController
+                                            .text
+                                            .trim();
                                         final parsedBudget =
                                             newBudgetText.isEmpty
-                                                ? null
-                                                : num.tryParse(
-                                                    newBudgetText.replaceAll(
-                                                        ',', '.'),
-                                                  );
+                                            ? null
+                                            : num.tryParse(
+                                                newBudgetText.replaceAll(
+                                                  ',',
+                                                  '.',
+                                                ),
+                                              );
                                         final existingBudget =
                                             _numericFromDynamic(
-                                          data['budget'] ??
-                                              data['price'] ??
-                                              data['budgetValue'],
-                                        );
+                                              data['budget'] ??
+                                                  data['price'] ??
+                                                  data['budgetValue'],
+                                            );
                                         final effectiveBudget =
                                             selectedBudgetType == 'À négocier'
-                                                ? 0.0
-                                                : (parsedBudget ??
-                                                    existingBudget);
+                                            ? 0.0
+                                            : (parsedBudget ?? existingBudget);
                                         final trimmedCategory =
                                             (selectedCategory ?? '').trim();
                                         final trimmedLocation =
@@ -3039,11 +3107,11 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                             serviceTypeController.text.trim();
                                         final trimmedPhoneNumber =
                                             phoneController.text.trim();
-                                        final fullPhone = trimmedPhoneNumber
-                                                .isEmpty
+                                        final fullPhone =
+                                            trimmedPhoneNumber.isEmpty
                                             ? ''
                                             : '${selectedPhoneCountryCode.trim()} $trimmedPhoneNumber'
-                                                .trim();
+                                                  .trim();
 
                                         final indexed = buildOfferIndexFields(
                                           category: trimmedCategory,
@@ -3059,23 +3127,26 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                               .instance
                                               .collection(kListingsCollection)
                                               .doc(item.offerId);
-                                          final listingsSnap =
-                                              await listingsRef.get();
+                                          final listingsSnap = await listingsRef
+                                              .get();
                                           if (!listingsSnap.exists) {
                                             throw StateError(
                                               'Annonce legacy non modifiable depuis l’UI : migration listings requise',
                                             );
                                           }
                                           final update = <String, dynamic>{
-                                            'title':
-                                                titleController.text.trim(),
-                                            'description':
-                                                descController.text.trim(),
-                                            'category': indexed['category'] ??
+                                            'title': titleController.text
+                                                .trim(),
+                                            'description': descController.text
+                                                .trim(),
+                                            'category':
+                                                indexed['category'] ??
                                                 trimmedCategory,
-                                            'location': indexed['location'] ??
+                                            'location':
+                                                indexed['location'] ??
                                                 trimmedLocation,
-                                            'city': indexed['city'] ??
+                                            'city':
+                                                indexed['city'] ??
                                                 trimmedLocation,
                                             'budgetType': selectedBudgetType,
                                             'canTravel': canTravel,
@@ -3085,8 +3156,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                                 FieldValue.serverTimestamp(),
                                             'postalCode':
                                                 trimmedPostalCode.isEmpty
-                                                    ? FieldValue.delete()
-                                                    : trimmedPostalCode,
+                                                ? FieldValue.delete()
+                                                : trimmedPostalCode,
                                             'cp': trimmedPostalCode.isEmpty
                                                 ? FieldValue.delete()
                                                 : trimmedPostalCode,
@@ -3095,59 +3166,61 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                                 : fullPhone,
                                             'missionDelay':
                                                 trimmedMissionDelay.isEmpty
-                                                    ? FieldValue.delete()
-                                                    : trimmedMissionDelay,
-                                            'averageDelay': trimmedAverageDelay
-                                                    .isNotEmpty
+                                                ? FieldValue.delete()
+                                                : trimmedMissionDelay,
+                                            'averageDelay':
+                                                trimmedAverageDelay.isNotEmpty
                                                 ? trimmedAverageDelay
                                                 : (trimmedMissionDelay.isEmpty
-                                                    ? FieldValue.delete()
-                                                    : trimmedMissionDelay),
+                                                      ? FieldValue.delete()
+                                                      : trimmedMissionDelay),
                                             'availability':
                                                 trimmedAvailability.isEmpty
-                                                    ? FieldValue.delete()
-                                                    : trimmedAvailability,
+                                                ? FieldValue.delete()
+                                                : trimmedAvailability,
                                             'serviceArea':
                                                 trimmedServiceArea.isEmpty
-                                                    ? (trimmedLocation.isEmpty
-                                                        ? FieldValue.delete()
-                                                        : trimmedLocation)
-                                                    : trimmedServiceArea,
+                                                ? (trimmedLocation.isEmpty
+                                                      ? FieldValue.delete()
+                                                      : trimmedLocation)
+                                                : trimmedServiceArea,
                                             'schedule': trimmedSchedule.isEmpty
                                                 ? FieldValue.delete()
                                                 : trimmedSchedule,
                                             'paymentMethod':
                                                 trimmedPaymentMethod.isEmpty
-                                                    ? FieldValue.delete()
-                                                    : trimmedPaymentMethod,
+                                                ? FieldValue.delete()
+                                                : trimmedPaymentMethod,
                                             'serviceType':
                                                 trimmedServiceType.isEmpty
-                                                    ? FieldValue.delete()
-                                                    : trimmedServiceType,
+                                                ? FieldValue.delete()
+                                                : trimmedServiceType,
                                             'subCategory':
                                                 trimmedSubCategory.isEmpty
-                                                    ? FieldValue.delete()
-                                                    : trimmedSubCategory,
+                                                ? FieldValue.delete()
+                                                : trimmedSubCategory,
                                             'subcategory':
                                                 trimmedSubCategory.isEmpty
-                                                    ? FieldValue.delete()
-                                                    : trimmedSubCategory,
+                                                ? FieldValue.delete()
+                                                : trimmedSubCategory,
                                             'categoryId':
                                                 indexed['categoryId'] ??
-                                                    FieldValue.delete(),
-                                            'cityId': indexed['cityId'] ??
+                                                FieldValue.delete(),
+                                            'cityId':
+                                                indexed['cityId'] ??
                                                 FieldValue.delete(),
                                             'cityCategoryKey':
                                                 indexed['cityCategoryKey'] ??
-                                                    FieldValue.delete(),
-                                            'dept': indexed['dept'] ??
+                                                FieldValue.delete(),
+                                            'dept':
+                                                indexed['dept'] ??
                                                 FieldValue.delete(),
                                           };
 
                                           if (effectiveBudget != null) {
                                             update['budget'] = effectiveBudget;
-                                            update['price'] =
-                                                effectiveBudget.toDouble();
+                                            update['price'] = effectiveBudget
+                                                .toDouble();
                                             update['budgetValue'] =
                                                 (indexed['budgetValue'] ??
                                                         effectiveBudget)
@@ -3190,8 +3263,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                           strokeWidth: 2,
                                           valueColor:
                                               AlwaysStoppedAnimation<Color>(
-                                            Colors.white,
-                                          ),
+                                                Colors.white,
+                                              ),
                                         ),
                                       )
                                     : const Icon(Icons.save_outlined),
@@ -3267,9 +3340,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
 
       final callable = prestoFirebaseFunctions.httpsCallable(
         'deleteListing',
-        options: HttpsCallableOptions(
-          timeout: const Duration(seconds: 30),
-        ),
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
       );
       await callable.call<dynamic>({
         'listingId': item.offerId,
@@ -3291,12 +3362,13 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
       debugPrint(
-          'Erreur callable suppression offre ${item.offerId}: ${e.code} ${e.message}');
+        'Erreur callable suppression offre ${item.offerId}: ${e.code} ${e.message}',
+      );
       final message = e.code == 'permission-denied'
           ? 'Suppression refusée. Cette annonce n’est pas reconnue comme vous appartenant.'
           : e.code == 'not-found'
-              ? 'Annonce introuvable.'
-              : 'Erreur lors de la suppression';
+          ? 'Annonce introuvable.'
+          : 'Erreur lors de la suppression';
       showErrorSnackBar(context, message);
     } catch (e) {
       if (!mounted) return;

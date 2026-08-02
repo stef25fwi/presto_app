@@ -39,20 +39,33 @@ class PublicListingsPage {
   final bool hasMore;
 }
 
+class OwnerListingsPage {
+  const OwnerListingsPage({
+    required this.documents,
+    required this.lastDocument,
+    required this.hasMore,
+  });
+
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> documents;
+  final QueryDocumentSnapshot<Map<String, dynamic>>? lastDocument;
+  final bool hasMore;
+}
+
 class ListingRepository {
   ListingRepository({
     FirebaseFirestore? firestore,
     FirebaseFunctions? functions,
     ProductAnalyticsService? analytics,
     ExpiringMemoryCache<String, PublicListingsPage>? publicListingsCache,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _functions = functions ?? prestoFirebaseFunctions,
-        _analytics = analytics ?? ProductAnalyticsService(),
-        _publicListingsCache = publicListingsCache ??
-            ExpiringMemoryCache<String, PublicListingsPage>(
-              defaultTtl: const Duration(seconds: 30),
-              maximumEntries: 30,
-            );
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _functions = functions ?? prestoFirebaseFunctions,
+       _analytics = analytics ?? ProductAnalyticsService(),
+       _publicListingsCache =
+           publicListingsCache ??
+           ExpiringMemoryCache<String, PublicListingsPage>(
+             defaultTtl: const Duration(seconds: 30),
+             maximumEntries: 30,
+           );
 
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
@@ -145,17 +158,55 @@ class ListingRepository {
     return result;
   }
 
-  Stream<List<MarketplaceListing>> watchMyListings(String userId) {
+  Stream<List<MarketplaceListing>> watchMyListings(
+    String userId, {
+    int limit = 20,
+  }) {
+    final pageSize = normalizePublicListingsPageSize(limit);
     return _listings
         .where('ownerId', isEqualTo: userId)
         .orderBy('updatedAt', descending: true)
-        .limit(500)
-        .webSafeSnapshots(debugKey: 'home.latestOffers')
+        .limit(pageSize)
+        .webSafeSnapshots(debugKey: 'marketplace.myListings')
         .map(
           (snapshot) => snapshot.docs
               .map(MarketplaceListing.fromFirestore)
               .toList(growable: false),
         );
+  }
+
+  Future<OwnerListingsPage> fetchOwnerListingsPage({
+    required String userId,
+    int limit = 20,
+    QueryDocumentSnapshot<Map<String, dynamic>>? startAfter,
+  }) async {
+    final normalizedUserId = userId.trim();
+    if (normalizedUserId.isEmpty) {
+      return const OwnerListingsPage(
+        documents: <QueryDocumentSnapshot<Map<String, dynamic>>>[],
+        lastDocument: null,
+        hasMore: false,
+      );
+    }
+
+    final pageSize = normalizePublicListingsPageSize(limit);
+    Query<Map<String, dynamic>> query = _listings
+        .where('ownerId', isEqualTo: normalizedUserId)
+        .orderBy('updatedAt', descending: true);
+    if (startAfter != null) {
+      query = query.startAfterDocument(startAfter);
+    }
+
+    final snapshot = await query.limit(pageSize + 1).get();
+    final hasMore = snapshot.docs.length > pageSize;
+    final visibleDocs = hasMore
+        ? snapshot.docs.take(pageSize).toList(growable: false)
+        : snapshot.docs;
+    return OwnerListingsPage(
+      documents: visibleDocs,
+      lastDocument: visibleDocs.isEmpty ? null : visibleDocs.last,
+      hasMore: hasMore,
+    );
   }
 
   Query<Map<String, dynamic>> _publicListingsQuery({

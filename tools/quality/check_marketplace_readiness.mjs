@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+import fs from 'node:fs';
+const enforce = process.argv.includes('--enforce');
+const failures = [];
+const read = (path) => { if (!fs.existsSync(path)) { failures.push(`missing file: ${path}`); return ''; } return fs.readFileSync(path, 'utf8'); };
+const needs = (text, token, label) => { if (!text.includes(token)) failures.push(`missing ${label}: ${token}`); };
+const forbids = (text, token, label) => { if (text.includes(token)) failures.push(`forbidden ${label}: ${token}`); };
+const registryText = read('quality/marketplace-readiness.json');
+const registry = registryText ? JSON.parse(registryText) : { controls: [] };
+const pending = (registry.controls ?? []).filter((control) => control.status !== 'verified');
+if (pending.length) failures.push(`unverified controls: ${pending.map((item) => item.id).join(', ')}`);
+read('docs/evidence/marketplace/listing-e2e.md');
+read('docs/evidence/marketplace/search-pagination.md');
+const listings = read('lib/data/marketplace/listing_repository.dart');
+for (const token of ['fetchPublicListingsPage', 'fetchOwnerListingsPage', 'startAfterDocument(startAfter)', '.limit(pageSize + 1)']) needs(listings, token, 'listing pagination');
+forbids(listings, '.limit(500)', 'oversized owner stream');
+const favorites = read('lib/data/marketplace/favorite_repository.dart');
+for (const token of ['fetchFavoriteOfferRefsPage', 'normalizeFavoritePageSize', 'startAfterDocument(startAfter)']) needs(favorites, token, 'favorite pagination');
+const ui = read('lib/pages/user_offers_section.dart');
+for (const token of ['Afficher plus de favoris', 'Afficher plus d’annonces', '.limit(_ownerPageSize)', 'FieldPath.documentId, whereIn: ids']) needs(ui, token, 'bounded marketplace UI');
+const publish = read('lib/services/marketplace_publish_service.dart');
+for (const token of ['createDraft(', 'updateDraftMedia(', 'submitDraft(', '_deleteUploadedMediaBestEffort']) needs(publish, token, 'publish pipeline');
+const backend = read('functions/src/modules/marketplace/callables/listings.ts');
+for (const token of ['createListingDraft', 'updateListingDraftMedia', 'submitListingDraft', 'validateListingDraftPayload', 'canProceedRateLimited', 'evaluateListingRisk']) needs(backend, token, 'authoritative backend');
+const favoriteBackend = read('functions/src/modules/marketplace/callables/favorites.ts');
+for (const token of ['toggleFavorite', 'runTransaction', 'Only public active listings can be favorited']) needs(favoriteBackend, token, 'favorite backend');
+read('functions/src/modules/marketplace/callables/reports.ts');
+read('functions/src/modules/marketplace/callables/reviews_v2.ts');
+read('functions/src/modules/marketplace/callables/listings.test.ts');
+read('test/services/marketplace_publish_service_flow_test.dart');
+read('test/features/offers/presentation/consult_offers_pagination_policy_test.dart');
+read('test/data/marketplace/favorite_repository_test.dart');
+if (failures.length) { console.error('Marketplace readiness: FAIL'); for (const failure of failures) console.error(`- ${failure}`); if (enforce) process.exit(1); } else { console.log(`Marketplace readiness: OK (${registry.controls.length} controls verified)`); }

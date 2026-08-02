@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "phase": 6,
+  "name": "Marketplace d’annonces",
+  "baselinePercent": 87,
+  "status": "verified",
+  "verifiedAt": "2026-08-02",
+  "controls": [
+    {
+      "id": "draft-server-authority",
+      "status": "verified",
+      "evidence": "Brouillon créé par callable ; propriétaire et statut imposés côté serveur."
+    },
+    {
+      "id": "media-pipeline",
+      "status": "verified",
+      "evidence": "Upload, conversion, métadonnées et rollback des médias couverts."
+    },
+    {
+      "id": "submission-moderation",
+      "status": "verified",
+      "evidence": "Validation, rate limit, quotas, risque et modération appliqués avant publication."
+    },
+    {
+      "id": "public-search-filters",
+      "status": "verified",
+      "evidence": "Index catégorie/ville, filtres géographiques et recherche normalisée."
+    },
+    {
+      "id": "public-cursor-pagination",
+      "status": "verified",
+      "evidence": "Consultation publique par startAfterDocument, pages et plafond de session."
+    },
+    {
+      "id": "owner-cursor-pagination",
+      "status": "verified",
+      "evidence": "Mes annonces : flux borné et pages suivantes par curseur."
+    },
+    {
+      "id": "favorites-cursor-pagination",
+      "status": "verified",
+      "evidence": "Favoris canoniques paginés ; fallback legacy borné."
+    },
+    {
+      "id": "favorites-server-authority",
+      "status": "verified",
+      "evidence": "Transaction serveur authentifiée, annonce active et publique obligatoire."
+    },
+    {
+      "id": "protected-contact",
+      "status": "verified",
+      "evidence": "Téléphone et option hidePhone conservés dans le contrat serveur."
+    },
+    {
+      "id": "reporting",
+      "status": "verified",
+      "evidence": "Signalement via callable authentifié, validé et testé."
+    },
+    {
+      "id": "reviews",
+      "status": "verified",
+      "evidence": "Avis Marketplace v2 câblés et modérables."
+    },
+    {
+      "id": "lifecycle",
+      "status": "verified",
+      "evidence": "États draft, pending, active, rejected et archived gérés."
+    },
+    {
+      "id": "firestore-rules",
+      "status": "verified",
+      "evidence": "Écritures sensibles protégées et testées sur émulateur."
+    }
+  ]
+}
