@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -6,10 +7,32 @@ void main() {
   group('web public prelaunch shell', () {
     late String html;
     late String bootstrap;
+    late Map<String, dynamic> structuredData;
+    late List<Map<String, dynamic>> structuredNodes;
 
     setUpAll(() {
       html = File('web/index.html').readAsStringSync();
       bootstrap = File('web/flutter_bootstrap.js').readAsStringSync();
+
+      final jsonLdMatch = RegExp(
+        r'<script\s+type="application/ld\+json"[^>]*>([\s\S]*?)</script>',
+      ).firstMatch(html);
+      if (jsonLdMatch == null) {
+        throw StateError('Le bloc JSON-LD public est absent de web/index.html.');
+      }
+
+      final decoded = jsonDecode(jsonLdMatch.group(1)!);
+      if (decoded is! Map) {
+        throw StateError('Le bloc JSON-LD public doit contenir un objet JSON.');
+      }
+      structuredData = decoded.cast<String, dynamic>();
+
+      final graph = structuredData['@graph'];
+      final rawNodes = graph is List ? graph : <dynamic>[structuredData];
+      structuredNodes = rawNodes
+          .whereType<Map>()
+          .map((node) => node.cast<String, dynamic>())
+          .toList(growable: false);
     });
 
     test('expose le contenu essentiel sans dépendre du rendu Flutter', () {
@@ -40,8 +63,6 @@ void main() {
       expect(html, contains('property="og:title"'));
       expect(html, contains('name="twitter:title"'));
       expect(html, contains('type="application/ld+json"'));
-      expect(html, contains('"@type": "WebSite"'));
-      expect(html, contains('"@type": "Organization"'));
       expect(html, contains('<title>iliprestō – Trouvez un service près de chez vous</title>'));
       expect(
         html,
@@ -49,12 +70,48 @@ void main() {
           '<meta name="description" content="Trouvez rapidement un particulier, un indépendant ou un professionnel partout en France. Publiez une annonce assistée par IA et échangez directement, avec 0 % de commission.">',
         ),
       );
-      expect(html, contains('"areaServed"'));
-      expect(html, contains('"@type": "Country"'));
-      expect(html, contains('"name": "France"'));
       expect(
         html,
         isNot(contains('Ouverture prochaine en Guadeloupe, Martinique et Guyane.')),
+      );
+    });
+
+    test('déclare un graphe JSON-LD national valide sans dépendre des espaces', () {
+      expect(structuredData['@context'], 'https://schema.org');
+
+      final types = structuredNodes.map((node) => node['@type']).toSet();
+      expect(
+        types,
+        containsAll(<String>{'Organization', 'WebSite', 'WebPage', 'Service'}),
+      );
+
+      final organization = structuredNodes.firstWhere(
+        (node) => node['@type'] == 'Organization',
+      );
+      expect(organization['@id'], 'https://ilipresto.fr/#organization');
+      expect(organization['name'], 'iliprestō');
+      expect(
+        organization['areaServed'],
+        equals(<String, dynamic>{'@type': 'Country', 'name': 'France'}),
+      );
+
+      final website = structuredNodes.firstWhere(
+        (node) => node['@type'] == 'WebSite',
+      );
+      expect(website['@id'], 'https://ilipresto.fr/#website');
+      expect(website['publisher'], equals(<String, dynamic>{
+        '@id': 'https://ilipresto.fr/#organization',
+      }));
+
+      final service = structuredNodes.firstWhere(
+        (node) => node['@type'] == 'Service',
+      );
+      expect(service['provider'], equals(<String, dynamic>{
+        '@id': 'https://ilipresto.fr/#organization',
+      }));
+      expect(
+        service['areaServed'],
+        equals(<String, dynamic>{'@type': 'Country', 'name': 'France'}),
       );
     });
 
