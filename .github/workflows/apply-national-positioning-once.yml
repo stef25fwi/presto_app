@@ -18,13 +18,17 @@ permissions:
   contents: write
   pull-requests: read
 
+concurrency:
+  group: national-seo-positioning
+  cancel-in-progress: true
+
 jobs:
   apply:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          ref: agent/seo-national-positioning
           fetch-depth: 0
 
       - name: Repair generator escaping
@@ -48,7 +52,7 @@ jobs:
       - name: Validate patch formatting
         run: git diff --check
 
-      - name: Commit generated source changes
+      - name: Commit and publish generated source changes
         shell: bash
         run: |
           git config user.name "ilipresto-seo-agent"
@@ -64,4 +68,7 @@ jobs:
             exit 0
           fi
           git commit -m "Positionner iliprestō comme plateforme nationale"
+          git restore tools/migrations/apply_national_positioning.py
+          git fetch origin agent/seo-national-positioning
+          git rebase origin/agent/seo-national-positioning
           git push origin HEAD:agent/seo-national-positioning
