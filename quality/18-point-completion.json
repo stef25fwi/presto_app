@@ -1,0 +1,615 @@
+{
+  "schemaVersion": 1,
+  "program": "ilipresto-18-point-100-percent",
+  "updatedAt": "2026-08-02",
+  "autoAdvance": false,
+  "rules": {
+    "singleActivePoint": true,
+    "priorPointsMustBeVerified": true,
+    "laterPointsMustRemainBlocked": true,
+    "promotionRequiresAllEvidence": true,
+    "promotionRequiresAllControls": true,
+    "promotionRequiresValidationCommands": true
+  },
+  "points": [
+    {
+      "id": 1,
+      "name": "Cadrage produit",
+      "baselinePercent": 85,
+      "status": "active",
+      "environmentProfile": "docs",
+      "objective": "Figer le produit, son modèle, son périmètre de lancement et ses indicateurs de succès.",
+      "requiredFiles": [
+        "docs/product/product-requirements.md",
+        "docs/product/business-model.md",
+        "docs/product/kpi-framework.md",
+        "docs/product/release-scope.md",
+        "quality/product-readiness.json"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/product-readiness.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "node tools/quality/check_18_point_completion.test.mjs"
+      ],
+      "doneWhen": [
+        "Les utilisateurs, rôles, besoins et parcours prioritaires sont figés.",
+        "Le modèle bêta gratuite puis commercial est documenté sans contradiction.",
+        "Le périmètre de lancement et les exclusions sont approuvés.",
+        "Les KPI acquisition, activation, rétention, mise en relation, MRR et coûts sont définis.",
+        "Tous les contrôles product-readiness sont verified."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "UX/UI et design system",
+      "baselinePercent": 68,
+      "status": "blocked",
+      "environmentProfile": "flutter",
+      "objective": "Obtenir une interface cohérente, responsive et accessible sur tous les parcours principaux.",
+      "requiredFiles": [
+        "docs/design/design-system.md",
+        "docs/evidence/ux/accessibility-audit.md",
+        "docs/evidence/ux/responsive-matrix.md",
+        "quality/accessibility_ux_readiness.json"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/accessibility_ux_readiness.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "flutter analyze --fatal-infos",
+        "flutter test --coverage --reporter expanded"
+      ],
+      "doneWhen": [
+        "Le design system est centralisé et documenté.",
+        "Les contrastes, focus, lecteurs d’écran et cibles tactiles sont validés.",
+        "Les tailles 320 à 1440 px et le texte agrandi sont testés.",
+        "Les états loading, empty, error et success sont cohérents.",
+        "Tous les contrôles accessibility_ux_readiness sont verified."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Architecture technique",
+      "baselinePercent": 75,
+      "status": "blocked",
+      "environmentProfile": "full",
+      "objective": "Stabiliser une architecture maintenable, documentée et sans dette critique bloquante.",
+      "requiredFiles": [
+        "docs/architecture/system-overview.md",
+        "docs/architecture/data-flows.md",
+        "docs/architecture/production-reference-roadmap.md",
+        "quality/technical-debt-register.md",
+        "quality/architecture-readiness.json"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/architecture-readiness.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "python3 tools/quality/audit_repository.py --output-dir quality_reports/18-point/03 --enforce",
+        "flutter analyze --fatal-infos",
+        "npm --prefix functions run build"
+      ],
+      "doneWhen": [
+        "Les frontières Flutter, repositories et backend sont explicites.",
+        "Les fichiers critiques sont sous les budgets d’architecture ou couverts par un plan daté accepté.",
+        "Les flux sensibles sont documentés et testables.",
+        "Aucune dette P0 d’architecture ne reste ouverte.",
+        "Tous les contrôles architecture-readiness sont verified."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Socle Flutter multiplateforme",
+      "baselinePercent": 75,
+      "status": "blocked",
+      "environmentProfile": "flutter",
+      "objective": "Certifier le socle Web, Android et iOS avec builds reproductibles et navigation stable.",
+      "requiredFiles": [
+        "quality/flutter-platform-readiness.json",
+        "docs/evidence/platform/web-release.md",
+        "docs/evidence/platform/android-release.md",
+        "docs/evidence/platform/ios-release.md"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/flutter-platform-readiness.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "flutter analyze --fatal-infos",
+        "flutter test --coverage --reporter expanded",
+        "bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run"
+      ],
+      "doneWhen": [
+        "Le routage initial et les routes profondes sont certifiés.",
+        "Les builds Web et Android release sont reproductibles.",
+        "Le build iOS est produit et testé dans l’environnement Apple prévu.",
+        "Les erreurs de démarrage et de reprise sont couvertes.",
+        "Tous les contrôles flutter-platform-readiness sont verified."
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Comptes et authentification",
+      "baselinePercent": 82,
+      "status": "blocked",
+      "environmentProfile": "full",
+      "objective": "Certifier tous les parcours de compte, d’identité et de récupération sur les plateformes supportées.",
+      "requiredFiles": [
+        "quality/auth-readiness.json",
+        "docs/evidence/auth/auth-matrix.md",
+        "docs/evidence/auth/app-check-auth.md"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/auth-readiness.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "flutter analyze --fatal-infos",
+        "flutter test --coverage --reporter expanded",
+        "npm --prefix functions test"
+      ],
+      "doneWhen": [
+        "Email, Google et Apple sont validés sur chaque plateforme concernée.",
+        "Vérification email, récupération, changement de mot de passe et suppression sont testés.",
+        "Les rôles et droits ne peuvent pas être élevés côté client.",
+        "App Check et les redirections de production sont prouvés.",
+        "Tous les contrôles auth-readiness sont verified."
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Marketplace d’annonces",
+      "baselinePercent": 87,
+      "status": "blocked",
+      "environmentProfile": "full",
+      "objective": "Certifier de bout en bout la création, publication, recherche et gestion des annonces.",
+      "requiredFiles": [
+        "quality/marketplace-readiness.json",
+        "docs/evidence/marketplace/listing-e2e.md",
+        "docs/evidence/marketplace/search-pagination.md"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/marketplace-readiness.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "flutter analyze --fatal-infos",
+        "flutter test --coverage --reporter expanded",
+        "npm --prefix functions test",
+        "npm --prefix functions run test:firestore"
+      ],
+      "doneWhen": [
+        "Le brouillon, les médias, la modération et la publication sont testés de bout en bout.",
+        "Recherche, filtres, favoris, contacts et cycle de vie sont certifiés.",
+        "Les listes volumineuses sont paginées et bornées.",
+        "Les quotas et validations sont autoritaires côté backend.",
+        "Tous les contrôles marketplace-readiness sont verified."
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Messagerie complète",
+      "baselinePercent": 82,
+      "status": "blocked",
+      "environmentProfile": "full",
+      "objective": "Certifier la messagerie texte, média, audio, modération et notifications.",
+      "requiredFiles": [
+        "quality/messaging-readiness.json",
+        "docs/evidence/messaging/conversation-e2e.md",
+        "docs/evidence/messaging/media-matrix.md",
+        "docs/evidence/messaging/push-device-tests.md"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/messaging-readiness.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "flutter analyze --fatal-infos",
+        "flutter test --coverage --reporter expanded",
+        "npm --prefix functions test",
+        "npm --prefix functions run test:firestore"
+      ],
+      "doneWhen": [
+        "Texte, photos, fichiers et audio sont validés sur appareils réels.",
+        "Plein écran, watermark et confirmations de suppression sont couverts.",
+        "Blocage, signalement, archivage et lecture sont cohérents.",
+        "Les notifications fonctionnent en premier plan, arrière-plan et application fermée.",
+        "Tous les contrôles messaging-readiness sont verified."
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Fonctions IA",
+      "baselinePercent": 88,
+      "status": "blocked",
+      "environmentProfile": "full",
+      "objective": "Certifier qualité, coût, sécurité, observabilité et rollback des fonctions IA.",
+      "requiredFiles": [
+        "quality/ai-readiness.json",
+        "docs/production/OPENAI_AI_ROLLOUT_RUNBOOK.md",
+        "docs/evidence/ai/evaluation-report.md",
+        "docs/evidence/ai/production-smoke.md"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/ai-readiness.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "flutter analyze --fatal-infos",
+        "flutter test --coverage --reporter expanded",
+        "npm --prefix functions run build",
+        "npm --prefix functions test"
+      ],
+      "doneWhen": [
+        "Les sorties structurées, validations et fallbacks sont certifiés.",
+        "Les évaluations audio, texte et image respectent les seuils définis.",
+        "Les coûts, latences, erreurs et taux de fallback sont observables.",
+        "Le rollback Remote Config est testé en production.",
+        "Tous les contrôles ai-readiness sont verified."
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Administration et modération",
+      "baselinePercent": 82,
+      "status": "blocked",
+      "environmentProfile": "full",
+      "objective": "Certifier les droits, opérations sensibles, audits et outils de modération.",
+      "requiredFiles": [
+        "quality/admin-readiness.json",
+        "docs/evidence/admin/role-matrix.md",
+        "docs/evidence/admin/moderation-e2e.md",
+        "docs/evidence/admin/audit-log.md"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/admin-readiness.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "flutter analyze --fatal-infos",
+        "flutter test --coverage --reporter expanded",
+        "npm --prefix functions test",
+        "npm --prefix functions run test:firestore"
+      ],
+      "doneWhen": [
+        "Chaque rôle possède uniquement les actions prévues.",
+        "Les opérations sensibles sont serveur, auditées et réversibles selon la politique.",
+        "Annonces, avis, messages, utilisateurs et paramètres sont modérables.",
+        "Les écrans administratifs critiques sont couverts et maintenables.",
+        "Tous les contrôles admin-readiness sont verified."
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Parcours Je me lance",
+      "baselinePercent": 87,
+      "status": "blocked",
+      "environmentProfile": "flutter",
+      "objective": "Certifier le parcours guidé, ses contenus, ses liens et ses exports.",
+      "requiredFiles": [
+        "quality/guided-journey-readiness.json",
+        "docs/evidence/journey/content-audit.md",
+        "docs/evidence/journey/link-audit.md",
+        "docs/evidence/journey/pdf-audit.md"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/guided-journey-readiness.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "flutter analyze --fatal-infos",
+        "flutter test --coverage --reporter expanded"
+      ],
+      "doneWhen": [
+        "Toutes les fiches attendues sont complètes, sans doublon et traçables.",
+        "Les étapes, checklists, ressources et reprises de progression sont validées.",
+        "Les liens officiels sont contrôlés et datés.",
+        "Les PDF sont lisibles, brandés et juridiquement prudents.",
+        "Tous les contrôles guided-journey-readiness sont verified."
+      ]
+    },
+    {
+      "id": 11,
+      "name": "Paiements et abonnements",
+      "baselinePercent": 90,
+      "status": "blocked",
+      "environmentProfile": "full",
+      "objective": "Certifier le cycle complet Stripe et la stratégie de paiement mobile.",
+      "requiredFiles": [
+        "quality/stripe-readiness.json",
+        "docs/production/PHASE_11_STRIPE_READINESS.md",
+        "docs/evidence/billing/firebase-user-e2e.md",
+        "docs/evidence/billing/mobile-billing-policy.md"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/stripe-readiness.json",
+          "acceptedStatuses": ["implemented", "verified"],
+          "acceptedRootStatuses": ["complete"]
+        }
+      ],
+      "validationCommands": [
+        "npm --prefix functions run build",
+        "npm --prefix functions test",
+        "flutter test --coverage --reporter expanded"
+      ],
+      "doneWhen": [
+        "Checkout, webhook, portail, droits, impayés, résiliation et remboursements sont certifiés.",
+        "Un utilisateur Firebase réel reçoit correctement ses droits après paiement de test.",
+        "La réconciliation et les alertes détectent les pannes silencieuses.",
+        "La stratégie Play Billing ou web-only est décidée et appliquée.",
+        "Tous les contrôles Stripe restent complets."
+      ]
+    },
+    {
+      "id": 12,
+      "name": "Sécurité et conformité",
+      "baselinePercent": 62,
+      "status": "blocked",
+      "environmentProfile": "full",
+      "objective": "Clore les preuves de sécurité, RGPD et conformité avant lancement.",
+      "requiredFiles": [
+        "quality/security-controls.json",
+        "docs/evidence/security/app-check-firestore.md",
+        "docs/evidence/security/app-check-storage.md",
+        "docs/evidence/security/app-check-functions.md",
+        "docs/evidence/security/api-key-restrictions.md",
+        "docs/evidence/security/secrets-inventory.md",
+        "docs/evidence/security/dependency-audit.md",
+        "docs/evidence/security/owasp-review.md"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/security-controls.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "node tools/quality/check_security_controls.mjs --enforce",
+        "npm --prefix functions audit --audit-level=high",
+        "npm --prefix functions run build",
+        "npm --prefix functions test",
+        "npm --prefix functions run test:firestore"
+      ],
+      "doneWhen": [
+        "App Check est appliqué et prouvé sur Firestore, Storage et Functions.",
+        "Les clés API sont restreintes et l’inventaire des secrets est à jour.",
+        "Aucune vulnérabilité haute non acceptée ne reste ouverte.",
+        "La revue OWASP et les obligations RGPD sont documentées.",
+        "Tous les contrôles security-controls sont verified."
+      ]
+    },
+    {
+      "id": 13,
+      "name": "Tests et qualité",
+      "baselinePercent": 74,
+      "status": "blocked",
+      "environmentProfile": "full",
+      "objective": "Atteindre les objectifs de couverture et certifier les parcours critiques.",
+      "requiredFiles": [
+        "quality/testing-readiness.json",
+        "docs/evidence/quality/coverage-70.md",
+        "docs/evidence/quality/critical-modules-85.md",
+        "docs/evidence/quality/integration-suite.md"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/testing-readiness.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "flutter analyze --fatal-infos",
+        "flutter test --coverage --reporter expanded",
+        "npm --prefix functions run build",
+        "npm --prefix functions test",
+        "npm --prefix functions run test:firestore",
+        "python3 tools/quality/audit_repository.py --output-dir quality_reports/18-point/13 --enforce"
+      ],
+      "doneWhen": [
+        "La couverture globale réelle atteint au moins 70 %.",
+        "Les modules critiques atteignent au moins 85 %, et paiements/droits 90 %.",
+        "Les parcours annonce, messagerie, abonnement, parcours et administration ont des tests d’intégration.",
+        "Aucun skip, exclusion artificielle ou baisse de seuil n’est utilisé.",
+        "Tous les contrôles testing-readiness sont verified."
+      ]
+    },
+    {
+      "id": 14,
+      "name": "CI/CD et déploiement",
+      "baselinePercent": 82,
+      "status": "blocked",
+      "environmentProfile": "full",
+      "objective": "Certifier une livraison reproductible, observable, réversible et séparée par environnement.",
+      "requiredFiles": [
+        "quality/cicd-readiness.json",
+        "docs/evidence/cicd/staging.md",
+        "docs/evidence/cicd/rollback-test.md",
+        "docs/evidence/cicd/production-deploy.md"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/cicd-readiness.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "flutter analyze --fatal-infos",
+        "flutter test --coverage --reporter expanded",
+        "npm --prefix functions run build",
+        "npm --prefix functions test",
+        "npm --prefix functions run test:firestore",
+        "bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run",
+        "node tools/check_web_bundle_size.mjs"
+      ],
+      "doneWhen": [
+        "Développement, staging et production sont séparés.",
+        "Les validations sont obligatoires avant déploiement.",
+        "Le rollback a été exécuté puis vérifié.",
+        "Les artefacts, statuts, smoke tests et alertes sont disponibles.",
+        "Tous les contrôles cicd-readiness sont verified."
+      ]
+    },
+    {
+      "id": 15,
+      "name": "SEO et pré-lancement",
+      "baselinePercent": 93,
+      "status": "blocked",
+      "environmentProfile": "node",
+      "objective": "Certifier le référencement, les pages publiques et le passage pré-lancement vers lancement.",
+      "requiredFiles": [
+        "quality/seo-readiness.json",
+        "docs/evidence/seo/search-console.md",
+        "docs/evidence/seo/structured-data.md",
+        "docs/evidence/seo/public-routes.md"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/seo-readiness.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "node tools/quality/check_play_listing.mjs",
+        "node tools/check_web_bundle_size.mjs"
+      ],
+      "doneWhen": [
+        "Canonical, métadonnées, JSON-LD, manifestes et sitemap sont cohérents.",
+        "Les pages légales et publiques répondent directement en production.",
+        "Search Console confirme l’indexation de la version nationale.",
+        "Le toggle de pré-lancement et son retrait sont testés sans double rendu.",
+        "Tous les contrôles seo-readiness sont verified."
+      ]
+    },
+    {
+      "id": 16,
+      "name": "Publication mobile",
+      "baselinePercent": 50,
+      "status": "blocked",
+      "environmentProfile": "mobile",
+      "objective": "Publier et certifier les versions Android et iOS avec leurs services associés.",
+      "requiredFiles": [
+        "quality/mobile_readiness.json",
+        "docs/deployment/playstore-launch-checklist.md",
+        "docs/evidence/mobile/android-aab.md",
+        "docs/evidence/mobile/play-integrity.md",
+        "docs/evidence/mobile/device-tests.md",
+        "docs/evidence/mobile/ios-testflight.md",
+        "docs/evidence/mobile/store-listings.md"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/mobile_readiness.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "flutter analyze --fatal-infos",
+        "flutter test --coverage --reporter expanded",
+        "flutter build appbundle --release"
+      ],
+      "doneWhen": [
+        "L’AAB signé est testé et accepté sur une piste Play.",
+        "Play App Signing, SHA, Play Integrity et App Check sont validés.",
+        "Push, deep links, permissions et Crashlytics sont testés sur appareils réels.",
+        "TestFlight et la fiche App Store sont validés si iOS est dans le périmètre.",
+        "Tous les contrôles mobile_readiness sont verified."
+      ]
+    },
+    {
+      "id": 17,
+      "name": "Gestion de projet",
+      "baselinePercent": 75,
+      "status": "blocked",
+      "environmentProfile": "docs",
+      "objective": "Mettre en place une gouvernance claire, un backlog maîtrisé et des responsabilités d’exploitation.",
+      "requiredFiles": [
+        "quality/project-governance-readiness.json",
+        "docs/governance/roles-and-responsibilities.md",
+        "docs/governance/backlog-policy.md",
+        "docs/governance/release-governance.md",
+        "docs/governance/support-ownership.md"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/project-governance-readiness.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "node tools/quality/check_18_point_completion.test.mjs"
+      ],
+      "doneWhen": [
+        "Chaque domaine possède un responsable et une définition de fini.",
+        "Les PR et branches obsolètes sont traitées selon une politique écrite.",
+        "Le backlog est priorisé et traçable jusqu’aux preuves.",
+        "Les décisions go/no-go, support et incidents ont des propriétaires.",
+        "Tous les contrôles project-governance-readiness sont verified."
+      ]
+    },
+    {
+      "id": 18,
+      "name": "Stabilisation avant lancement",
+      "baselinePercent": 70,
+      "status": "blocked",
+      "environmentProfile": "full",
+      "objective": "Clore le go-live, le rollback, la supervision et les obligations de lancement.",
+      "requiredFiles": [
+        "quality/production_go_live_readiness.json",
+        "docs/production/PHASE_16_GO_LIVE_EVIDENCE.md",
+        "docs/evidence/go-live/release-candidate.md",
+        "docs/evidence/go-live/smoke-tests.md",
+        "docs/evidence/go-live/rollback.md",
+        "docs/evidence/go-live/monitoring.md",
+        "docs/evidence/go-live/legal-store-approval.md"
+      ],
+      "controlFiles": [
+        {
+          "path": "quality/production_go_live_readiness.json",
+          "acceptedStatuses": ["verified"]
+        }
+      ],
+      "validationCommands": [
+        "node tools/quality/check_production_go_live_readiness.mjs --enforce",
+        "flutter analyze --fatal-infos",
+        "flutter test --coverage --reporter expanded",
+        "npm --prefix functions run build",
+        "npm --prefix functions test",
+        "npm --prefix functions run test:firestore",
+        "bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run",
+        "node tools/check_web_bundle_size.mjs"
+      ],
+      "doneWhen": [
+        "Une release candidate immuable est identifiée.",
+        "Les smoke tests production et le rollback ont été exécutés.",
+        "Les dashboards, alertes, contacts d’incident et support sont prêts.",
+        "Les éléments légaux et stores sont approuvés.",
+        "Tous les contrôles production_go_live_readiness sont verified et le programme atteint 18/18."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,227 @@
+name: 18-Point Sequential Supervisor
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Surveiller ou demander la promotion du point actif"
+        required: true
+        default: monitor
+        type: choice
+        options:
+          - monitor
+          - advance
+  schedule:
+    - cron: "30 5 * * *"
+  push:
+    branches:
+      - main
+    paths:
+      - "quality/**"
+      - "docs/evidence/**"
+      - "docs/product/**"
+      - "docs/design/**"
+      - "docs/governance/**"
+      - "tools/quality/check_18_point_completion.mjs"
+      - "tools/quality/check_18_point_completion.test.mjs"
+      - ".github/workflows/18-point-supervisor.yml"
+  pull_request:
+    paths:
+      - "quality/**"
+      - "docs/evidence/**"
+      - "docs/product/**"
+      - "docs/design/**"
+      - "docs/governance/**"
+      - "tools/quality/check_18_point_completion.mjs"
+      - "tools/quality/check_18_point_completion.test.mjs"
+      - ".github/workflows/18-point-supervisor.yml"
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: 18-point-supervisor-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    name: Contrôler la séquence et publier le rapport
+    runs-on: ubuntu-latest
+    outputs:
+      active_id: ${{ steps.state.outputs.active_id }}
+      active_name: ${{ steps.state.outputs.active_name }}
+      profile: ${{ steps.state.outputs.profile }}
+      all_verified: ${{ steps.state.outputs.all_verified }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Tester le moteur du superviseur
+        run: node tools/quality/check_18_point_completion.test.mjs
+
+      - name: Analyser le registre séquentiel
+        run: |
+          mkdir -p quality_reports/18-point
+          node tools/quality/check_18_point_completion.mjs \
+            --json \
+            --report-path quality_reports/18-point/status.md \
+            > quality_reports/18-point/state.json
+
+      - name: Exposer le point actif
+        id: state
+        shell: bash
+        run: |
+          node <<'NODE' >> "$GITHUB_OUTPUT"
+          const fs = require('fs');
+          const state = JSON.parse(fs.readFileSync('quality_reports/18-point/state.json', 'utf8'));
+          console.log(`active_id=${state.activePoint?.id ?? ''}`);
+          console.log(`active_name=${state.activePoint?.name ?? ''}`);
+          console.log(`profile=${state.activePoint?.environmentProfile ?? 'none'}`);
+          console.log(`all_verified=${state.allVerified}`);
+          NODE
+
+      - name: Ajouter le rapport au résumé GitHub Actions
+        run: cat quality_reports/18-point/status.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Archiver le rapport de supervision
+        uses: actions/upload-artifact@v7
+        with:
+          name: 18-point-status-${{ github.run_id }}
+          path: quality_reports/18-point
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Créer ou actualiser l issue de suivi
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: "[Agent 18/18] Supervision séquentielle iliprestō"
+        shell: bash
+        run: |
+          set -euo pipefail
+          issue_number=$(
+            gh issue list --state open --limit 100 --json number,title \
+              | jq -r --arg title "$TITLE" '.[] | select(.title == $title) | .number' \
+              | head -n 1
+          )
+
+          if [ -z "$issue_number" ]; then
+            gh issue create \
+              --title "$TITLE" \
+              --body-file quality_reports/18-point/status.md \
+              --assignee "${{ github.repository_owner }}"
+          else
+            gh issue edit "$issue_number" \
+              --title "$TITLE" \
+              --body-file quality_reports/18-point/status.md
+          fi
+
+  advance:
+    name: Valider puis préparer le point suivant
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      inputs.action == 'advance' &&
+      needs.monitor.outputs.all_verified != 'true'
+    needs: monitor
+    runs-on: ubuntu-latest
+    environment: recaptcha
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Setup Flutter 3.44.6
+        if: >-
+          needs.monitor.outputs.profile == 'flutter' ||
+          needs.monitor.outputs.profile == 'full' ||
+          needs.monitor.outputs.profile == 'mobile'
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.6"
+          channel: stable
+          cache: true
+
+      - name: Préparer Flutter
+        if: >-
+          needs.monitor.outputs.profile == 'flutter' ||
+          needs.monitor.outputs.profile == 'full' ||
+          needs.monitor.outputs.profile == 'mobile'
+        run: |
+          flutter config --enable-web
+          flutter pub get
+
+      - name: Installer les dépendances Functions
+        if: needs.monitor.outputs.profile == 'full'
+        run: npm --prefix functions ci
+
+      - name: Installer Firebase CLI pour les profils complets
+        if: needs.monitor.outputs.profile == 'full'
+        run: npm install -g firebase-tools@13
+
+      - name: Valider toutes les preuves et promouvoir localement
+        run: |
+          mkdir -p quality_reports/18-point
+          node tools/quality/check_18_point_completion.mjs \
+            --promote \
+            --json \
+            --report-path quality_reports/18-point/promotion.md \
+            > quality_reports/18-point/promotion-state.json
+
+      - name: Créer la PR de promotion séquentielle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTIVE_ID: ${{ needs.monitor.outputs.active_id }}
+          ACTIVE_NAME: ${{ needs.monitor.outputs.active_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="agent/18-point-promote-${ACTIVE_ID}-${GITHUB_RUN_ID}"
+          next_id=$((ACTIVE_ID + 1))
+
+          git config user.name "ilipresto-18-point-agent"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add quality/18-point-completion.json
+          git commit -m "chore(quality): valider le point ${ACTIVE_ID} et activer le suivant"
+          git push origin "$branch"
+
+          if [ "$ACTIVE_ID" -eq 18 ]; then
+            title="Clore le programme 18/18 à 100 %"
+            next_text="aucun : le programme est terminé"
+          else
+            title="Valider le point ${ACTIVE_ID} et activer le point ${next_id}"
+            next_text="point ${next_id}"
+          fi
+
+          {
+            echo "## Promotion produite par l’agent séquentiel"
+            echo
+            echo "- Point validé : **${ACTIVE_ID}. ${ACTIVE_NAME}**"
+            echo "- Prochaine étape : **${next_text}**"
+            echo "- Toutes les preuves, registres et commandes du point actif ont réussi."
+            echo "- Le point suivant ne devient actif sur \`main\` qu’après fusion de cette PR."
+            echo
+            cat quality_reports/18-point/promotion.md
+          } > /tmp/promotion-pr.md
+
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "$title" \
+            --body-file /tmp/promotion-pr.md
