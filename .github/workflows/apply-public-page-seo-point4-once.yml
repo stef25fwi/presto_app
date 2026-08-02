@@ -1,0 +1,54 @@
+name: Apply public page SEO point 4 once
+
+on:
+  push:
+    branches:
+      - agent/seo-public-pages-point-4
+    paths:
+      - tools/migrations/apply_public_page_seo_point4.py
+      - .github/workflows/apply-public-page-seo-point4-once.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: public-page-seo-point-4
+  cancel-in-progress: true
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/seo-public-pages-point-4
+          fetch-depth: 0
+
+      - name: Validate migration syntax
+        run: python3 -m py_compile tools/migrations/apply_public_page_seo_point4.py
+
+      - name: Apply public page SEO migration
+        run: python3 tools/migrations/apply_public_page_seo_point4.py
+
+      - name: Validate generated public pages
+        run: node tools/quality/check_public_page_seo.mjs
+
+      - name: Validate patch formatting
+        run: git diff --check
+
+      - name: Commit generated changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "ilipresto-seo-agent"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm tools/migrations/apply_public_page_seo_point4.py
+          git rm .github/workflows/apply-public-page-seo-point4-once.yml
+          git add \
+            web/index.html \
+            web/sitemap.xml \
+            firebase.json \
+            .github/workflows/seo-acquisition-readiness.yml \
+            .github/workflows/deploy.yml
+          git commit -m "Optimiser toutes les pages publiques pour le SEO"
+          git push origin HEAD:agent/seo-public-pages-point-4
