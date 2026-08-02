@@ -1,0 +1,39 @@
+name: Promote point 1
+
+on:
+  push:
+    branches:
+      - agent/promote-point-1
+    paths:
+      - ".github/workflows/promote-point-1.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: agent/promote-point-1
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Valider et promouvoir le point 1
+        run: |
+          node tools/quality/check_18_point_completion.mjs \
+            --promote \
+            --json \
+            --report-path /tmp/promotion-report.md \
+            > /tmp/promotion-state.json
+          cat /tmp/promotion-state.json
+          cat /tmp/promotion-report.md
+      - name: Enregistrer la promotion
+        run: |
+          git config user.name "ilipresto-18-point-agent"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add quality/18-point-completion.json
+          git commit -m "chore(quality): valider le point 1 et activer le point 2"
+          git push origin HEAD:agent/promote-point-1
