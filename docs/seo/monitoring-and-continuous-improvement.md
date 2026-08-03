@@ -51,7 +51,7 @@ Valeurs initiales : disponibilité 100 %, avertissement de réponse au-delà de 
 Chaque semaine :
 
 1. vérifier le dernier rapport et l’issue d’alerte ;
-2. comparer requêtes et pages gagnantes ou perdantes ;
+2. comparer requêtes et pages gagnantes ou perdues ;
 3. contrôler les pages à fortes impressions et faible CTR ;
 4. comparer clics Search Console et sessions organiques GA4 ;
 5. prioriser au maximum trois corrections mesurables ;
@@ -75,6 +75,8 @@ Une hausse de trafic sans activation ni contact n’est pas une réussite compl�
 ## Alertes automatiques
 
 Le workflow `SEO continuous monitoring` s’exécute quotidiennement à 06:17 en Guadeloupe. Il produit `seo-monitoring-report.json`, `seo-monitoring-report.md` et une issue unique intitulée `[SEO] Alerte de suivi continu iliprestō` en cas de régression. L’issue est mise à jour plutôt que dupliquée, puis fermée automatiquement après retour à la normale.
+
+Chaque exécution est rattachée au SHA contrôlé afin que les métriques Search Console, GA4 et les vérifications de production restent auditables.
 
 ## Commandes locales
 
