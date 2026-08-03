@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "siteName": "iliprestō",
+  "siteUrl": "https://ilipresto.fr",
+  "searchConsoleSiteUrl": "sc-domain:ilipresto.fr",
+  "ga4MeasurementId": "G-NT4PEHQ3CJ",
+  "dataLagDays": 3,
+  "currentPeriodDays": 28,
+  "comparisonPeriodDays": 28,
+  "monitoredPages": [
+    { "path": "/", "validationMode": "html", "priority": "critical" },
+    { "path": "/a-propos", "validationMode": "html", "priority": "high" },
+    { "path": "/guides/comment-fonctionne-ilipresto", "validationMode": "html", "priority": "high" },
+    { "path": "/guadeloupe", "validationMode": "html", "priority": "high" },
+    { "path": "/martinique", "validationMode": "html", "priority": "high" },
+    { "path": "/guyane", "validationMode": "html", "priority": "high" },
+    { "path": "/mentions-legales", "validationMode": "runtime-registry", "priority": "normal" },
+    { "path": "/confidentialite", "validationMode": "runtime-registry", "priority": "normal" },
+    { "path": "/cgu", "validationMode": "runtime-registry", "priority": "normal" },
+    { "path": "/suppression-compte", "validationMode": "runtime-registry", "priority": "normal" }
+  ],
+  "conversionEvents": [
+    "registration_completed",
+    "activation_first_value",
+    "engagement_listing_contacted",
+    "conversion_plan_selected",
+    "conversion_checkout_completed"
+  ],
+  "thresholds": {
+    "availabilityPercentMin": 100,
+    "maxResponseTimeMs": 3500,
+    "titleLengthMin": 20,
+    "titleLengthMax": 70,
+    "descriptionLengthMin": 80,
+    "descriptionLengthMax": 180,
+    "clicksDropPercent": 20,
+    "impressionsDropPercent": 20,
+    "ctrDropPercentagePoints": 1,
+    "averagePositionLoss": 3,
+    "organicSessionsDropPercent": 20,
+    "organicKeyEventsDropPercent": 20,
+    "minimumPreviousClicksForTrend": 20,
+    "minimumPreviousImpressionsForTrend": 100,
+    "minimumPreviousSessionsForTrend": 20
+  }
+}
