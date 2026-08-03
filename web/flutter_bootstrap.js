@@ -49,6 +49,27 @@
     );
   };
 
+  const params = new URLSearchParams(window.location.search);
+  const host = window.location.hostname.toLowerCase();
+  const normalizedPath = (function () {
+    const rawPath = String(window.location.pathname || '/').trim() || '/';
+    return rawPath.length > 1 && rawPath.endsWith('/')
+        ? rawPath.slice(0, -1)
+        : rawPath;
+  })();
+
+  const prodHosts = new Set([
+    'ilipresto.fr',
+    'www.ilipresto.fr',
+    'ilipresto.web.app',
+    'ilipresto.firebaseapp.com',
+    'presto-app-74abe.web.app',
+    'presto-app-74abe.firebaseapp.com',
+  ]);
+
+  const keepFullPrelaunchShell =
+      normalizedPath === '/' && prodHosts.has(host);
+
   function getPrelaunchSeoShell() {
     return document.getElementById('prelaunch-seo-shell');
   }
@@ -57,10 +78,15 @@
     const shell = getPrelaunchSeoShell();
     if (!shell || shell.hidden) return;
 
-    // The HTML shell contains the complete page for SEO/no-JavaScript use.
-    // Once JavaScript starts, keep only the centered brand while Flutter loads.
-    // This prevents users from seeing the same full page once in HTML and then
-    // a second time when the real Flutter screen paints.
+    // Sur la racine publique, conserver la page complète et stable pendant le
+    // chargement de Flutter. Masquer la carte ici produisait la séquence
+    // « page complète → fond beige/logo → page complète », perçue comme un bug.
+    if (keepFullPrelaunchShell) {
+      shell.dataset.flutterLoading = 'true';
+      return;
+    }
+
+    // Pour les autres routes, conserver le chargement de marque compact.
     const card = shell.querySelector('.prelaunch-card');
     const domain = shell.querySelector('.prelaunch-domain');
     const brand = shell.querySelector('.prelaunch-brand');
@@ -73,9 +99,35 @@
     shell.dataset.flutterLoading = 'true';
   }
 
+  let shellRemovalScheduled = false;
+
   function removePrelaunchSeoShell() {
     const shell = getPrelaunchSeoShell();
-    if (shell) shell.remove();
+    if (!shell) return;
+
+    if (!keepFullPrelaunchShell) {
+      shell.remove();
+      return;
+    }
+
+    if (shellRemovalScheduled) return;
+    shellRemovalScheduled = true;
+
+    // Laisser la page Flutter de pré-lancement stabiliser son rendu sous le
+    // shell HTML, puis effectuer une transition imperceptible entre deux écrans
+    // visuellement identiques.
+    shell.style.transition = 'opacity 180ms ease-out';
+    shell.style.willChange = 'opacity';
+
+    window.setTimeout(function () {
+      const currentShell = getPrelaunchSeoShell();
+      if (!currentShell) return;
+      currentShell.style.opacity = '0';
+      window.setTimeout(function () {
+        const shellToRemove = getPrelaunchSeoShell();
+        if (shellToRemove) shellToRemove.remove();
+      }, 200);
+    }, 700);
   }
 
   // Run immediately when this same-origin bootstrap is evaluated, well before
@@ -85,18 +137,6 @@
   window.addEventListener('flutter-first-frame', removePrelaunchSeoShell, {
     once: true,
   });
-
-  const params = new URLSearchParams(window.location.search);
-  const host = window.location.hostname;
-
-  const prodHosts = new Set([
-    'ilipresto.fr',
-    'www.ilipresto.fr',
-    'ilipresto.web.app',
-    'ilipresto.firebaseapp.com',
-    'presto-app-74abe.web.app',
-    'presto-app-74abe.firebaseapp.com',
-  ]);
 
   const isLocalHost =
       host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0';
