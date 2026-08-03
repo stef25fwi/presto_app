@@ -117,6 +117,20 @@ Future<dynamic> _pumpThread(WidgetTester tester) async {
   fail('Le fil de discussion ne s’est pas affiché.');
 }
 
+OverlayEntry _mountPreviewInOverlay(dynamic state, Widget preview) {
+  final overlay = Overlay.of(state.context);
+  final entry = OverlayEntry(
+    builder: (_) => Positioned.fill(
+      child: Material(
+        color: Colors.transparent,
+        child: Center(child: preview),
+      ),
+    ),
+  );
+  overlay.insert(entry);
+  return entry;
+}
+
 Future<void> _disposeThread(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pump();
@@ -158,21 +172,13 @@ void main() {
         sizeBytes: 512,
       );
       final Widget preview = state.buildAttachmentPreview(attachment);
-
-      await _disposeThread(tester);
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(child: preview),
-          ),
-        ),
-      );
+      final entry = _mountPreviewInOverlay(state, preview);
       await tester.pump();
 
       expect(find.byType(InteractiveViewer), findsNothing);
       expect(find.text('iliprestō'), findsNothing);
 
-      await tester.tap(find.byType(GestureDetector).first);
+      await tester.tap(find.byType(GestureDetector).last);
       await tester.pump();
 
       expect(find.byType(InteractiveViewer), findsOneWidget);
@@ -190,6 +196,9 @@ void main() {
 
       expect(find.byType(InteractiveViewer), findsNothing);
       expect(find.text('iliprestō'), findsNothing);
+
+      entry.remove();
+      await _disposeThread(tester);
     },
   );
 
@@ -207,16 +216,10 @@ void main() {
       sizeBytes: 256,
     );
     final Widget preview = state.buildAttachmentPreview(attachment);
-
-    await _disposeThread(tester);
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(body: Center(child: preview)),
-      ),
-    );
+    final entry = _mountPreviewInOverlay(state, preview);
     await tester.pump();
 
-    await tester.tap(find.byType(GestureDetector).first);
+    await tester.tap(find.byType(GestureDetector).last);
     await tester.pump();
     expect(find.byType(InteractiveViewer), findsOneWidget);
 
@@ -224,5 +227,8 @@ void main() {
     await tester.pump();
 
     expect(find.byType(InteractiveViewer), findsNothing);
+
+    entry.remove();
+    await _disposeThread(tester);
   });
 }
