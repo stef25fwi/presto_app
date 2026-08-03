@@ -70,19 +70,23 @@ class PublicLandingConfigService extends ChangeNotifier {
       'Trouvez rapidement un particulier, un indépendant ou un professionnel '
       'près de chez vous';
   static const String defaultDescription =
-      'Trouvez rapidement un particulier, un indépendant ou un professionnel '
-      'partout en France. Publiez une annonce assistée par IA et échangez '
-      'directement, avec 0 % de commission.';
+      'Publiez votre besoin en quelques secondes, par texte ou à la voix. '
+      'Votre annonce est assistée par IA et vous échangez directement avec '
+      'des particuliers, indépendants et professionnels, sans commission.';
   static const String defaultLaunchMessage =
       'Plateforme nationale en cours de déploiement. Première ouverture en '
       'Guadeloupe, Martinique et Guyane.';
 
   static const String _legacyDefaultTitle =
       'Trouvez rapidement un particulier ou un professionnel près de chez vous';
-  static const String _legacyDefaultDescription =
-      'iliprestō met en relation particuliers, indépendants et professionnels '
-      'pour répondre rapidement à vos besoins en services et microservices du '
-      'quotidien, avec des annonces assistées par IA et 0 % de commission.';
+  static const Set<String> _legacyDefaultDescriptions = <String>{
+    'iliprestō met en relation particuliers, indépendants et professionnels '
+        'pour répondre rapidement à vos besoins en services et microservices du '
+        'quotidien, avec des annonces assistées par IA et 0 % de commission.',
+    'Trouvez rapidement un particulier, un indépendant ou un professionnel '
+        'partout en France. Publiez une annonce assistée par IA et échangez '
+        'directement, avec 0 % de commission.',
+  };
   static const String _legacyDefaultLaunchMessage =
       'Ouverture prochaine en Guadeloupe, Martinique et Guyane.';
 
@@ -231,7 +235,7 @@ class PublicLandingConfigService extends ChangeNotifier {
     if (_title == _legacyDefaultTitle) {
       _title = defaultTitle;
     }
-    if (_description == _legacyDefaultDescription) {
+    if (_legacyDefaultDescriptions.contains(_description)) {
       _description = defaultDescription;
     }
     if (_launchMessage == _legacyDefaultLaunchMessage) {
