@@ -1,5 +1,6 @@
 import 'dart:ui' show SemanticsFlag;
 
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/pages/public_prelaunch_page.dart';
@@ -7,6 +8,15 @@ import 'package:presto_app/services/public_landing_config_service.dart';
 
 class _FakePublicLandingConfigAdapter
     implements PublicLandingRemoteConfigAdapter {
+  @override
+  Future<void> setDefaults(Map<String, dynamic> defaults) async {}
+
+  @override
+  Future<void> setConfigSettings(RemoteConfigSettings settings) async {}
+
+  @override
+  Future<bool> fetchAndActivate() async => false;
+
   @override
   bool getBool(String key) => false;
 
