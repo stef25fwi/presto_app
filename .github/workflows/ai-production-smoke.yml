@@ -23,7 +23,7 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
     environment: recaptcha
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
         with:
@@ -69,7 +69,17 @@ jobs:
           printf '%s\n' "$(git rev-parse HEAD)" \
             > quality_reports/ai-production/deployed-sha.txt
 
+      - name: Verify Remote Config rollback and restoration
+        env:
+          PROJECT_ID: presto-app-74abe
+        shell: bash
+        run: |
+          set -euo pipefail
+          node functions/scripts/remote_config_rollback_smoke.mjs \
+            | tee quality_reports/ai-production/remote-config-rollback.json
+
       - name: Archive production AI evidence
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: ai-production-smoke-${{ github.sha }}
