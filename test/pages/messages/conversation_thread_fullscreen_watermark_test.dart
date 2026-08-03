@@ -131,10 +131,15 @@ OverlayEntry _mountPreviewInOverlay(dynamic state, Widget preview) {
   return entry;
 }
 
-Finder _dismissibleModalBarrier() => find.byWidgetPredicate(
-  (widget) => widget is ModalBarrier && widget.dismissible,
-  description: 'barrière modale fermable',
-);
+Future<void> _openFullscreenPreview(WidgetTester tester) async {
+  final previewGesture = find.byWidgetPredicate(
+    (widget) => widget is GestureDetector && widget.onTap != null,
+    description: 'aperçu photo interactif',
+  );
+  await tester.tap(previewGesture.last);
+  await tester.pump();
+  expect(find.byType(InteractiveViewer), findsOneWidget);
+}
 
 Future<void> _disposeThread(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
@@ -183,10 +188,8 @@ void main() {
       expect(find.byType(InteractiveViewer), findsNothing);
       expect(find.text('iliprestō'), findsNothing);
 
-      await tester.tap(find.byType(GestureDetector).last);
-      await tester.pump();
+      await _openFullscreenPreview(tester);
 
-      expect(find.byType(InteractiveViewer), findsOneWidget);
       final viewer = tester.widget<InteractiveViewer>(
         find.byType(InteractiveViewer),
       );
@@ -195,7 +198,14 @@ void main() {
       expect(find.text('iliprestō'), findsOneWidget);
       expect(find.byTooltip('Fermer'), findsOneWidget);
 
-      await tester.tap(find.byTooltip('Fermer'));
+      final closeButton = tester.widget<IconButton>(
+        find.ancestor(
+          of: find.byTooltip('Fermer'),
+          matching: find.byType(IconButton),
+        ),
+      );
+      expect(closeButton.onPressed, isNotNull);
+      closeButton.onPressed!.call();
       await tester.pump();
 
       expect(find.byType(InteractiveViewer), findsNothing);
@@ -206,16 +216,16 @@ void main() {
     },
   );
 
-  testWidgets('le dialogue plein écran se ferme via la barrière', (
+  testWidgets('la route plein écran se ferme par la navigation système', (
     tester,
   ) async {
     final dynamic state = await _pumpThread(tester);
     const attachment = MessageAttachment(
       type: 'image',
-      name: 'photo-barriere.webp',
+      name: 'photo-retour.webp',
       url: '',
       thumbnailUrl: '',
-      storagePath: 'messages/photo-barriere.webp',
+      storagePath: 'messages/photo-retour.webp',
       mimeType: 'image/webp',
       sizeBytes: 256,
     );
@@ -223,15 +233,11 @@ void main() {
     final entry = _mountPreviewInOverlay(state, preview);
     await tester.pump();
 
-    await tester.tap(find.byType(GestureDetector).last);
-    await tester.pump();
-    expect(find.byType(InteractiveViewer), findsOneWidget);
+    await _openFullscreenPreview(tester);
 
-    final barrierFinder = _dismissibleModalBarrier();
-    expect(barrierFinder, findsOneWidget);
-    final barrier = tester.widget<ModalBarrier>(barrierFinder);
-    expect(barrier.onDismiss, isNotNull);
-    barrier.onDismiss!.call();
+    final fullscreenContext = tester.element(find.byType(InteractiveViewer));
+    final didPop = await Navigator.of(fullscreenContext).maybePop();
+    expect(didPop, isTrue);
     await tester.pump();
 
     expect(find.byType(InteractiveViewer), findsNothing);
