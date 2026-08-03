@@ -1,10 +1,30 @@
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/pages/public_prelaunch_page.dart';
 import 'package:presto_app/services/public_landing_config_service.dart';
 
+class _NoopPublicLandingAdapter implements PublicLandingRemoteConfigAdapter {
+  @override
+  Future<bool> fetchAndActivate() async => false;
+
+  @override
+  bool getBool(String key) => PublicLandingConfigService.defaultEnabled;
+
+  @override
+  String getString(String key) => '';
+
+  @override
+  Future<void> setConfigSettings(RemoteConfigSettings settings) async {}
+
+  @override
+  Future<void> setDefaults(Map<String, dynamic> defaults) async {}
+}
+
 void main() {
-  final config = PublicLandingConfigService(adapter: null);
+  final config = PublicLandingConfigService(
+    adapter: _NoopPublicLandingAdapter(),
+  );
 
   Future<void> pumpPrelaunch(
     WidgetTester tester, {
@@ -15,14 +35,17 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      MediaQuery(
-        data: MediaQueryData(
-          size: Size(width, 1000),
-          textScaler: TextScaler.linear(textScale),
-        ),
-        child: MaterialApp(
-          home: PublicPrelaunchPage(config: config),
-        ),
+      MaterialApp(
+        builder: (context, child) {
+          final mediaQuery = MediaQuery.of(context);
+          return MediaQuery(
+            data: mediaQuery.copyWith(
+              textScaler: TextScaler.linear(textScale),
+            ),
+            child: child!,
+          );
+        },
+        home: PublicPrelaunchPage(config: config),
       ),
     );
     await tester.pumpAndSettle();
@@ -62,6 +85,8 @@ void main() {
       (tester) async {
         await pumpPrelaunch(tester, width: width, textScale: 2);
 
+        final context = tester.element(find.byType(PublicPrelaunchPage));
+        expect(MediaQuery.textScalerOf(context).scale(10), 20);
         expect(find.byType(PublicPrelaunchPage), findsOneWidget);
         expect(
           find.text(PublicLandingConfigService.defaultLaunchMessage),
@@ -75,6 +100,9 @@ void main() {
   testWidgets('le logo expose un en-tête sémantique iliprestō', (
     tester,
   ) async {
+    final semanticsHandle = tester.ensureSemantics();
+    addTearDown(semanticsHandle.dispose);
+
     await pumpPrelaunch(tester, width: 390, textScale: 1);
 
     final semantics = tester.getSemantics(find.bySemanticsLabel('iliprestō'));
