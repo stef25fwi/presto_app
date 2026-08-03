@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "scope": "point-7-messaging-complete",
+  "updatedAt": "2026-08-03T19:49:00Z",
+  "controls": [
+    {
+      "id": "text-messaging",
+      "status": "in_progress",
+      "evidence": [
+        "lib/pages/messages/conversation_thread_page.dart",
+        "test/pages/messages/conversation_thread_page_interactions_test.dart"
+      ]
+    },
+    {
+      "id": "photo-file-messaging",
+      "status": "in_progress",
+      "evidence": [
+        "lib/pages/messages/conversation_thread_page.dart",
+        "test/pages/messages/conversation_thread_page_confirmation_test.dart"
+      ]
+    },
+    {
+      "id": "audio-messaging",
+      "status": "in_progress",
+      "evidence": [
+        "test/pages/messages/conversation_thread_voice_preview_coverage_test.dart"
+      ]
+    },
+    {
+      "id": "fullscreen-watermark",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "delete-confirmations",
+      "status": "in_progress",
+      "evidence": [
+        "test/pages/messages/conversation_thread_page_confirmation_test.dart"
+      ]
+    },
+    {
+      "id": "moderation-block-report",
+      "status": "in_progress",
+      "evidence": [
+        "test/pages/messages/messaging_phase1_contracts_test.dart"
+      ]
+    },
+    {
+      "id": "archive-read-state",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "backend-authorization",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "push-foreground",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "push-background",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "push-terminated",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "real-device-matrix",
+      "status": "pending",
+      "evidence": []
+    }
+  ]
+}
