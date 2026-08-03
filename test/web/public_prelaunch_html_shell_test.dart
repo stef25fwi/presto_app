@@ -115,34 +115,25 @@ void main() {
       );
     });
 
-    test('réduit immédiatement la coquille HTML à un chargement de marque', () {
-      expect(bootstrap, contains('preparePrelaunchSeoShellForFlutter'));
-      expect(bootstrap, contains("shell.querySelector('.prelaunch-card')"));
-      expect(bootstrap, contains("shell.querySelector('.prelaunch-domain')"));
-      expect(bootstrap, contains('if (card) card.hidden = true;'));
-      expect(bootstrap, contains('if (domain) domain.hidden = true;'));
+    test('masque la coquille HTML sur la racine publique', () {
+      expect(bootstrap, contains('useFlutterPrelaunchOnly'));
+      expect(bootstrap, contains("shell.style.visibility = 'hidden';"));
+      expect(bootstrap, contains("shell.style.pointerEvents = 'none';"));
       expect(bootstrap, contains("shell.setAttribute('aria-hidden', 'true')"));
       expect(
         bootstrap.indexOf('preparePrelaunchSeoShellForFlutter();'),
         lessThan(bootstrap.indexOf('_flutter.loader.load({')),
       );
+      expect(bootstrap, isNot(contains('shellRemovalScheduled')));
+      expect(bootstrap, isNot(contains('window.setTimeout(function ()')));
     });
 
-    test('retire la coquille après la première frame Flutter', () {
+    test('retire la coquille dès la première frame Flutter', () {
       expect(html, contains("window.addEventListener('flutter-first-frame'"));
       expect(html, contains('shell.remove();'));
       expect(bootstrap, contains("window.addEventListener('flutter-first-frame'"));
       expect(bootstrap, contains('removePrelaunchSeoShell'));
-    });
-
-    test('prévoit un retrait de secours après le démarrage Flutter', () {
-      expect(bootstrap, contains('onEntrypointLoaded'));
-      expect(bootstrap, contains('await appRunner.runApp();'));
-      expect(bootstrap, contains('window.requestAnimationFrame'));
-      expect(
-        bootstrap,
-        contains("document.getElementById('prelaunch-seo-shell')"),
-      );
+      expect(bootstrap, contains('window.requestAnimationFrame(removePrelaunchSeoShell);'));
     });
 
     test('préserve les routes administration et authentification', () {
