@@ -67,7 +67,7 @@
     'presto-app-74abe.firebaseapp.com',
   ]);
 
-  const keepFullPrelaunchShell =
+  const useFlutterPrelaunchOnly =
       normalizedPath === '/' && prodHosts.has(host);
 
   function getPrelaunchSeoShell() {
@@ -78,10 +78,14 @@
     const shell = getPrelaunchSeoShell();
     if (!shell || shell.hidden) return;
 
-    // Sur la racine publique, conserver la page complète et stable pendant le
-    // chargement de Flutter. Masquer la carte ici produisait la séquence
-    // « page complète → fond beige/logo → page complète », perçue comme un bug.
-    if (keepFullPrelaunchShell) {
+    // La racine publique utilise exclusivement la page Flutter complète.
+    // La coquille HTML reste présente dans le DOM pour le SEO et le mode sans
+    // JavaScript, mais elle est masquée avant le chargement de Flutter afin que
+    // l'utilisateur ne voie jamais deux versions successives de la même page.
+    if (useFlutterPrelaunchOnly) {
+      shell.style.visibility = 'hidden';
+      shell.style.pointerEvents = 'none';
+      shell.setAttribute('aria-hidden', 'true');
       shell.dataset.flutterLoading = 'true';
       return;
     }
@@ -99,35 +103,9 @@
     shell.dataset.flutterLoading = 'true';
   }
 
-  let shellRemovalScheduled = false;
-
   function removePrelaunchSeoShell() {
     const shell = getPrelaunchSeoShell();
-    if (!shell) return;
-
-    if (!keepFullPrelaunchShell) {
-      shell.remove();
-      return;
-    }
-
-    if (shellRemovalScheduled) return;
-    shellRemovalScheduled = true;
-
-    // Laisser la page Flutter de pré-lancement stabiliser son rendu sous le
-    // shell HTML, puis effectuer une transition imperceptible entre deux écrans
-    // visuellement identiques.
-    shell.style.transition = 'opacity 180ms ease-out';
-    shell.style.willChange = 'opacity';
-
-    window.setTimeout(function () {
-      const currentShell = getPrelaunchSeoShell();
-      if (!currentShell) return;
-      currentShell.style.opacity = '0';
-      window.setTimeout(function () {
-        const shellToRemove = getPrelaunchSeoShell();
-        if (shellToRemove) shellToRemove.remove();
-      }, 200);
-    }, 700);
+    if (shell) shell.remove();
   }
 
   // Run immediately when this same-origin bootstrap is evaluated, well before
@@ -161,10 +139,7 @@
       await appRunner.runApp();
 
       // Fallback fiable si le navigateur ne relaie pas flutter-first-frame.
-      // Deux frames laissent Flutter peindre avant de retirer la coquille SEO.
-      window.requestAnimationFrame(function () {
-        window.requestAnimationFrame(removePrelaunchSeoShell);
-      });
+      window.requestAnimationFrame(removePrelaunchSeoShell);
     },
   });
 })();
