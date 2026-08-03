@@ -17,5 +17,7 @@ jobs:
           node-version: '20'
       - name: Validate public pages
         run: node tools/quality/check_public_page_seo.mjs
+      - name: Validate search intent ecosystem
+        run: node tools/quality/check_search_intent_ecosystem.mjs
       - name: Validate JSON-LD graphs
         run: node tools/quality/check_structured_data.mjs
