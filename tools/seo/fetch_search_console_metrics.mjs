@@ -94,11 +94,13 @@ async function fetchPeriod(accessToken, siteUrl, period) {
 
 export async function fetchSearchConsoleMetrics({
   config,
-  serviceAccountJson,
+  directAccessToken = '',
+  serviceAccountJson = '',
   siteUrl = config.searchConsoleSiteUrl,
   now = new Date(),
 }) {
   const accessToken = await getGoogleAccessToken({
+    directAccessToken,
     serviceAccountJson,
     scopes: [SEARCH_CONSOLE_SCOPE],
   });
@@ -140,6 +142,7 @@ async function runCli() {
   try {
     const result = await fetchSearchConsoleMetrics({
       config,
+      directAccessToken: process.env.SEO_GOOGLE_ACCESS_TOKEN ?? '',
       serviceAccountJson:
         process.env.SEO_GOOGLE_SERVICE_ACCOUNT_JSON ??
         process.env.GOOGLE_SERVICE_ACCOUNT_JSON ??
