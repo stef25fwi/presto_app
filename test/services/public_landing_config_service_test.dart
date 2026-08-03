@@ -65,7 +65,7 @@ void main() {
       );
       expect(
         PublicLandingConfigService.defaultDescription,
-        'Trouvez rapidement un particulier, un indépendant ou un professionnel partout en France. Publiez une annonce assistée par IA et échangez directement, avec 0 % de commission.',
+        'Publiez votre besoin en quelques secondes, par texte ou à la voix. Votre annonce est assistée par IA et vous échangez directement avec des particuliers, indépendants et professionnels, sans commission.',
       );
       expect(
         PublicLandingConfigService.defaultLaunchMessage,
