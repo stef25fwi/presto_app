@@ -1,29 +1,22 @@
-import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'dart:ui' show SemanticsFlag;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/pages/public_prelaunch_page.dart';
 import 'package:presto_app/services/public_landing_config_service.dart';
 
-class _NoopPublicLandingAdapter implements PublicLandingRemoteConfigAdapter {
+class _FakePublicLandingConfigAdapter
+    implements PublicLandingRemoteConfigAdapter {
   @override
-  Future<bool> fetchAndActivate() async => false;
-
-  @override
-  bool getBool(String key) => PublicLandingConfigService.defaultEnabled;
+  bool getBool(String key) => false;
 
   @override
   String getString(String key) => '';
-
-  @override
-  Future<void> setConfigSettings(RemoteConfigSettings settings) async {}
-
-  @override
-  Future<void> setDefaults(Map<String, dynamic> defaults) async {}
 }
 
 void main() {
   final config = PublicLandingConfigService(
-    adapter: _NoopPublicLandingAdapter(),
+    adapter: _FakePublicLandingConfigAdapter(),
   );
 
   Future<void> pumpPrelaunch(
@@ -32,23 +25,29 @@ void main() {
     required double textScale,
   }) async {
     await tester.binding.setSurfaceSize(Size(width, 1000));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    addTearDown(() async {
+      await tester.binding.setSurfaceSize(null);
+    });
 
     await tester.pumpWidget(
       MaterialApp(
-        builder: (context, child) {
-          final mediaQuery = MediaQuery.of(context);
-          return MediaQuery(
-            data: mediaQuery.copyWith(
-              textScaler: TextScaler.linear(textScale),
-            ),
-            child: child!,
-          );
-        },
-        home: PublicPrelaunchPage(config: config),
+        home: MediaQuery(
+          data: MediaQueryData(
+            size: Size(width, 1000),
+            textScaler: TextScaler.linear(textScale),
+          ),
+          child: PublicPrelaunchPage(config: config),
+        ),
       ),
     );
     await tester.pumpAndSettle();
+
+    expect(
+      MediaQuery.textScalerOf(
+        tester.element(find.byType(PublicPrelaunchPage)),
+      ).scale(16),
+      closeTo(16 * textScale, 0.001),
+    );
   }
 
   for (final width in <double>[
@@ -85,8 +84,6 @@ void main() {
       (tester) async {
         await pumpPrelaunch(tester, width: width, textScale: 2);
 
-        final context = tester.element(find.byType(PublicPrelaunchPage));
-        expect(MediaQuery.textScalerOf(context).scale(10), 20);
         expect(find.byType(PublicPrelaunchPage), findsOneWidget);
         expect(
           find.text(PublicLandingConfigService.defaultLaunchMessage),
