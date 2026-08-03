@@ -40,6 +40,44 @@
   }
 
   const path = normalizePath(window.location.pathname);
+
+  // Sur la racine publique, la page HTML de pré-lancement est le premier écran
+  // utile. Flutter émet `flutter-first-frame` avant que sa page équivalente ait
+  // totalement stabilisé son rendu. Sans cette protection, le shell HTML est
+  // retiré trop tôt et laisse apparaître brièvement le splash beige/logo avant
+  // que la même page ne revienne, ce qui ressemble à un redémarrage.
+  //
+  // Le listener est enregistré en capture avant celui de `index.html`, bloque
+  // son retrait immédiat, puis effectue une transition courte une fois Flutter
+  // prêt. Les autres routes conservent leur comportement normal.
+  const publicHosts = new Set([
+    'ilipresto.fr',
+    'www.ilipresto.fr',
+    'ilipresto.web.app',
+    'ilipresto.firebaseapp.com',
+    'presto-app-74abe.web.app',
+    'presto-app-74abe.firebaseapp.com'
+  ]);
+
+  if (path === '/' && publicHosts.has(window.location.hostname.toLowerCase())) {
+    window.addEventListener('flutter-first-frame', function (event) {
+      event.stopImmediatePropagation();
+
+      const shell = document.getElementById('prelaunch-seo-shell');
+      if (!shell) return;
+
+      shell.style.transition = 'opacity 180ms ease-out';
+      shell.style.willChange = 'opacity';
+
+      window.setTimeout(function () {
+        shell.style.opacity = '0';
+        window.setTimeout(function () {
+          shell.remove();
+        }, 200);
+      }, 700);
+    }, true);
+  }
+
   const page = pages[path];
   if (!page) return;
 
