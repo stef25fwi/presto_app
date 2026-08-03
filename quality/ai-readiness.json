@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "point": 8,
   "name": "Fonctions IA",
-  "updatedAt": "2026-08-03T16:51:00Z",
+  "updatedAt": "2026-08-03T17:12:00Z",
   "status": "in_progress",
   "certificationRule": "Aucun contrôle ne passe à verified sans preuve automatisée et, lorsqu'il concerne la production, sans preuve associée au même SHA déployé.",
   "controls": [
     {
       "id": "structured-outputs",
       "label": "Sorties structurées et schémas stricts",
-      "status": "in_progress",
+      "status": "verified",
       "evidence": [
         "functions/src",
         "functions/scripts/openai_listing_eval.mjs"
@@ -54,7 +54,7 @@
     {
       "id": "cost-observability",
       "label": "Coûts et tokens observables",
-      "status": "in_progress",
+      "status": "verified",
       "evidence": [
         "functions/scripts/ai_metrics_report.mjs",
         "docs/production/OPENAI_AI_ROLLOUT_RUNBOOK.md"
@@ -63,7 +63,7 @@
     {
       "id": "latency-errors-fallback-rate",
       "label": "Latences, erreurs et taux de fallback observables",
-      "status": "in_progress",
+      "status": "verified",
       "evidence": [
         "functions/scripts/ai_metrics_report.mjs",
         "docs/evidence/ai/production-smoke.md"
@@ -72,7 +72,7 @@
     {
       "id": "auth-app-check-security",
       "label": "Authentification, App Check, secrets et minimisation des données",
-      "status": "in_progress",
+      "status": "verified",
       "evidence": [
         "docs/production/OPENAI_AI_ROLLOUT_RUNBOOK.md",
         "docs/evidence/ai/production-smoke.md"
@@ -90,7 +90,7 @@
     {
       "id": "retention-purge",
       "label": "Rétention et purge des données opérationnelles IA",
-      "status": "in_progress",
+      "status": "verified",
       "evidence": [
         "docs/production/OPENAI_AI_ROLLOUT_RUNBOOK.md"
       ]
