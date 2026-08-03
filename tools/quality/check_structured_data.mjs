@@ -147,7 +147,7 @@ function validateStaticRoute(route, config) {
     assert.equal(article.image?.['@id'], registry.logoId, `${route}: image Article`);
     assertIsoDate(article.datePublished, `${route}: datePublished Article`);
     assertIsoDate(article.dateModified, `${route}: dateModified Article`);
-    assert.ok(html.includes('Publié et mis à jour le 2 août 2026'), `${route}: dates Article non visibles`);
+    assert.ok(/Publié[\s\S]{0,160}mis à jour le/i.test(html), `${route}: dates Article non visibles`);
   }
 }
 

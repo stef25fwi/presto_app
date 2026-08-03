@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "updatedAt": "2026-08-03",
+  "baseUrl": "https://ilipresto.fr",
+  "positioning": "Trouver rapidement une personne compétente et disponible pour réaliser un service ou micro-service du quotidien.",
+  "guardrails": {
+    "nationalPlatform": true,
+    "notAJobBoard": true,
+    "notAnEmployer": true,
+    "noUnverifiedInstantResponseClaim": true,
+    "noUnverifiedProviderVolumeClaim": true,
+    "noDoorwayPages": true
+  },
+  "pillarPages": [
+    {
+      "route": "/trouver-une-personne-disponible/",
+      "intent": "Trouver quelqu’un disponible pour réaliser un service",
+      "audience": "demandeur",
+      "priority": 1,
+      "status": "implemented"
+    },
+    {
+      "route": "/proposer-ses-services/",
+      "intent": "Proposer ses compétences et répondre à des besoins",
+      "audience": "prestataire",
+      "priority": 2,
+      "status": "planned"
+    },
+    {
+      "route": "/services-et-microservices/",
+      "intent": "Découvrir les catégories de services du quotidien",
+      "audience": "demandeur",
+      "priority": 3,
+      "status": "planned"
+    },
+    {
+      "route": "/guides/creer-micro-entreprise-services/",
+      "intent": "Créer une micro-entreprise de services",
+      "audience": "créateur d’activité",
+      "priority": 4,
+      "status": "implemented"
+    },
+    {
+      "route": "/guides/trouver-premiers-clients-services/",
+      "intent": "Trouver ses premières missions de service",
+      "audience": "créateur d’activité",
+      "priority": 5,
+      "status": "planned"
+    },
+    {
+      "route": "/services-outre-mer/",
+      "intent": "Trouver ou proposer des services dans les territoires ultramarins",
+      "audience": "local",
+      "priority": 6,
+      "status": "implemented"
+    }
+  ],
+  "territories": [
+    "Guadeloupe",
+    "Martinique",
+    "Guyane",
+    "La Réunion",
+    "Mayotte"
+  ],
+  "serviceClusters": [
+    "bricolage-petits-travaux",
+    "jardinage-entretien-exterieur",
+    "menage-entretien-domicile",
+    "aide-administrative",
+    "assistance-informatique-numerique",
+    "demenagement-manutention",
+    "aide-du-quotidien",
+    "evenementiel",
+    "beaute-bien-etre",
+    "cours-accompagnement"
+  ]
+}
