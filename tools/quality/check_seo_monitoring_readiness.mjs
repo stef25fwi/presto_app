@@ -4,22 +4,19 @@ import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
 
 const failures = [];
-
-function read(path) {
+const read = (path) => {
   if (!fs.existsSync(path)) {
     failures.push(`missing file: ${path}`);
     return '';
   }
   return fs.readFileSync(path, 'utf8');
-}
-
-function requireText(content, token, label) {
+};
+const requireText = (content, token, label) => {
   if (!content.includes(token)) failures.push(`missing ${label}: ${token}`);
-}
-
-function requireCondition(condition, message) {
+};
+const requireCondition = (condition, message) => {
   if (!condition) failures.push(message);
-}
+};
 
 const configText = read('config/seo-monitoring.json');
 const readinessText = read('quality/seo-monitoring-readiness.json');
@@ -71,9 +68,7 @@ const requiredPaths = [
 ];
 requireCondition(paths.length === 10, `expected 10 monitored pages, found ${paths.length}`);
 requireCondition(new Set(paths).size === paths.length, 'monitored pages contain duplicates');
-for (const path of requiredPaths) {
-  requireCondition(paths.includes(path), `monitored page missing: ${path}`);
-}
+for (const path of requiredPaths) requireCondition(paths.includes(path), `monitored page missing: ${path}`);
 for (const page of pages) {
   requireCondition(
     ['html', 'runtime-registry'].includes(page.validationMode),
@@ -93,15 +88,16 @@ for (const eventName of config.conversionEvents ?? []) {
   requireText(analyticsEvents, `name: '${eventName}'`, `analytics event ${eventName}`);
 }
 
-requireText(auth, 'RSA-SHA256', 'service account JWT signing');
-requireText(auth, 'https://oauth2.googleapis.com/token', 'Google OAuth token endpoint');
+requireText(auth, 'directAccessToken', 'short-lived token support');
+requireText(auth, 'RSA-SHA256', 'local service-account fallback');
 requireText(gsc, 'webmasters.readonly', 'Search Console readonly scope');
 requireText(gsc, '/searchAnalytics/query', 'Search Console query endpoint');
 requireText(gsc, "dimensions: ['query']", 'query reporting');
 requireText(gsc, "dimensions: ['page']", 'page reporting');
+requireText(ga4, 'analyticsadmin.googleapis.com/v1beta/accountSummaries', 'GA4 property discovery');
+requireText(ga4, 'webStreamData?.measurementId', 'GA4 measurement matching');
 requireText(ga4, 'analyticsdata.googleapis.com/v1beta/properties', 'GA4 Data API endpoint');
-requireText(ga4, 'sessionDefaultChannelGroup', 'organic channel filter');
-requireText(ga4, 'Organic Search', 'organic channel value');
+requireText(ga4, 'Organic Search', 'organic channel filter');
 requireText(ga4, 'landingPagePlusQueryString', 'landing page reporting');
 requireText(publicMonitor, 'robots.txt', 'robots monitoring');
 requireText(publicMonitor, 'sitemap.xml', 'sitemap monitoring');
@@ -112,15 +108,22 @@ requireText(report, '--require-external-data', 'strict external-data mode');
 
 requireText(workflow, 'schedule:', 'scheduled monitoring');
 requireText(workflow, "cron: '17 10 * * *'", 'daily Guadeloupe schedule');
+requireText(workflow, 'id-token: write', 'OIDC permission');
 requireText(workflow, 'issues: write', 'issue alert permission');
-requireText(workflow, 'SEO_GOOGLE_SERVICE_ACCOUNT_JSON', 'Google secret wiring');
-requireText(workflow, 'SEO_GA4_PROPERTY_ID', 'GA4 property wiring');
+requireText(workflow, 'google-github-actions/auth@v3', 'WIF authentication action');
+requireText(workflow, 'secrets.WIF_PROVIDER', 'WIF provider wiring');
+requireText(workflow, 'secrets.WIF_SERVICE_ACCOUNT', 'WIF service account wiring');
+requireText(workflow, 'SEO_GOOGLE_ACCESS_TOKEN', 'short-lived token wiring');
+requireText(workflow, 'SEO_GA4_PROPERTY_ID', 'optional GA4 override');
+requireText(workflow, 'webmasters.readonly', 'Search Console token scope');
+requireText(workflow, 'analytics.readonly', 'GA4 token scope');
 requireText(workflow, 'build_seo_monitoring_report.mjs', 'monitoring report execution');
 requireText(workflow, 'actions/upload-artifact@v4', 'report retention');
 requireText(workflow, 'actions/github-script@v7', 'GitHub issue alerting');
 requireText(prWorkflow, 'check_seo_monitoring_readiness.test.mjs', 'PR regression gate');
 requireText(docs, 'Search Console', 'Search Console runbook');
-requireText(docs, 'SEO_GOOGLE_SERVICE_ACCOUNT_JSON', 'secret setup documentation');
+requireText(docs, 'Workload Identity Federation', 'WIF runbook');
+requireText(docs, 'SEO_GOOGLE_SERVICE_ACCOUNT_JSON', 'local fallback documentation');
 requireText(docs, 'Revue hebdomadaire', 'weekly improvement cycle');
 requireText(docs, 'Revue mensuelle', 'monthly improvement cycle');
 
@@ -142,12 +145,8 @@ for (const script of [
   'tools/seo/monitor_public_seo.mjs',
   'tools/seo/build_seo_monitoring_report.mjs',
 ]) {
-  const result = spawnSync(process.execPath, ['--check', script], {
-    encoding: 'utf8',
-  });
-  if (result.status !== 0) {
-    failures.push(`syntax error in ${script}: ${result.stderr.trim()}`);
-  }
+  const result = spawnSync(process.execPath, ['--check', script], { encoding: 'utf8' });
+  if (result.status !== 0) failures.push(`syntax error in ${script}: ${result.stderr.trim()}`);
 }
 
 if (failures.length) {
@@ -155,7 +154,4 @@ if (failures.length) {
   for (const failure of failures) console.error(`- ${failure}`);
   process.exit(1);
 }
-
-console.log(
-  `SEO monitoring readiness: OK (${controls.length} controls, ${paths.length} pages)`,
-);
+console.log(`SEO monitoring readiness: OK (${controls.length} controls, ${paths.length} pages)`);
