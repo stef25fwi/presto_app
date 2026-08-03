@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/public_landing_config_service.dart';
 
@@ -23,6 +24,19 @@ class PublicPrelaunchPage extends StatefulWidget {
 
 class _PublicPrelaunchPageState extends State<PublicPrelaunchPage> {
   static const _tapSequenceTimeout = Duration(seconds: 8);
+  static const _publicBaseUrl = 'https://ilipresto.fr';
+
+  static const _footerLinks = <({String label, String path})>[
+    (label: 'À propos', path: '/a-propos'),
+    (
+      label: 'Guide d’utilisation',
+      path: '/guides/comment-fonctionne-ilipresto',
+    ),
+    (label: 'Mentions légales', path: '/mentions-legales'),
+    (label: 'Confidentialité', path: '/confidentialite'),
+    (label: 'CGU', path: '/cgu'),
+    (label: 'Suppression du compte', path: '/suppression-compte'),
+  ];
 
   Timer? _tapResetTimer;
   int _tapCount = 0;
@@ -63,6 +77,18 @@ class _PublicPrelaunchPageState extends State<PublicPrelaunchPage> {
     _tapCount = nextTapCount;
     _lastTapAt = now;
     _tapResetTimer = Timer(_tapSequenceTimeout, _resetTapSequence);
+  }
+
+  Future<void> _openPublicPage(String path) async {
+    final uri = Uri.parse('$_publicBaseUrl$path');
+    final opened = await launchUrl(uri, webOnlyWindowName: '_self');
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Impossible d’ouvrir cette page pour le moment.'),
+        ),
+      );
+    }
   }
 
   @override
@@ -137,8 +163,7 @@ class _PublicPrelaunchPageState extends State<PublicPrelaunchPage> {
                                   Text(
                                     config.title,
                                     textAlign: TextAlign.center,
-                                    style:
-                                        theme.textTheme.headlineMedium?.copyWith(
+                                    style: theme.textTheme.headlineMedium?.copyWith(
                                       color: const Color(0xFF12345B),
                                       fontWeight: FontWeight.w800,
                                       height: 1.12,
@@ -189,8 +214,7 @@ class _PublicPrelaunchPageState extends State<PublicPrelaunchPage> {
                                       borderRadius: BorderRadius.circular(18),
                                     ),
                                     child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: <Widget>[
                                         const Icon(
                                           Icons.rocket_launch_rounded,
@@ -202,8 +226,7 @@ class _PublicPrelaunchPageState extends State<PublicPrelaunchPage> {
                                           child: Text(
                                             config.launchMessage,
                                             textAlign: TextAlign.center,
-                                            style: theme.textTheme.bodyMedium
-                                                ?.copyWith(
+                                            style: theme.textTheme.bodyMedium?.copyWith(
                                               color: const Color(0xFF7A3A0D),
                                               fontWeight: FontWeight.w700,
                                             ),
@@ -216,7 +239,45 @@ class _PublicPrelaunchPageState extends State<PublicPrelaunchPage> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 22),
+                          Semantics(
+                            label: 'Liens publics et informations légales',
+                            container: true,
+                            child: Wrap(
+                              key: const Key('public-prelaunch-footer-links'),
+                              alignment: WrapAlignment.center,
+                              runAlignment: WrapAlignment.center,
+                              spacing: 4,
+                              runSpacing: 2,
+                              children: _footerLinks
+                                  .map(
+                                    (link) => TextButton(
+                                      key: Key(
+                                        'public-prelaunch-link-${link.path}',
+                                      ),
+                                      onPressed: () => _openPublicPage(link.path),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: const Color(0xFF175DB8),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 9,
+                                          vertical: 7,
+                                        ),
+                                        minimumSize: const Size(44, 40),
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        textStyle: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                      child: Text(link.label),
+                                    ),
+                                  )
+                                  .toList(growable: false),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
                           Text(
                             'ilipresto.fr',
                             style: theme.textTheme.bodyMedium?.copyWith(
