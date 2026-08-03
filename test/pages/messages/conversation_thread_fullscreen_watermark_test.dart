@@ -199,9 +199,14 @@ void main() {
       expect(find.byTooltip('Fermer'), findsOneWidget);
 
       final closeButton = tester.widget<IconButton>(
-        find.byType(IconButton).last,
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is IconButton &&
+              widget.tooltip == 'Fermer' &&
+              widget.onPressed != null,
+          description: 'bouton Fermer du visualiseur',
+        ),
       );
-      expect(closeButton.onPressed, isNotNull);
       closeButton.onPressed!.call();
       await tester.pump();
 
