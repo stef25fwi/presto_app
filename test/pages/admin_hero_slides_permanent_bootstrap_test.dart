@@ -35,23 +35,25 @@ void main() {
 
   setUpAll(() async {
     setupFirebaseCoreMocks();
-    if (Firebase.apps.isEmpty) {
-      try {
-        await Firebase.initializeApp(
-          options: const FirebaseOptions(
-            apiKey: 'test-api-key',
-            appId: '1:1234567890:web:admin-hero-permanent',
-            messagingSenderId: '1234567890',
-            projectId: 'presto-test',
-            storageBucket: 'presto-test.appspot.com',
-          ),
-        );
-      } on FirebaseException catch (error) {
-        if (error.code != 'duplicate-app') {
-          rethrow;
-        }
-      }
+
+    // A previous bootstrap in the same test process can leave a default app
+    // whose options do not contain a Storage bucket. FirebaseStorage.instance
+    // validates that option before delegating to the mocked platform, so the
+    // default app must be recreated deterministically for this test file.
+    for (final app in List<FirebaseApp>.from(Firebase.apps)) {
+      await app.delete();
     }
+
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: 'test-api-key',
+        appId: '1:1234567890:web:admin-hero-permanent',
+        messagingSenderId: '1234567890',
+        projectId: 'presto-test',
+        storageBucket: 'presto-test.appspot.com',
+      ),
+    );
+
     originalStoragePlatform = FirebaseStoragePlatform.instance;
   });
 
