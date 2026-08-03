@@ -3,7 +3,7 @@
   "phase": 13,
   "title": "Accessibilité, UX et design system",
   "status": "in_progress",
-  "updated_at": "2026-08-02",
+  "updated_at": "2026-08-03",
   "controls": [
     {
       "id": "design-system",
@@ -41,7 +41,8 @@
       "title": "Lecteur d’écran et sémantique",
       "status": "pending",
       "evidence": [
-        "docs/evidence/ux/accessibility-audit.md"
+        "docs/evidence/ux/accessibility-audit.md",
+        "test/pages/public_prelaunch_responsive_accessibility_test.dart"
       ]
     },
     {
@@ -58,11 +59,12 @@
     {
       "id": "responsive-text-scale",
       "title": "Responsive et tailles de texte élevées",
-      "status": "pending",
+      "status": "in_progress",
       "evidence": [
         "docs/evidence/ux/responsive-matrix.md",
         "docs/evidence/ux/accessibility-audit.md",
-        "test/app/presto_design_system_accessibility_test.dart"
+        "test/app/presto_design_system_accessibility_test.dart",
+        "test/pages/public_prelaunch_responsive_accessibility_test.dart"
       ]
     },
     {
@@ -77,10 +79,11 @@
     {
       "id": "accessibility-audit",
       "title": "Audit accessibilité des parcours principaux",
-      "status": "pending",
+      "status": "in_progress",
       "evidence": [
         "docs/evidence/ux/accessibility-audit.md",
-        "docs/evidence/ux/responsive-matrix.md"
+        "docs/evidence/ux/responsive-matrix.md",
+        "test/pages/public_prelaunch_responsive_accessibility_test.dart"
       ]
     }
   ]
