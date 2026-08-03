@@ -233,7 +233,7 @@ jobs:
 
       - name: Upload factory evidence
         if: always() && steps.dedupe.outputs.run == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-factory-${{ github.run_id }}
           path: |

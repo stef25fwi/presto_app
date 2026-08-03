@@ -136,7 +136,7 @@ jobs:
             --max-files-per-pack 4
 
       - name: Upload FastLane plan
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-fastlane-plan-${{ github.sha }}
           path: |

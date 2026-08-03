@@ -35,7 +35,7 @@ jobs:
             test/features/auth/services/email_auth_service_test.dart
 
       - name: Upload formatted Auth email files
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: auth-email-formatted-files
           path: |
