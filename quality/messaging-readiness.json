@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "scope": "point-7-messaging-complete",
-  "updatedAt": "2026-08-03T19:49:00Z",
+  "updatedAt": "2026-08-03T19:58:00Z",
   "controls": [
     {
       "id": "text-messaging",
@@ -28,8 +28,11 @@
     },
     {
       "id": "fullscreen-watermark",
-      "status": "pending",
-      "evidence": []
+      "status": "in_progress",
+      "evidence": [
+        "lib/pages/messages/conversation_thread_page.dart",
+        "test/pages/messages/conversation_thread_fullscreen_watermark_test.dart"
+      ]
     },
     {
       "id": "delete-confirmations",
