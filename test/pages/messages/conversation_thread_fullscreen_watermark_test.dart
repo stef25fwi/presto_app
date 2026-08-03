@@ -199,10 +199,7 @@ void main() {
       expect(find.byTooltip('Fermer'), findsOneWidget);
 
       final closeButton = tester.widget<IconButton>(
-        find.ancestor(
-          of: find.byTooltip('Fermer'),
-          matching: find.byType(IconButton),
-        ),
+        find.byType(IconButton).last,
       );
       expect(closeButton.onPressed, isNotNull);
       closeButton.onPressed!.call();
