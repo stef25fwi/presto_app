@@ -28,7 +28,7 @@ jobs:
         run: node tools/quality/check_security_controls.mjs
 
       - name: Upload security readiness report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: security-controls-${{ github.sha }}
           path: quality_reports/security/security-controls.json

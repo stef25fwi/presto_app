@@ -117,7 +117,7 @@ jobs:
           Le superviseur ignore désormais les missions orphelines pour éviter le verrouillage permanent et relance la Coverage Factory dès qu’une capacité utile est disponible."
 
       - name: Upload supervision evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-supervisor-${{ github.run_id }}
           path: quality_reports/coverage-supervisor/

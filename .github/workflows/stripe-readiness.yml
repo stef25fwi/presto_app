@@ -22,7 +22,7 @@ jobs:
       - name: Build Stripe readiness inventory
         run: node tools/quality/check_stripe_readiness.mjs
       - name: Upload Stripe readiness report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: stripe-readiness-report
           path: quality_reports/stripe-readiness/report.json
