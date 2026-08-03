@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "point": 8,
+  "name": "Fonctions IA",
+  "updatedAt": "2026-08-03T17:12:00Z",
+  "status": "in_progress",
+  "certificationRule": "Aucun contrôle ne passe à verified sans preuve automatisée et, lorsqu'il concerne la production, sans preuve associée au même SHA déployé.",
+  "controls": [
+    {
+      "id": "structured-outputs",
+      "label": "Sorties structurées et schémas stricts",
+      "status": "verified",
+      "evidence": [
+        "functions/src",
+        "functions/scripts/openai_listing_eval.mjs"
+      ]
+    },
+    {
+      "id": "validation-fallbacks",
+      "label": "Validations, retries, idempotence et fallbacks",
+      "status": "in_progress",
+      "evidence": [
+        "docs/production/OPENAI_AI_ROLLOUT_RUNBOOK.md",
+        "functions/scripts/microia_production_smoke_test.mjs"
+      ]
+    },
+    {
+      "id": "audio-evaluation",
+      "label": "Évaluation audio et transcription",
+      "status": "pending",
+      "evidence": [
+        "functions/scripts/openai_transcription_eval.mjs",
+        "docs/evidence/ai/evaluation-report.md"
+      ]
+    },
+    {
+      "id": "text-evaluation",
+      "label": "Évaluation texte et annonce structurée",
+      "status": "pending",
+      "evidence": [
+        "functions/scripts/openai_listing_eval.mjs",
+        "docs/evidence/ai/evaluation-report.md"
+      ]
+    },
+    {
+      "id": "vision-evaluation",
+      "label": "Évaluation image et vision",
+      "status": "pending",
+      "evidence": [
+        "functions/scripts/openai_vision_eval.mjs",
+        "docs/evidence/ai/evaluation-report.md"
+      ]
+    },
+    {
+      "id": "cost-observability",
+      "label": "Coûts et tokens observables",
+      "status": "verified",
+      "evidence": [
+        "functions/scripts/ai_metrics_report.mjs",
+        "docs/production/OPENAI_AI_ROLLOUT_RUNBOOK.md"
+      ]
+    },
+    {
+      "id": "latency-errors-fallback-rate",
+      "label": "Latences, erreurs et taux de fallback observables",
+      "status": "verified",
+      "evidence": [
+        "functions/scripts/ai_metrics_report.mjs",
+        "docs/evidence/ai/production-smoke.md"
+      ]
+    },
+    {
+      "id": "auth-app-check-security",
+      "label": "Authentification, App Check, secrets et minimisation des données",
+      "status": "verified",
+      "evidence": [
+        "docs/production/OPENAI_AI_ROLLOUT_RUNBOOK.md",
+        "docs/evidence/ai/production-smoke.md"
+      ]
+    },
+    {
+      "id": "remote-config-rollback",
+      "label": "Rollback Remote Config testé en production",
+      "status": "pending",
+      "evidence": [
+        "docs/production/OPENAI_AI_ROLLOUT_RUNBOOK.md",
+        "docs/evidence/ai/production-smoke.md"
+      ]
+    },
+    {
+      "id": "retention-purge",
+      "label": "Rétention et purge des données opérationnelles IA",
+      "status": "verified",
+      "evidence": [
+        "docs/production/OPENAI_AI_ROLLOUT_RUNBOOK.md"
+      ]
+    },
+    {
+      "id": "production-smoke",
+      "label": "Smoke test production V2 et fallback V1",
+      "status": "pending",
+      "evidence": [
+        "functions/scripts/microia_production_smoke_test.mjs",
+        "docs/evidence/ai/production-smoke.md"
+      ]
+    }
+  ]
+}

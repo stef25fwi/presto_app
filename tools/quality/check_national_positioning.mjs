@@ -74,8 +74,8 @@ assert.ok(
   'migration de la valeur Remote Config historique absente',
 );
 assert.ok(
-  service.includes('if (_description == _legacyDefaultDescription)'),
-  'migration de la description Remote Config historique absente',
+  service.includes('if (_legacyDefaultDescriptions.contains(_description))'),
+  'migration des descriptions Remote Config historiques absente',
 );
 
 console.log('Positionnement national iliprestō validé.');

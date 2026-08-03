@@ -23,7 +23,7 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
     environment: recaptcha
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
         with:
@@ -58,4 +58,31 @@ jobs:
           FUNCTIONS_REGION: europe-west1
           FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
           FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
-        run: npm --prefix functions run ai:smoke:production
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p quality_reports/ai-production
+          npm --prefix functions run ai:smoke:production \
+            | tee quality_reports/ai-production/smoke.json
+          npm --prefix functions run ai:metrics:report -- 14 \
+            | tee quality_reports/ai-production/metrics.json
+          printf '%s\n' "$(git rev-parse HEAD)" \
+            > quality_reports/ai-production/deployed-sha.txt
+
+      - name: Verify Remote Config rollback and restoration
+        env:
+          PROJECT_ID: presto-app-74abe
+        shell: bash
+        run: |
+          set -euo pipefail
+          node functions/scripts/remote_config_rollback_smoke.mjs \
+            | tee quality_reports/ai-production/remote-config-rollback.json
+
+      - name: Archive production AI evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ai-production-smoke-${{ github.sha }}
+          path: quality_reports/ai-production
+          if-no-files-found: error
+          retention-days: 90
