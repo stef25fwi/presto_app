@@ -59,7 +59,7 @@
     {
       "id": "responsive-text-scale",
       "title": "Responsive et tailles de texte élevées",
-      "status": "in_progress",
+      "status": "pending",
       "evidence": [
         "docs/evidence/ux/responsive-matrix.md",
         "docs/evidence/ux/accessibility-audit.md",
@@ -79,7 +79,7 @@
     {
       "id": "accessibility-audit",
       "title": "Audit accessibilité des parcours principaux",
-      "status": "in_progress",
+      "status": "pending",
       "evidence": [
         "docs/evidence/ux/accessibility-audit.md",
         "docs/evidence/ux/responsive-matrix.md",
