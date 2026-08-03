@@ -3,6 +3,11 @@ name: AI evaluations
 on:
   pull_request:
     paths:
+      - 'quality/ai-readiness.json'
+      - 'docs/evidence/ai/**'
+      - 'docs/production/OPENAI_AI_ROLLOUT_RUNBOOK.md'
+      - 'tools/quality/check_ai_readiness.mjs'
+      - 'tools/quality/check_ai_readiness.test.mjs'
       - 'functions/evals/**'
       - 'functions/scripts/openai_*eval.mjs'
       - 'functions/scripts/ai_eval_metrics.mjs'
@@ -17,6 +22,11 @@ on:
     branches:
       - main
     paths:
+      - 'quality/ai-readiness.json'
+      - 'docs/evidence/ai/**'
+      - 'docs/production/OPENAI_AI_ROLLOUT_RUNBOOK.md'
+      - 'tools/quality/check_ai_readiness.mjs'
+      - 'tools/quality/check_ai_readiness.test.mjs'
       - 'functions/evals/**'
       - 'functions/scripts/openai_*eval.mjs'
       - 'functions/scripts/ai_eval_metrics.mjs'
@@ -33,6 +43,11 @@ on:
         description: 'Exécuter les évaluations OpenAI réelles'
         required: false
         default: true
+        type: boolean
+      enforce_readiness:
+        description: 'Exiger que tous les contrôles du point 8 soient verified'
+        required: false
+        default: false
         type: boolean
 
 permissions:
@@ -61,6 +76,15 @@ jobs:
       - name: Install Functions dependencies
         run: npm --prefix functions ci
 
+      - name: Validate point 8 readiness registry
+        run: |
+          node tools/quality/check_ai_readiness.test.mjs
+          node tools/quality/check_ai_readiness.mjs
+
+      - name: Enforce point 8 completion when requested
+        if: github.event_name == 'workflow_dispatch' && inputs.enforce_readiness == true
+        run: node tools/quality/check_ai_readiness.mjs --enforce
+
       - name: Build and test Functions
         run: npm --prefix functions run ci
 
@@ -73,6 +97,16 @@ jobs:
           npm --prefix functions run ai:eval:vision:dry
           npm --prefix functions run ai:prompt:tokens
 
+      - name: Archive validation evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: ai-validation-${{ github.sha }}
+          path: |
+            build/quality/ai-readiness-report.json
+            functions/evals/media
+          if-no-files-found: error
+          retention-days: 90
+
   live:
     if: >-
       github.event_name == 'push' ||
@@ -80,7 +114,7 @@ jobs:
     needs: validate
     environment: recaptcha
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
 
@@ -124,6 +158,7 @@ jobs:
           OPENAI_OUTPUT_EUR_PER_MILLION_TOKENS: ${{ vars.OPENAI_OUTPUT_EUR_PER_MILLION_TOKENS }}
         run: |
           mkdir -p quality_reports/ai
+          npm --prefix functions run ai:eval:listing -- functions/evals/listing_cases.jsonl ../quality_reports/ai/listing.json
           npm --prefix functions run ai:eval:transcription -- --output ../quality_reports/ai/transcription.json
           npm --prefix functions run ai:eval:vision -- --output ../quality_reports/ai/vision.json
 
