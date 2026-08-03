@@ -12,6 +12,52 @@ import {
 
 const ANALYTICS_SCOPE = 'https://www.googleapis.com/auth/analytics.readonly';
 
+async function fetchGoogleJson(accessToken, url) {
+  const response = await fetch(url, {
+    headers: { authorization: `Bearer ${accessToken}` },
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = payload?.error?.message ?? response.statusText;
+    throw new Error(`Google Analytics API failed (${response.status}): ${message}`);
+  }
+  return payload;
+}
+
+export async function resolveGa4PropertyId(
+  accessToken,
+  measurementId,
+) {
+  const expectedMeasurementId = String(measurementId ?? '').trim();
+  if (!expectedMeasurementId) {
+    throw new Error('GA4 measurement ID is missing.');
+  }
+  const summaries = await fetchGoogleJson(
+    accessToken,
+    'https://analyticsadmin.googleapis.com/v1beta/accountSummaries?pageSize=200',
+  );
+  const properties = (summaries.accountSummaries ?? []).flatMap(
+    (account) => account.propertySummaries ?? [],
+  );
+  for (const property of properties) {
+    const propertyName = String(property.property ?? '').trim();
+    if (!/^properties\/\d+$/u.test(propertyName)) continue;
+    const streams = await fetchGoogleJson(
+      accessToken,
+      `https://analyticsadmin.googleapis.com/v1beta/${propertyName}/dataStreams?pageSize=200`,
+    );
+    const match = (streams.dataStreams ?? []).find(
+      (stream) =>
+        String(stream?.webStreamData?.measurementId ?? '').trim() ===
+        expectedMeasurementId,
+    );
+    if (match) return propertyName.replace('properties/', '');
+  }
+  throw new Error(
+    `No GA4 property visible to this identity contains measurement ID ${expectedMeasurementId}.`,
+  );
+}
+
 async function runReport(accessToken, propertyId, request) {
   const response = await fetch(
     `https://analyticsdata.googleapis.com/v1beta/properties/${encodeURIComponent(
@@ -139,17 +185,18 @@ async function fetchPeriod(
 
 export async function fetchGa4Metrics({
   config,
-  serviceAccountJson,
-  propertyId,
+  directAccessToken = '',
+  serviceAccountJson = '',
+  propertyId = '',
   now = new Date(),
 }) {
-  if (!String(propertyId ?? '').trim()) {
-    throw new Error('SEO_GA4_PROPERTY_ID is missing.');
-  }
   const accessToken = await getGoogleAccessToken({
+    directAccessToken,
     serviceAccountJson,
     scopes: [ANALYTICS_SCOPE],
   });
+  const resolvedPropertyId = String(propertyId).trim() ||
+    (await resolveGa4PropertyId(accessToken, config.ga4MeasurementId));
   const periods = buildComparisonPeriods(config, now);
 
   let keyEventMetric = 'keyEvents';
@@ -159,14 +206,14 @@ export async function fetchGa4Metrics({
     [current, previous] = await Promise.all([
       fetchPeriod(
         accessToken,
-        propertyId,
+        resolvedPropertyId,
         periods.current,
         config.conversionEvents,
         keyEventMetric,
       ),
       fetchPeriod(
         accessToken,
-        propertyId,
+        resolvedPropertyId,
         periods.previous,
         config.conversionEvents,
         keyEventMetric,
@@ -178,14 +225,14 @@ export async function fetchGa4Metrics({
     [current, previous] = await Promise.all([
       fetchPeriod(
         accessToken,
-        propertyId,
+        resolvedPropertyId,
         periods.current,
         config.conversionEvents,
         keyEventMetric,
       ),
       fetchPeriod(
         accessToken,
-        propertyId,
+        resolvedPropertyId,
         periods.previous,
         config.conversionEvents,
         keyEventMetric,
@@ -195,7 +242,7 @@ export async function fetchGa4Metrics({
 
   return {
     status: 'available',
-    propertyId: String(propertyId),
+    propertyId: resolvedPropertyId,
     measurementId: config.ga4MeasurementId,
     keyEventMetric,
     current,
@@ -235,6 +282,7 @@ async function runCli() {
   try {
     const result = await fetchGa4Metrics({
       config,
+      directAccessToken: process.env.SEO_GOOGLE_ACCESS_TOKEN ?? '',
       serviceAccountJson:
         process.env.SEO_GOOGLE_SERVICE_ACCOUNT_JSON ??
         process.env.GOOGLE_SERVICE_ACCOUNT_JSON ??
