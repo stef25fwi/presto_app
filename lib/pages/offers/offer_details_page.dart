@@ -26,7 +26,9 @@ import 'package:presto_app/pages/offers/widgets/animated_payment_info_pill.dart'
 import 'package:presto_app/pages/offers/widgets/payment_info_popup.dart';
 import 'package:presto_app/widgets/deleted_user_profile.dart';
 import 'package:presto_app/pages/fiche_pro_page.dart';
+
 enum OfferActionType { booking, contact }
+
 String _extractOfferDetailImageUrl(dynamic entry) {
   if (entry == null) return '';
   if (entry is Map) {
@@ -51,6 +53,7 @@ String _extractOfferDetailImageUrl(dynamic entry) {
   }
   return entry.toString().trim();
 }
+
 String _firstOfferDetailPhotoField(dynamic data, List<String> keys) {
   if (data is! Map) return '';
   for (final key in keys) {
@@ -61,6 +64,7 @@ String _firstOfferDetailPhotoField(dynamic data, List<String> keys) {
   }
   return '';
 }
+
 List<String> _collectOfferDetailImageUrls({
   dynamic imageUrls,
   dynamic media,
@@ -75,6 +79,7 @@ List<String> _collectOfferDetailImageUrls({
     }
     orderedUrls.add(url);
   }
+
   if (media is List) {
     for (final entry in media) {
       addUrl(entry);
@@ -89,6 +94,7 @@ List<String> _collectOfferDetailImageUrls({
   addUrl(thumbnailUrl);
   return orderedUrls;
 }
+
 class PracticalInfo {
   final String category;
   final String serviceArea;
@@ -109,6 +115,7 @@ class PracticalInfo {
     required this.serviceType,
   });
 }
+
 class Advertiser {
   final String id;
   final String name;
@@ -137,6 +144,7 @@ class Advertiser {
     required this.lastSeenLabel,
   });
 }
+
 String _normalizeBudgetDisplayText(String value) {
   return value
       .toLowerCase()
@@ -148,6 +156,7 @@ String _normalizeBudgetDisplayText(String value) {
       .replaceAll(RegExp(r'\s+'), ' ')
       .trim();
 }
+
 bool _isNegotiableBudgetValue(Object? value) {
   final raw = (value ?? '').toString().trim();
   if (raw.isEmpty) return false;
@@ -159,6 +168,7 @@ bool _isNegotiableBudgetValue(Object? value) {
       normalized == 'a negocier' ||
       normalized == 'à négocier';
 }
+
 num? _asBudgetNumber(Object? value) {
   if (value == null) return null;
   if (value is num) return value;
@@ -172,6 +182,7 @@ num? _asBudgetNumber(Object? value) {
       .trim();
   return num.tryParse(cleaned);
 }
+
 bool _shouldHideBudgetOnOfferDetails(Map<String, dynamic> data) {
   final possibleLabels = <Object?>[
     data['budgetLabel'],
@@ -203,6 +214,7 @@ bool _shouldHideBudgetOnOfferDetails(Map<String, dynamic> data) {
   }
   return false;
 }
+
 class Offer {
   final String id;
   final String listingId;
@@ -267,6 +279,7 @@ class Offer {
     required this.similarOffers,
   }) : listingId = listingId ?? id;
 }
+
 class OfferDetailsPage extends StatelessWidget {
   final Object? offer;
   final String currentUserId;
@@ -286,6 +299,7 @@ class OfferDetailsPage extends StatelessWidget {
     );
   }
 }
+
 class PrestoOfferDetailsPage extends StatefulWidget {
   final Object? offer;
   final String currentUserId;
@@ -299,6 +313,7 @@ class PrestoOfferDetailsPage extends StatefulWidget {
   @override
   State<PrestoOfferDetailsPage> createState() => _PrestoOfferDetailsPageState();
 }
+
 class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
   static const Color _headerOrange = Color(0xFFFF6600);
   static const SystemUiOverlayStyle _statusBarStyle = SystemUiOverlayStyle(
@@ -320,6 +335,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     _initMarketplaceFuture();
     unawaited(_loadAdminAccess());
   }
+
   @override
   void didUpdateWidget(PrestoOfferDetailsPage old) {
     super.didUpdateWidget(old);
@@ -327,13 +343,16 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       _initMarketplaceFuture();
     }
   }
+
   void _initMarketplaceFuture() {
     final listingId = _extractMarketplaceListingId(widget.offer);
-    _marketplaceFuture = (listingId.isNotEmpty &&
+    _marketplaceFuture =
+        (listingId.isNotEmpty &&
             _shouldHydrateMarketplaceOffer(widget.offer, listingId))
         ? _fetchMarketplaceOffer(listingId)
         : null;
   }
+
   Future<void> _loadAdminAccess() async {
     try {
       final state = await _adminAccessResolver.resolveAdminAccess(
@@ -350,6 +369,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       });
     }
   }
+
   Future<void> _confirmAdminDeleteOffer(
     BuildContext context,
     _OfferUiData data,
@@ -409,8 +429,8 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       final message = error.code == 'permission-denied'
           ? 'Suppression admin refusée.'
           : error.code == 'not-found'
-              ? 'Annonce introuvable.'
-              : 'Erreur lors de la suppression admin.';
+          ? 'Annonce introuvable.'
+          : 'Erreur lors de la suppression admin.';
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
@@ -427,24 +447,28 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       }
     }
   }
+
   String _extractMarketplaceListingId(Object? source) {
     final dynamic dynamicSource = source;
-    final rawId = ((source is Map
-                ? source['listingId'] ?? source['offerId'] ?? source['id']
-                : _OfferUiData._read(() => dynamicSource?.listingId) ??
-                    _OfferUiData._read(() => dynamicSource?.offerId) ??
-                    _OfferUiData._read(() => dynamicSource?.id)) ??
-            '')
-        .toString()
-        .trim();
+    final rawId =
+        ((source is Map
+                    ? source['listingId'] ?? source['offerId'] ?? source['id']
+                    : _OfferUiData._read(() => dynamicSource?.listingId) ??
+                          _OfferUiData._read(() => dynamicSource?.offerId) ??
+                          _OfferUiData._read(() => dynamicSource?.id)) ??
+                '')
+            .toString()
+            .trim();
     if (rawId.isEmpty) {
       return '';
     }
     return rawId;
   }
+
   String _extractImageUrl(dynamic entry) {
     return _extractOfferDetailImageUrl(entry);
   }
+
   List<String> _collectImageUrls({
     dynamic imageUrls,
     dynamic media,
@@ -458,6 +482,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       thumbnailUrl: thumbnailUrl,
     );
   }
+
   Object? _mergeMarketplaceOffer(
     Object? source,
     Map<String, dynamic>? fetchedData,
@@ -486,6 +511,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     }
     return merged;
   }
+
   bool _shouldHydrateMarketplaceOffer(Object? source, String listingId) {
     if (listingId.isEmpty) {
       return false;
@@ -519,6 +545,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         advertiserId.isEmpty ||
         imageUrls.isEmpty;
   }
+
   Future<Map<String, dynamic>?> _fetchMarketplaceOffer(String listingId) async {
     if (listingId.isEmpty) {
       return null;
@@ -529,6 +556,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         .get();
     return snapshot.data();
   }
+
   String _toE164Like(String raw) {
     final trimmed = raw.trim();
     if (trimmed.isEmpty) return '';
@@ -547,6 +575,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     }
     return digits;
   }
+
   Future<User?> _resolveSignedInUser() async {
     final auth = FirebaseAuth.instance;
     final currentUser = auth.currentUser;
@@ -555,6 +584,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     }
     return null;
   }
+
   Future<User?> _ensureSignedInForOfferAction(
     BuildContext context, {
     required String area,
@@ -664,8 +694,9 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     final resolvedUser = await _resolveSignedInUser();
     logRuntimeAction(
       area: area,
-      action:
-          resolvedUser == null ? 'auth-handoff-failed' : 'auth-handoff-success',
+      action: resolvedUser == null
+          ? 'auth-handoff-failed'
+          : 'auth-handoff-success',
       details: <String, Object?>{
         'offerId': offerId,
         'userId': resolvedUser?.uid,
@@ -673,6 +704,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     );
     return resolvedUser;
   }
+
   Future<void> _openInternalMessaging(
     BuildContext context,
     _OfferUiData data,
@@ -680,8 +712,9 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     final messenger = ScaffoldMessenger.maybeOf(context);
     final navigator = Navigator.of(context);
     User? authUser = FirebaseAuth.instance.currentUser;
-    var me =
-        authUser?.uid.isNotEmpty == true ? authUser!.uid : widget.currentUserId;
+    var me = authUser?.uid.isNotEmpty == true
+        ? authUser!.uid
+        : widget.currentUserId;
     logRuntimeAction(
       area: 'messaging',
       action: 'open-from-offer',
@@ -787,6 +820,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     );
     navigator.pushNamed(targetRoute);
   }
+
   Future<void> _callPhone(BuildContext context, String phone) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
     if (phone.trim().isEmpty) {
@@ -809,6 +843,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     }
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
+
   Future<String> _resolveCallablePhoneForOffer(_OfferUiData data) async {
     if (!data.isMarketplace || data.offerId.trim().isEmpty) {
       return data.phone.trim();
@@ -833,6 +868,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       return data.phone.trim();
     }
   }
+
   Future<void> _openExternalShareTarget(
     BuildContext context, {
     required Uri uri,
@@ -847,6 +883,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     }
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
+
   Future<void> _showShareOptionsSheet(
     BuildContext context,
     _OfferUiData data,
@@ -870,6 +907,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
             const SnackBar(content: Text('Lien de l\'annonce copié.')),
           );
         }
+
         Future<void> openInstagram() async {
           await Clipboard.setData(ClipboardData(text: shareText));
           if (!sheetContext.mounted) return;
@@ -886,6 +924,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
             ),
           );
         }
+
         return SafeArea(
           top: false,
           child: Container(
@@ -1031,6 +1070,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       },
     );
   }
+
   Future<void> _showContactOptionsSheet(
     BuildContext context,
     _OfferUiData data,
@@ -1085,8 +1125,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
                     child: ElevatedButton.icon(
                       onPressed: () async {
                         Navigator.of(sheetContext).pop();
-                        final signedInUser =
-                            await _ensureSignedInForOfferAction(
+                        final signedInUser = await _ensureSignedInForOfferAction(
                           context,
                           area: 'offer_call',
                           offerId: data.offerId,
@@ -1101,8 +1140,9 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
                               .collection('listings')
                               .doc(data.offerId)
                               .update({
-                            'phoneViewCount': FieldValue.increment(1),
-                          }).ignore();
+                                'phoneViewCount': FieldValue.increment(1),
+                              })
+                              .ignore();
                         }
                         final phone = await _resolveCallablePhoneForOffer(data);
                         if (!context.mounted) return;
@@ -1127,6 +1167,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       },
     );
   }
+
   Future<void> _toggleFavorite(
     BuildContext context,
     _OfferUiData data,
@@ -1203,7 +1244,8 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         },
       );
       if (!context.mounted) return;
-      final isLegacyUnavailable = !data.isMarketplace &&
+      final isLegacyUnavailable =
+          !data.isMarketplace &&
           (e.code == 'not-found' || e.code == 'failed-precondition');
       messenger?.showSnackBar(
         SnackBar(
@@ -1230,6 +1272,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       );
     }
   }
+
   Future<void> _showReportSheet(BuildContext context, _OfferUiData data) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
     var uid = FirebaseAuth.instance.currentUser?.uid.trim() ?? '';
@@ -1387,8 +1430,9 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         ListingReportDraft(
           listingId: data.offerId,
           reasonCode: reason,
-          reasonText:
-              (reasonText ?? '').trim().isEmpty ? null : reasonText!.trim(),
+          reasonText: (reasonText ?? '').trim().isEmpty
+              ? null
+              : reasonText!.trim(),
         ),
         recaptchaToken: recaptchaToken,
       );
@@ -1426,6 +1470,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       );
     }
   }
+
   String _reportReasonLabel(ListingReportReasonCode reason) {
     return switch (reason) {
       ListingReportReasonCode.spam => 'Spam',
@@ -1438,15 +1483,17 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       ListingReportReasonCode.other => 'Autre motif',
     };
   }
+
   Map<String, dynamic> _buildFavoriteOfferPayload(_OfferUiData data) {
     final dynamic rawOffer = widget.offer;
-    final imageUrls = ((_OfferUiData._read(() => rawOffer['imageUrls']) ??
-                    _OfferUiData._read(() => rawOffer.imageUrls))
-                as List<dynamic>? ??
-            const [])
-        .map((e) => e.toString().trim())
-        .where((e) => e.isNotEmpty)
-        .toList(growable: false);
+    final imageUrls =
+        ((_OfferUiData._read(() => rawOffer['imageUrls']) ??
+                        _OfferUiData._read(() => rawOffer.imageUrls))
+                    as List<dynamic>? ??
+                const [])
+            .map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .toList(growable: false);
     final createdAt = _OfferUiData._read(() => rawOffer.createdAt);
     return {
       'offerId': data.offerId,
@@ -1482,6 +1529,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       if (createdAt is Timestamp) 'createdAt': createdAt,
     };
   }
+
   Widget _buildFavoriteAction(BuildContext context, _OfferUiData data) {
     final authUser = FirebaseAuth.instance.currentUser;
     final uid = authUser?.uid.trim() ?? '';
@@ -1498,7 +1546,8 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       stream: _favoriteRepository.watchFavoriteListingIds(uid),
       builder: (context, snapshot) {
         final favoriteIds = snapshot.data ?? const <String>{};
-        final isFavorite = data.offerId.trim().isNotEmpty &&
+        final isFavorite =
+            data.offerId.trim().isNotEmpty &&
             favoriteIds.contains(data.offerId.trim());
         return IconButton(
           tooltip: isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris',
@@ -1512,6 +1561,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     Widget buildPage(Object? resolvedOffer) {
@@ -1611,6 +1661,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         ),
       );
     }
+
     if (_marketplaceFuture == null) {
       return buildPage(widget.offer);
     }
@@ -1628,6 +1679,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     );
   }
 }
+
 class _ListingViewTracker {
   static final Set<String> _countedListingIds = <String>{};
   static final String _sessionViewerKey =
@@ -1659,6 +1711,7 @@ class _ListingViewTracker {
     }
   }
 }
+
 class _OfferUiData {
   final String offerId;
   final bool isMarketplace;
@@ -1763,17 +1816,21 @@ class _OfferUiData {
         .trim();
     return out.isEmpty ? title.trim() : out;
   }
+
   bool get hasPhotos => mediaCount > 0;
   bool get isListingActive {
     final status = listingStatus.trim().toLowerCase();
     return status == 'active' || status == 'published';
   }
+
   bool get showPendingPhotoNotice {
     return isMarketplace && hasPhotos && !isListingActive;
   }
+
   bool get isMediaStillProcessing {
     return mediaProcessingStatus.trim().toLowerCase() == 'processing';
   }
+
   String get publishedAtExactLabel {
     final value = publishedAt;
     if (value == null) return publishedAtLabel;
@@ -1784,6 +1841,7 @@ class _OfferUiData {
     final minute = value.minute.toString().padLeft(2, '0');
     return '$day/$month/$year à $hour:$minute';
   }
+
   factory _OfferUiData.fromOffer(Object? offer) {
     final dynamic o = offer;
     dynamic readValue(String key, [dynamic Function()? getter]) {
@@ -1792,6 +1850,7 @@ class _OfferUiData {
       }
       return getter == null ? null : _read(getter);
     }
+
     dynamic readNestedValue(
       dynamic source,
       String key, [
@@ -1802,6 +1861,7 @@ class _OfferUiData {
       }
       return getter == null ? null : _read(getter);
     }
+
     final dynamic advertiser = readValue('advertiser', () => o.advertiser);
     final dynamic practical = readValue('practicalInfo', () => o.practicalInfo);
     final offerId = _asString(
@@ -1814,17 +1874,17 @@ class _OfferUiData {
     final isMarketplace = marketplaceFlag is bool
         ? marketplaceFlag
         : _asString(
-              readValue('categoryId', () => o.categoryId),
-              fallback: '',
-            ).isNotEmpty ||
-            _asString(
-              readValue('cityId', () => o.cityId),
-              fallback: '',
-            ).isNotEmpty ||
-            _asString(
-              readValue('visibility', () => o.visibility),
-              fallback: '',
-            ).isNotEmpty;
+                readValue('categoryId', () => o.categoryId),
+                fallback: '',
+              ).isNotEmpty ||
+              _asString(
+                readValue('cityId', () => o.cityId),
+                fallback: '',
+              ).isNotEmpty ||
+              _asString(
+                readValue('visibility', () => o.visibility),
+                fallback: '',
+              ).isNotEmpty;
     final listingStatus = _asString(
       readValue('status', () => o.status),
       fallback: '',
@@ -1838,11 +1898,12 @@ class _OfferUiData {
     final mediaCount = rawMedia is List
         ? rawMedia.length
         : rawImageUrls is List
-            ? rawImageUrls.length
-            : 0;
+        ? rawImageUrls.length
+        : 0;
     final mediaProcessingStatus = _asString(
       readValue('mediaProcessingStatus'),
-      fallback: (!listingStatus.trim().toLowerCase().contains('active') &&
+      fallback:
+          (!listingStatus.trim().toLowerCase().contains('active') &&
               !listingStatus.trim().toLowerCase().contains('published') &&
               mediaCount > 0)
           ? 'processing'
@@ -2073,11 +2134,13 @@ class _OfferUiData {
       return null;
     }
   }
+
   static String _asString(dynamic value, {required String fallback}) {
     if (value == null) return fallback;
     final s = value.toString().trim();
     return s.isEmpty ? fallback : s;
   }
+
   static double _asDouble(dynamic value, {required double fallback}) {
     if (value is num) return value.toDouble();
     if (value is String) {
@@ -2086,6 +2149,7 @@ class _OfferUiData {
     }
     return fallback;
   }
+
   static int _asInt(dynamic value, {required int fallback}) {
     if (value is int) return value;
     if (value is num) return value.toInt();
@@ -2095,10 +2159,12 @@ class _OfferUiData {
     }
     return fallback;
   }
+
   static bool _asBool(dynamic value, {required bool fallback}) {
     if (value is bool) return value;
     return fallback;
   }
+
   static DateTime? _asDateTime(dynamic value) {
     if (value is Timestamp) return value.toDate().toLocal();
     if (value is DateTime) return value.toLocal();
@@ -2111,6 +2177,7 @@ class _OfferUiData {
     }
     return null;
   }
+
   static List<String> _asStringList(dynamic value) {
     if (value is List) {
       return value
@@ -2121,6 +2188,7 @@ class _OfferUiData {
     return const [];
   }
 }
+
 class _BackgroundDecor extends StatelessWidget {
   const _BackgroundDecor();
   @override
@@ -2152,6 +2220,7 @@ class _BackgroundDecor extends StatelessWidget {
     );
   }
 }
+
 class _TopHeader extends StatelessWidget {
   final String title;
   final bool compact;
@@ -2218,12 +2287,14 @@ class _TopHeader extends StatelessWidget {
       ),
     );
   }
+
   String _truncatedTitle(String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) return 'Montage me...';
     return trimmed.length > 12 ? '${trimmed.substring(0, 10)}...' : trimmed;
   }
 }
+
 class _HeroCard extends StatelessWidget {
   final _OfferUiData data;
   final bool compact;
@@ -2236,6 +2307,7 @@ class _HeroCard extends StatelessWidget {
       initialIndex: initialIndex,
     );
   }
+
   @override
   Widget build(BuildContext context) {
     const card = Colors.white;
@@ -2536,6 +2608,7 @@ class _HeroCard extends StatelessWidget {
     );
   }
 }
+
 class _PendingPhotoNotice extends StatelessWidget {
   final bool compact;
   final bool isProcessing;
@@ -2556,9 +2629,9 @@ class _PendingPhotoNotice extends StatelessWidget {
     final message = isProcessing
         ? 'Photos en traitement. Publication automatique une fois les photos prêtes.'
         : normalizedModeration == 'manual_review' ||
-                normalizedModeration == 'pending'
-            ? 'Annonce en cours de vérification avant publication.'
-            : 'Cette annonce reste temporairement hors ligne avant publication.';
+              normalizedModeration == 'pending'
+        ? 'Annonce en cours de vérification avant publication.'
+        : 'Cette annonce reste temporairement hors ligne avant publication.';
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
@@ -2621,6 +2694,7 @@ class _PendingPhotoNotice extends StatelessWidget {
     );
   }
 }
+
 class _HeroInfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -2661,6 +2735,7 @@ class _HeroInfoChip extends StatelessWidget {
     );
   }
 }
+
 class _PhotoGalleryTapOverlay extends StatelessWidget {
   final VoidCallback onTap;
   const _PhotoGalleryTapOverlay({required this.onTap});
@@ -2678,6 +2753,7 @@ class _PhotoGalleryTapOverlay extends StatelessWidget {
     );
   }
 }
+
 class _PhotoThumbnailStrip extends StatelessWidget {
   final List<String> imageUrls;
   const _PhotoThumbnailStrip({required this.imageUrls});
@@ -2749,6 +2825,7 @@ class _PhotoThumbnailStrip extends StatelessWidget {
       ),
     );
   }
+
   void _openFullScreenGallery(BuildContext context, int initialIndex) {
     _showPhotoGalleryPopup(
       context,
@@ -2757,6 +2834,7 @@ class _PhotoThumbnailStrip extends StatelessWidget {
     );
   }
 }
+
 Future<void> _showPhotoGalleryPopup(
   BuildContext context, {
   required List<String> imageUrls,
@@ -2776,6 +2854,7 @@ Future<void> _showPhotoGalleryPopup(
     },
   );
 }
+
 class _PhotoGalleryPopup extends StatefulWidget {
   final List<String> imageUrls;
   final int initialIndex;
@@ -2786,6 +2865,7 @@ class _PhotoGalleryPopup extends StatefulWidget {
   @override
   State<_PhotoGalleryPopup> createState() => _PhotoGalleryPopupState();
 }
+
 class _PhotoGalleryPopupState extends State<_PhotoGalleryPopup> {
   late final PageController _pageController;
   late int _currentPage;
@@ -2795,11 +2875,13 @@ class _PhotoGalleryPopupState extends State<_PhotoGalleryPopup> {
     _currentPage = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
   }
+
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -2874,6 +2956,7 @@ class _PhotoGalleryPopupState extends State<_PhotoGalleryPopup> {
     );
   }
 }
+
 final Map<String, Future<String?>> _offerImageUrlCache =
     <String, Future<String?>>{};
 Future<String?> _resolveOfferImageUrl(String rawUrl) {
@@ -2896,16 +2979,18 @@ Future<String?> _resolveOfferImageUrl(String rawUrl) {
   final future = () async {
     try {
       if (trimmed.startsWith('gs://')) {
-        final resolved =
-            await FirebaseStorage.instance.refFromURL(trimmed).getDownloadURL();
+        final resolved = await FirebaseStorage.instance
+            .refFromURL(trimmed)
+            .getDownloadURL();
         if (resolved.trim().isEmpty) {
           _offerImageUrlCache.remove(trimmed);
           return null;
         }
         return resolved;
       }
-      final normalizedPath =
-          trimmed.startsWith('/') ? trimmed.substring(1) : trimmed;
+      final normalizedPath = trimmed.startsWith('/')
+          ? trimmed.substring(1)
+          : trimmed;
       if (normalizedPath.isEmpty) {
         _offerImageUrlCache.remove(trimmed);
         return null;
@@ -2927,6 +3012,7 @@ Future<String?> _resolveOfferImageUrl(String rawUrl) {
   _offerImageUrlCache[trimmed] = future;
   return future;
 }
+
 class _OfferImage extends StatelessWidget {
   final String rawUrl;
   final BoxFit fit;
@@ -2944,6 +3030,7 @@ class _OfferImage extends StatelessWidget {
         url.startsWith('data:image/') ||
         url.startsWith('//');
   }
+
   @override
   Widget build(BuildContext context) {
     final trimmed = rawUrl.trim();
@@ -2975,6 +3062,7 @@ class _OfferImage extends StatelessWidget {
     );
   }
 }
+
 class _AdminDeleteListingButton extends StatelessWidget {
   final bool compact;
   final VoidCallback onTap;
@@ -3006,6 +3094,7 @@ class _AdminDeleteListingButton extends StatelessWidget {
     );
   }
 }
+
 class _PracticalInfoCard extends StatelessWidget {
   final _OfferUiData data;
   final bool compact;
@@ -3020,6 +3109,7 @@ class _PracticalInfoCard extends StatelessWidget {
   Widget _paymentInfoPill(BuildContext context) {
     return AnimatedPaymentInfoPill(onTap: () => showPaymentInfoPopup(context));
   }
+
   @override
   Widget build(BuildContext context) {
     const blueSoft = Color(0xFFDCEBFF);
@@ -3128,6 +3218,7 @@ class _PracticalInfoCard extends StatelessWidget {
     );
   }
 }
+
 class _OfferDetailsAdMobBannerSpace extends StatelessWidget {
   const _OfferDetailsAdMobBannerSpace();
   @override
@@ -3161,6 +3252,7 @@ class _OfferDetailsAdMobBannerSpace extends StatelessWidget {
     );
   }
 }
+
 class _AdvertiserContactCard extends StatelessWidget {
   final _OfferUiData data;
   final bool compact;
@@ -3173,8 +3265,10 @@ class _AdvertiserContactCard extends StatelessWidget {
   Future<void> _openProfile(BuildContext context) async {
     final uid = data.advertiserId.trim();
     if (uid.isEmpty) return;
-    final doc =
-        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
     final accountType = (doc.data()?['accountType'] ?? '').toString();
     if (accountType != 'Entreprise') return;
     if (!context.mounted) return;
@@ -3182,6 +3276,7 @@ class _AdvertiserContactCard extends StatelessWidget {
       MaterialPageRoute(builder: (_) => FicheProPage(uid: uid, isOwner: false)),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     const blueSoft = Color(0xFFDCEBFF);
@@ -3250,6 +3345,7 @@ class _AdvertiserContactCard extends StatelessWidget {
     );
   }
 }
+
 class _AdvertiserHeaderLine extends StatelessWidget {
   final String advertiserName;
   final bool verified;
@@ -3345,6 +3441,7 @@ class _AdvertiserHeaderLine extends StatelessWidget {
     );
   }
 }
+
 class _InfoLine extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -3464,6 +3561,7 @@ class _InfoLine extends StatelessWidget {
     );
   }
 }
+
 class _AdvertiserMetaLine extends StatelessWidget {
   final double advertiserRating;
   final int advertiserReviewCount;
@@ -3584,6 +3682,7 @@ class _AdvertiserMetaLine extends StatelessWidget {
     );
   }
 }
+
 class _MaskedPhoneInfoLine extends StatefulWidget {
   final String phone;
   final bool compact;
@@ -3598,6 +3697,7 @@ class _MaskedPhoneInfoLine extends StatefulWidget {
   @override
   State<_MaskedPhoneInfoLine> createState() => _MaskedPhoneInfoLineState();
 }
+
 class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
   bool _isPhoneVisible = false;
   bool _isResolvingContact = false;
@@ -3608,6 +3708,7 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     super.initState();
     _prefetchContactPreviewIfNeeded();
   }
+
   @override
   void didUpdateWidget(covariant _MaskedPhoneInfoLine oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -3620,11 +3721,13 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
       _prefetchContactPreviewIfNeeded();
     }
   }
+
   Future<void> _prefetchContactPreviewIfNeeded() async {
     if (widget.offerId.trim().isEmpty) return;
     if (widget.phone.trim().isNotEmpty && !widget.hidePhone) return;
     await _resolveListingContact(allowFullPhone: false);
   }
+
   Future<void> _resolveListingContact({required bool allowFullPhone}) async {
     if (_isResolvingContact || widget.offerId.trim().isEmpty) return;
     setState(() {
@@ -3660,11 +3763,13 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
       }
     }
   }
+
   String _effectivePhone() {
     final resolved = (_resolvedPhone ?? '').trim();
     if (resolved.isNotEmpty) return resolved;
     return widget.phone.trim();
   }
+
   Future<void> _handlePhoneVisibility() async {
     if (_isPhoneVisible) {
       if (!mounted) return;
@@ -3732,9 +3837,11 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
       FirebaseFirestore.instance
           .collection('listings')
           .doc(widget.offerId)
-          .update({'phoneViewCount': FieldValue.increment(1)}).ignore();
+          .update({'phoneViewCount': FieldValue.increment(1)})
+          .ignore();
     }
   }
+
   String _phoneIndicatif(String rawPhone) {
     final compact = rawPhone.trim().replaceAll(RegExp(r'[\s().-]+'), '');
     if (compact.isEmpty) {
@@ -3783,6 +3890,7 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     }
     return '';
   }
+
   String _indicatifOnly(String rawPhone) {
     final dialingCode = _phoneIndicatif(rawPhone);
     if (dialingCode.isEmpty) {
@@ -3793,6 +3901,7 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     }
     return '$dialingCode ••••••';
   }
+
   String _maskedLabel(String rawPhone) {
     final normalized = rawPhone.trim();
     if (normalized.isEmpty) {
@@ -3807,20 +3916,23 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     }
     return '$dialingCode ••••••';
   }
+
   @override
   Widget build(BuildContext context) {
     const navy = Color(0xFF18233D);
     const muted = Color(0xFF6F7282);
     const line = Color(0xFFE6E3E6);
     final effectivePhone = _effectivePhone();
-    final canRequestReveal = !widget.hidePhone &&
+    final canRequestReveal =
+        !widget.hidePhone &&
         (effectivePhone.isNotEmpty || widget.offerId.trim().isNotEmpty);
     final String displayedValue;
     if (widget.hidePhone) {
       displayedValue = _indicatifOnly(effectivePhone);
     } else {
-      displayedValue =
-          _isPhoneVisible ? effectivePhone : _maskedLabel(effectivePhone);
+      displayedValue = _isPhoneVisible
+          ? effectivePhone
+          : _maskedLabel(effectivePhone);
     }
     return Column(
       children: [
@@ -3879,8 +3991,9 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
                 SizedBox(width: widget.compact ? 4 : 6),
                 IconButton(
                   onPressed: canRequestReveal ? _handlePhoneVisibility : null,
-                  tooltip:
-                      _isPhoneVisible ? 'Masquer le numéro' : 'Voir le numéro',
+                  tooltip: _isPhoneVisible
+                      ? 'Masquer le numéro'
+                      : 'Voir le numéro',
                   visualDensity: VisualDensity.compact,
                   splashRadius: widget.compact ? 18 : 20,
                   icon: Icon(
@@ -3900,6 +4013,7 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     );
   }
 }
+
 class _UrgentBadge extends StatelessWidget {
   final bool compact;
   const _UrgentBadge({this.compact = false});
@@ -3937,6 +4051,7 @@ class _UrgentBadge extends StatelessWidget {
     );
   }
 }
+
 class _HeaderPillBadge extends StatelessWidget {
   final bool compact;
   final double minWidth;
@@ -3962,6 +4077,7 @@ class _HeaderPillBadge extends StatelessWidget {
     );
   }
 }
+
 class _InlineCta extends StatelessWidget {
   final String label;
   final bool compact;
@@ -4020,6 +4136,7 @@ class _InlineCta extends StatelessWidget {
     );
   }
 }
+
 class _ShareOptionTile extends StatelessWidget {
   final Widget icon;
   final String label;
@@ -4089,6 +4206,7 @@ class _ShareOptionTile extends StatelessWidget {
     );
   }
 }
+
 class _AvatarFallback extends StatelessWidget {
   final String initials;
   const _AvatarFallback({required this.initials});
@@ -4152,9 +4270,11 @@ class _AvatarFallback extends StatelessWidget {
     );
   }
 }
+
 bool _isDeletedUserMap(Map<String, dynamic>? data) {
   return DeletedUserProfile.isDeletedMap(data);
 }
+
 String _deletedAwareDisplayName(
   Map<String, dynamic>? data,
   String? fallbackName,
@@ -4164,6 +4284,7 @@ String _deletedAwareDisplayName(
     fallbackName: fallbackName,
   );
 }
+
 Widget _deletedAwareAvatar({
   required Map<String, dynamic>? data,
   required Widget fallback,

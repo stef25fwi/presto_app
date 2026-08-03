@@ -54,8 +54,10 @@ import '../features/offers/presentation/widgets/publish_offer_contact_fields.dar
 import '../features/offers/presentation/widgets/publish_offer_mission_fields.dart';
 import '../widgets/phone_input_field.dart';
 import '../widgets/orbiting_ai_visual.dart';
+
 final AdminAudioRuntimeStore _adminAudioRuntimeStore =
     AdminAudioRuntimeStore.instance;
+
 enum PublishOfferAiFlowStep {
   chooseMethod,
   voiceSelected,
@@ -64,12 +66,14 @@ enum PublishOfferAiFlowStep {
   textAnalyzing,
   completed,
 }
+
 class PublishOfferPage extends StatefulWidget {
   final Function(double)? onScroll;
   const PublishOfferPage({super.key, this.onScroll});
   @override
   State<PublishOfferPage> createState() => _PublishOfferPageState();
 }
+
 class _PublishOfferPageState extends State<PublishOfferPage> {
   MarketplacePublishService? _marketplacePublishService;
   static const int _publishPhotoHardLimit = 2;
@@ -147,6 +151,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return message;
   }
+
   Future<bool> _ensureAppCheckReady({
     required String flow,
     bool showBlockingMessage = true,
@@ -222,6 +227,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return false;
   }
+
   /// Uploade l'audio, appelle microIaProcessAudio avec generateDraft:true pour
   /// obtenir transcription + brouillon en un seul round-trip, et retourne les
   /// deux dans une Map {text, draft?}.
@@ -313,6 +319,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           : null,
     };
   }
+
   /// Applique la transcription au formulaire.
   /// Si [combinedDraft] est fourni (mode combiné), l'utilise directement sans
   /// appel réseau supplémentaire. Sinon, appelle generateOfferDraftV2 en fallback.
@@ -368,6 +375,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           : (draft['error'] ?? 'Erreur IA inconnue').toString(),
     );
   }
+
   /// Bouton micro: utiliser le flux audio classique, qui traite l'audio au stop
   /// et remplit les champs via le pipeline STT + draft.
   final _formKey = GlobalKey<FormState>();
@@ -422,6 +430,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       debugPrint('[Analytics] logOfferPublished error: $e');
     }
   }
+
   // Champs texte
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -496,6 +505,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return null;
     }
   }
+
   FirebaseFirestore? get _firestoreOrNull {
     try {
       return FirebaseFirestore.instance;
@@ -503,6 +513,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return null;
     }
   }
+
   final GlobalKey _titleFieldKey = GlobalKey();
   final GlobalKey _categoryFieldKey = GlobalKey();
   final GlobalKey _publishAiFlowHintKey = GlobalKey();
@@ -537,10 +548,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _isApplyingProgrammaticPublishUpdate = previous;
     }
   }
+
   void _notifyPublishAiTraceChanged() {
     if (_publishAiTraceDisposed) return;
     _publishAiTraceVersion.value++;
   }
+
   void _resetPublishAiTrace(String flowLabel) {
     _publishAiTraceAttempt += 1;
     _publishAiTraceEntries
@@ -555,6 +568,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
     _notifyPublishAiTraceChanged();
   }
+
   void _appendPublishAiTrace(
     String stage,
     String detail, {
@@ -584,16 +598,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
     _notifyPublishAiTraceChanged();
   }
+
   void _clearPublishAiTrace() {
     _publishAiTraceEntries.clear();
     _notifyPublishAiTraceChanged();
   }
+
   String publishAiDebugValue(Object? value) {
     if (value == null) return '-';
     if (value is bool) return value ? 'yes' : 'no';
     final text = value.toString().trim();
     return text.isEmpty ? '-' : text;
   }
+
   void _appendAdminAccessDiagnosticTrace(
     String stage,
     Map<String, dynamic> payload, {
@@ -618,6 +635,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     _appendPublishAiTrace(stage, parts.join(' | '), level: level);
   }
+
   void _appendAdminAccessStateTrace(
     String stage,
     AdminAccessState state, {
@@ -637,6 +655,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     _appendPublishAiTrace(stage, parts.join(' | '), level: level);
   }
+
   String _publishAdminRuntimeDetail(AdminAccessState state) {
     if (state.serverCheckSucceeded && state.serverIsAdmin == true) {
       return 'Accès admin confirmé';
@@ -655,11 +674,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return 'Accès admin non confirmé';
   }
+
   String _currentPublishAiRuntimeState() {
     if (_isListening) return 'Ecoute micro';
     if (_isAnalyzing) return 'Analyse en cours';
     return 'En attente';
   }
+
   void _logMicroIaDebug(String stage, String message) {
     AdminWebDebugStore.instance.recordEvent(
       area: 'publish-ai',
@@ -668,6 +689,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
     debugPrint('[MICIA][$stage] $message');
   }
+
   Future<MicroIaSecureContext?> _requirePublishAiSecureContext({
     required String stage,
     bool forceRefreshToken = false,
@@ -714,6 +736,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return null;
     }
   }
+
   String adminAudioModeLabel(String mode) {
     switch (mode.toUpperCase()) {
       case 'GOOGLE_ONLY':
@@ -725,6 +748,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         return 'Hybride';
     }
   }
+
   String _classicAdminAudioRuntimeDetail() {
     switch (_adminAudioRuntimeMode.toUpperCase()) {
       case 'GOOGLE_ONLY':
@@ -736,6 +760,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         return 'Micro classique -> Google STT puis nettoyage IA, avec fallback Whisper/Google';
     }
   }
+
   Future<void> _refreshAdminAudioRuntimeAccess() async {
     // Test-safe + UX-safe :
     // ne pas attendre authStateChanges().timeout(5s) au simple montage de la page.
@@ -925,6 +950,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       });
     }
   }
+
   void _rememberAdminAudioRuntime({
     required String flowKey,
     required String label,
@@ -942,6 +968,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       backendModeUsed: backendModeUsed,
     );
   }
+
   Future<void> _showPublishAiTraceDialog() async {
     if (!mounted) return;
     await showDialog<void>(
@@ -963,6 +990,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       },
     );
   }
+
   void _setControllerText(TextEditingController controller, String value) {
     if (controller.text == value) return;
     _runWithoutMarkingUserEdits(() {
@@ -973,42 +1001,52 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
     });
   }
+
   void _handlePublishTitleChanged() {
     if (_isApplyingProgrammaticPublishUpdate) return;
     _titleEditedByUser = true;
   }
+
   void _handlePublishDescriptionChanged() {
     if (_isApplyingProgrammaticPublishUpdate) return;
     _descriptionEditedByUser = true;
   }
+
   void _handlePublishLocationChanged() {
     if (_isApplyingProgrammaticPublishUpdate) return;
     _locationEditedByUser = true;
   }
+
   void _handlePublishPostalCodeChanged() {
     if (_isApplyingProgrammaticPublishUpdate) return;
     _postalCodeEditedByUser = true;
   }
+
   void _handlePublishBudgetChanged() {
     if (_isApplyingProgrammaticPublishUpdate) return;
     _budgetEditedByUser = true;
   }
+
   AiPublishState get _aiPublishState {
     if (_isListening) return AiPublishState.recording;
     if (_isAnalyzing) return AiPublishState.analyzing;
     return AiPublishState.ready;
   }
+
   bool get _isPublishFlowCompleted {
     return _publishAiFlowStep == PublishOfferAiFlowStep.completed;
   }
+
   bool get _isVoiceFlowActive {
     return _publishAiFlowStep == PublishOfferAiFlowStep.voiceSelected ||
         _publishAiFlowStep == PublishOfferAiFlowStep.voiceAnalyzing;
   }
+
   bool get _isTextFlowActive {
     return _publishAiFlowStep == PublishOfferAiFlowStep.textSelected ||
         _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
   }
+
   void _setPublishAiFlowStep(
     PublishOfferAiFlowStep nextStep, {
     String? reason,
@@ -1025,6 +1063,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _publishAiFlowStep = nextStep;
     });
   }
+
   void _onSelectVoiceMethod() {
     if (_descriptionTapToEditPrimed) {
       setState(() {
@@ -1037,6 +1076,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       reason: 'voice-tab-selected',
     );
   }
+
   Future<void> _onSelectTextMethod() async {
     if (mounted) {
       setState(() {
@@ -1052,6 +1092,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     await WidgetsBinding.instance.endOfFrame;
     await _scrollToDescription();
   }
+
   void _markPublishAiFlowCompleted(String reason) {
     if (_descriptionTapToEditPrimed) {
       setState(() {
@@ -1060,6 +1101,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     _setPublishAiFlowStep(PublishOfferAiFlowStep.completed, reason: reason);
   }
+
   void _restorePublishAiFlowAfterError({required bool fromVoice}) {
     _setPublishAiFlowStep(
       fromVoice
@@ -1068,6 +1110,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       reason: fromVoice ? 'voice-error' : 'text-error',
     );
   }
+
   String get _publishAiGuidanceText {
     if (_isListening) {
       return 'Enregistrement en cours. Parlez à l\'IA puis arrêtez pour lancer l\'analyse.';
@@ -1087,6 +1130,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         return 'Votre annonce est prête. Vous pouvez vérifier les informations avant publication.';
     }
   }
+
   Widget _buildPublishAiFlowHint() {
     if (_publishAiFlowStep == PublishOfferAiFlowStep.chooseMethod ||
         _publishAiFlowStep == PublishOfferAiFlowStep.voiceSelected ||
@@ -1139,6 +1183,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       ),
     );
   }
+
   Widget _guidedSection({
     required Widget child,
     required bool isActive,
@@ -1233,6 +1278,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       ),
     );
   }
+
   String? normalizeDraftMissionDelay(String? rawUrgency) {
     final urgency = (rawUrgency ?? '').trim().toLowerCase();
     switch (urgency) {
@@ -1252,6 +1298,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         return null;
     }
   }
+
   bool transcriptMentionsBudget(String transcript) {
     final lower = transcript.toLowerCase();
     return RegExp(
@@ -1263,6 +1310,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         lower.contains('à négocier') ||
         lower.contains('a negocier');
   }
+
   bool transcriptMentionsUrgency(String transcript) {
     final lower = transcript.toLowerCase();
     return lower.contains('urgent') ||
@@ -1279,6 +1327,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         lower.contains('immédiat') ||
         lower.contains('immediat');
   }
+
   String? extractMissionDelayFromTranscript(String transcript) {
     final lower = transcript.toLowerCase();
     if (lower.contains('urgent') ||
@@ -1316,6 +1365,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return null;
   }
+
   bool transcriptRequestsNegotiatedBudget(String transcript) {
     final lower = transcript.toLowerCase();
     return lower.contains('à négocier') ||
@@ -1325,6 +1375,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         lower.contains('prix flexible') ||
         lower.contains('budget flexible');
   }
+
   double? extractBudgetAmountFromTranscript(String transcript) {
     final matches = RegExp(
       r'\b(\d{2,5}(?:[.,]\d{1,2})?)\s*(€|euros?)\b',
@@ -1339,6 +1390,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return null;
   }
+
   /// Mots trop génériques pour compter comme information nouvelle dans une
   /// puce "details" (liaison, remplissage, localisation générique).
   static const Set<String> _kDetailFillerWords = {
@@ -1395,12 +1447,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return buffer.toString();
   }
+
   List<String> significantDetailWords(String text) {
     return normalizeDetailText(text)
         .split(RegExp(r'\s+'))
         .where((w) => w.length >= 4 && !_kDetailFillerWords.contains(w))
         .toList();
   }
+
   /// Deux mots comptent comme la même information s'ils sont identiques,
   /// si l'un contient l'autre (recherché/cherche) ou s'ils partagent une
   /// racine d'au moins 5 caractères (réparation/réparer).
@@ -1414,6 +1468,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return common >= 5;
   }
+
   /// Filtre anti-doublon : écarte les puces "details" qui ne font que
   /// reformuler la description (ou une puce déjà retenue). Une puce est
   /// jugée redondante quand au moins 60 % de ses mots significatifs sont
@@ -1436,6 +1491,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return kept;
   }
+
   String buildRichDraftDescription(Map<String, dynamic> draft) {
     final shortDescription =
         ((draft['description_courte'] ?? draft['description']) as String? ?? '')
@@ -1464,6 +1520,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return lines.join('\n').trim();
   }
+
   String firstNonEmptyDraftValue(
     Map<String, dynamic> draft,
     List<String> keys,
@@ -1476,6 +1533,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return '';
   }
+
   void _applyRichDraftToForm(Map<String, dynamic> draft) {
     final title = firstNonEmptyDraftValue(draft, const [
       'title',
@@ -1565,6 +1623,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     bool canFillController(TextEditingController controller, bool editedFlag) {
       return controller.text.trim().isEmpty || !editedFlag;
     }
+
     setState(() {
       if (canFillController(_titleController, _titleEditedByUser) &&
           title.isNotEmpty) {
@@ -1630,6 +1689,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (mounted) _recompute();
     });
   }
+
   // ✅ Extraction rapide CP (FR + DROM) depuis la transcription
   String? extractPostalCodeFromTranscript(String transcript) {
     final t = transcript;
@@ -1637,6 +1697,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final m = RegExp(r'\b(97[0-9]{3}|98[0-9]{3}|[0-9]{5})\b').firstMatch(t);
     return m?.group(1);
   }
+
   // ✅ Extraction ville: soit via CP (fiable), soit via motif "à <ville>"
   CityRecord? _extractCityRecordFromTranscript(
     String transcript, {
@@ -1660,6 +1721,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       postalCode: '',
     );
   }
+
   String? resolvePublishCategoryLabel(String? rawCategory) {
     final canonical = canonicalizeOfferCategory(rawCategory);
     if (canonical == null || canonical.trim().isEmpty) return null;
@@ -1683,12 +1745,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return null;
   }
+
   CityRecord? _resolveCanonicalCityRecord({String? city, String? postalCode}) {
     return FrenchCityPostalValidator.instance.resolveCanonicalCity(
       city: city,
       postalCode: postalCode,
     );
   }
+
   void _canonicalizeLocationInputs() {
     final best = _resolveCanonicalCityRecord(
       city: _locationController.text,
@@ -1700,6 +1764,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (sameCity && samePostalCode) return;
     _applyCity(best, forceApply: true);
   }
+
   String normalizeAiGeoHint(String value) {
     return normalizeLocationLookupKey(value)
         .replaceAll(RegExp(r'\bdepartement\b'), '')
@@ -1708,6 +1773,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
+
   bool geoCommuneMatchesAiHint(
     GeoApiGouvCommune commune, {
     required String departmentHint,
@@ -1741,6 +1807,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     bool hintMatchesAliases(String hint, Set<String> aliases) {
       return aliases.any((alias) => hint == alias || hint.contains(alias));
     }
+
     for (final hint in hints) {
       if (hint == dept || hint.contains(dept)) return true;
       if (hint == region || hint.contains(region)) return true;
@@ -1755,6 +1822,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     return false;
   }
+
   Future<void> _resolveAiCityWithGeoApiGouv({
     required String rawCity,
     required String rawPostalCode,

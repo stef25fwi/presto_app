@@ -22,6 +22,7 @@ import '../widgets/offer_network_image.dart';
 import '../widgets/phone_input_field.dart';
 import '../main.dart'
     show buildOfferDetailsOffer, kOfferDeleteReasonFoundOnIliPresto;
+
 class UserOffersSection extends StatefulWidget {
   final String userId;
   final bool showTitle;
@@ -33,6 +34,7 @@ class UserOffersSection extends StatefulWidget {
   @override
   State<UserOffersSection> createState() => _UserOffersSectionState();
 }
+
 class FavoriteOffersSection extends StatefulWidget {
   final String userId;
   final bool showTitle;
@@ -44,6 +46,7 @@ class FavoriteOffersSection extends StatefulWidget {
   @override
   State<FavoriteOffersSection> createState() => _FavoriteOffersSectionState();
 }
+
 class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
   static final FavoriteRepository _favoriteRepository = FavoriteRepository();
   static const String _kFavoriteLoadErrorMessage =
@@ -65,17 +68,20 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
     return text.contains('permission-denied') ||
         text.contains('permission denied');
   }
+
   void _debugFavoriteLog(String message) {
     if (kDebugMode) {
       debugPrint(message);
     }
   }
+
   @override
   void initState() {
     super.initState();
     _bindFavoritesWatcher();
     _loadFavorites();
   }
+
   @override
   void didUpdateWidget(covariant FavoriteOffersSection oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -85,11 +91,13 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
     _bindFavoritesWatcher();
     _loadFavorites();
   }
+
   @override
   void dispose() {
     _favoritesSubscription?.cancel();
     super.dispose();
   }
+
   void _bindFavoritesWatcher() {
     _favoritesSubscription?.cancel();
     final userId = widget.userId.trim();
@@ -104,6 +112,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
           _loadFavorites();
         });
   }
+
   Future<void> _loadFavorites({bool loadMore = false}) async {
     final userId = widget.userId.trim();
     if (userId.isEmpty) {
@@ -199,6 +208,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
       });
     }
   }
+
   Future<Map<String, _FavoriteOfferItem>> _loadFavoriteOfferItems(
     FirebaseFirestore firestore, {
     required List<String> offerIds,
@@ -264,6 +274,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
     }
     return result;
   }
+
   Future<void> _removeFavorite(String offerId) async {
     logRuntimeAction(
       area: 'favorites',
@@ -304,6 +315,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
       );
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final userId = widget.userId.trim();
@@ -546,6 +558,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
       ],
     );
   }
+
   String _favoriteAddedLabel(Timestamp? addedAt) {
     if (addedAt == null) return 'Favori enregistré';
     final diff = DateTime.now().difference(addedAt.toDate());
@@ -558,6 +571,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
     final month = date.month.toString().padLeft(2, '0');
     return 'Ajouté le $day/$month/${date.year}';
   }
+
   Widget _buildFavoriteLoadingCard() {
     return Container(
       constraints: const BoxConstraints(minHeight: 112, maxHeight: 140),
@@ -574,6 +588,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
       ),
     );
   }
+
   Widget _buildFavoritePlaceholder() {
     return Container(
       width: 72,
@@ -586,6 +601,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
       child: const Icon(Icons.image_outlined, color: Colors.black38),
     );
   }
+
   Widget _buildFavoriteErrorCard() {
     return Container(
       constraints: const BoxConstraints(minHeight: 132, maxHeight: 180),
@@ -642,6 +658,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
       ),
     );
   }
+
   Widget _buildFavoriteInfoCard({
     required IconData icon,
     required String message,
@@ -681,6 +698,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
       ),
     );
   }
+
   String _primaryOfferImageUrl(Map<String, dynamic> data) {
     final thumbnailUrl = (data['thumbnailUrl'] ?? '').toString().trim();
     if (thumbnailUrl.isNotEmpty) return thumbnailUrl;
@@ -707,6 +725,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
     return '';
   }
 }
+
 class _FavoriteOfferItem {
   final String offerId;
   final String title;
@@ -729,7 +748,9 @@ class _FavoriteOfferItem {
     this.isMarketplace = false,
   });
 }
+
 enum _OfferManagementSection { pending, published, rejected, archived }
+
 class _ManagedOfferItem {
   final String offerId;
   final Map<String, dynamic> data;
@@ -740,6 +761,7 @@ class _ManagedOfferItem {
     required this.section,
   });
 }
+
 class _UserOffersSectionState extends State<UserOffersSection> {
   List<_ManagedOfferItem> _offers = const [];
   bool _isLoading = true;
@@ -767,6 +789,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       details: details,
     );
   }
+
   bool _isPermissionDeniedError(Object error) {
     if (error is FirebaseException) {
       return error.code == 'permission-denied';
@@ -775,6 +798,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     return text.contains('permission-denied') ||
         text.contains('permission denied');
   }
+
   bool _isOfferPublished(Map<String, dynamic> data) {
     if (isOfferArchivedLike(data)) return false;
     final isPublished = data['isPublished'];
@@ -790,6 +814,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     if (isActive is bool && isActive) return true;
     return false;
   }
+
   bool _isOfferRejected(Map<String, dynamic> data) {
     final moderation = data['moderation'];
     if (moderation is Map) {
@@ -802,9 +827,11 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     final status = (data['status'] ?? '').toString().trim().toLowerCase();
     return status == 'rejected' || status == 'refused' || status == 'declined';
   }
+
   bool _isOfferArchived(Map<String, dynamic> data) {
     return isOfferArchivedLike(data);
   }
+
   bool _isOfferPending(Map<String, dynamic> data) {
     if (_isOfferArchived(data) ||
         _isOfferRejected(data) ||
@@ -827,6 +854,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         status == 'in_moderation' ||
         status == 'pending_moderation';
   }
+
   _OfferManagementSection _resolveSection(Map<String, dynamic> data) {
     if (_isOfferArchived(data)) {
       return _OfferManagementSection.archived;
@@ -842,12 +870,14 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     }
     return _OfferManagementSection.pending;
   }
+
   String _offerLocation(Map<String, dynamic> data) {
     final v = (data['location'] ?? data['city'] ?? data['serviceArea'] ?? '')
         .toString()
         .trim();
     return v.isEmpty ? 'Lieu non précisé' : v;
   }
+
   String _offerCategory(Map<String, dynamic> data) {
     final v =
         (data['category'] ?? data['subCategory'] ?? data['subcategory'] ?? '')
@@ -855,16 +885,19 @@ class _UserOffersSectionState extends State<UserOffersSection> {
             .trim();
     return v.isEmpty ? 'Catégorie non précisée' : v;
   }
+
   String _offerTitle(Map<String, dynamic> data) {
     final value = (data['title'] ?? 'Sans titre').toString().trim();
     return value.isEmpty ? 'Sans titre' : value;
   }
+
   DateTime? _dateFromDynamic(dynamic value) {
     if (value is Timestamp) return value.toDate();
     if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
     if (value is String) return DateTime.tryParse(value);
     return null;
   }
+
   String _formatOfferDate(Map<String, dynamic> data) {
     final date =
         _dateFromDynamic(
@@ -875,6 +908,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     final month = date.month.toString().padLeft(2, '0');
     return '$day/$month/${date.year}';
   }
+
   int _offerSortValue(Map<String, dynamic> data) {
     final date = _dateFromDynamic(
       data['updatedAt'] ??
@@ -884,6 +918,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     );
     return date?.millisecondsSinceEpoch ?? 0;
   }
+
   String? _offerStatusDetails(Map<String, dynamic> data) {
     if (_isOfferRejected(data)) {
       final moderation = data['moderation'];
@@ -912,6 +947,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     }
     return null;
   }
+
   bool _offerHasPhotos(Map<String, dynamic> data) {
     final media = data['media'];
     if (media is List && media.isNotEmpty) {
@@ -924,6 +960,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     final imageUrl = (data['imageUrl'] ?? '').toString().trim();
     return imageUrl.isNotEmpty;
   }
+
   bool _offerMediaStillProcessing(Map<String, dynamic> data) {
     final raw = (data['mediaProcessingStatus'] ?? '')
         .toString()
@@ -937,6 +974,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     }
     return _isOfferPending(data) && _offerHasPhotos(data);
   }
+
   int? _offerPendingCountdownSeconds(Map<String, dynamic> data) {
     if (!_isOfferPending(data)) {
       return null;
@@ -953,6 +991,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     }
     return 30 - elapsed;
   }
+
   String? _offerPendingPhotoNotice(Map<String, dynamic> data) {
     if (!_isOfferPending(data) || !_offerHasPhotos(data)) {
       return null;
@@ -972,6 +1011,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     }
     return 'Annonce en cours de vérification avant publication. Le délai de 30 secondes est indicatif et la publication reste pilotée par la modération.';
   }
+
   String _sectionTitle(_OfferManagementSection section) {
     switch (section) {
       case _OfferManagementSection.pending:
@@ -984,6 +1024,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         return 'Supprimées / archivées';
     }
   }
+
   String _sectionEmptyLabel(_OfferManagementSection section) {
     switch (section) {
       case _OfferManagementSection.pending:
@@ -996,6 +1037,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         return 'Aucune annonce supprimée ou archivée.';
     }
   }
+
   String _statusLabel(_OfferManagementSection section) {
     switch (section) {
       case _OfferManagementSection.pending:
@@ -1008,6 +1050,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         return 'Archivée';
     }
   }
+
   Color _statusColor(_OfferManagementSection section) {
     switch (section) {
       case _OfferManagementSection.pending:
@@ -1020,12 +1063,15 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         return const Color(0xFF6B7280);
     }
   }
+
   bool _canEditOffer(_OfferManagementSection section) {
     return section == _OfferManagementSection.rejected;
   }
+
   bool _canDeleteOffer(_OfferManagementSection section) {
     return section != _OfferManagementSection.archived;
   }
+
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
   _loadOffersByOwnerField(String field) async {
     try {
@@ -1063,12 +1109,14 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       rethrow;
     }
   }
+
   @override
   void initState() {
     super.initState();
     _bindOffersStream();
     unawaited(_loadOffers());
   }
+
   @override
   void didUpdateWidget(covariant UserOffersSection oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -1080,11 +1128,13 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     _bindOffersStream();
     unawaited(_loadOffers());
   }
+
   @override
   void dispose() {
     _offersStream?.cancel();
     super.dispose();
   }
+
   void _bindOffersStream() {
     _offersStream?.cancel();
     final userId = widget.userId.trim();
@@ -1103,6 +1153,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
           _onOffersSnapshot(snapshot);
         }, onError: (_) {});
   }
+
   void _onOffersSnapshot(QuerySnapshot<Map<String, dynamic>> snapshot) {
     final currentPublishedIds = <String>{};
     for (final doc in snapshot.docs) {
@@ -1120,6 +1171,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     }
     _knownPublishedIds = currentPublishedIds;
   }
+
   Future<void> _loadOffers() async {
     final userId = widget.userId.trim();
     _logUserOffersLoad('start', details: <String, Object?>{'userId': userId});
@@ -1208,6 +1260,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       });
     }
   }
+
   Future<void> _loadMoreOwnerOffers() async {
     if (_isLoadingMoreOwnerOffers || !_hasMoreOwnerOffers) return;
     final cursor = _lastOwnerDocument;
@@ -1246,6 +1299,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       showErrorSnackBar(context, 'Impossible de charger plus d’annonces.');
     }
   }
+
   @override
   Widget build(BuildContext context) {
     if (widget.userId.isEmpty) {
@@ -1409,6 +1463,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       ],
     );
   }
+
   Widget _buildOfferSection(
     _OfferManagementSection section,
     List<_ManagedOfferItem> items,
@@ -1486,6 +1541,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       ),
     );
   }
+
   Widget _buildPublishedOfferSection(List<_ManagedOfferItem> items) {
     final color = _statusColor(_OfferManagementSection.published);
     return Container(
@@ -1612,6 +1668,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       ),
     );
   }
+
   Widget _buildRejectedOfferSection(List<_ManagedOfferItem> items) {
     final color = _statusColor(_OfferManagementSection.rejected);
     return Container(
@@ -1738,6 +1795,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       ),
     );
   }
+
   Widget _buildArchivedOfferSection(List<_ManagedOfferItem> items) {
     final color = _statusColor(_OfferManagementSection.archived);
     return Container(
@@ -1864,6 +1922,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       ),
     );
   }
+
   Widget _buildPendingQuickList(List<_ManagedOfferItem> items) {
     return Container(
       width: double.infinity,
@@ -1945,6 +2004,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       ),
     );
   }
+
   void _openOfferDetails(_ManagedOfferItem item) {
     logRuntimeAction(
       area: 'offers',
@@ -1963,6 +2023,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       ),
     );
   }
+
   num? _numericFromDynamic(dynamic value) {
     if (value == null) return null;
     if (value is num) return value;
@@ -1975,15 +2036,18 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     if (normalized.isEmpty) return null;
     return num.tryParse(normalized);
   }
+
   String _offerSubCategory(Map<String, dynamic> data) {
     return ((data['subCategory'] ?? data['subcategory']) ?? '')
         .toString()
         .trim();
   }
+
   String _offerBudgetType(Map<String, dynamic> data) {
     final raw = (data['budgetType'] ?? '').toString().trim();
     return raw == 'À négocier' ? raw : 'Fixe';
   }
+
   String _offerPhoneCountryCode(Map<String, dynamic> data) {
     final rawPhone = (data['phone'] ?? '').toString().trim();
     if (rawPhone.isEmpty) return '+33';
@@ -1995,6 +2059,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     }
     return '+33';
   }
+
   String _offerPhoneLocalNumber(Map<String, dynamic> data) {
     final rawPhone = (data['phone'] ?? '').toString().trim();
     if (rawPhone.isEmpty) return '';
@@ -2004,6 +2069,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         : rawPhone;
     return phoneWithoutCode.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
+
   BoxDecoration _offerTileDecoration() {
     return BoxDecoration(
       color: const Color(0xFFFDFDFD),
@@ -2014,6 +2080,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       ),
     );
   }
+
   String _primaryManagedOfferImageUrl(Map<String, dynamic> data) {
     final thumbnailUrl = (data['thumbnailUrl'] ?? '').toString().trim();
     if (thumbnailUrl.isNotEmpty) return thumbnailUrl;
@@ -2039,6 +2106,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     }
     return '';
   }
+
   Widget _buildOfferPhotoPreview(Map<String, dynamic> data) {
     final imageUrl = _primaryManagedOfferImageUrl(data);
     if (imageUrl.isEmpty) {
@@ -2098,6 +2166,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       ),
     );
   }
+
   Widget _buildOfferTile(_ManagedOfferItem item) {
     final data = item.data;
     final statusColor = _statusColor(item.section);
@@ -2386,6 +2455,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       ),
     );
   }
+
   Widget _buildMetaChip(IconData icon, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -2410,6 +2480,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       ),
     );
   }
+
   Future<void> _showEditOfferDialog(
     BuildContext context,
     _ManagedOfferItem item,
@@ -2481,6 +2552,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       );
     }
+
     const missionDelayOptions = <String>[
       'Immédiat',
       'Dans la journée',
@@ -3174,6 +3246,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       },
     );
   }
+
   Future<void> _deleteOffer(_ManagedOfferItem item) async {
     final title = _offerTitle(item.data);
     final reason = await _showDeleteOfferDialog(context);
@@ -3239,6 +3312,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       }
     }
   }
+
   Future<void> _handleFoundOnIliPrestoReviewFlow(
     _ManagedOfferItem item,
     String title,
@@ -3305,6 +3379,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       successMessage: message,
     );
   }
+
   Future<void> _closeFoundOnIliPrestoWithoutReview({
     required _ManagedOfferItem item,
     required String title,
@@ -3344,6 +3419,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       }
     }
   }
+
   Future<String?> _showDeleteOfferDialog(BuildContext context) async {
     return showDialog<String>(
       context: context,
@@ -3351,6 +3427,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     );
   }
 }
+
 class _QuerySnapshotAdapter implements QuerySnapshot<Map<String, dynamic>> {
   _QuerySnapshotAdapter(this.docs);
   @override
