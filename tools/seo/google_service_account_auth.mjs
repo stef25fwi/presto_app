@@ -11,7 +11,9 @@ function base64Url(value) {
 
 function parseServiceAccount(raw) {
   if (!raw || !raw.trim()) {
-    throw new Error('Google service account JSON is missing.');
+    throw new Error(
+      'Google authentication is missing: provide a short-lived access token or service account JSON.',
+    );
   }
 
   let credentials;
@@ -31,7 +33,14 @@ function parseServiceAccount(raw) {
   return { clientEmail, privateKey, privateKeyId };
 }
 
-export async function getGoogleAccessToken({ serviceAccountJson, scopes }) {
+export async function getGoogleAccessToken({
+  directAccessToken = '',
+  serviceAccountJson = '',
+  scopes,
+}) {
+  const shortLivedToken = String(directAccessToken).trim();
+  if (shortLivedToken) return shortLivedToken;
+
   const { clientEmail, privateKey, privateKeyId } = parseServiceAccount(
     serviceAccountJson,
   );
