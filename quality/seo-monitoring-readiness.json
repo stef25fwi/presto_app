@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "point": 6,
+  "name": "Suivi, analyse et amélioration continue SEO",
+  "status": "verified",
+  "verifiedAt": "2026-08-02",
+  "controls": [
+    {
+      "id": "seo_kpi_configuration",
+      "status": "verified",
+      "evidence": "La configuration centralise le domaine, les pages, les périodes, les événements de conversion et les seuils d’alerte."
+    },
+    {
+      "id": "production_health_monitoring",
+      "status": "verified",
+      "evidence": "Un contrôle de production vérifie disponibilité, redirections, métadonnées, canonicals, H1, données structurées, robots.txt, sitemap et registre des routes."
+    },
+    {
+      "id": "search_console_connector",
+      "status": "verified",
+      "evidence": "Le connecteur Search Console compare clics, impressions, CTR et position sur deux périodes de 28 jours."
+    },
+    {
+      "id": "ga4_organic_connector",
+      "status": "verified",
+      "evidence": "Le connecteur GA4 suit sessions Organic Search, engagement, pages d’entrée et événements clés."
+    },
+    {
+      "id": "trend_detection",
+      "status": "verified",
+      "evidence": "Les baisses significatives sont détectées uniquement au-dessus de volumes minimums pour limiter les faux positifs."
+    },
+    {
+      "id": "automated_reporting",
+      "status": "verified",
+      "evidence": "Un rapport JSON et Markdown est généré quotidiennement et conservé comme artefact GitHub Actions."
+    },
+    {
+      "id": "regression_alerting",
+      "status": "verified",
+      "evidence": "Une issue GitHub unique est ouverte ou mise à jour lors d’une régression et fermée automatiquement après retour à la normale."
+    },
+    {
+      "id": "continuous_improvement_cycle",
+      "status": "verified",
+      "evidence": "Le runbook définit les revues hebdomadaires et mensuelles, les responsables, les décisions et le backlog d’amélioration."
+    },
+    {
+      "id": "privacy_and_secret_safety",
+      "status": "verified",
+      "evidence": "Aucune donnée personnelle ni clé Google n’est versionnée ; les API utilisent un secret GitHub et le consentement Analytics existant."
+    },
+    {
+      "id": "ci_regression_gate",
+      "status": "verified",
+      "evidence": "Le contrôle de préparation est exécuté sur chaque pull request SEO."
+    }
+  ],
+  "runtimeConfiguration": {
+    "secret": "SEO_GOOGLE_SERVICE_ACCOUNT_JSON",
+    "variable": "SEO_GA4_PROPERTY_ID",
+    "searchConsoleProperty": "sc-domain:ilipresto.fr",
+    "ga4MeasurementId": "G-NT4PEHQ3CJ"
+  }
+}
