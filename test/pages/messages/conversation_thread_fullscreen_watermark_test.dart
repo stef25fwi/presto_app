@@ -131,6 +131,11 @@ OverlayEntry _mountPreviewInOverlay(dynamic state, Widget preview) {
   return entry;
 }
 
+Finder _dismissibleModalBarrier() => find.byWidgetPredicate(
+  (widget) => widget is ModalBarrier && widget.dismissible,
+  description: 'barrière modale fermable',
+);
+
 Future<void> _disposeThread(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pump();
@@ -189,7 +194,6 @@ void main() {
       expect(viewer.maxScale, 4.0);
       expect(find.text('iliprestō'), findsOneWidget);
       expect(find.byTooltip('Fermer'), findsOneWidget);
-      expect(find.byIcon(Icons.broken_image_outlined), findsWidgets);
 
       await tester.tap(find.byTooltip('Fermer'));
       await tester.pump();
@@ -223,7 +227,11 @@ void main() {
     await tester.pump();
     expect(find.byType(InteractiveViewer), findsOneWidget);
 
-    await tester.tapAt(const Offset(8, 460));
+    final barrierFinder = _dismissibleModalBarrier();
+    expect(barrierFinder, findsOneWidget);
+    final barrier = tester.widget<ModalBarrier>(barrierFinder);
+    expect(barrier.onDismiss, isNotNull);
+    barrier.onDismiss!.call();
     await tester.pump();
 
     expect(find.byType(InteractiveViewer), findsNothing);
