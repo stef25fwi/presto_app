@@ -556,6 +556,23 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       return true;
     }
 
+    if (source is Offer) {
+      // `title`/`shortDescription` always carry a display fallback (see
+      // buildOfferDetailsOffer in main.dart), so an empty value here means
+      // the offer truly wasn't hydrated yet — not just a listing without a
+      // description. Checking the raw `description` instead would trigger a
+      // needless re-fetch (and the resulting text flash) for every listing
+      // that simply has no description filled in.
+      final title = source.title.trim();
+      final shortDescription = source.shortDescription.trim();
+      final advertiserId = source.advertiser.id.trim();
+
+      return title.isEmpty ||
+          shortDescription.isEmpty ||
+          advertiserId.isEmpty ||
+          source.imageUrls.isEmpty;
+    }
+
     if (source is! Map) {
       return true;
     }
