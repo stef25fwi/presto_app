@@ -7,24 +7,44 @@ import 'package:presto_app/pages/admin_hero_slides_page.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  FirebaseOptions? originalDefaultOptions;
+  var replacedDefaultApp = false;
+
+  const testOptions = FirebaseOptions(
+    apiKey: 'test-api-key',
+    appId: '1:1234567890:web:admin-hero-permanent',
+    messagingSenderId: '1234567890',
+    projectId: 'presto-test',
+    storageBucket: 'presto-test.appspot.com',
+  );
+
   setUpAll(() async {
     setupFirebaseCoreMocks();
-    if (Firebase.apps.isEmpty) {
-      try {
-        await Firebase.initializeApp(
-          options: const FirebaseOptions(
-            apiKey: 'test-api-key',
-            appId: '1:1234567890:web:admin-hero-permanent',
-            messagingSenderId: '1234567890',
-            projectId: 'presto-test',
-            storageBucket: 'presto-test.appspot.com',
-          ),
-        );
-      } on FirebaseException catch (error) {
-        if (error.code != 'duplicate-app') {
-          rethrow;
-        }
+
+    if (Firebase.apps.isNotEmpty) {
+      final defaultApp = Firebase.app();
+      final bucket = defaultApp.options.storageBucket;
+      if (bucket == null || bucket.trim().isEmpty) {
+        originalDefaultOptions = defaultApp.options;
+        await defaultApp.delete();
+        replacedDefaultApp = true;
       }
+    }
+
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(options: testOptions);
+    }
+  });
+
+  tearDownAll(() async {
+    if (!replacedDefaultApp) return;
+
+    if (Firebase.apps.isNotEmpty) {
+      await Firebase.app().delete();
+    }
+    final options = originalDefaultOptions;
+    if (options != null) {
+      await Firebase.initializeApp(options: options);
     }
   });
 
