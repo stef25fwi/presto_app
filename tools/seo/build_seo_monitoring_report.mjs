@@ -131,7 +131,7 @@ function recommendationsFor(alerts) {
     ga4_organic_key_events_drop:
       'Analyser le tunnel organique entre landing, inscription, première valeur et contact afin de corriger le point de fuite.',
     external_data_missing:
-      'Configurer le compte de service Google et la propriété GA4 pour activer les comparaisons réelles Search Console et Analytics.',
+      'Vérifier les droits Search Console et GA4 du compte fédéré WIF utilisé par GitHub Actions.',
   };
   return [...new Set(alerts.map((alert) => mapping[alert.code]).filter(Boolean))];
 }
@@ -173,34 +173,37 @@ export async function buildSeoMonitoringReport({
   requireExternalData = false,
 }) {
   const productionHealth = await monitorPublicSeo({ config });
+  const directAccessToken = process.env.SEO_GOOGLE_ACCESS_TOKEN ?? '';
   const serviceAccountJson =
     process.env.SEO_GOOGLE_SERVICE_ACCOUNT_JSON ??
     process.env.GOOGLE_SERVICE_ACCOUNT_JSON ??
     '';
   const ga4PropertyId = process.env.SEO_GA4_PROPERTY_ID ?? '';
+  const hasGoogleAuthentication =
+    directAccessToken.trim().length > 0 || serviceAccountJson.trim().length > 0;
 
   let searchConsole = { status: 'not_configured' };
   let ga4 = { status: 'not_configured' };
-  if (serviceAccountJson.trim()) {
+  if (hasGoogleAuthentication) {
     try {
       searchConsole = await fetchSearchConsoleMetrics({
         config,
+        directAccessToken,
         serviceAccountJson,
         siteUrl: process.env.SEO_GSC_SITE_URL ?? config.searchConsoleSiteUrl,
       });
     } catch (error) {
       searchConsole = { status: 'error', error: safeErrorMessage(error) };
     }
-    if (ga4PropertyId.trim()) {
-      try {
-        ga4 = await fetchGa4Metrics({
-          config,
-          serviceAccountJson,
-          propertyId: ga4PropertyId,
-        });
-      } catch (error) {
-        ga4 = { status: 'error', error: safeErrorMessage(error) };
-      }
+    try {
+      ga4 = await fetchGa4Metrics({
+        config,
+        directAccessToken,
+        serviceAccountJson,
+        propertyId: ga4PropertyId,
+      });
+    } catch (error) {
+      ga4 = { status: 'error', error: safeErrorMessage(error) };
     }
   }
 
@@ -235,7 +238,7 @@ export async function buildSeoMonitoringReport({
     : alerts.length > 0 || productionHealth.status === 'warning'
       ? 'warning'
       : 'healthy';
-  const report = {
+  return {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     status,
@@ -247,7 +250,6 @@ export async function buildSeoMonitoringReport({
     alerts,
     recommendations: recommendationsFor(alerts),
   };
-  return report;
 }
 
 async function runCli() {
