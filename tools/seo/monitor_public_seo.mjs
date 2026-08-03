@@ -7,13 +7,17 @@ import {
   writeJsonFile,
 } from './seo_monitoring_utils.mjs';
 
+const HTML_ENTITIES = Object.freeze({
+  '&amp;': '&',
+  '&quot;': '"',
+  '&#39;': "'",
+  '&lt;': '<',
+  '&gt;': '>',
+});
+
 function decodeHtml(value) {
   return String(value ?? '')
-    .replaceAll('&amp;', '&')
-    .replaceAll('&quot;', '"')
-    .replaceAll('&#39;', "'")
-    .replaceAll('&lt;', '<')
-    .replaceAll('&gt;', '>')
+    .replace(/&(amp|quot|#39|lt|gt);/gu, (entity) => HTML_ENTITIES[entity] ?? entity)
     .replace(/\s+/gu, ' ')
     .trim();
 }
@@ -78,14 +82,13 @@ async function fetchText(url, timeoutMs = 15000) {
         'user-agent': 'ilipresto-seo-monitor/1.0 (+https://ilipresto.fr)',
       },
     });
-    const text = await response.text();
     return {
       status: response.status,
       ok: response.ok,
       finalUrl: response.url,
       contentType: response.headers.get('content-type') ?? '',
       responseTimeMs: round(performance.now() - startedAt),
-      text,
+      text: await response.text(),
     };
   } finally {
     clearTimeout(timeout);
@@ -98,8 +101,9 @@ function validateHtmlPage({ html, expectedUrl, config }) {
   const description = extractMeta(html, 'name', 'description');
   const robots = extractMeta(html, 'name', 'robots').toLowerCase();
   const canonical = extractCanonical(html);
-  const h1Matches = [...html.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/giu)];
-  const h1 = h1Matches.map((match) => stripTags(match[1])).filter(Boolean);
+  const h1 = [...html.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/giu)]
+    .map((match) => stripTags(match[1]))
+    .filter(Boolean);
   const jsonLdCount = (html.match(/type=["']application\/ld\+json["']/giu) ?? [])
     .length;
   const errors = [];
