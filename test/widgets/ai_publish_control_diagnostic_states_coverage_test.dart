@@ -35,7 +35,7 @@ void main() {
       ),
     );
 
-    expect(find.text('ADMIN'), findsOneWidget);
+    expect(find.text('LIVE'), findsOneWidget);
     expect(find.text('Mode serveur : Whisper'), findsOneWidget);
     expect(find.text('État : Écoute micro'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 225));
@@ -43,7 +43,7 @@ void main() {
     setHostState(() => state = AiPublishState.analyzing);
     await tester.pump();
 
-    expect(find.text('ADMIN'), findsOneWidget);
+    expect(find.text('ANALYSE'), findsOneWidget);
     expect(find.text('État : Analyse en cours'), findsOneWidget);
   });
 }
