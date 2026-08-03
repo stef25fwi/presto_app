@@ -1,6 +1,7 @@
 {
   "application": "ilipresto",
   "environment": "production",
-  "deployedAtUtc": "2026-08-03T16:33:00Z",
-  "source": "github-main"
+  "deployedAtUtc": "2026-08-03T17:18:00Z",
+  "source": "github-main",
+  "release": "single-prelaunch-screen"
 }
