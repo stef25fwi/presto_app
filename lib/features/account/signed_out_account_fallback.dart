@@ -15,6 +15,7 @@ import '../../utils/runtime_action_logger.dart';
 import '../../pages/pro_profile_page.dart';
 
 import 'package:presto_app/widgets/pro_siret_signup_section.dart';
+import '../../app/presto_design_tokens.dart';
 
 class SignedOutAccountFallback extends StatefulWidget {
   const SignedOutAccountFallback({
@@ -258,10 +259,14 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark,
         ),
-        title: const Text('Mon compte'),
+        title: const Text(
+          'Mon compte',
+          style: TextStyle(color: PrestoColors.textOnOrange),
+        ),
         automaticallyImplyLeading: false,
         backgroundColor: const Color(0xFFFF6600),
-        foregroundColor: const Color(0xFFFFFFFF),
+        // Le blanc sur l'orange de marque plafonne à 2,94:1.
+        foregroundColor: PrestoColors.textOnOrange,
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -318,8 +323,16 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   Center(
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
+                                    // Un `Row` figé débordait de 30 px au
+                                    // repos et de 464 px à 320 px avec un
+                                    // texte agrandi : le bloc de marque passe
+                                    // à la ligne au lieu de déborder.
+                                    child: Wrap(
+                                      alignment: WrapAlignment.center,
+                                      crossAxisAlignment:
+                                          WrapCrossAlignment.center,
+                                      spacing: 14,
+                                      runSpacing: 8,
                                       children: [
                                         ClipRRect(
                                           borderRadius: BorderRadius.circular(
@@ -332,11 +345,10 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                             fit: BoxFit.cover,
                                           ),
                                         ),
-                                        const SizedBox(width: 14),
                                         const Text(
                                           'iliprestō',
                                           style: TextStyle(
-                                            color: Color(0xFFFF6600),
+                                            color: PrestoColors.brandOrangeText,
                                             fontSize: 36,
                                             fontWeight: FontWeight.w900,
                                           ),

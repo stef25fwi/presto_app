@@ -44,12 +44,12 @@
       "title": "Lecteur d’écran et sémantique",
       "status": "pending",
       "evidence": [
-        "lib/app/presto_states.dart",
-        "docs/design/design-system.md",
-        "docs/evidence/ux/accessibility-audit.md",
-        "test/app/presto_accessibility_guidelines_test.dart"
+        "test/support/firebase_test_harness.dart",
+        "test/support/accessibility_harness.dart",
+        "test/app/presto_journey_accessibility_test.dart",
+        "docs/evidence/ux/accessibility-audit.md"
       ],
-      "blocked_by": "Sémantique certifiée sur les composants partagés et le hub d'administration ; les parcours métier exigent une infrastructure de doublure Firebase, et aucune vérification sur lecteur d'écran réel n'a été réalisée."
+      "blocked_by": "Sémantique et libellés certifiés sur les composants partagés et six parcours ; aucune vérification sur lecteur d'écran réel (VoiceOver, TalkBack, NVDA)."
     },
     {
       "id": "touch-targets",
@@ -90,12 +90,12 @@
       "title": "Audit accessibilité des parcours principaux",
       "status": "pending",
       "evidence": [
-        "docs/evidence/ux/accessibility-audit.md",
-        "docs/evidence/ux/responsive-matrix.md",
-        "test/app/presto_accessibility_guidelines_test.dart",
-        "test/app/presto_responsive_matrix_test.dart"
+        "test/support/firebase_test_harness.dart",
+        "test/support/accessibility_harness.dart",
+        "test/app/presto_journey_accessibility_test.dart",
+        "docs/evidence/ux/accessibility-audit.md"
       ],
-      "blocked_by": "Les règles intégrées ne sont appliquées qu'aux écrans se rendant sans Firebase ; les neuf parcours principaux restent à couvrir."
+      "blocked_by": "Six parcours audités sur neuf ; publication, consultation et abonnement exigent Firestore peuplé, Storage et Stripe. Dette ouverte assumée sur ToolboxPage."
     }
   ]
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/presto_design_tokens.dart';
+
 class AuthPrimaryButton extends StatelessWidget {
   const AuthPrimaryButton({
     super.key,
@@ -19,10 +21,12 @@ class AuthPrimaryButton extends StatelessWidget {
     return FilledButton.icon(
       onPressed: isLoading ? null : onPressed,
       style: FilledButton.styleFrom(
-        backgroundColor: const Color(0xFFFF6600),
-        foregroundColor: Colors.white,
+        backgroundColor: PrestoColors.brandOrange,
+        // Action principale de tout le parcours d'authentification : en blanc
+        // elle plafonnait à 2,94:1, sous le seuil AA du texte normal.
+        foregroundColor: PrestoColors.textOnOrange,
         disabledBackgroundColor: const Color(0xFFFFB083),
-        disabledForegroundColor: Colors.white,
+        disabledForegroundColor: PrestoColors.textOnOrange,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
@@ -32,7 +36,7 @@ class AuthPrimaryButton extends StatelessWidget {
               height: 18,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Colors.white,
+                color: PrestoColors.textOnOrange,
               ),
             )
           : Icon(icon ?? Icons.login_rounded),

@@ -3,6 +3,7 @@ import 'package:presto_app/pages/entrepreneur_pricing_page.dart';
 import 'package:presto_app/pages/toolbox_je_me_lance_page.dart';
 
 import '../constants.dart';
+import '../app/presto_design_tokens.dart';
 
 class AppRoutes {
   static const toolboxHub = '/toolbox_hub';
@@ -49,9 +50,11 @@ class ToolboxHubPage extends StatelessWidget {
         'Plan d’actions sur 30 jours',
       ],
       buttonText: 'Démarrer mon projet',
+      // Le bleu clair d'origine plafonnait à 2,65:1 avec du texte blanc.
       buttonGradient: const LinearGradient(
-        colors: [Color(0xFF42A5F5), Color(0xFF1250B0)],
+        colors: [Color(0xFF1976D2), Color(0xFF1250B0)],
       ),
+      buttonForeground: Colors.white,
       buttonHeight: toolButtonHeight,
       compact: isPhone,
       onPressed: () {
@@ -82,6 +85,7 @@ class ToolboxHubPage extends StatelessWidget {
       buttonGradient: const LinearGradient(
         colors: [Color(0xFFFF8C00), Color(0xFFFF4500)],
       ),
+      buttonForeground: PrestoColors.textOnOrange,
       buttonHeight: toolButtonHeight,
       compact: isPhone,
       onPressed: () {
@@ -98,9 +102,14 @@ class ToolboxHubPage extends StatelessWidget {
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
         backgroundColor: prestoOrange,
-        foregroundColor: Colors.white,
+        // Le blanc sur l'orange de marque plafonne à 2,94:1 : le design
+        // system impose le texte principal sur toute surface orange.
+        foregroundColor: PrestoColors.textOnOrange,
         elevation: 0,
-        title: const Text('Boîte à outils'),
+        title: const Text(
+          'Boîte à outils',
+          style: TextStyle(color: PrestoColors.textOnOrange),
+        ),
       ),
       body: SafeArea(
         top: false,
@@ -139,6 +148,7 @@ class _ToolCard extends StatelessWidget {
     required this.bullets,
     required this.buttonText,
     required this.buttonGradient,
+    required this.buttonForeground,
     required this.buttonHeight,
     required this.compact,
     required this.onPressed,
@@ -151,6 +161,10 @@ class _ToolCard extends StatelessWidget {
   final List<String> bullets;
   final String buttonText;
   final LinearGradient buttonGradient;
+
+  /// Couleur du libellé : elle dépend du dégradé, aucune valeur ne convient
+  /// aux deux.
+  final Color buttonForeground;
   final double buttonHeight;
   final bool compact;
   final VoidCallback onPressed;
@@ -242,7 +256,7 @@ class _ToolCard extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
-                    foregroundColor: Colors.white,
+                    foregroundColor: buttonForeground,
                     elevation: 0,
                     minimumSize: Size.fromHeight(buttonHeight),
                     padding: EdgeInsets.zero,

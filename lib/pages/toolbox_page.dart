@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:presto_app/pages/toolbox_hub_page.dart';
+import '../app/presto_design_tokens.dart';
 
 const Color kBlueStart = Color(0xFF16A7FF);
 const Color kBlueEnd = Color(0xFF002BD9);
@@ -42,7 +43,9 @@ class _ToolboxView extends StatelessWidget {
         backgroundColor: kPageBackground,
         appBar: AppBar(
           backgroundColor: kToolboxAppBarColor,
-          foregroundColor: Colors.white,
+          // Le blanc sur l'orange de marque plafonne à 2,94:1 : le design
+          // system impose le texte principal sur toute surface orange.
+          foregroundColor: PrestoColors.textOnOrange,
           elevation: 0,
           centerTitle: true,
           systemOverlayStyle: SystemUiOverlayStyle.light.copyWith(
@@ -52,7 +55,12 @@ class _ToolboxView extends StatelessWidget {
           ),
           title: const Text(
             'Boîte à outils',
-            style: TextStyle(fontWeight: FontWeight.w800),
+            // Le style de titre du thème global est blanc : sur une barre
+            // orange, il doit être redéfini explicitement.
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: PrestoColors.textOnOrange,
+            ),
           ),
         ),
         body: SafeArea(
@@ -71,6 +79,15 @@ class _ToolboxView extends StatelessWidget {
                       (verticalPadding * 2) -
                       cardSpacing) /
                   2;
+              // DETTE CONNUE — les deux cartes se partagent l'écran à hauteur
+              // figée et `_ToolboxCard` distribue cette hauteur avec des
+              // `Expanded`. La page déborde donc sur un écran plus haut que
+              // celui pour lequel elle a été réglée (191 px) et à texte
+              // agrandi (1 276 px à 200 %). La corriger suppose de rendre la
+              // carte intrinsèque, c'est-à-dire de remplacer sa distribution
+              // verticale : voir quality/flutter_architecture_size_budget.json.
+              Widget sized(Widget card) =>
+                  SizedBox(height: cardHeight, child: card);
 
               return Padding(
                 padding: EdgeInsets.symmetric(
@@ -78,31 +95,33 @@ class _ToolboxView extends StatelessWidget {
                   vertical: verticalPadding,
                 ),
                 child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: shouldConstrain ? 430 : double.infinity,
-                    ),
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: cardHeight,
-                          child: _ToolboxCard(
-                            icon: Icon(
-                              Icons.rocket_launch_rounded,
-                              size: isVeryShort ? 30 : 38,
-                              color: const Color(0xFFFF5A00),
-                            ),
-                            iconBackground: kIconOrangeBg,
-                            title: 'JE CRÉE MON\nACTIVITÉ',
-                            subtitle: 'Un parcours simple pour me lancer.',
-                            description:
-                                'Comprends la réglementation, les démarches et les aides utiles selon ta région, ton statut et ton activité.',
-                            benefits: const [
-                              'Statut juridique\nconseillé',
-                              'Coûts & démarches\nexactes',
-                              'Aides, subventions &\norganismes',
-                              'Plan d’action sur 30\njours',
-                            ],
+                  child: SingleChildScrollView(
+                    physics: const NeverScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: shouldConstrain ? 430 : double.infinity,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          sized(
+                            _ToolboxCard(
+                              icon: Icon(
+                                Icons.rocket_launch_rounded,
+                                size: isVeryShort ? 30 : 38,
+                                color: const Color(0xFFFF5A00),
+                              ),
+                              iconBackground: kIconOrangeBg,
+                              title: 'JE CRÉE MON\nACTIVITÉ',
+                              subtitle: 'Un parcours simple pour me lancer.',
+                              description:
+                                  'Comprends la réglementation, les démarches et les aides utiles selon ta région, ton statut et ton activité.',
+                              benefits: const [
+                                'Statut juridique\nconseillé',
+                                'Coûts & démarches\nexactes',
+                                'Aides, subventions &\norganismes',
+                                'Plan d’action sur 30\njours',
+                              ],
                             buttonLabel: 'Commencer mon parcours',
                             buttonGradient: const LinearGradient(
                               begin: Alignment.centerLeft,
@@ -116,9 +135,8 @@ class _ToolboxView extends StatelessWidget {
                           ),
                         ),
                         SizedBox(height: cardSpacing),
-                        SizedBox(
-                          height: cardHeight,
-                          child: _ToolboxCard(
+                        sized(
+                          _ToolboxCard(
                             icon: Icon(
                               Icons.calculate_rounded,
                               size: isVeryShort ? 32 : 40,
@@ -150,7 +168,8 @@ class _ToolboxView extends StatelessWidget {
                             ultraTight: isUltraShort,
                           ),
                         ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

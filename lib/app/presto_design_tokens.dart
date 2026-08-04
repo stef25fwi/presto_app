@@ -8,6 +8,15 @@ import 'package:flutter/material.dart';
 /// boutons orange utilisent donc [textPrimary].
 abstract final class PrestoColors {
   static const brandOrange = Color(0xFFFF6600);
+
+  /// Orange de marque assombri, réservé au **texte** sur fond clair.
+  ///
+  /// L’orange de marque ne dépasse pas 2,94:1 sur blanc : il échoue même au
+  /// seuil du texte large. Cette variante atteint 5,01:1 sur la surface et
+  /// 4,61:1 sur le fond de l’application. L’orange d’origine reste réservé aux
+  /// aplats, jamais au texte.
+  static const brandOrangeText = Color(0xFFBF4A00);
+
   static const brandBlue = Color(0xFF1A73E8);
   static const brandBlueDark = Color(0xFF175DB8);
 

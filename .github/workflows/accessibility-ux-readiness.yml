@@ -47,6 +47,7 @@ jobs:
         run: |
           flutter test \
             test/app/presto_accessibility_guidelines_test.dart \
+            test/app/presto_journey_accessibility_test.dart \
             test/app/presto_responsive_matrix_test.dart \
             test/app/presto_design_system_accessibility_test.dart \
             --reporter expanded

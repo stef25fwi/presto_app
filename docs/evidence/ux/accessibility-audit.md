@@ -281,14 +281,81 @@ saisie, et le parcours de tabulation dans l’ordre visuel.
 
 **11 tests, tous verts.**
 
+## Audit des parcours principaux
+
+### Harnais de doublure Firebase
+
+`test/support/firebase_test_harness.dart` fournit une initialisation
+idempotente du cœur Firebase et une authentification déterministe. Chaque
+fichier de test réimplémentait jusqu’ici sa propre doublure — une centaine de
+lignes recopiées, avec des variantes d’initialisation contradictoires. Les
+écrans de parcours se rendent désormais sans backend.
+
+`test/support/accessibility_harness.dart` uniformise le rendu à une taille et
+un facteur de texte donnés, et l’application des quatre règles intégrées.
+
+### Parcours audités
+
+`test/app/presto_journey_accessibility_test.dart` applique à chaque parcours
+les règles de contraste, de cibles tactiles et de libellés, puis vérifie sa
+tenue à 320 px avec un texte à 200 %.
+
+| Parcours | Écran | Règles | 320 px / 200 % |
+|---|---|:-:|:-:|
+| Authentification | `LoginPage` | ✅ | ✅ |
+| Compte déconnecté | `SignedOutAccountFallback` | ✅ | ✅ |
+| Boîte à outils | `ToolboxHubPage` | ✅ | ✅ |
+| Je me lance | `ToolboxPage` | ⛔ dette ouverte | ⛔ dette ouverte |
+| Messagerie | `ConversationsListPage` | ✅ (libellés hors périmètre) | ✅ |
+| Administration | `AdminSpaceHubPage` | ✅ | ✅ |
+
+**12 tests verts, 2 ignorés avec motif écrit.**
+
+### Défauts de contraste trouvés et corrigés
+
+L’audit a révélé que la règle « jamais de blanc sur l’orange de marque », déjà
+écrite dans le design system, était violée sur les parcours réels. L’orange
+`#FF6600` plafonne à 2,94:1 avec du blanc — il échoue même au seuil du texte
+large.
+
+| Élément | Avant | Après |
+|---|---|---|
+| `AuthPrimaryButton`, action principale du parcours d’authentification | blanc, 2,94:1 | texte principal, 6,08:1 |
+| Barre de titre « Mon compte » | blanc, 2,94:1 | texte principal, 6,08:1 |
+| Barres de titre « Boîte à outils », deux écrans | blanc, 2,94:1 | texte principal, 6,08:1 |
+| Bouton « Calculer mon prix » sur dégradé orange | blanc, 2,90:1 | texte principal |
+| Bouton « Démarrer mon projet » sur dégradé bleu clair | blanc, 2,65:1 | dégradé assombri, 4,60:1 |
+| Mot-clé « iliprestō » orange sur blanc | 2,94:1 | `brandOrangeText`, 5,01:1 |
+
+Le jeton `PrestoColors.brandOrangeText` (#BF4A00) est né de cet audit :
+l’orange de marque reste réservé aux aplats, cette variante assombrie au texte
+sur fond clair.
+
+### Défaut de mise en page trouvé et corrigé
+
+Le bloc de marque de l’écran de compte déconnecté était un `Row` figé : il
+débordait de 30 px au repos et de 464 px à 320 px avec un texte agrandi. Il
+passe désormais à la ligne.
+
+### Dette ouverte assumée
+
+`ToolboxPage` répartit une hauteur figée entre deux cartes qui la distribuent
+avec des `Expanded`. La page déborde de 191 px sur un écran plus haut que son
+réglage, et de 1 276 px à 200 % de texte. La rendre intrinsèque suppose de
+changer la distribution verticale de la carte — un changement de conception,
+pas un ajustement.
+
+Le parcours reste listé dans l’audit et son motif est imprimé par le lanceur :
+un test refuse qu’un parcours soit écarté sans motif écrit. La correction est
+rattachée au point 3.
+
 ### Ce qui reste ouvert
 
-Les règles ne sont appliquées qu’aux écrans qui se rendent sans Firebase. Les
-parcours métier — publication, consultation, messagerie, compte — exigent une
-infrastructure de doublure qui n’existe pas encore dans la suite de tests.
-Le contrôle `accessibility-audit` reste donc `pending`, et
-`screen-reader` limité aux composants partagés.
+Trois parcours ne sont pas encore audités : publication, consultation et
+abonnement. Leurs écrans exigent plus qu’une doublure d’authentification —
+Firestore peuplé, Storage et Stripe.
 
 Aucune vérification sur lecteur d’écran réel — VoiceOver, TalkBack, NVDA — n’a
 été réalisée : elle exige des appareils, hors de portée d’une exécution
-automatisée.
+automatisée. Les contrôles `screen-reader` et `accessibility-audit` restent
+donc `pending`.

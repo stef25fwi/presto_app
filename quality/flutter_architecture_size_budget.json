@@ -79,5 +79,13 @@
     ".backups/",
     "build/",
     ".dart_tool/"
-  ]
+  ],
+  "accessibility_debt": {
+    "lib/pages/toolbox_page.dart": {
+      "issue": "Répartit une hauteur figée entre deux cartes qui la distribuent avec des Expanded : débordement de 191 px sur un écran plus haut que son réglage et de 1 276 px à 200 % de texte.",
+      "detected_by": "test/app/presto_journey_accessibility_test.dart",
+      "next_step": "Rendre _ToolboxCard intrinsèque — remplacer la distribution verticale par une hauteur naturelle — puis réactiver le parcours « je me lance » dans l'audit.",
+      "owner": "point-3-architecture"
+    }
+  }
 }
