@@ -71,6 +71,18 @@ micro_ia_v1_fallback_enabled = true
 
 Après rafraîchissement de la configuration, vérifier que le client n’appelle plus V2 et que V1 reste fonctionnel. Restaurer ensuite la configuration validée et répéter un test V2 nominal.
 
+### E. Tendance accumulée
+
+Le smoke test produit également `metrics-trend.json` au même SHA :
+
+```bash
+npm --prefix functions run ai:metrics:trend -- --days 30
+```
+
+La preuve de durée est détaillée dans
+[`metrics-accumulation.md`](metrics-accumulation.md) ; un cycle réussi ne
+suffit pas à conclure tant que `accumulationComplete` est faux.
+
 ## Observabilité obligatoire
 
 Le rapport final doit inclure, sans texte utilisateur :
@@ -87,6 +99,16 @@ Le rapport final doit inclure, sans texte utilisateur :
 - erreurs par code ;
 - preuve d’exécution des purges planifiées.
 
-## État initial
+- durée audio par conteneur : `wav`, `mp3`, `ogg`, `webm`, `flac` et `m4a`
+  sont désormais tous mesurés (`functions/src/modules/ai/audio_duration.ts`),
+  ce qui rend le coût et la durée exploitables quel que soit l’enregistreur
+  du client. Un conteneur illisible reste à `null` plutôt que d’être estimé.
 
-Le script de smoke production et le runbook existent déjà. La preuve d’un cycle complet V2 → fallback → rollback → reprise, associée au SHA candidat, n’est pas encore archivée. Les contrôles `production-smoke` et `remote-config-rollback` restent `pending`.
+## État
+
+Le script de smoke production, le rollback Remote Config
+(`npm --prefix functions run ai:smoke:rollback`) et le runbook existent. La
+preuve d’un cycle complet V2 → fallback → rollback → reprise, associée au SHA
+candidat, n’est pas encore archivée. Les contrôles `production-smoke` et
+`remote-config-rollback` restent `pending`, et `validation-fallbacks` reste
+`in_progress` tant que le fallback n’a pas été observé en production.

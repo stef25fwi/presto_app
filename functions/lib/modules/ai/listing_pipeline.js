@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PIPELINE_VERSION = exports.LISTING_SCHEMA_VERSION = exports.LISTING_PROMPT_VERSION = exports.TRANSCRIPTION_FALLBACK_MODEL = exports.TRANSCRIPTION_MODEL = exports.LISTING_MODEL = void 0;
+exports.estimateAudioDurationSeconds = exports.PIPELINE_VERSION = exports.LISTING_SCHEMA_VERSION = exports.LISTING_PROMPT_VERSION = exports.TRANSCRIPTION_FALLBACK_MODEL = exports.TRANSCRIPTION_MODEL = exports.LISTING_MODEL = void 0;
 exports.cleanString = cleanString;
 exports.buildLegacyDraftPayload = buildLegacyDraftPayload;
 exports.assertAuthenticated = assertAuthenticated;
@@ -11,7 +11,6 @@ exports.enforceRateLimit = enforceRateLimit;
 exports.requestIdFrom = requestIdFrom;
 exports.mapOpenAiError = mapOpenAiError;
 exports.generateStructuredListing = generateStructuredListing;
-exports.estimateAudioDurationSeconds = estimateAudioDurationSeconds;
 exports.prepareAudioInput = prepareAudioInput;
 exports.transcribeWithOpenAi = transcribeWithOpenAi;
 exports.evaluateTranscriptQuality = evaluateTranscriptQuality;
@@ -22,15 +21,17 @@ const https_1 = require("firebase-functions/v2/https");
 const openai_1 = require("openai");
 const logger_1 = require("../../core/logger");
 const ai_metrics_1 = require("./ai_metrics");
+const audio_duration_1 = require("./audio_duration");
+Object.defineProperty(exports, "estimateAudioDurationSeconds", { enumerable: true, get: function () { return audio_duration_1.estimateAudioDurationSeconds; } });
 const idempotency_1 = require("./idempotency");
 const listing_taxonomy_1 = require("./listing_taxonomy");
 const openai_runtime_1 = require("./openai_runtime");
 if (firebase_admin_1.default.apps.length === 0) {
     firebase_admin_1.default.initializeApp();
 }
-exports.LISTING_MODEL = process.env.OPENAI_LISTING_MODEL?.trim() || "gpt-4o-mini-2024-07-18";
+exports.LISTING_MODEL = process.env.OPENAI_LISTING_MODEL?.trim() || "gpt-4o-mini";
 exports.TRANSCRIPTION_MODEL = process.env.OPENAI_TRANSCRIBE_MODEL?.trim() ||
-    "gpt-4o-mini-transcribe-2025-12-15";
+    "gpt-4o-mini-transcribe";
 exports.TRANSCRIPTION_FALLBACK_MODEL = "whisper-1";
 exports.LISTING_PROMPT_VERSION = "ilipresto-listing-v3";
 exports.LISTING_SCHEMA_VERSION = "ilipresto-listing-schema-v3";
@@ -409,27 +410,6 @@ async function generateStructuredListing(options) {
         throw mapped;
     }
 }
-function estimateWavDuration(buffer) {
-    if (buffer.length < 44 || buffer.toString("ascii", 0, 4) !== "RIFF")
-        return null;
-    const byteRate = buffer.readUInt32LE(28);
-    if (!byteRate)
-        return null;
-    let offset = 12;
-    while (offset + 8 <= buffer.length) {
-        const id = buffer.toString("ascii", offset, offset + 4);
-        const size = buffer.readUInt32LE(offset + 4);
-        if (id === "data")
-            return Number((size / byteRate).toFixed(2));
-        offset += 8 + size + (size % 2);
-    }
-    return null;
-}
-function estimateAudioDurationSeconds(buffer, contentType) {
-    if (contentType.includes("wav"))
-        return estimateWavDuration(buffer);
-    return null;
-}
 async function prepareAudioInput(options) {
     const inlineBase64 = cleanString(options.audioBase64);
     const storagePath = cleanString(options.storagePath) || "";
@@ -462,7 +442,7 @@ async function prepareAudioInput(options) {
             storagePath: "",
             generation: "inline",
             fromStorage: false,
-            durationSeconds: estimateAudioDurationSeconds(buffer, contentType),
+            durationSeconds: (0, audio_duration_1.estimateAudioDurationSeconds)(buffer, contentType),
         };
     }
     if (!storagePath ||
@@ -505,7 +485,7 @@ async function prepareAudioInput(options) {
         storagePath,
         generation: cleanString(metadata.generation) || "",
         fromStorage: true,
-        durationSeconds: estimateAudioDurationSeconds(buffer, contentType),
+        durationSeconds: (0, audio_duration_1.estimateAudioDurationSeconds)(buffer, contentType),
     };
 }
 function canFallbackTranscriptionModel(error) {

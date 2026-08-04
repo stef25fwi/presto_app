@@ -1,3 +1,3 @@
-{"id":"plumber-sink","image":"media/vision/plumber-sink.jpg","expectedMetier":"plombier"}
-{"id":"garden-mower","image":"media/vision/garden-mower.jpg","expectedMetier":"tonte"}
-{"id":"ambiguous-landscape","image":"media/vision/ambiguous-landscape.jpg","expectedMetier":null}
+{"id":"plumber-sink","image":"media/vision/plumber-sink.jpg","format":"jpg","contentType":"image/jpeg","expectedMetier":"plombier"}
+{"id":"garden-mower","image":"media/vision/garden-mower.png","format":"png","contentType":"image/png","expectedMetier":"tonte"}
+{"id":"ambiguous-landscape","image":"media/vision/ambiguous-landscape.webp","format":"webp","contentType":"image/webp","expectedMetier":null}

@@ -262,7 +262,8 @@
         "quality/ai-readiness.json",
         "docs/production/OPENAI_AI_ROLLOUT_RUNBOOK.md",
         "docs/evidence/ai/evaluation-report.md",
-        "docs/evidence/ai/production-smoke.md"
+        "docs/evidence/ai/production-smoke.md",
+        "docs/evidence/ai/metrics-accumulation.md"
       ],
       "controlFiles": [
         {
@@ -276,11 +277,17 @@
         "flutter analyze --fatal-infos",
         "flutter test --coverage --reporter expanded",
         "npm --prefix functions run build",
-        "npm --prefix functions test"
+        "npm --prefix functions test",
+        "node tools/quality/check_ai_eval_corpus.mjs",
+        "node tools/quality/check_ai_eval_corpus.test.mjs",
+        "node tools/quality/check_ai_metrics_trend.test.mjs",
+        "node tools/quality/check_ai_readiness.mjs --enforce"
       ],
       "doneWhen": [
         "Les sorties structurées, validations et fallbacks sont certifiés.",
-        "Les évaluations audio, texte et image respectent les seuils définis.",
+        "Le corpus couvre les accents fr-FR/fr-BE/fr-CH et les six conteneurs audio acceptés.",
+        "Les évaluations audio, texte et image respectent les seuils définis, globalement et par groupe.",
+        "Les métriques de production sont accumulées sur la fenêtre minimale exigée.",
         "Les coûts, latences, erreurs et taux de fallback sont observables.",
         "Le rollback Remote Config est testé en production.",
         "Tous les contrôles ai-readiness sont verified."

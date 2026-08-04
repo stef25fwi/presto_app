@@ -1,0 +1,92 @@
+name: AI metrics accumulation
+
+# Le point 8 exige des métriques de production accumulées dans la durée, et
+# pas seulement une photographie prise le jour du smoke test. Ce workflow
+# relit chaque jour la collection `_ai_metrics_daily`, calcule les fenêtres
+# glissantes 7/14/30 jours et archive le résultat comme preuve datée.
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Profondeur de la fenêtre analysée'
+        required: false
+        default: '30'
+        type: string
+      enforce:
+        description: 'Échouer si l’accumulation ou les seuils ne sont pas tenus'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: ai-metrics-accumulation
+  cancel-in-progress: false
+
+jobs:
+  trend:
+    environment: recaptcha
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Install and build Functions
+        run: |
+          npm --prefix functions ci
+          npm --prefix functions run build
+
+      - name: Validate trend tooling
+        run: node tools/quality/check_ai_metrics_trend.test.mjs
+
+      - name: Compute rolling AI metrics trend
+        env:
+          PROJECT_ID: presto-app-74abe
+          GOOGLE_CLOUD_PROJECT: presto-app-74abe
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p quality_reports/ai-trend
+          npm --prefix functions run ai:metrics:trend -- \
+            --days "${{ inputs.days || '30' }}" \
+            --output "../quality_reports/ai-trend/trend.json"
+          printf '%s\n' "$(git rev-parse HEAD)" > quality_reports/ai-trend/sha.txt
+
+      - name: Enforce accumulation and quality thresholds
+        if: github.event_name == 'workflow_dispatch' && inputs.enforce == true
+        env:
+          PROJECT_ID: presto-app-74abe
+          GOOGLE_CLOUD_PROJECT: presto-app-74abe
+        run: |
+          npm --prefix functions run ai:metrics:trend -- \
+            --days "${{ inputs.days || '30' }}" --enforce
+
+      - name: Archive AI metrics trend
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ai-metrics-trend-${{ github.run_id }}
+          path: quality_reports/ai-trend
+          if-no-files-found: error
+          retention-days: 90
