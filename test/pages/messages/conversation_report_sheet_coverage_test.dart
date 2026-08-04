@@ -105,10 +105,10 @@ void main() {
           conversationId: 'conversation-other',
           reasonPicker: (_) async => MessageReportReasonCode.other,
           reasonTextPicker: (_) async => '  comportement inquiétant  ',
-          verificationTokenProvider: (_) async => null,
+          verificationTokenProvider: (_) async => 'token-other',
           reportSubmitter: (draft, {recaptchaToken}) async {
             submittedDraft = draft;
-            expect(recaptchaToken, isNull);
+            expect(recaptchaToken, 'token-other');
             return false;
           },
         ),
