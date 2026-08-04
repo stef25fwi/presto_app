@@ -177,15 +177,16 @@ void main() {
     await tester.tap(find.text('Ouvrir'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Email envoyé'), findsOneWidget);
-    expect(find.text('Vérifie ta boîte email'), findsOneWidget);
+    expect(find.text('E-mail envoyé'), findsOneWidget);
+    expect(find.text('Consultez votre boîte e-mail'), findsOneWidget);
     expect(find.textContaining('test@exemple.fr'), findsOneWidget);
+    expect(find.textContaining('iliprestō'), findsOneWidget);
     expect(find.byIcon(Icons.mark_email_read), findsOneWidget);
 
     await tester.tap(find.text('Retour'));
     await tester.pumpAndSettle();
 
     expect(find.text('Ouvrir'), findsOneWidget);
-    expect(find.text('Vérifie ta boîte email'), findsNothing);
+    expect(find.text('Consultez votre boîte e-mail'), findsNothing);
   });
 }

@@ -9,8 +9,8 @@ void main() {
     await tester.pumpWidget(app(const ForgotPasswordPage()));
 
     expect(find.text('Mot de passe oublié'), findsOneWidget);
-    expect(find.text('Réinitialiser le mot de passe'), findsOneWidget);
-    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Réinitialiser votre mot de passe'), findsOneWidget);
+    expect(find.text('Adresse e-mail'), findsOneWidget);
     expect(find.text('Envoyer le lien'), findsOneWidget);
     expect(find.byIcon(Icons.lock_reset), findsOneWidget);
   });
@@ -32,14 +32,14 @@ void main() {
     await tester.tap(find.text('Envoyer le lien'));
     await tester.pump();
 
-    expect(find.text('Email obligatoire.'), findsOneWidget);
+    expect(find.text('Adresse e-mail obligatoire.'), findsOneWidget);
     expect(resetCalled, isFalse);
 
     await tester.enterText(find.byType(TextFormField), 'email-invalide');
     await tester.tap(find.text('Envoyer le lien'));
     await tester.pump();
 
-    expect(find.text('Email invalide.'), findsOneWidget);
+    expect(find.text('Adresse e-mail invalide.'), findsOneWidget);
     expect(resetCalled, isFalse);
   });
 
@@ -62,9 +62,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(sentEmail, 'test@exemple.fr');
-    expect(find.text('Email envoyé'), findsOneWidget);
-    expect(find.text('Vérifie ta boîte email'), findsOneWidget);
+    expect(find.text('E-mail envoyé'), findsOneWidget);
+    expect(find.text('Consultez votre boîte e-mail'), findsOneWidget);
     expect(find.textContaining('test@exemple.fr'), findsOneWidget);
+    expect(find.textContaining('iliprestō'), findsOneWidget);
   });
 
   testWidgets('ForgotPasswordPage affiche une erreur mapped en SnackBar',

@@ -12,7 +12,6 @@ typedef AuthFunctionCaller = Future<void> Function({
   required Map<String, dynamic> parameters,
   required String area,
 });
-
 typedef AuthGoogleSignOut = Future<void> Function();
 
 enum AuthStatus {
@@ -91,7 +90,7 @@ class AuthService {
 
   ActionCodeSettings get _emailActionSettings {
     return ActionCodeSettings(
-      url: 'https://www.ilipresto.fr/auth/action',
+      url: 'https://ilipresto.fr/auth/action',
       handleCodeInApp: false,
     );
   }
