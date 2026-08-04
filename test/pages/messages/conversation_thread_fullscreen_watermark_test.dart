@@ -143,7 +143,11 @@ Future<void> _openFullscreenPreview(WidgetTester tester) async {
 
 Future<void> _disposeThread(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
-  await tester.pump();
+  // Le bootstrap du profil arme des `.timeout()` (donc des Timer) qui
+  // peuvent être encore en vol au moment où l'arbre est démonté. On laisse
+  // l'horloge simulée les faire expirer, sinon le binding signale « A Timer
+  // is still pending » en fin de test.
+  await tester.pump(const Duration(seconds: 30));
 }
 
 void main() {

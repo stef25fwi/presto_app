@@ -38,9 +38,10 @@ void main() {
 
     // Some test bootstraps can already expose a mocked default application.
     // Recreating it would raise [core/duplicate-app], so initialization must
-    // remain idempotent. When no app exists, provide a deterministic bucket so
-    // FirebaseStorage.instance can be constructed by the real page service.
-    if (Firebase.apps.isEmpty) {
+    // remain idempotent. Firebase.apps.isEmpty is not a reliable guard here
+    // because test isolates are reused across files, so catch the exception
+    // instead of pre-checking, the same idiom other suites in this repo use.
+    try {
       await Firebase.initializeApp(
         options: const FirebaseOptions(
           apiKey: 'test-api-key',
@@ -50,6 +51,10 @@ void main() {
           storageBucket: 'presto-test.appspot.com',
         ),
       );
+    } on FirebaseException catch (error) {
+      if (error.code != 'duplicate-app') {
+        rethrow;
+      }
     }
 
     originalStoragePlatform = FirebaseStoragePlatform.instance;
