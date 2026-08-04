@@ -15,7 +15,7 @@ class ResetPasswordSuccessPage extends StatelessWidget {
     const orange = Color(0xFFFF6600);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Email envoyé')),
+      appBar: AppBar(title: const Text('E-mail envoyé')),
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -28,12 +28,12 @@ class ResetPasswordSuccessPage extends StatelessWidget {
                   const Icon(Icons.mark_email_read, size: 80, color: orange),
                   const SizedBox(height: 16),
                   const Text(
-                    'Vérifie ta boîte email',
+                    'Consultez votre boîte e-mail',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Si un compte existe avec $email, tu recevras un lien pour choisir un nouveau mot de passe.',
+                    'Si un compte iliprestō existe avec l’adresse $email, vous recevrez un lien sécurisé pour choisir un nouveau mot de passe.',
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
