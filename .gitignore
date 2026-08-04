@@ -112,3 +112,6 @@ build/
 *.aab
 release_apk/
 android/app/build/
+
+# Corpus IA synthétique régénéré par npm --prefix functions run ai:eval:media
+functions/evals/media/

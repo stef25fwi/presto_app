@@ -66,6 +66,8 @@ jobs:
             | tee quality_reports/ai-production/smoke.json
           npm --prefix functions run ai:metrics:report -- 14 \
             | tee quality_reports/ai-production/metrics.json
+          npm --prefix functions run ai:metrics:trend -- \
+            --days 30 --output ../quality_reports/ai-production/metrics-trend.json
           printf '%s\n' "$(git rev-parse HEAD)" \
             > quality_reports/ai-production/deployed-sha.txt
 
@@ -75,7 +77,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node functions/scripts/remote_config_rollback_smoke.mjs \
+          npm --prefix functions run ai:smoke:rollback \
             | tee quality_reports/ai-production/remote-config-rollback.json
 
       - name: Archive production AI evidence

@@ -8,9 +8,14 @@ on:
       - 'docs/production/OPENAI_AI_ROLLOUT_RUNBOOK.md'
       - 'tools/quality/check_ai_readiness.mjs'
       - 'tools/quality/check_ai_readiness.test.mjs'
+      - 'tools/quality/check_ai_eval_corpus.mjs'
+      - 'tools/quality/check_ai_eval_corpus.test.mjs'
+      - 'tools/quality/check_ai_metrics_trend.test.mjs'
       - 'functions/evals/**'
       - 'functions/scripts/openai_*eval.mjs'
       - 'functions/scripts/ai_eval_metrics.mjs'
+      - 'functions/scripts/ai_media_probe.mjs'
+      - 'functions/scripts/ai_metrics_trend.mjs'
       - 'functions/scripts/generate_ai_eval_media.mjs'
       - 'functions/src/modules/ai/**'
       - 'functions/src/modules/marketplace/callables/classify_service_photo.ts'
@@ -27,9 +32,14 @@ on:
       - 'docs/production/OPENAI_AI_ROLLOUT_RUNBOOK.md'
       - 'tools/quality/check_ai_readiness.mjs'
       - 'tools/quality/check_ai_readiness.test.mjs'
+      - 'tools/quality/check_ai_eval_corpus.mjs'
+      - 'tools/quality/check_ai_eval_corpus.test.mjs'
+      - 'tools/quality/check_ai_metrics_trend.test.mjs'
       - 'functions/evals/**'
       - 'functions/scripts/openai_*eval.mjs'
       - 'functions/scripts/ai_eval_metrics.mjs'
+      - 'functions/scripts/ai_media_probe.mjs'
+      - 'functions/scripts/ai_metrics_trend.mjs'
       - 'functions/scripts/generate_ai_eval_media.mjs'
       - 'functions/src/modules/ai/**'
       - 'functions/src/modules/marketplace/callables/classify_service_photo.ts'
@@ -37,6 +47,11 @@ on:
       - 'lib/config/listing_taxonomy.dart'
       - 'tools/check_listing_taxonomy_sync.mjs'
       - '.github/workflows/ai-evaluations.yml'
+  schedule:
+    # Les jeux d'évaluation réels tournent chaque lundi matin afin que la
+    # qualité par accent et par format soit re-mesurée régulièrement et pas
+    # seulement au moment d'une modification du corpus.
+    - cron: '0 5 * * 1'
   workflow_dispatch:
     inputs:
       live:
@@ -81,6 +96,12 @@ jobs:
           node tools/quality/check_ai_readiness.test.mjs
           node tools/quality/check_ai_readiness.mjs
 
+      - name: Validate evaluation corpus coverage
+        run: |
+          node tools/quality/check_ai_eval_corpus.mjs
+          node tools/quality/check_ai_eval_corpus.test.mjs
+          node tools/quality/check_ai_metrics_trend.test.mjs
+
       - name: Enforce point 8 completion when requested
         if: github.event_name == 'workflow_dispatch' && inputs.enforce_readiness == true
         run: node tools/quality/check_ai_readiness.mjs --enforce
@@ -103,6 +124,7 @@ jobs:
           name: ai-validation-${{ github.sha }}
           path: |
             build/quality/ai-readiness-report.json
+            build/quality/ai-eval-corpus-report.json
             functions/evals/media
           if-no-files-found: error
           retention-days: 90
@@ -110,6 +132,7 @@ jobs:
   live:
     if: >-
       github.event_name == 'push' ||
+      github.event_name == 'schedule' ||
       (github.event_name == 'workflow_dispatch' && inputs.live == true)
     needs: validate
     environment: recaptcha

@@ -23,6 +23,43 @@ export function latencySummary(values) {
   };
 }
 
+export function groupBy(items, keyOf) {
+  const groups = new Map();
+  for (const item of items) {
+    const key = keyOf(item);
+    if (!key) continue;
+    const bucket = groups.get(key);
+    if (bucket) bucket.push(item);
+    else groups.set(key, [item]);
+  }
+  return Object.fromEntries([...groups.entries()].sort(([a], [b]) => a.localeCompare(b)));
+}
+
+/**
+ * Résume la qualité par groupe (accent, format, …) afin qu'une moyenne globale
+ * acceptable ne masque pas une famille dégradée.
+ */
+export function qualitySummary(groups) {
+  const summary = {};
+  for (const [name, items] of Object.entries(groups)) {
+    summary[name] = {
+      cases: items.length,
+      averageWer: Number(average(items.map((item) => item.wer)).toFixed(4)),
+      averageEntityErrorRate: Number(
+        average(items.map((item) => item.entityErrorRate)).toFixed(4),
+      ),
+      averageHallucinationExtraWordRate: Number(
+        average(items.map((item) => item.hallucinationExtraWordRate)).toFixed(4),
+      ),
+      latencyMs: latencySummary(items.map((item) => item.latencyMs)),
+      totalAudioSeconds: Number(
+        items.reduce((sum, item) => sum + Number(item.audioSeconds || 0), 0).toFixed(3),
+      ),
+    };
+  }
+  return summary;
+}
+
 export function estimatedTranscriptionCostEur(audioSeconds) {
   const rate = Number(process.env.OPENAI_TRANSCRIPTION_EUR_PER_MINUTE || 0);
   if (!Number.isFinite(rate) || rate <= 0) return null;

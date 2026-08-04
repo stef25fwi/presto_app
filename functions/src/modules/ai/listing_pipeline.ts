@@ -6,6 +6,7 @@ import { toFile } from "openai";
 
 import { logger } from "../../core/logger";
 import { recordAiMetric } from "./ai_metrics";
+import { estimateAudioDurationSeconds } from "./audio_duration";
 import { deriveClientRequestId, normalizeClientRequestId } from "./idempotency";
 import {
   ANTILLES_TRANSCRIPTION_CONTEXT,
@@ -510,27 +511,7 @@ export async function generateStructuredListing(options: {
   }
 }
 
-function estimateWavDuration(buffer: Buffer): number | null {
-  if (buffer.length < 44 || buffer.toString("ascii", 0, 4) !== "RIFF") return null;
-  const byteRate = buffer.readUInt32LE(28);
-  if (!byteRate) return null;
-  let offset = 12;
-  while (offset + 8 <= buffer.length) {
-    const id = buffer.toString("ascii", offset, offset + 4);
-    const size = buffer.readUInt32LE(offset + 4);
-    if (id === "data") return Number((size / byteRate).toFixed(2));
-    offset += 8 + size + (size % 2);
-  }
-  return null;
-}
-
-export function estimateAudioDurationSeconds(
-  buffer: Buffer,
-  contentType: string,
-): number | null {
-  if (contentType.includes("wav")) return estimateWavDuration(buffer);
-  return null;
-}
+export { estimateAudioDurationSeconds };
 
 export async function prepareAudioInput(options: {
   uid: string;

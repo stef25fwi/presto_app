@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "point": 8,
   "name": "Fonctions IA",
-  "updatedAt": "2026-08-03T17:12:00Z",
+  "updatedAt": "2026-08-04T00:00:00Z",
   "status": "in_progress",
   "certificationRule": "Aucun contrôle ne passe à verified sans preuve automatisée et, lorsqu'il concerne la production, sans preuve associée au même SHA déployé.",
   "controls": [
@@ -22,6 +22,27 @@
       "evidence": [
         "docs/production/OPENAI_AI_ROLLOUT_RUNBOOK.md",
         "functions/scripts/microia_production_smoke_test.mjs"
+      ]
+    },
+    {
+      "id": "eval-corpus-coverage",
+      "label": "Couverture du corpus : accents fr-FR/fr-BE/fr-CH et six conteneurs audio",
+      "status": "verified",
+      "evidence": [
+        "functions/evals/transcription_cases.jsonl",
+        "functions/evals/vision_cases.jsonl",
+        "functions/scripts/generate_ai_eval_media.mjs",
+        "tools/quality/check_ai_eval_corpus.mjs",
+        "tools/quality/check_ai_eval_corpus.test.mjs"
+      ]
+    },
+    {
+      "id": "audio-duration-coverage",
+      "label": "Durée audio mesurée sur tous les conteneurs acceptés",
+      "status": "verified",
+      "evidence": [
+        "functions/src/modules/ai/audio_duration.ts",
+        "functions/src/modules/ai/audio_duration.test.ts"
       ]
     },
     {
@@ -57,7 +78,28 @@
       "status": "verified",
       "evidence": [
         "functions/scripts/ai_metrics_report.mjs",
+        "functions/src/modules/ai/audio_duration.ts",
         "docs/production/OPENAI_AI_ROLLOUT_RUNBOOK.md"
+      ]
+    },
+    {
+      "id": "metrics-accumulation",
+      "label": "Accumulation des métriques de production sur fenêtres glissantes",
+      "status": "in_progress",
+      "evidence": [
+        "functions/scripts/ai_metrics_trend.mjs",
+        "tools/quality/check_ai_metrics_trend.test.mjs",
+        ".github/workflows/ai-metrics-accumulation.yml",
+        "docs/evidence/ai/metrics-accumulation.md"
+      ]
+    },
+    {
+      "id": "scheduled-evaluations",
+      "label": "Évaluations réelles planifiées et archivées",
+      "status": "in_progress",
+      "evidence": [
+        ".github/workflows/ai-evaluations.yml",
+        "docs/evidence/ai/evaluation-report.md"
       ]
     },
     {
