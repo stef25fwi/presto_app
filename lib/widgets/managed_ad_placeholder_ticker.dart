@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:presto_app/services/ad_placeholder_image_service.dart';
+import 'managed_ad_placeholder_ticker_support.dart';
 
 class ManagedAdPlaceholderTicker extends StatefulWidget {
   const ManagedAdPlaceholderTicker({
@@ -13,6 +13,10 @@ class ManagedAdPlaceholderTicker extends StatefulWidget {
     this.interval = const Duration(seconds: 4),
     this.antiRepeatWindow = 0,
     this.target = 'consult_offers',
+    this.watchVisible,
+    this.loadFallbackAssets,
+    this.networkImageProviderBuilder,
+    this.assetImageProviderBuilder,
   });
 
   final String fallbackFolderPrefix;
@@ -21,6 +25,10 @@ class ManagedAdPlaceholderTicker extends StatefulWidget {
   final Duration interval;
   final int antiRepeatWindow;
   final String target;
+  final AdPlaceholderImagesWatcher? watchVisible;
+  final FallbackAssetLoader? loadFallbackAssets;
+  final BannerImageProviderBuilder? networkImageProviderBuilder;
+  final BannerImageProviderBuilder? assetImageProviderBuilder;
 
   @override
   State<ManagedAdPlaceholderTicker> createState() =>
@@ -32,8 +40,10 @@ class _ManagedAdPlaceholderTickerState
   final List<int> _recentIndexes = <int>[];
 
   StreamSubscription<List<AdPlaceholderImage>>? _remoteSubscription;
-  List<_BannerImageSource> _remoteImages = <_BannerImageSource>[];
-  List<_BannerImageSource> _fallbackImages = <_BannerImageSource>[];
+  List<ManagedAdBannerImageSource> _remoteImages =
+      <ManagedAdBannerImageSource>[];
+  List<ManagedAdBannerImageSource> _fallbackImages =
+      <ManagedAdBannerImageSource>[];
 
   int _index = 0;
   double? _aspectRatio;
@@ -41,12 +51,12 @@ class _ManagedAdPlaceholderTickerState
   ImageStream? _imageStream;
   ImageStreamListener? _imageListener;
 
-  List<_BannerImageSource> get _activeImages {
+  List<ManagedAdBannerImageSource> get _activeImages {
     if (_remoteImages.isNotEmpty) return _remoteImages;
     return _fallbackImages;
   }
 
-  _BannerImageSource? get _currentImage {
+  ManagedAdBannerImageSource? get _currentImage {
     final images = _activeImages;
     if (images.isEmpty) return null;
     return images[_index.clamp(0, images.length - 1)];
@@ -63,13 +73,15 @@ class _ManagedAdPlaceholderTickerState
   void didUpdateWidget(covariant ManagedAdPlaceholderTicker oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.target != widget.target) {
+    if (oldWidget.target != widget.target ||
+        oldWidget.watchVisible != widget.watchVisible) {
       _remoteSubscription?.cancel();
       _watchRemoteImages();
     }
 
-    if (oldWidget.fallbackFolderPrefix != widget.fallbackFolderPrefix) {
-      _fallbackImages = <_BannerImageSource>[];
+    if (oldWidget.fallbackFolderPrefix != widget.fallbackFolderPrefix ||
+        oldWidget.loadFallbackAssets != widget.loadFallbackAssets) {
+      _fallbackImages = <ManagedAdBannerImageSource>[];
       _loadFallbackAssets();
     }
 
@@ -82,8 +94,8 @@ class _ManagedAdPlaceholderTickerState
   void _watchRemoteImages() {
     _remoteSubscription?.cancel();
 
-    _remoteSubscription =
-        AdPlaceholderImageService.watchVisible(target: widget.target).listen(
+    final watcher = widget.watchVisible ?? AdPlaceholderImageService.watchVisible;
+    _remoteSubscription = watcher(target: widget.target).listen(
       (images) {
         if (!mounted) return;
 
@@ -91,8 +103,9 @@ class _ManagedAdPlaceholderTickerState
           _remoteImages = images
               .where((image) => image.imageUrl.trim().isNotEmpty)
               .map(
-                (image) => _BannerImageSource.network(
+                (image) => ManagedAdBannerImageSource.network(
                   image.imageUrl.trim(),
+                  providerBuilder: widget.networkImageProviderBuilder,
                 ),
               )
               .toList();
@@ -107,27 +120,21 @@ class _ManagedAdPlaceholderTickerState
   }
 
   Future<void> _loadFallbackAssets() async {
-    final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-
-    final normalizedPrefix = widget.fallbackFolderPrefix.endsWith('/')
-        ? widget.fallbackFolderPrefix
-        : '${widget.fallbackFolderPrefix}/';
-
-    final assets = manifest
-        .listAssets()
-        .where(
-          (asset) =>
-              asset.startsWith(normalizedPrefix) &&
-              RegExp(r'\.(png|jpg|jpeg|webp)$', caseSensitive: false)
-                  .hasMatch(asset),
-        )
-        .toList()
-      ..sort();
+    final loader =
+        widget.loadFallbackAssets ?? loadManagedAdFallbackAssets;
+    final assets = await loader(widget.fallbackFolderPrefix);
 
     if (!mounted) return;
 
     setState(() {
-      _fallbackImages = assets.map(_BannerImageSource.asset).toList();
+      _fallbackImages = assets
+          .map(
+            (asset) => ManagedAdBannerImageSource.asset(
+              asset,
+              providerBuilder: widget.assetImageProviderBuilder,
+            ),
+          )
+          .toList();
       _index = 0;
     });
 
@@ -239,7 +246,7 @@ class _ManagedAdPlaceholderTickerState
         final calculatedHeight = availableWidth / ratio;
 
         return SizedBox(
-          width: double.infinity,
+          width: availableWidth,
           height: calculatedHeight,
           child: ClipRRect(
             borderRadius: widget.borderRadius,
@@ -248,7 +255,7 @@ class _ManagedAdPlaceholderTickerState
               child: Image(
                 key: ValueKey<String>(image.key),
                 image: image.provider,
-                width: double.infinity,
+                width: availableWidth,
                 height: calculatedHeight,
                 fit: BoxFit.contain,
                 alignment: Alignment.center,
@@ -260,28 +267,4 @@ class _ManagedAdPlaceholderTickerState
       },
     );
   }
-}
-
-class _BannerImageSource {
-  const _BannerImageSource._({
-    required this.key,
-    required this.provider,
-  });
-
-  factory _BannerImageSource.asset(String assetPath) {
-    return _BannerImageSource._(
-      key: 'asset:$assetPath',
-      provider: AssetImage(assetPath),
-    );
-  }
-
-  factory _BannerImageSource.network(String url) {
-    return _BannerImageSource._(
-      key: 'network:$url',
-      provider: NetworkImage(url),
-    );
-  }
-
-  final String key;
-  final ImageProvider provider;
 }
