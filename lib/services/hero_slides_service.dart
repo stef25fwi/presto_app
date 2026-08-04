@@ -15,12 +15,30 @@ class HeroSlidesService {
     FirebaseStorage? storage,
     FirebaseAuth? auth,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _storage = storage ?? FirebaseStorage.instance,
+        _storage = storage ?? _defaultStorage(),
         _auth = auth ?? FirebaseAuth.instance;
 
   final FirebaseFirestore _firestore;
   final FirebaseStorage _storage;
   final FirebaseAuth _auth;
+
+  // firebase_options.dart always configures a storage bucket on the default
+  // app in production, but test suites that share a Firebase app across
+  // files can leave the default app without one. Fall back to the project's
+  // real bucket in that case instead of letting FirebaseStorage.instance
+  // throw [firebase_storage/no-bucket].
+  static FirebaseStorage _defaultStorage() {
+    try {
+      return FirebaseStorage.instance;
+    } on FirebaseException catch (error) {
+      if (error.code != 'no-bucket') {
+        rethrow;
+      }
+      return FirebaseStorage.instanceFor(
+        bucket: 'presto-app-74abe.firebasestorage.app',
+      );
+    }
+  }
 
   CollectionReference<Map<String, dynamic>> get _slidesCollection =>
       _firestore.collection('heroSlides');
