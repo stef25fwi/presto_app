@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../core/connectivity/connectivity_status.dart';
 import '../pages/home_page.dart';
 import '../pages/public_prelaunch_page.dart';
+import '../platform/public_prelaunch_shell.dart';
 import '../services/public_landing_config_service.dart';
 import '../widgets/cookie_consent_banner.dart';
 import '../widgets/offline_banner.dart';
@@ -106,6 +107,7 @@ class _PrestoAppChromeState extends State<PrestoAppChrome>
   void _grantTemporaryDeveloperAccess() {
     if (!mounted || _publicLandingBypassed) return;
     _temporaryDeveloperAccessGranted = true;
+    revealApplicationAfterPublicPrelaunch();
     setState(() => _publicLandingBypassed = true);
     _openApplicationHome();
   }
