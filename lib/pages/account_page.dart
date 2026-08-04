@@ -71,6 +71,14 @@ class _AccountPageState extends State<AccountPage> {
   final ScrollController _scrollController = ScrollController();
   final AdminAccessResolver _adminAccessResolver = AdminAccessResolver();
 
+  // Flux conservé pour toute la durée de vie de la page : recréer le stream à
+  // chaque build relancerait l'état « en attente » et referait clignoter la
+  // bannière des alertes « Nouvelle annonce ».
+  final Stream<List<AdPlaceholderImage>> _subscriptionAlertsBannerStream =
+      AdPlaceholderImageService.watchAll(
+    target: 'subscription_alerts_banner',
+  );
+
   final FirebaseFunctions _functions = prestoFirebaseFunctions;
 
   Future<void> _trackLogin({String? authMethod, bool isNewUser = false}) async {
@@ -2948,6 +2956,10 @@ class _AccountPageState extends State<AccountPage> {
   Widget _buildSubscriptionAlertsBanner() {
     const fallbackAsset = 'assets/images/subscription_alerts_banner.png';
 
+    // Aplat neutre affiché tant qu'aucune image n'est prête : aucune image de
+    // repli n'apparaît avant la vraie, donc plus de flash visuel.
+    const placeholder = ColoredBox(color: Color(0xFFE8F0FE));
+
     Widget fallback() => Image.asset(
           fallbackAsset,
           fit: BoxFit.cover,
@@ -2974,10 +2986,13 @@ class _AccountPageState extends State<AccountPage> {
       child: AspectRatio(
         aspectRatio: 16 / 7,
         child: StreamBuilder<List<AdPlaceholderImage>>(
-          stream: AdPlaceholderImageService.watchAll(
-            target: 'subscription_alerts_banner',
-          ),
+          stream: _subscriptionAlertsBannerStream,
           builder: (context, snapshot) {
+            // Firestore n'a pas encore répondu : on ne sait pas encore s'il
+            // existe une image distante, donc on n'affiche rien d'autre qu'un
+            // aplat plutôt que la bannière embarquée.
+            if (!snapshot.hasData && !snapshot.hasError) return placeholder;
+
             final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
                 .where((image) => image.isVisible)
                 .toList();
@@ -2991,7 +3006,7 @@ class _AccountPageState extends State<AccountPage> {
               errorBuilder: (_, __, ___) => fallback(),
               loadingBuilder: (context, child, progress) {
                 if (progress == null) return child;
-                return const ColoredBox(color: Color(0xFFE8F0FE));
+                return placeholder;
               },
             );
           },
