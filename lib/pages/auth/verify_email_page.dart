@@ -49,7 +49,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
     if (explicitEmail != null && explicitEmail.isNotEmpty) {
       return explicitEmail;
     }
-    return _user?.email ?? 'ton adresse email';
+    return _user?.email ?? 'votre adresse e-mail';
   }
 
   @override
@@ -100,13 +100,15 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
 
       if (verified) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email validé avec succès.')),
+          const SnackBar(content: Text('Adresse e-mail validée avec succès.')),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content:
-                  Text('Email pas encore validé. Clique sur le lien reçu.')),
+            content: Text(
+              'Adresse e-mail pas encore validée. Ouvrez le lien reçu.',
+            ),
+          ),
         );
       }
     } catch (e) {
@@ -124,13 +126,14 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
     setState(() => _loading = true);
 
     try {
-      final resendVerificationEmail = widget.resendVerificationEmail ?? AuthService.instance.resendVerificationEmail;
+      final resendVerificationEmail = widget.resendVerificationEmail ??
+          AuthService.instance.resendVerificationEmail;
       await resendVerificationEmail();
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email de confirmation renvoyé.')),
+        const SnackBar(content: Text('E-mail de confirmation renvoyé.')),
       );
 
       _startCooldown();
@@ -157,7 +160,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Confirme ton email'),
+        title: const Text('Confirmez votre adresse e-mail'),
         actions: [
           TextButton(
             onPressed: _loading ? null : _logout,
@@ -177,12 +180,12 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                   const Icon(Icons.verified_user, size: 82, color: orange),
                   const SizedBox(height: 16),
                   const Text(
-                    'Validation obligatoire',
+                    'Validation de l’adresse requise',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Un lien de validation a été envoyé à $email. Clique dessus pour activer toutes les fonctions Prestō.',
+                    'Un lien de validation iliprestō a été envoyé à $email. Ouvrez-le pour activer toutes les fonctionnalités de votre compte.',
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
@@ -193,7 +196,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                       onPressed: _loading ? null : _checkVerified,
                       child: _loading
                           ? const CircularProgressIndicator()
-                          : const Text('J’ai validé mon email'),
+                          : const Text('J’ai validé mon adresse e-mail'),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -206,7 +209,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                       child: Text(
                         _secondsBeforeResend > 0
                             ? 'Renvoyer dans $_secondsBeforeResend s'
-                            : 'Renvoyer l’email',
+                            : 'Renvoyer l’e-mail',
                       ),
                     ),
                   ),
