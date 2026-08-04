@@ -25,9 +25,12 @@ const auth = read('tools/seo/google_service_account_auth.mjs');
 const gsc = read('tools/seo/fetch_search_console_metrics.mjs');
 const ga4 = read('tools/seo/fetch_ga4_metrics.mjs');
 const publicMonitor = read('tools/seo/monitor_public_seo.mjs');
+const runtimeContract = read('tools/seo/runtime_seo_registry_contract.mjs');
+const runtimeContractTest = read('tools/seo/runtime_seo_registry_contract.test.mjs');
 const report = read('tools/seo/build_seo_monitoring_report.mjs');
 const workflow = read('.github/workflows/seo-continuous-monitoring.yml');
 const prWorkflow = read('.github/workflows/seo-acquisition-readiness.yml');
+const sitemap = read('web/sitemap.xml');
 const firebaseOptions = read('lib/firebase_options.dart');
 const analyticsEvents = read('lib/services/product_analytics_events.dart');
 
@@ -56,6 +59,8 @@ const pages = Array.isArray(config.monitoredPages) ? config.monitoredPages : [];
 const paths = pages.map((page) => page.path);
 const requiredPaths = [
   '/',
+  '/trouver-une-personne-disponible/',
+  '/guides/creer-micro-entreprise-services/',
   '/a-propos',
   '/guides/comment-fonctionne-ilipresto',
   '/guadeloupe',
@@ -66,9 +71,20 @@ const requiredPaths = [
   '/cgu',
   '/suppression-compte',
 ];
-requireCondition(paths.length === 10, `expected 10 monitored pages, found ${paths.length}`);
+requireCondition(paths.length === 12, `expected 12 monitored pages, found ${paths.length}`);
 requireCondition(new Set(paths).size === paths.length, 'monitored pages contain duplicates');
-for (const path of requiredPaths) requireCondition(paths.includes(path), `monitored page missing: ${path}`);
+for (const path of requiredPaths) {
+  requireCondition(paths.includes(path), `monitored page missing: ${path}`);
+  requireText(
+    sitemap,
+    `<loc>https://ilipresto.fr${path === '/' ? '/' : path}</loc>`,
+    `sitemap URL ${path}`,
+  );
+}
+requireCondition(
+  !paths.includes('/services-outre-mer/'),
+  'legacy regional hub must not be monitored as a national indexable page',
+);
 for (const page of pages) {
   requireCondition(
     ['html', 'runtime-registry'].includes(page.validationMode),
@@ -101,22 +117,32 @@ requireText(ga4, 'Organic Search', 'organic channel filter');
 requireText(ga4, 'landingPagePlusQueryString', 'landing page reporting');
 requireText(publicMonitor, 'robots.txt', 'robots monitoring');
 requireText(publicMonitor, 'sitemap.xml', 'sitemap monitoring');
-requireText(publicMonitor, 'runtime-registry', 'runtime route registry monitoring');
+requireText(publicMonitor, 'validateRuntimeSeoRegistry', 'runtime registry contract use');
+requireText(runtimeContract, 'canonicalBuilderRegistered', 'dynamic canonical builder check');
+requireText(runtimeContract, 'canonicalApplicationRegistered', 'canonical application check');
+requireText(runtimeContractTest, '/mentions-legales', 'legal route contract test');
+requireText(runtimeContractTest, '/route-absente', 'negative route contract test');
 requireText(report, 'gsc_clicks_drop', 'Search Console trend alert');
 requireText(report, 'ga4_organic_sessions_drop', 'GA4 trend alert');
 requireText(report, '--require-external-data', 'strict external-data mode');
 
 requireText(workflow, 'schedule:', 'scheduled monitoring');
 requireText(workflow, "cron: '17 10 * * *'", 'daily Guadeloupe schedule');
+requireText(workflow, 'push:', 'post-merge monitoring trigger');
 requireText(workflow, 'id-token: write', 'OIDC permission');
 requireText(workflow, 'issues: write', 'issue alert permission');
 requireText(workflow, 'google-github-actions/auth@v3', 'WIF authentication action');
+requireText(workflow, 'google-github-actions/setup-gcloud@v3', 'Google Cloud CLI setup');
 requireText(workflow, 'secrets.WIF_PROVIDER', 'WIF provider wiring');
 requireText(workflow, 'secrets.WIF_SERVICE_ACCOUNT', 'WIF service account wiring');
 requireText(workflow, 'SEO_GOOGLE_ACCESS_TOKEN', 'short-lived token wiring');
 requireText(workflow, 'SEO_GA4_PROPERTY_ID', 'optional GA4 override');
+requireText(workflow, 'cloud-platform', 'service activation token scope');
 requireText(workflow, 'webmasters.readonly', 'Search Console token scope');
 requireText(workflow, 'analytics.readonly', 'GA4 token scope');
+requireText(workflow, 'searchconsole.googleapis.com', 'Search Console API activation');
+requireText(workflow, 'analyticsadmin.googleapis.com', 'Analytics Admin API activation');
+requireText(workflow, 'analyticsdata.googleapis.com', 'Analytics Data API activation');
 requireText(workflow, 'build_seo_monitoring_report.mjs', 'monitoring report execution');
 requireText(workflow, 'actions/upload-artifact@v4', 'report retention');
 requireText(workflow, 'actions/github-script@v7', 'GitHub issue alerting');
@@ -142,6 +168,8 @@ for (const script of [
   'tools/seo/seo_monitoring_utils.mjs',
   'tools/seo/fetch_search_console_metrics.mjs',
   'tools/seo/fetch_ga4_metrics.mjs',
+  'tools/seo/runtime_seo_registry_contract.mjs',
+  'tools/seo/runtime_seo_registry_contract.test.mjs',
   'tools/seo/monitor_public_seo.mjs',
   'tools/seo/build_seo_monitoring_report.mjs',
 ]) {

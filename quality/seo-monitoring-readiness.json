@@ -1,26 +1,34 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "point": 6,
   "name": "Suivi, analyse et amélioration continue SEO",
   "status": "verified",
-  "verifiedAt": "2026-08-02",
+  "verifiedAt": "2026-08-04",
   "controls": [
-    {"id":"seo_kpi_configuration","status":"verified","evidence":"La configuration centralise domaine, pages, périodes, événements de conversion et seuils d’alerte."},
-    {"id":"production_health_monitoring","status":"verified","evidence":"Un contrôle de production vérifie disponibilité, redirections, métadonnées, canonicals, H1, données structurées, robots.txt, sitemap et registre des routes."},
+    {"id":"seo_kpi_configuration","status":"verified","evidence":"La configuration centralise domaine, 12 URL indexables, périodes, événements de conversion et seuils d’alerte."},
+    {"id":"production_health_monitoring","status":"verified","evidence":"Le contrôle vérifie disponibilité, redirections, métadonnées, canonicals statiques ou dynamiques, H1, données structurées, robots.txt et sitemap."},
+    {"id":"runtime_canonical_contract","status":"verified","evidence":"Les pages légales sont validées par leur route, le domaine de base, la construction du canonical et son application au DOM et au JSON-LD, sans exiger une chaîne littérale inexistante."},
     {"id":"search_console_connector","status":"verified","evidence":"Le connecteur Search Console compare clics, impressions, CTR et position sur deux périodes de 28 jours."},
     {"id":"ga4_organic_connector","status":"verified","evidence":"Le connecteur GA4 retrouve la propriété depuis le measurement ID et suit sessions Organic Search, engagement, pages d’entrée et événements clés."},
+    {"id":"google_api_bootstrap","status":"verified","evidence":"Le workflow tente d’activer Search Console API, Analytics Admin API et Analytics Data API avec WIF et sans clé longue durée."},
     {"id":"trend_detection","status":"verified","evidence":"Les baisses significatives sont détectées uniquement au-dessus de volumes minimums pour limiter les faux positifs."},
-    {"id":"automated_reporting","status":"verified","evidence":"Un rapport JSON et Markdown est généré quotidiennement et conservé comme artefact GitHub Actions."},
+    {"id":"automated_reporting","status":"verified","evidence":"Un rapport JSON et Markdown est généré quotidiennement, après fusion des changements SEO et sur demande, puis conservé comme artefact GitHub Actions."},
     {"id":"regression_alerting","status":"verified","evidence":"Une issue GitHub unique est ouverte ou mise à jour lors d’une régression et fermée automatiquement après retour à la normale."},
     {"id":"continuous_improvement_cycle","status":"verified","evidence":"Le runbook définit les revues hebdomadaires et mensuelles, les décisions et le backlog d’amélioration."},
     {"id":"privacy_and_secret_safety","status":"verified","evidence":"Aucune donnée personnelle ni clé Google longue durée n’est versionnée ; la CI utilise Workload Identity Federation et le consentement Analytics existant."},
-    {"id":"ci_regression_gate","status":"verified","evidence":"Le contrôle de préparation est exécuté sur chaque pull request SEO."}
+    {"id":"ci_regression_gate","status":"verified","evidence":"Le contrôle de préparation, le contrat des routes dynamiques et la syntaxe des scripts sont exécutés sur chaque pull request SEO."}
   ],
   "runtimeConfiguration": {
     "environment": "recaptcha",
     "workloadIdentityProviderSecret": "WIF_PROVIDER",
     "serviceAccountSecret": "WIF_SERVICE_ACCOUNT",
     "optionalGa4PropertyVariable": "SEO_GA4_PROPERTY_ID",
+    "googleCloudProject": "presto-app-74abe",
+    "enabledApis": [
+      "searchconsole.googleapis.com",
+      "analyticsadmin.googleapis.com",
+      "analyticsdata.googleapis.com"
+    ],
     "searchConsoleProperty": "sc-domain:ilipresto.fr",
     "ga4MeasurementId": "G-NT4PEHQ3CJ",
     "scheduleUtc": "17 10 * * *",

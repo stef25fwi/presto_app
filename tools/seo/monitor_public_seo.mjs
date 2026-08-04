@@ -1,5 +1,6 @@
 import { pathToFileURL } from 'node:url';
 
+import { validateRuntimeSeoRegistry } from './runtime_seo_registry_contract.mjs';
 import {
   loadSeoMonitoringConfig,
   round,
@@ -172,20 +173,17 @@ export async function monitorPublicSeo({ config }) {
 
       let metadata;
       if (page.validationMode === 'runtime-registry') {
-        const routeToken = `'${page.path}'`;
-        const canonicalToken = `${siteUrl}${page.path}`;
         if (!registryResponse.ok) errors.push('runtime_registry_unavailable');
-        if (!registryResponse.text.includes(routeToken)) {
-          errors.push('runtime_registry_route_missing');
-        }
-        if (!registryResponse.text.includes(canonicalToken)) {
-          errors.push('runtime_registry_canonical_missing');
-        }
+        const contract = validateRuntimeSeoRegistry({
+          registrySource: registryResponse.text,
+          routePath: page.path,
+          siteUrl,
+        });
+        errors.push(...contract.errors);
         metadata = {
           mode: 'runtime-registry',
           registryUrl,
-          routeRegistered: registryResponse.text.includes(routeToken),
-          canonicalRegistered: registryResponse.text.includes(canonicalToken),
+          ...contract,
         };
       } else {
         metadata = validateHtmlPage({

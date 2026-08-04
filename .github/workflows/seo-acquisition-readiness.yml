@@ -21,6 +21,8 @@ jobs:
         run: node tools/quality/check_public_page_seo.mjs
       - name: Validate continuous SEO monitoring
         run: node tools/quality/check_seo_monitoring_readiness.test.mjs
+      - name: Validate runtime SEO registry
+        run: node tools/seo/runtime_seo_registry_contract.test.mjs
       - name: Validate registry
         run: node tools/quality/check_seo_acquisition_readiness.test.mjs
       - name: Build readiness report
