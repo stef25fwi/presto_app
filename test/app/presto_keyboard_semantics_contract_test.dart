@@ -95,11 +95,11 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildPrestoTheme(),
-        home: const Scaffold(
+        home: Scaffold(
           body: Semantics(
             liveRegion: true,
             label: 'Chargement en cours',
-            child: ExcludeSemantics(
+            child: const ExcludeSemantics(
               child: CircularProgressIndicator(),
             ),
           ),
