@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../core/connectivity/connectivity_status.dart';
 import '../pages/home_page.dart';
 import '../pages/public_prelaunch_page.dart';
+import '../platform/public_prelaunch_shell.dart';
 import '../services/public_landing_config_service.dart';
 import '../widgets/cookie_consent_banner.dart';
 import '../widgets/offline_banner.dart';
@@ -103,11 +104,20 @@ class _PrestoAppChromeState extends State<PrestoAppChrome>
     });
   }
 
+  void _revealApplicationAfterHomePaint() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) revealApplicationAfterPublicPrelaunch();
+      });
+    });
+  }
+
   void _grantTemporaryDeveloperAccess() {
     if (!mounted || _publicLandingBypassed) return;
     _temporaryDeveloperAccessGranted = true;
     setState(() => _publicLandingBypassed = true);
     _openApplicationHome();
+    _revealApplicationAfterHomePaint();
   }
 
   @override
@@ -148,11 +158,6 @@ class _PrestoAppChromeState extends State<PrestoAppChrome>
             child: Stack(
               children: [
                 widget.child,
-                // CookieConsentBanner renvoie lui-même un Positioned.fill
-                // lorsque le consentement doit être affiché. Il doit donc être
-                // un enfant direct du Stack. Le wrapper Positioned/Align
-                // précédent cassait son ParentData et ne laissait visible que
-                // le voile modal gris, sans la feuille de consentement.
                 const CookieConsentBanner(),
                 Positioned(
                   top: 0,
