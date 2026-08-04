@@ -24,10 +24,21 @@ jobs:
     environment: recaptcha
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      EVIDENCE_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout the exact deployed SHA
+        uses: actions/checkout@v7
         with:
-          ref: main
+          ref: ${{ env.EVIDENCE_SHA }}
+
+      - name: Assert evidence SHA consistency
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_sha="$(git rev-parse HEAD)"
+          test "$actual_sha" = "$EVIDENCE_SHA"
+          printf 'Evidence will be generated for deployed SHA %s\n' "$actual_sha"
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v6
@@ -68,7 +79,7 @@ jobs:
             | tee quality_reports/ai-production/metrics.json
           npm --prefix functions run ai:metrics:trend -- \
             --days 30 --output ../quality_reports/ai-production/metrics-trend.json
-          printf '%s\n' "$(git rev-parse HEAD)" \
+          printf '%s\n' "$EVIDENCE_SHA" \
             > quality_reports/ai-production/deployed-sha.txt
 
       - name: Verify Remote Config rollback and restoration
@@ -84,7 +95,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: ai-production-smoke-${{ github.sha }}
+          name: ai-production-smoke-${{ env.EVIDENCE_SHA }}
           path: quality_reports/ai-production
           if-no-files-found: error
           retention-days: 90
