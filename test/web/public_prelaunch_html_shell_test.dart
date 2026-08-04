@@ -115,33 +115,31 @@ void main() {
       );
     });
 
-    test('maintient une copie visuelle pendant le bootstrap Flutter', () {
+    test('maintient une seule page visible pendant tout le pré-lancement', () {
       expect(bootstrap, contains('useFlutterPrelaunchOnly'));
       expect(bootstrap, contains('createPrelaunchTransitionShell(shell)'));
       expect(bootstrap, contains("prelaunchTransitionShell.id = 'prelaunch-transition-shell'"));
       expect(bootstrap, contains("prelaunchTransitionShell.style.pointerEvents = 'none'"));
       expect(bootstrap, contains("prelaunchTransitionShell.style.zIndex = '2147483646'"));
       expect(bootstrap, contains("shell.style.visibility = 'hidden';"));
+      expect(bootstrap, contains('window.iliprestoOpenApplication = removePrelaunchTransitionShell'));
       expect(
         bootstrap.indexOf('preparePrelaunchSeoShellForFlutter();'),
         lessThan(bootstrap.indexOf('_flutter.loader.load({')),
       );
     });
 
-    test('retire la copie seulement après la peinture Flutter', () {
-      expect(html, contains("window.addEventListener('flutter-first-frame'"));
-      expect(bootstrap, contains("window.addEventListener('flutter-first-frame'"));
-      expect(bootstrap, contains('removeTransitionShellAfterPaint'));
-      expect(bootstrap, contains('prelaunchTransitionRemovalScheduled'));
+    test('ne retire pas automatiquement la page visible à la première frame', () {
+      expect(bootstrap, isNot(contains('removeTransitionShellAfterPaint')));
+      expect(bootstrap, isNot(contains('prelaunchTransitionRemovalScheduled')));
       expect(
-        RegExp(r'window\.requestAnimationFrame\(function \(\) \{[\s\S]*window\.requestAnimationFrame\(function \(\) \{')
-            .hasMatch(bootstrap),
-        isTrue,
+        bootstrap,
+        contains('if (!useFlutterPrelaunchOnly) {\n      removePrelaunchTransitionShell();'),
       );
-      expect(bootstrap, contains('prelaunchTransitionShell.remove();'));
+      expect(bootstrap, contains('window.iliprestoOpenApplication'));
     });
 
-    test('la copie de transition ne bloque jamais les huit taps Flutter', () {
+    test('la page visible laisse passer les huit taps Flutter', () {
       expect(bootstrap, contains("prelaunchTransitionShell.style.pointerEvents = 'none'"));
       expect(bootstrap, isNot(contains("prelaunchTransitionShell.style.pointerEvents = 'auto'")));
     });
