@@ -4,6 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:presto_app/services/ad_placeholder_image_service.dart';
 
+typedef AdPlaceholderImagesWatcher = Stream<List<AdPlaceholderImage>> Function({
+  required String target,
+});
+typedef FallbackAssetLoader = Future<List<String>> Function(String prefix);
+typedef BannerImageProviderBuilder = ImageProvider Function(String source);
+
 class ManagedAdPlaceholderTicker extends StatefulWidget {
   const ManagedAdPlaceholderTicker({
     super.key,
@@ -13,6 +19,10 @@ class ManagedAdPlaceholderTicker extends StatefulWidget {
     this.interval = const Duration(seconds: 4),
     this.antiRepeatWindow = 0,
     this.target = 'consult_offers',
+    this.watchVisible,
+    this.loadFallbackAssets,
+    this.networkImageProviderBuilder,
+    this.assetImageProviderBuilder,
   });
 
   final String fallbackFolderPrefix;
@@ -21,6 +31,10 @@ class ManagedAdPlaceholderTicker extends StatefulWidget {
   final Duration interval;
   final int antiRepeatWindow;
   final String target;
+  final AdPlaceholderImagesWatcher? watchVisible;
+  final FallbackAssetLoader? loadFallbackAssets;
+  final BannerImageProviderBuilder? networkImageProviderBuilder;
+  final BannerImageProviderBuilder? assetImageProviderBuilder;
 
   @override
   State<ManagedAdPlaceholderTicker> createState() =>
@@ -63,12 +77,14 @@ class _ManagedAdPlaceholderTickerState
   void didUpdateWidget(covariant ManagedAdPlaceholderTicker oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.target != widget.target) {
+    if (oldWidget.target != widget.target ||
+        oldWidget.watchVisible != widget.watchVisible) {
       _remoteSubscription?.cancel();
       _watchRemoteImages();
     }
 
-    if (oldWidget.fallbackFolderPrefix != widget.fallbackFolderPrefix) {
+    if (oldWidget.fallbackFolderPrefix != widget.fallbackFolderPrefix ||
+        oldWidget.loadFallbackAssets != widget.loadFallbackAssets) {
       _fallbackImages = <_BannerImageSource>[];
       _loadFallbackAssets();
     }
@@ -82,8 +98,8 @@ class _ManagedAdPlaceholderTickerState
   void _watchRemoteImages() {
     _remoteSubscription?.cancel();
 
-    _remoteSubscription =
-        AdPlaceholderImageService.watchVisible(target: widget.target).listen(
+    final watcher = widget.watchVisible ?? AdPlaceholderImageService.watchVisible;
+    _remoteSubscription = watcher(target: widget.target).listen(
       (images) {
         if (!mounted) return;
 
@@ -93,6 +109,7 @@ class _ManagedAdPlaceholderTickerState
               .map(
                 (image) => _BannerImageSource.network(
                   image.imageUrl.trim(),
+                  providerBuilder: widget.networkImageProviderBuilder,
                 ),
               )
               .toList();
@@ -107,13 +124,32 @@ class _ManagedAdPlaceholderTickerState
   }
 
   Future<void> _loadFallbackAssets() async {
+    final loader = widget.loadFallbackAssets ?? _loadAssetsFromManifest;
+    final assets = await loader(widget.fallbackFolderPrefix);
+
+    if (!mounted) return;
+
+    setState(() {
+      _fallbackImages = assets
+          .map(
+            (asset) => _BannerImageSource.asset(
+              asset,
+              providerBuilder: widget.assetImageProviderBuilder,
+            ),
+          )
+          .toList();
+      _index = 0;
+    });
+
+    _resolveCurrentImageRatio();
+    _startTimer();
+  }
+
+  static Future<List<String>> _loadAssetsFromManifest(String prefix) async {
     final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+    final normalizedPrefix = prefix.endsWith('/') ? prefix : '$prefix/';
 
-    final normalizedPrefix = widget.fallbackFolderPrefix.endsWith('/')
-        ? widget.fallbackFolderPrefix
-        : '${widget.fallbackFolderPrefix}/';
-
-    final assets = manifest
+    return manifest
         .listAssets()
         .where(
           (asset) =>
@@ -123,16 +159,6 @@ class _ManagedAdPlaceholderTickerState
         )
         .toList()
       ..sort();
-
-    if (!mounted) return;
-
-    setState(() {
-      _fallbackImages = assets.map(_BannerImageSource.asset).toList();
-      _index = 0;
-    });
-
-    _resolveCurrentImageRatio();
-    _startTimer();
   }
 
   void _startTimer() {
@@ -268,17 +294,23 @@ class _BannerImageSource {
     required this.provider,
   });
 
-  factory _BannerImageSource.asset(String assetPath) {
+  factory _BannerImageSource.asset(
+    String assetPath, {
+    BannerImageProviderBuilder? providerBuilder,
+  }) {
     return _BannerImageSource._(
       key: 'asset:$assetPath',
-      provider: AssetImage(assetPath),
+      provider: providerBuilder?.call(assetPath) ?? AssetImage(assetPath),
     );
   }
 
-  factory _BannerImageSource.network(String url) {
+  factory _BannerImageSource.network(
+    String url, {
+    BannerImageProviderBuilder? providerBuilder,
+  }) {
     return _BannerImageSource._(
       key: 'network:$url',
-      provider: NetworkImage(url),
+      provider: providerBuilder?.call(url) ?? NetworkImage(url),
     );
   }
 
