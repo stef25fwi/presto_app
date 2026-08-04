@@ -86,7 +86,9 @@ void main() {
           quantityPerUnit: 2.5,
           unitPrice: 4,
         ),
-        onResult: (value) => result = value,
+        onResult: (value) {
+          result = value;
+        },
       ),
     );
 
@@ -142,7 +144,11 @@ void main() {
     ProductionAccessoryUsage? result;
 
     await tester.pumpWidget(
-      _harness(onResult: (value) => result = value),
+      _harness(
+        onResult: (value) {
+          result = value;
+        },
+      ),
     );
 
     await tester.tap(find.text('Ouvrir'));
