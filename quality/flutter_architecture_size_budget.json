@@ -57,6 +57,22 @@
       "target_lines": 500,
       "module": "abonnements",
       "next_split": "extraire cartes, sélecteur d’audience et administration des abonnements"
+    },
+    "lib/pages/admin_space_page.dart": {
+      "current_lines": 1113,
+      "target_lines": 500,
+      "module": "administration",
+      "previous_lines": 5777,
+      "split_done": "2026-08-04 : 17 fragments `part` extraits vers lib/pages/admin_space/ (diagnostic de déploiement, modération messagerie, domaines de métriques, écran Micro IA, formatage, modèles et calcul du tableau de bord, tableau de bord e-mail, diffusion, sections et cartes, widgets communs, chips).",
+      "next_split": "Extraire _AdminSpacePageState en widgets à paramètres explicites : l'état ne peut pas être déplacé par `part`, une extension ne pouvant ni appeler setState ni référencer les membres statiques du type étendu.",
+      "next_split_owner": "point-3-architecture"
+    },
+    "lib/pages/admin_space/admin_space_dashboard_computed.dart": {
+      "current_lines": 559,
+      "target_lines": 500,
+      "module": "administration",
+      "next_split": "Extraire les agrégations par domaine de la fabrique fromSources en fonctions testables ; le découpage `part` ne peut pas scinder une classe unique.",
+      "next_split_owner": "point-3-architecture"
     }
   },
   "ignored_paths": [

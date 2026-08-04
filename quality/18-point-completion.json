@@ -302,6 +302,7 @@
       "objective": "Certifier les droits, opérations sensibles, audits et outils de modération.",
       "requiredFiles": [
         "quality/admin-readiness.json",
+        "quality/admin-authority-matrix.json",
         "docs/evidence/admin/role-matrix.md",
         "docs/evidence/admin/moderation-e2e.md",
         "docs/evidence/admin/audit-log.md"
@@ -318,10 +319,14 @@
         "flutter analyze --fatal-infos",
         "flutter test --coverage --reporter expanded",
         "npm --prefix functions test",
-        "npm --prefix functions run test:firestore"
+        "npm --prefix functions run test:firestore",
+        "node tools/quality/check_admin_authority.mjs",
+        "node tools/quality/check_admin_authority.test.mjs",
+        "node tools/quality/check_admin_readiness.mjs --enforce",
+        "python3 tools/quality/check_flutter_architecture_size.py"
       ],
       "doneWhen": [
-        "Chaque rôle possède uniquement les actions prévues.",
+        "Chaque rôle possède uniquement les actions prévues, et aucune opération d'administration n'échappe à la matrice.",
         "Les opérations sensibles sont serveur, auditées et réversibles selon la politique.",
         "Annonces, avis, messages, utilisateurs et paramètres sont modérables.",
         "Les écrans administratifs critiques sont couverts et maintenables.",

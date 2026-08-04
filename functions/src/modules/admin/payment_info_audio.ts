@@ -14,6 +14,7 @@ import {
   generateTtsMp3,
   resolveTtsConfig,
 } from "../ai/tts_service";
+import { writeAdminActionLog } from "../marketplace/services/admin_audit";
 import {
   extractRolesFromAuthToken,
   requireAnyRole,
@@ -47,6 +48,13 @@ function requireAdmin(request: {
   const roles = extractRolesFromAuthToken(request.auth?.token || {});
   requireAnyRole(roles, ["admin", "superadmin"], "Admin access required");
   return uid;
+}
+
+function actorRole(request: {
+  auth?: { token?: Record<string, unknown> } | null;
+}): "admin" | "superadmin" {
+  const roles = extractRolesFromAuthToken(request.auth?.token || {});
+  return roles.includes("superadmin") ? "superadmin" : "admin";
 }
 
 async function loadPaymentText(requestText: unknown): Promise<string> {
@@ -273,6 +281,16 @@ export const publishPaymentInfoAudioDraft = onCall(
       uid,
       storagePath,
       version: payload.version,
+    });
+    // La publication rend l'audio visible des utilisateurs : c'est le
+    // changement d'état qui doit rester traçable, pas la génération interne.
+    await writeAdminActionLog({
+      actorId: uid,
+      actorRole: actorRole(request),
+      actionType: "publish_payment_info_audio",
+      targetType: "public_config",
+      targetId: PUBLIC_CONFIG_DOC,
+      after: { storagePath, version: payload.version, voice: payload.voice },
     });
     return { ok: true, ...payload, generatedAt: new Date().toISOString() };
   },

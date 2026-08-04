@@ -1,0 +1,102 @@
+name: Admin authority
+
+# Point 9 — administration et modération. Le contrôle confronte la matrice
+# d'autorité au code réel dans les deux sens : une opération dont les rôles
+# changent, dont App Check est désactivé sans dérogation, dont la mutation
+# n'est plus journalisée, ou qui apparaît sans être déclarée, fait échouer la
+# vérification.
+
+on:
+  pull_request:
+    paths:
+      - 'quality/admin-authority-matrix.json'
+      - 'quality/admin-readiness.json'
+      - 'docs/evidence/admin/**'
+      - 'firestore.rules'
+      - 'functions/src/modules/admin/**'
+      - 'functions/src/modules/marketplace/callables/**'
+      - 'functions/src/modules/marketplace/services/**'
+      - 'functions/src/modules/messaging/callables.ts'
+      - 'functions/src/modules/notifications/callables.ts'
+      - 'functions/src/modules/ai/ai_metrics.ts'
+      - 'tools/quality/check_admin_authority.mjs'
+      - 'tools/quality/check_admin_authority.test.mjs'
+      - 'tools/quality/check_admin_readiness.mjs'
+      - 'tools/quality/check_admin_readiness.test.mjs'
+      - '.github/workflows/admin-authority.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'quality/admin-authority-matrix.json'
+      - 'quality/admin-readiness.json'
+      - 'docs/evidence/admin/**'
+      - 'firestore.rules'
+      - 'functions/src/modules/admin/**'
+      - 'functions/src/modules/marketplace/callables/**'
+      - 'functions/src/modules/marketplace/services/**'
+      - 'functions/src/modules/messaging/callables.ts'
+      - 'functions/src/modules/notifications/callables.ts'
+      - 'functions/src/modules/ai/ai_metrics.ts'
+      - 'tools/quality/check_admin_authority.mjs'
+      - 'tools/quality/check_admin_authority.test.mjs'
+      - 'tools/quality/check_admin_readiness.mjs'
+      - 'tools/quality/check_admin_readiness.test.mjs'
+      - '.github/workflows/admin-authority.yml'
+  workflow_dispatch:
+    inputs:
+      enforce_readiness:
+        description: 'Exiger que tous les contrôles du point 9 soient verified'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  authority:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Verify admin authority matrix against sources
+        run: |
+          node tools/quality/check_admin_authority.mjs
+          node tools/quality/check_admin_authority.test.mjs
+
+      - name: Verify point 9 readiness registry
+        run: |
+          node tools/quality/check_admin_readiness.mjs
+          node tools/quality/check_admin_readiness.test.mjs
+
+      - name: Enforce point 9 completion when requested
+        if: github.event_name == 'workflow_dispatch' && inputs.enforce_readiness == true
+        run: node tools/quality/check_admin_readiness.mjs --enforce
+
+      - name: Verify admin screen size budgets
+        run: python3 tools/quality/check_flutter_architecture_size.py
+
+      - name: Install and test Functions
+        run: |
+          npm --prefix functions ci
+          npm --prefix functions run ci
+
+      - name: Archive admin authority evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: admin-authority-${{ github.sha }}
+          path: |
+            build/quality/admin-authority-report.json
+            build/quality/admin-readiness-report.json
+          if-no-files-found: error
+          retention-days: 90

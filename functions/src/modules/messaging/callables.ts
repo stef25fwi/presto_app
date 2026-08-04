@@ -10,6 +10,7 @@ import { logger } from "../../core/logger";
 import { canProceedRateLimited } from "../../core/rate_limit";
 import { COLLECTIONS, LEGACY_COLLECTIONS } from "../../shared/constants";
 import { sha256 } from "../../utils/hash";
+import { writeAdminActionLog } from "../marketplace/services/admin_audit";
 import { extractRolesFromAuthToken } from "../marketplace/services/roles";
 import { refreshUnreadMessageCount, refreshUnreadNotificationCount } from "../notifications/counters";
 import {
@@ -1594,6 +1595,21 @@ export const adminUnblockConversation = onCall(ADMIN_MESSAGING_CALLABLE_OPTIONS,
     conversationId_len: conversationId.length,
     adminUid_len: currentUserId.length,
     participantCount: participants.length,
+  });
+
+  // Le déblocage force l'état d'une conversation privée : il doit rester
+  // attribuable à un administrateur nommé.
+  await writeAdminActionLog({
+    actorId: currentUserId,
+    actorRole: extractRolesFromAuthToken(
+      request.auth?.token as Record<string, unknown> | undefined,
+    ).includes("superadmin")
+      ? "superadmin"
+      : "admin",
+    actionType: "admin_unblock_conversation",
+    targetType: "conversation",
+    targetId: conversationId,
+    after: { participantCount: participants.length },
   });
 
   return { ok: true };

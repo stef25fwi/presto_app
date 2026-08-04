@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "point": 9,
+  "name": "Administration et modération",
+  "updatedAt": "2026-08-04T00:00:00Z",
+  "status": "in_progress",
+  "certificationRule": "Aucun contrôle ne passe à verified sans preuve automatisée et, lorsqu'il concerne la production, sans preuve associée au même SHA déployé.",
+  "controls": [
+    {
+      "id": "role-matrix",
+      "label": "Matrice des rôles déclarée et confrontée au code",
+      "status": "verified",
+      "evidence": [
+        "quality/admin-authority-matrix.json",
+        "tools/quality/check_admin_authority.mjs",
+        "tools/quality/check_admin_authority.test.mjs",
+        "docs/evidence/admin/role-matrix.md"
+      ]
+    },
+    {
+      "id": "server-authority",
+      "label": "Opérations sensibles exécutées et autorisées côté serveur",
+      "status": "verified",
+      "evidence": [
+        "functions/src/modules/marketplace/services/roles.ts",
+        "functions/src/modules/marketplace/callables/admin.ts",
+        "quality/admin-authority-matrix.json"
+      ]
+    },
+    {
+      "id": "no-client-elevation",
+      "label": "Aucune élévation de privilège possible depuis le client",
+      "status": "verified",
+      "evidence": [
+        "firestore.rules",
+        "tools/quality/check_admin_authority.mjs",
+        "docs/evidence/admin/role-matrix.md"
+      ]
+    },
+    {
+      "id": "audit-log",
+      "label": "Toute mutation d'administration est journalisée ou fait l'objet d'une dérogation écrite",
+      "status": "verified",
+      "evidence": [
+        "functions/src/modules/marketplace/services/admin_audit.ts",
+        "quality/admin-authority-matrix.json",
+        "docs/evidence/admin/audit-log.md"
+      ]
+    },
+    {
+      "id": "moderation-coverage",
+      "label": "Annonces, avis, messages et signalements sont modérables et testés",
+      "status": "in_progress",
+      "evidence": [
+        "functions/src/modules/marketplace/callables/reviews_admin_v2.ts",
+        "lib/admin/messaging/services/admin_moderation_service.dart",
+        "docs/evidence/admin/moderation-e2e.md"
+      ]
+    },
+    {
+      "id": "app-check-admin",
+      "label": "App Check appliqué sur toutes les opérations d'administration",
+      "status": "pending",
+      "evidence": [
+        "quality/admin-authority-matrix.json",
+        "docs/evidence/admin/role-matrix.md"
+      ],
+      "blockedBy": "adminUnblockConversation conserve enforceAppCheck=false ; dérogation ouverte rattachée au point 12."
+    },
+    {
+      "id": "admin-screen-maintainability",
+      "label": "Écrans d'administration sous le budget d'architecture",
+      "status": "in_progress",
+      "evidence": [
+        "quality/flutter_architecture_size_budget.json",
+        "tools/quality/check_flutter_architecture_size.py",
+        "docs/evidence/admin/admin-space-refactor.md",
+        "lib/pages/admin_space"
+      ]
+    },
+    {
+      "id": "moderation-device-evidence",
+      "label": "Décisions de modération vérifiées de bout en bout en production",
+      "status": "pending",
+      "evidence": [
+        "docs/evidence/admin/moderation-e2e.md"
+      ]
+    }
+  ]
+}

@@ -11,6 +11,7 @@ const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
 const env_1 = require("../../config/env");
 const firestore_1 = require("../../core/firestore");
+const admin_audit_1 = require("../marketplace/services/admin_audit");
 const roles_1 = require("../marketplace/services/roles");
 const videomaker_utils_1 = require("./videomaker_utils");
 const VEO_API_KEY = (0, params_1.defineSecret)("VEO_API_KEY");
@@ -36,7 +37,12 @@ function requireAdmin(request) {
     const token = request.auth?.token;
     if (!token)
         throw new https_1.HttpsError("unauthenticated", "Authentication required");
-    (0, roles_1.requireAnyRole)((0, roles_1.extractRolesFromAuthToken)(token), ["admin", "superadmin"], "Admin access required");
+    const roles = (0, roles_1.extractRolesFromAuthToken)(token);
+    (0, roles_1.requireAnyRole)(roles, ["admin", "superadmin"], "Admin access required");
+    return {
+        actorId: String(request.auth?.uid || "").trim() || "unknown",
+        actorRole: roles.includes("superadmin") ? "superadmin" : "admin",
+    };
 }
 function messageFromUnknown(error) {
     if (error instanceof Error && error.message.trim()) {
@@ -227,7 +233,7 @@ exports.adminGenerateVideo = (0, https_1.onCall)({
     timeoutSeconds: 540,
     memory: "1GiB",
 }, async (request) => {
-    requireAdmin(request);
+    const actor = requireAdmin(request);
     const input = asRecord(request.data);
     let prompt;
     let apiKey;
@@ -249,6 +255,8 @@ exports.adminGenerateVideo = (0, https_1.onCall)({
         throw mapGenerationError(error);
     }
     const model = videomaker_utils_1.DEFAULT_VEO_MODEL;
+    let result = {};
+    let auditPayload = {};
     const jobRef = (0, firestore_1.getDb)().collection(VIDEO_JOBS_COLLECTION).doc();
     const now = firebase_admin_1.default.firestore.FieldValue.serverTimestamp();
     await jobRef.set({
@@ -310,7 +318,13 @@ exports.adminGenerateVideo = (0, https_1.onCall)({
             updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
             errorMessage: firebase_admin_1.default.firestore.FieldValue.delete(),
         });
-        return { id: jobRef.id, status: "ready", publicUrl, fileName, model, aspectRatio };
+        auditPayload = {
+            storagePath,
+            model,
+            aspectRatio,
+            sizeBytes: videoBytes.length,
+        };
+        result = { id: jobRef.id, status: "ready", publicUrl, fileName, model, aspectRatio };
     }
     catch (error) {
         const mappedError = mapGenerationError(error);
@@ -328,6 +342,19 @@ exports.adminGenerateVideo = (0, https_1.onCall)({
         });
         throw mappedError;
     }
+    // La génération consomme un service payant et publie un média : elle est
+    // journalisée après coup, hors du bloc qui marque le travail en échec —
+    // une écriture d'audit défaillante ne doit pas faire passer une vidéo
+    // produite pour un échec.
+    await (0, admin_audit_1.writeAdminActionLog)({
+        actorId: actor.actorId,
+        actorRole: actor.actorRole,
+        actionType: "generate_video",
+        targetType: "generated_video",
+        targetId: jobRef.id,
+        after: auditPayload,
+    });
+    return result;
 });
 exports.adminListGeneratedVideos = (0, https_1.onCall)({
     region: env_1.PROJECT_REGION,
@@ -376,7 +403,7 @@ exports.adminDeleteGeneratedVideo = (0, https_1.onCall)({
     timeoutSeconds: 45,
     memory: "256MiB",
 }, async (request) => {
-    requireAdmin(request);
+    const actor = requireAdmin(request);
     const id = typeof asRecord(request.data).id === "string"
         ? String(asRecord(request.data).id).trim()
         : "";
@@ -394,7 +421,6 @@ exports.adminDeleteGeneratedVideo = (0, https_1.onCall)({
             await firebase_admin_1.default.storage().bucket().file(storagePath).delete({ ignoreNotFound: true });
         }
         await ref.delete();
-        return { id, deleted: true };
     }
     catch (error) {
         firebase_functions_1.logger.error("adminDeleteGeneratedVideo failed", {
@@ -405,5 +431,16 @@ exports.adminDeleteGeneratedVideo = (0, https_1.onCall)({
         });
         throw new https_1.HttpsError("internal", "Impossible de supprimer cette vidéo.");
     }
+    // Suppression irréversible : la trace conserve le chemin de stockage afin
+    // que la décision reste explicable après coup.
+    await (0, admin_audit_1.writeAdminActionLog)({
+        actorId: actor.actorId,
+        actorRole: actor.actorRole,
+        actionType: "delete_generated_video",
+        targetType: "generated_video",
+        targetId: id,
+        before: { storagePath },
+    });
+    return { id, deleted: true };
 });
 //# sourceMappingURL=videomaker.js.map

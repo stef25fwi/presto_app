@@ -7,6 +7,8 @@ import { defineSecret } from "firebase-functions/params";
 
 import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { getDb } from "../../core/firestore";
+import type { UserRole } from "../marketplace/constants/enums";
+import { writeAdminActionLog } from "../marketplace/services/admin_audit";
 import { extractRolesFromAuthToken, requireAnyRole } from "../marketplace/services/roles";
 import {
   DEFAULT_VEO_MODEL,
@@ -42,14 +44,17 @@ function asRecord(value: unknown): JsonRecord {
     : {};
 }
 
-function requireAdmin(request: { auth?: { token?: unknown } | null }): void {
+function requireAdmin(
+  request: { auth?: { uid?: string; token?: unknown } | null },
+): { actorId: string; actorRole: UserRole } {
   const token = request.auth?.token as Record<string, unknown> | undefined;
   if (!token) throw new HttpsError("unauthenticated", "Authentication required");
-  requireAnyRole(
-    extractRolesFromAuthToken(token),
-    ["admin", "superadmin"],
-    "Admin access required",
-  );
+  const roles = extractRolesFromAuthToken(token);
+  requireAnyRole(roles, ["admin", "superadmin"], "Admin access required");
+  return {
+    actorId: String(request.auth?.uid || "").trim() || "unknown",
+    actorRole: roles.includes("superadmin") ? "superadmin" : "admin",
+  };
 }
 
 function messageFromUnknown(error: unknown): string {
@@ -268,7 +273,7 @@ export const adminGenerateVideo = onCall(
     memory: "1GiB",
   },
   async (request) => {
-    requireAdmin(request);
+    const actor = requireAdmin(request);
     const input = asRecord(request.data);
     let prompt: string;
     let apiKey: string;
@@ -293,6 +298,8 @@ export const adminGenerateVideo = onCall(
     }
 
     const model = DEFAULT_VEO_MODEL;
+    let result: JsonRecord = {};
+    let auditPayload: JsonRecord = {};
     const jobRef = getDb().collection(VIDEO_JOBS_COLLECTION).doc();
     const now = admin.firestore.FieldValue.serverTimestamp();
     await jobRef.set({
@@ -355,7 +362,13 @@ export const adminGenerateVideo = onCall(
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         errorMessage: admin.firestore.FieldValue.delete(),
       });
-      return { id: jobRef.id, status: "ready", publicUrl, fileName, model, aspectRatio };
+      auditPayload = {
+        storagePath,
+        model,
+        aspectRatio,
+        sizeBytes: videoBytes.length,
+      };
+      result = { id: jobRef.id, status: "ready", publicUrl, fileName, model, aspectRatio };
     } catch (error) {
       const mappedError = mapGenerationError(error);
       logger.error("adminGenerateVideo failed", {
@@ -372,6 +385,20 @@ export const adminGenerateVideo = onCall(
       });
       throw mappedError;
     }
+
+    // La génération consomme un service payant et publie un média : elle est
+    // journalisée après coup, hors du bloc qui marque le travail en échec —
+    // une écriture d'audit défaillante ne doit pas faire passer une vidéo
+    // produite pour un échec.
+    await writeAdminActionLog({
+      actorId: actor.actorId,
+      actorRole: actor.actorRole,
+      actionType: "generate_video",
+      targetType: "generated_video",
+      targetId: jobRef.id,
+      after: auditPayload,
+    });
+    return result;
   },
 );
 
@@ -429,7 +456,7 @@ export const adminDeleteGeneratedVideo = onCall(
     memory: "256MiB",
   },
   async (request) => {
-    requireAdmin(request);
+    const actor = requireAdmin(request);
     const id = typeof asRecord(request.data).id === "string"
       ? String(asRecord(request.data).id).trim()
       : "";
@@ -446,7 +473,6 @@ export const adminDeleteGeneratedVideo = onCall(
         await admin.storage().bucket().file(storagePath).delete({ ignoreNotFound: true });
       }
       await ref.delete();
-      return { id, deleted: true };
     } catch (error) {
       logger.error("adminDeleteGeneratedVideo failed", {
         uid: request.auth?.uid ?? null,
@@ -456,5 +482,17 @@ export const adminDeleteGeneratedVideo = onCall(
       });
       throw new HttpsError("internal", "Impossible de supprimer cette vidéo.");
     }
+
+    // Suppression irréversible : la trace conserve le chemin de stockage afin
+    // que la décision reste explicable après coup.
+    await writeAdminActionLog({
+      actorId: actor.actorId,
+      actorRole: actor.actorRole,
+      actionType: "delete_generated_video",
+      targetType: "generated_video",
+      targetId: id,
+      before: { storagePath },
+    });
+    return { id, deleted: true };
   },
 );

@@ -10,6 +10,7 @@ const https_1 = require("firebase-functions/v2/https");
 const env_1 = require("../../config/env");
 const logger_1 = require("../../core/logger");
 const tts_service_1 = require("../ai/tts_service");
+const admin_audit_1 = require("../marketplace/services/admin_audit");
 const roles_1 = require("../marketplace/services/roles");
 if (firebase_admin_1.default.apps.length === 0)
     firebase_admin_1.default.initializeApp();
@@ -35,6 +36,10 @@ function requireAdmin(request) {
     const roles = (0, roles_1.extractRolesFromAuthToken)(request.auth?.token || {});
     (0, roles_1.requireAnyRole)(roles, ["admin", "superadmin"], "Admin access required");
     return uid;
+}
+function actorRole(request) {
+    const roles = (0, roles_1.extractRolesFromAuthToken)(request.auth?.token || {});
+    return roles.includes("superadmin") ? "superadmin" : "admin";
 }
 async function loadPaymentText(requestText) {
     const direct = cleanText(requestText);
@@ -229,6 +234,16 @@ exports.publishPaymentInfoAudioDraft = (0, https_1.onCall)({
         uid,
         storagePath,
         version: payload.version,
+    });
+    // La publication rend l'audio visible des utilisateurs : c'est le
+    // changement d'état qui doit rester traçable, pas la génération interne.
+    await (0, admin_audit_1.writeAdminActionLog)({
+        actorId: uid,
+        actorRole: actorRole(request),
+        actionType: "publish_payment_info_audio",
+        targetType: "public_config",
+        targetId: PUBLIC_CONFIG_DOC,
+        after: { storagePath, version: payload.version, voice: payload.voice },
     });
     return { ok: true, ...payload, generatedAt: new Date().toISOString() };
 });

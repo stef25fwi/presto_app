@@ -10,6 +10,7 @@ const env_1 = require("../../config/env");
 const firestore_1 = require("../../core/firestore");
 const logger_1 = require("../../core/logger");
 const constants_1 = require("../../shared/constants");
+const admin_audit_1 = require("../marketplace/services/admin_audit");
 const roles_1 = require("../marketplace/services/roles");
 const push_1 = require("./push");
 function requireAuthUid(request) {
@@ -81,6 +82,18 @@ exports.broadcastTestNotification = (0, https_1.onCall)({
     logger_1.logger.info("admin_broadcast_test_sent", {
         actor: request.auth?.uid ?? "unknown",
         ...result,
+    });
+    // Une diffusion touche tous les destinataires : elle laisse une trace
+    // nominative dans le journal d'administration, comme toute action
+    // sensible du point 9.
+    await (0, admin_audit_1.writeAdminActionLog)({
+        actorId: request.auth?.uid ?? "unknown",
+        actorRole: roles.includes("superadmin") ? "superadmin" : "admin",
+        actionType: "broadcast_test_notification",
+        targetType: "push_broadcast",
+        targetId: "all_users",
+        after: { title, body },
+        metadata: { ...result },
     });
     return { ok: true, ...result };
 });

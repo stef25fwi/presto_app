@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 1,
+  "point": 9,
+  "name": "Matrice d'autorité des opérations d'administration",
+  "updatedAt": "2026-08-04T00:00:00Z",
+  "rule": "Toute opération d'administration ou de modération est un appel serveur, protégé par un rôle explicite, et journalisée lorsqu'elle modifie l'état. Une opération non déclarée ici fait échouer le contrôle.",
+  "roles": {
+    "moderator": "Traite les signalements et les contenus, sans toucher aux rôles ni aux comptes.",
+    "admin": "Opère l'ensemble des outils d'exploitation et de modération.",
+    "superadmin": "Hérite d'admin et reste seul destinataire des évolutions de privilèges les plus sensibles."
+  },
+  "guards": [
+    {
+      "id": "requireAdmin@admin/payment_info_audio",
+      "file": "functions/src/modules/admin/payment_info_audio.ts",
+      "symbol": "requireAdmin",
+      "roles": [
+        "admin",
+        "superadmin"
+      ]
+    },
+    {
+      "id": "requireAdmin@admin/videomaker",
+      "file": "functions/src/modules/admin/videomaker.ts",
+      "symbol": "requireAdmin",
+      "roles": [
+        "admin",
+        "superadmin"
+      ]
+    },
+    {
+      "id": "requireAdminAccess@messaging/callables",
+      "file": "functions/src/modules/messaging/callables.ts",
+      "symbol": "requireAdminAccess",
+      "roles": [
+        "admin",
+        "superadmin"
+      ],
+      "note": "S'appuie sur hasAdminAccessFromRequest, qui accepte aussi les revendications héritées admin/superadmin."
+    }
+  ],
+  "operations": [
+    {
+      "callable": "applyUserRoleClaims",
+      "file": "functions/src/modules/marketplace/callables/admin.ts",
+      "roles": [
+        "admin",
+        "superadmin"
+      ],
+      "mutating": true,
+      "appCheck": "enforced",
+      "audit": "writeAdminActionLog",
+      "description": "Attribue les rôles et synchronise les revendications Firebase."
+    },
+    {
+      "callable": "logAdminAction",
+      "file": "functions/src/modules/marketplace/callables/admin.ts",
+      "roles": [
+        "admin",
+        "superadmin",
+        "moderator"
+      ],
+      "mutating": true,
+      "appCheck": "enforced",
+      "audit": "writeAdminActionLog",
+      "description": "Journalise une décision prise depuis l'espace d'administration."
+    },
+    {
+      "callable": "reviewListingPhoto",
+      "file": "functions/src/modules/marketplace/callables/admin.ts",
+      "roles": [
+        "moderator",
+        "admin",
+        "superadmin"
+      ],
+      "mutating": true,
+      "appCheck": "enforced",
+      "audit": "writeAdminActionLog",
+      "description": "Accepte ou refuse une photo d'annonce en modération."
+    },
+    {
+      "callable": "adminBulkDeleteListings",
+      "file": "functions/src/modules/marketplace/callables/admin_bulk_listings.ts",
+      "roles": [
+        "admin",
+        "superadmin"
+      ],
+      "mutating": true,
+      "appCheck": "enforced",
+      "audit": "writeAdminActionLog",
+      "description": "Supprime en masse des annonces, avec motif obligatoire."
+    },
+    {
+      "callable": "adminModerateReviewV2",
+      "file": "functions/src/modules/marketplace/callables/reviews_admin_v2.ts",
+      "roles": [
+        "moderator",
+        "admin",
+        "superadmin"
+      ],
+      "mutating": true,
+      "appCheck": "enforced",
+      "audit": "REVIEW_MODERATION_ACTIONS_COLLECTION",
+      "description": "Décide de la publication ou du retrait d'un avis, avec trace dédiée."
+    },
+    {
+      "callable": "adminUnblockConversation",
+      "file": "functions/src/modules/messaging/callables.ts",
+      "guard": "requireAdminAccess@messaging/callables",
+      "roles": [
+        "admin",
+        "superadmin"
+      ],
+      "mutating": true,
+      "appCheck": "disabled",
+      "appCheckWaiver": {
+        "reason": "ADMIN_MESSAGING_CALLABLE_OPTIONS désactive App Check pour ce déblocage d'urgence.",
+        "status": "open",
+        "owner": "point-12-securite",
+        "expectedFix": "Rétablir enforceAppCheck avec le point 12 ou documenter formellement la dérogation."
+      },
+      "audit": "writeAdminActionLog",
+      "description": "Débloque une conversation depuis l'espace d'administration."
+    },
+    {
+      "callable": "adminGetAiMetrics",
+      "file": "functions/src/modules/ai/ai_metrics.ts",
+      "roles": [
+        "admin",
+        "superadmin"
+      ],
+      "mutating": false,
+      "appCheck": "enforced",
+      "audit": "none",
+      "description": "Lecture des métriques IA agrégées, sans contenu utilisateur."
+    },
+    {
+      "callable": "adminGenerateVideo",
+      "file": "functions/src/modules/admin/videomaker.ts",
+      "guard": "requireAdmin@admin/videomaker",
+      "roles": [
+        "admin",
+        "superadmin"
+      ],
+      "mutating": true,
+      "appCheck": "enforced",
+      "audit": "writeAdminActionLog",
+      "description": "Génère une vidéo marketing via le fournisseur VEO."
+    },
+    {
+      "callable": "adminListGeneratedVideos",
+      "file": "functions/src/modules/admin/videomaker.ts",
+      "guard": "requireAdmin@admin/videomaker",
+      "roles": [
+        "admin",
+        "superadmin"
+      ],
+      "mutating": false,
+      "appCheck": "enforced",
+      "audit": "none",
+      "description": "Liste les vidéos générées."
+    },
+    {
+      "callable": "adminDeleteGeneratedVideo",
+      "file": "functions/src/modules/admin/videomaker.ts",
+      "guard": "requireAdmin@admin/videomaker",
+      "roles": [
+        "admin",
+        "superadmin"
+      ],
+      "mutating": true,
+      "appCheck": "enforced",
+      "audit": "writeAdminActionLog",
+      "description": "Supprime une vidéo générée."
+    },
+    {
+      "callable": "generatePaymentInfoAudio",
+      "file": "functions/src/modules/admin/payment_info_audio.ts",
+      "guard": "requireAdmin@admin/payment_info_audio",
+      "roles": [
+        "admin",
+        "superadmin"
+      ],
+      "mutating": true,
+      "appCheck": "enforced",
+      "audit": "none",
+      "description": "Produit l'audio d'information de paiement.",
+      "auditWaiver": {
+        "reason": "Génération interne sans effet visible : la trace est portée par la publication (publishPaymentInfoAudioDraft).",
+        "status": "accepted"
+      }
+    },
+    {
+      "callable": "generatePaymentInfoAudioDraft",
+      "file": "functions/src/modules/admin/payment_info_audio.ts",
+      "guard": "requireAdmin@admin/payment_info_audio",
+      "roles": [
+        "admin",
+        "superadmin"
+      ],
+      "mutating": true,
+      "appCheck": "enforced",
+      "audit": "none",
+      "description": "Prépare un brouillon audio avant publication.",
+      "auditWaiver": {
+        "reason": "Brouillon non diffusé : la trace est portée par la publication (publishPaymentInfoAudioDraft).",
+        "status": "accepted"
+      }
+    },
+    {
+      "callable": "publishPaymentInfoAudioDraft",
+      "file": "functions/src/modules/admin/payment_info_audio.ts",
+      "guard": "requireAdmin@admin/payment_info_audio",
+      "roles": [
+        "admin",
+        "superadmin"
+      ],
+      "mutating": true,
+      "appCheck": "enforced",
+      "audit": "writeAdminActionLog",
+      "description": "Publie le brouillon audio validé."
+    },
+    {
+      "callable": "broadcastTestNotification",
+      "file": "functions/src/modules/notifications/callables.ts",
+      "roles": [
+        "admin",
+        "superadmin"
+      ],
+      "mutating": true,
+      "appCheck": "enforced",
+      "audit": "writeAdminActionLog",
+      "description": "Diffuse une notification de test à l'ensemble des destinataires."
+    }
+  ],
+  "clientElevationProtection": {
+    "rulesFile": "firestore.rules",
+    "protectedUserFields": [
+      "roles",
+      "role",
+      "primaryRole",
+      "adminRole",
+      "admin",
+      "superadmin",
+      "moderator",
+      "isAdmin",
+      "isModerator",
+      "isSuperadmin",
+      "marketplaceAccess"
+    ]
+  }
+}

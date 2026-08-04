@@ -25,6 +25,7 @@ const logger_1 = require("../../core/logger");
 const rate_limit_1 = require("../../core/rate_limit");
 const constants_1 = require("../../shared/constants");
 const hash_1 = require("../../utils/hash");
+const admin_audit_1 = require("../marketplace/services/admin_audit");
 const roles_1 = require("../marketplace/services/roles");
 const counters_1 = require("../notifications/counters");
 const moderation_1 = require("./moderation");
@@ -1190,6 +1191,18 @@ exports.adminUnblockConversation = (0, https_1.onCall)(ADMIN_MESSAGING_CALLABLE_
         conversationId_len: conversationId.length,
         adminUid_len: currentUserId.length,
         participantCount: participants.length,
+    });
+    // Le déblocage force l'état d'une conversation privée : il doit rester
+    // attribuable à un administrateur nommé.
+    await (0, admin_audit_1.writeAdminActionLog)({
+        actorId: currentUserId,
+        actorRole: (0, roles_1.extractRolesFromAuthToken)(request.auth?.token).includes("superadmin")
+            ? "superadmin"
+            : "admin",
+        actionType: "admin_unblock_conversation",
+        targetType: "conversation",
+        targetId: conversationId,
+        after: { participantCount: participants.length },
     });
     return { ok: true };
 });

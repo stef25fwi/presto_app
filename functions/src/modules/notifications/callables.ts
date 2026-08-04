@@ -4,6 +4,7 @@ import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { db } from "../../core/firestore";
 import { logger } from "../../core/logger";
 import { COLLECTIONS } from "../../shared/constants";
+import { writeAdminActionLog } from "../marketplace/services/admin_audit";
 import { extractRolesFromAuthToken, requireAnyRole } from "../marketplace/services/roles";
 import { sendBroadcastPush, sendPushToUser } from "./push";
 
@@ -90,6 +91,19 @@ export const broadcastTestNotification = onCall(
     logger.info("admin_broadcast_test_sent", {
       actor: request.auth?.uid ?? "unknown",
       ...result,
+    });
+
+    // Une diffusion touche tous les destinataires : elle laisse une trace
+    // nominative dans le journal d'administration, comme toute action
+    // sensible du point 9.
+    await writeAdminActionLog({
+      actorId: request.auth?.uid ?? "unknown",
+      actorRole: roles.includes("superadmin") ? "superadmin" : "admin",
+      actionType: "broadcast_test_notification",
+      targetType: "push_broadcast",
+      targetId: "all_users",
+      after: { title, body },
+      metadata: { ...result },
     });
 
     return { ok: true, ...result };
