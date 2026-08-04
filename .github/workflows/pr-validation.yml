@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     outputs:
-      web_changed: ${{ steps.scope.outputs.web }}
+      web_changed: 'true'
     steps:
       - uses: actions/checkout@v7
         with:
@@ -42,10 +42,9 @@ jobs:
 
           echo "functions=$(changed '^(functions/|package.json$|package-lock.json$)')" >> "$GITHUB_OUTPUT"
           echo "firestore=$(changed '^(functions/|firestore\.rules$|firestore\.indexes\.json$|storage\.rules$)')" >> "$GITHUB_OUTPUT"
-          echo "web=$(changed '^(lib/|web/|assets/|fonts/|pubspec\.yaml$|pubspec\.lock$|firebase\.json$|\.firebaserc$)')" >> "$GITHUB_OUTPUT"
+          echo "web=true" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@v4
-        if: ${{ steps.scope.outputs.functions == 'true' || steps.scope.outputs.firestore == 'true' || steps.scope.outputs.web == 'true' }}
         with:
           node-version: '22'
           cache: npm
@@ -173,7 +172,6 @@ jobs:
           npm --prefix functions run test:firestore 2>&1 | tee pr_validation_logs/firestore_rules.log
 
       - name: Build web
-        if: ${{ steps.scope.outputs.web == 'true' }}
         id: web_build
         continue-on-error: true
         env:
@@ -239,19 +237,15 @@ jobs:
         env:
           FUNCTIONS_CHANGED: ${{ steps.scope.outputs.functions }}
           FIRESTORE_CHANGED: ${{ steps.scope.outputs.firestore }}
-          WEB_CHANGED: ${{ steps.scope.outputs.web }}
         run: |
           set -euo pipefail
-          required_outcomes='${{ steps.generated_check.outcome }} ${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.quality_gate.outcome }} ${{ steps.critical_coverage.outcome }}'
+          required_outcomes='${{ steps.generated_check.outcome }} ${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.quality_gate.outcome }} ${{ steps.critical_coverage.outcome }} ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}'
 
           if [ "$FUNCTIONS_CHANGED" = 'true' ]; then
             required_outcomes="$required_outcomes ${{ steps.functions_deps.outcome }} ${{ steps.functions_build.outcome }} ${{ steps.functions_test.outcome }}"
           fi
           if [ "$FIRESTORE_CHANGED" = 'true' ]; then
             required_outcomes="$required_outcomes ${{ steps.firebase_cli.outcome }} ${{ steps.firestore_rules.outcome }}"
-          fi
-          if [ "$WEB_CHANGED" = 'true' ]; then
-            required_outcomes="$required_outcomes ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}"
           fi
 
           for outcome in $required_outcomes; do
@@ -270,7 +264,7 @@ jobs:
   preview:
     name: Firebase Hosting preview
     needs: validate
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && needs.validate.outputs.web_changed == 'true' }}
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
