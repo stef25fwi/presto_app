@@ -18,7 +18,7 @@ typedef MessageReportReasonPicker = Future<MessageReportReasonCode?> Function(
 typedef MessageReportTextPicker = Future<String?> Function(
   BuildContext context,
 );
-typedef MarketplaceVerificationTokenProvider = Future<String?> Function(
+typedef MarketplaceVerificationTokenProvider = Future<String> Function(
   MarketplaceHumanVerificationAction action,
 );
 typedef ConversationReportSubmitter = Future<bool> Function(
