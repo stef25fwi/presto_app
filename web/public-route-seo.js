@@ -5,6 +5,7 @@
   const organizationId = baseUrl + '/#organization';
   const websiteId = baseUrl + '/#website';
   const logoId = baseUrl + '/#logo';
+  const pageLastModified = '2026-08-03T23:30:00Z';
   const pages = {
     '/mentions-legales': {
       title: 'Mentions légales | iliprestō',
@@ -41,15 +42,6 @@
 
   const path = normalizePath(window.location.pathname);
 
-  // Sur la racine publique, la page HTML de pré-lancement est le premier écran
-  // utile. Flutter émet `flutter-first-frame` avant que sa page équivalente ait
-  // totalement stabilisé son rendu. Sans cette protection, le shell HTML est
-  // retiré trop tôt et laisse apparaître brièvement le splash beige/logo avant
-  // que la même page ne revienne, ce qui ressemble à un redémarrage.
-  //
-  // Le listener est enregistré en capture avant celui de `index.html`, bloque
-  // son retrait immédiat, puis effectue une transition courte une fois Flutter
-  // prêt. Les autres routes conservent leur comportement normal.
   const publicHosts = new Set([
     'ilipresto.fr',
     'www.ilipresto.fr',
@@ -110,7 +102,7 @@
         url: canonical,
         name: page.title,
         description: page.description,
-        dateModified: '2026-08-02T18:00:00Z',
+        dateModified: pageLastModified,
         inLanguage: 'fr-FR',
         isPartOf: {'@id': websiteId},
         publisher: {'@id': organizationId},
