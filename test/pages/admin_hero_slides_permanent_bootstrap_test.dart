@@ -38,9 +38,14 @@ void main() {
 
     // Some test bootstraps can already expose a mocked default application.
     // Recreating it would raise [core/duplicate-app], so initialization must
-    // remain idempotent. When no app exists, provide a deterministic bucket so
-    // FirebaseStorage.instance can be constructed by the real page service.
-    if (Firebase.apps.isEmpty) {
+    // remain idempotent. Firebase.apps.isEmpty is not a reliable guard here
+    // because test isolates are reused across files, so catch the exception
+    // instead of pre-checking, the same idiom other suites in this repo use.
+    // A default app left behind by another test file may have no storage
+    // bucket configured (Firebase forbids deleting/reconfiguring "[DEFAULT]"
+    // once created), so HeroSlidesService falls back to the project's real
+    // bucket in that case instead of this test trying to fix it here.
+    try {
       await Firebase.initializeApp(
         options: const FirebaseOptions(
           apiKey: 'test-api-key',
@@ -50,6 +55,10 @@ void main() {
           storageBucket: 'presto-test.appspot.com',
         ),
       );
+    } on FirebaseException catch (error) {
+      if (error.code != 'duplicate-app') {
+        rethrow;
+      }
     }
 
     originalStoragePlatform = FirebaseStoragePlatform.instance;
