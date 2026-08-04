@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "scope": "point-3-architecture-technical",
+  "status": "in_progress",
+  "updatedAt": "2026-08-04",
+  "controls": [
+    {"id":"system-boundaries","status":"implemented","evidence":["docs/architecture/system-overview.md","docs/architecture/data-flows.md"]},
+    {"id":"critical-data-flows","status":"implemented","evidence":["docs/architecture/data-flows.md"]},
+    {"id":"architecture-budgets","status":"in_progress","evidence":["quality/technical-debt-register.md","tools/quality/audit_repository.py"]},
+    {"id":"p0-debt","status":"pending","evidence":["quality/technical-debt-register.md"]},
+    {"id":"repository-audit","status":"pending","evidence":[]},
+    {"id":"flutter-analysis","status":"pending","evidence":[]},
+    {"id":"functions-build","status":"pending","evidence":[]}
+  ]
+}
