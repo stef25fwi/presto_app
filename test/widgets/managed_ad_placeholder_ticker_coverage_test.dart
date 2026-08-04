@@ -92,13 +92,16 @@ void main() {
         _image('second', 'https://cdn.example/second.png'),
       ]);
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
 
+      final switcher = tester.widget<AnimatedSwitcher>(find.byType(AnimatedSwitcher));
+      expect(
+        switcher.child?.key,
+        const ValueKey('network:https://cdn.example/first.png'),
+      );
       expect(
         find.byKey(const ValueKey('network:https://cdn.example/first.png')),
         findsOneWidget,
       );
-      expect(find.byKey(const ValueKey('asset:assets/fallback/a.png')), findsNothing);
     });
 
     testWidgets('désactivation et changement intervalle pilotent la rotation',
@@ -205,6 +208,8 @@ void main() {
     testWidgets('utilise la largeur média quand les contraintes sont infinies',
         (tester) async {
       final provider = MemoryImage(_pixelPng);
+      await tester.binding.setSurfaceSize(const Size(800, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(
         MaterialApp(
@@ -224,6 +229,7 @@ void main() {
       await tester.pump();
 
       expect(find.byType(Image), findsOneWidget);
+      expect(tester.getSize(find.byType(Image)), const Size(800, 800));
       expect(tester.takeException(), isNull);
     });
   });
