@@ -51,16 +51,24 @@ gcloud services enable "${REQUIRED_APIS[@]}" \
 gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
   --role="roles/serviceusage.serviceUsageConsumer" \
-  --condition=None \
   --quiet >/dev/null
 
 echo
-echo "API actives :"
-gcloud services list \
-  --enabled \
-  --project "$PROJECT_ID" \
-  --filter="name:(${REQUIRED_APIS[*]})" \
-  --format='table(name,title)'
+echo "Vérification des API :"
+for api in "${REQUIRED_APIS[@]}"; do
+  enabled="$(
+    gcloud services list \
+      --enabled \
+      --project "$PROJECT_ID" \
+      --filter="config.name=${api}" \
+      --format='value(config.name)'
+  )"
+  if [[ "$enabled" != "$api" ]]; then
+    echo "ERREUR: l'API $api n'est pas confirmée active." >&2
+    exit 1
+  fi
+  echo "  OK  $api"
+done
 
 cat <<EOF
 
