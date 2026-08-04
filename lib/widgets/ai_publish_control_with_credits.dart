@@ -19,6 +19,7 @@ class AiPublishControlWithCredits extends StatelessWidget {
   final bool showAdminDiagnostics;
   final bool highlightVocalCard;
   final bool dimVocalCard;
+  final SubscriptionCreditService? creditsService;
 
   const AiPublishControlWithCredits({
     super.key,
@@ -34,6 +35,7 @@ class AiPublishControlWithCredits extends StatelessWidget {
     this.showAdminDiagnostics = false,
     this.highlightVocalCard = false,
     this.dimVocalCard = false,
+    this.creditsService,
   });
 
   @override
@@ -41,11 +43,12 @@ class AiPublishControlWithCredits extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SubscriptionCreditsInlineBadges(
-          kinds: [
+        SubscriptionCreditsInlineBadges(
+          kinds: const [
             SubscriptionCreditKind.voiceAi,
             SubscriptionCreditKind.textAi,
           ],
+          service: creditsService,
         ),
         const SizedBox(height: 10),
         AiPublishControl(
