@@ -6,7 +6,7 @@
   "controls": [
     {"id":"all-prior-points-verified","status":"pending","evidence":["quality/18-point-completion.json"]},
     {"id":"release-candidate-frozen","status":"pending","evidence":["docs/production/PHASE_16_PRIORITY_EXECUTION.md"]},
-    {"id":"production-smoke-tests","status":"pending","evidence":["tools/production/run_smoke_tests.sh",".github/workflows/firebase-deploy.yml"]},
+    {"id":"production-smoke-tests","status":"pending","evidence":["tools/production/run_smoke_tests.sh",".github/workflows/deploy.yml"]},
     {"id":"rollback-tested","status":"pending","evidence":["docs/deployment/rollback.md"]},
     {"id":"incident-contacts-confirmed","status":"pending","evidence":["docs/production/PHASE_16_PRIORITY_EXECUTION.md"]},
     {"id":"support-playbook-ready","status":"verified","evidence":["docs/production/SUPPORT_PLAYBOOK.md"]},
