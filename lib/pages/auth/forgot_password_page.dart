@@ -73,8 +73,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   String? _emailValidator(String? value) {
     final text = value?.trim() ?? '';
-    if (text.isEmpty) return 'Email obligatoire.';
-    if (!text.contains('@')) return 'Email invalide.';
+    if (text.isEmpty) return 'Adresse e-mail obligatoire.';
+    if (!text.contains('@')) return 'Adresse e-mail invalide.';
     return null;
   }
 
@@ -97,13 +97,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     const Icon(Icons.lock_reset, size: 72, color: blue),
                     const SizedBox(height: 16),
                     const Text(
-                      'Réinitialiser le mot de passe',
+                      'Réinitialiser votre mot de passe',
                       style:
                           TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Entre ton email. Si un compte Prestō existe avec cette adresse, un lien de réinitialisation sera envoyé.',
+                      'Indiquez votre adresse e-mail. Si un compte iliprestō existe avec cette adresse, vous recevrez un lien sécurisé pour choisir un nouveau mot de passe.',
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
@@ -111,7 +111,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       controller: _emailCtrl,
                       keyboardType: TextInputType.emailAddress,
                       decoration: const InputDecoration(
-                        labelText: 'Email',
+                        labelText: 'Adresse e-mail',
                         border: OutlineInputBorder(),
                       ),
                       validator: _emailValidator,
