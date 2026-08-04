@@ -239,27 +239,37 @@ jobs:
           FIRESTORE_CHANGED: ${{ steps.scope.outputs.firestore }}
         run: |
           set -euo pipefail
-          required_outcomes='${{ steps.generated_check.outcome }} ${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.quality_gate.outcome }} ${{ steps.critical_coverage.outcome }} ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}'
+
+          assert_success() {
+            local label="$1"
+            local outcome="$2"
+            if [ "$outcome" != 'success' ]; then
+              echo "::error::$label failed (outcome: ${outcome:-missing}). Inspect the logs and artifacts above."
+              exit 1
+            fi
+            echo "OK: $label"
+          }
+
+          assert_success 'Generated hardening patches' '${{ steps.generated_check.outcome }}'
+          assert_success 'Flutter dependencies' '${{ steps.flutter_deps.outcome }}'
+          assert_success 'Flutter analyze' '${{ steps.flutter_analyze.outcome }}'
+          assert_success 'Flutter tests with coverage' '${{ steps.flutter_test.outcome }}'
+          assert_success 'Repository quality gates' '${{ steps.quality_gate.outcome }}'
+          assert_success 'Critical module coverage' '${{ steps.critical_coverage.outcome }}'
+          assert_success 'Web build' '${{ steps.web_build.outcome }}'
+          assert_success 'Bundle budget' '${{ steps.bundle_budget.outcome }}'
 
           if [ "$FUNCTIONS_CHANGED" = 'true' ]; then
-            required_outcomes="$required_outcomes ${{ steps.functions_deps.outcome }} ${{ steps.functions_build.outcome }} ${{ steps.functions_test.outcome }}"
+            assert_success 'Functions dependencies' '${{ steps.functions_deps.outcome }}'
+            assert_success 'Functions build' '${{ steps.functions_build.outcome }}'
+            assert_success 'Functions tests' '${{ steps.functions_test.outcome }}'
           fi
           if [ "$FIRESTORE_CHANGED" = 'true' ]; then
-            required_outcomes="$required_outcomes ${{ steps.firebase_cli.outcome }} ${{ steps.firestore_rules.outcome }}"
+            assert_success 'Firebase CLI' '${{ steps.firebase_cli.outcome }}'
+            assert_success 'Firestore rules tests' '${{ steps.firestore_rules.outcome }}'
           fi
 
-          for outcome in $required_outcomes; do
-            case "$outcome" in
-              success)
-                ;;
-              *)
-                echo "::error::Pull request validation failed (outcome: $outcome). Inspect the logs and artifacts above."
-                exit 1
-                ;;
-            esac
-          done
-
-          echo "Validation succeeded: $required_outcomes"
+          echo 'Validation succeeded.'
 
   preview:
     name: Firebase Hosting preview
