@@ -6,9 +6,40 @@ import 'package:presto_app/widgets/ai_publish_control.dart';
 import 'package:presto_app/widgets/ai_publish_control_with_credits.dart';
 
 void main() {
+  SubscriptionCreditService deterministicCreditsService() {
+    return SubscriptionCreditService(
+      caller: (name, parameters) async {
+        expect(name, 'getMySubscriptionCredits');
+        expect(parameters, isNull);
+        return <String, dynamic>{
+          'plan': 'free',
+          'period': '2026-08',
+          'freeAccessMode': true,
+          'credits': <String, dynamic>{
+            'voiceAi': <String, dynamic>{
+              'used': 0,
+              'limit': 1,
+              'remaining': 1,
+              'unlimited': false,
+              'exhausted': false,
+            },
+            'textAi': <String, dynamic>{
+              'used': 0,
+              'limit': 2,
+              'remaining': 2,
+              'unlimited': false,
+              'exhausted': false,
+            },
+          },
+        };
+      },
+    );
+  }
+
   testWidgets('affiche les crédits IA et transmet toutes les options',
       (tester) async {
     final link = LayerLink();
+    final creditsService = deterministicCreditsService();
     var started = 0;
     var stopped = 0;
     var selectedVocal = 0;
@@ -32,15 +63,18 @@ void main() {
             showAdminDiagnostics: true,
             highlightVocalCard: true,
             dimVocalCard: true,
+            creditsService: creditsService,
           ),
         ),
       ),
     );
+    await tester.pump();
 
     expect(find.byType(SubscriptionCreditsInlineBadges), findsOneWidget);
     final badges = tester.widget<SubscriptionCreditsInlineBadges>(
       find.byType(SubscriptionCreditsInlineBadges),
     );
+    expect(badges.service, same(creditsService));
     expect(
       badges.kinds,
       const <SubscriptionCreditKind>[
@@ -75,6 +109,8 @@ void main() {
   });
 
   testWidgets('conserve les valeurs optionnelles par défaut', (tester) async {
+    final creditsService = deterministicCreditsService();
+
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -87,10 +123,12 @@ void main() {
             onSelectText: () {},
             onDiagnostic: () {},
             onClear: () {},
+            creditsService: creditsService,
           ),
         ),
       ),
     );
+    await tester.pump();
 
     final control = tester.widget<AiPublishControl>(
       find.byType(AiPublishControl),
