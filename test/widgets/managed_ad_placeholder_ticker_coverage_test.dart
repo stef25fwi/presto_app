@@ -64,7 +64,7 @@ void main() {
     });
 
     testWidgets('les images distantes valides remplacent le fallback', (tester) async {
-      final remote = StreamController<List<AdPlaceholderImage>>();
+      final remote = StreamController<List<AdPlaceholderImage>>(sync: true);
       addTearDown(remote.close);
       final provider = MemoryImage(_pixelPng);
 
