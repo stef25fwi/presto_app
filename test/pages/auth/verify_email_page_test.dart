@@ -25,11 +25,12 @@ void main() {
       (tester) async {
     await tester.pumpWidget(app(page()));
 
-    expect(find.text('Confirme ton email'), findsOneWidget);
-    expect(find.text('Validation obligatoire'), findsOneWidget);
+    expect(find.text('Confirmez votre adresse e-mail'), findsOneWidget);
+    expect(find.text('Validation de l’adresse requise'), findsOneWidget);
     expect(find.textContaining('test@exemple.fr'), findsOneWidget);
-    expect(find.text('J’ai validé mon email'), findsOneWidget);
-    expect(find.text('Renvoyer l’email'), findsOneWidget);
+    expect(find.textContaining('iliprestō'), findsOneWidget);
+    expect(find.text('J’ai validé mon adresse e-mail'), findsOneWidget);
+    expect(find.text('Renvoyer l’e-mail'), findsOneWidget);
     expect(find.text('Déconnexion'), findsOneWidget);
     expect(find.byIcon(Icons.verified_user), findsOneWidget);
   });
@@ -49,11 +50,11 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('J’ai validé mon email'));
+    await tester.tap(find.text('J’ai validé mon adresse e-mail'));
     await tester.pumpAndSettle();
 
     expect(checked, isTrue);
-    expect(find.text('Email validé avec succès.'), findsOneWidget);
+    expect(find.text('Adresse e-mail validée avec succès.'), findsOneWidget);
   });
 
   testWidgets('VerifyEmailPage affiche le message non verifie', (tester) async {
@@ -65,11 +66,11 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('J’ai validé mon email'));
+    await tester.tap(find.text('J’ai validé mon adresse e-mail'));
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Email pas encore validé. Clique sur le lien reçu.'),
+      find.text('Adresse e-mail pas encore validée. Ouvrez le lien reçu.'),
       findsOneWidget,
     );
   });
@@ -88,11 +89,11 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Renvoyer l’email'));
+    await tester.tap(find.text('Renvoyer l’e-mail'));
     await tester.pumpAndSettle();
 
     expect(resent, isTrue);
-    expect(find.text('Email de confirmation renvoyé.'), findsOneWidget);
+    expect(find.text('E-mail de confirmation renvoyé.'), findsOneWidget);
   });
 
   testWidgets('VerifyEmailPage mappe les erreurs de verification',
@@ -108,7 +109,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('J’ai validé mon email'));
+    await tester.tap(find.text('J’ai validé mon adresse e-mail'));
     await tester.pumpAndSettle();
 
     expect(find.text('Erreur verify test'), findsOneWidget);
