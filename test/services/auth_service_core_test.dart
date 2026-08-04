@@ -93,7 +93,7 @@ void main() {
     expect(platform.resetSettings, isNotNull);
     expect(
       platform.resetSettings!.url,
-      'https://www.ilipresto.fr/auth/action',
+      'https://ilipresto.fr/auth/action',
     );
     expect(platform.resetSettings!.handleCodeInApp, isFalse);
   });
