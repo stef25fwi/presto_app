@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-03",
+  "updatedAt": "2026-08-04",
   "baseUrl": "https://ilipresto.fr",
   "positioning": "Trouver rapidement une personne compétente et disponible pour réaliser un service ou micro-service du quotidien.",
   "guardrails": {
@@ -17,7 +17,8 @@
       "intent": "Trouver quelqu’un disponible pour réaliser un service",
       "audience": "demandeur",
       "priority": 1,
-      "status": "implemented"
+      "status": "implemented",
+      "sitemap": true
     },
     {
       "route": "/proposer-ses-services/",
@@ -38,7 +39,8 @@
       "intent": "Créer une micro-entreprise de services",
       "audience": "créateur d’activité",
       "priority": 4,
-      "status": "implemented"
+      "status": "implemented",
+      "sitemap": true
     },
     {
       "route": "/guides/trouver-premiers-clients-services/",
@@ -52,7 +54,9 @@
       "intent": "Trouver ou proposer des services dans les territoires ultramarins",
       "audience": "local",
       "priority": 6,
-      "status": "implemented"
+      "status": "implemented",
+      "sitemap": false,
+      "scope": "regional-legacy"
     }
   ],
   "territories": [

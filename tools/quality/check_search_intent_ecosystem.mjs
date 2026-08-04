@@ -43,7 +43,13 @@ for (const page of implemented) {
   assert.ok(description.length >= 110 && description.length <= 180, `${page.route}: longueur de description`);
   assert.ok(h1.length >= 20, `${page.route}: H1 trop court`);
   assert.ok(html.includes(`<link rel="canonical" href="${canonical}">`), `${page.route}: canonical incohérente`);
-  assert.ok(sitemap.includes(`<loc>${canonical}</loc>`), `${page.route}: URL absente du sitemap`);
+
+  if (page.sitemap === false) {
+    assert.ok(!sitemap.includes(`<loc>${canonical}</loc>`), `${page.route}: URL régionale legacy ne doit pas être promue par le sitemap national`);
+  } else {
+    assert.ok(sitemap.includes(`<loc>${canonical}</loc>`), `${page.route}: URL absente du sitemap`);
+  }
+
   assert.ok(html.includes('aria-label="Fil d’Ariane"'), `${page.route}: fil d’Ariane absent`);
   assert.ok((html.match(/<a href=/g) || []).length >= 7, `${page.route}: maillage interne insuffisant`);
   assert.ok(html.includes('alt="Logo iliprestō"'), `${page.route}: texte alternatif du logo absent`);
