@@ -70,19 +70,35 @@
   const useFlutterPrelaunchOnly =
       normalizedPath === '/' && prodHosts.has(host);
 
+  let prelaunchTransitionShell = null;
+  let prelaunchTransitionRemovalScheduled = false;
+
   function getPrelaunchSeoShell() {
     return document.getElementById('prelaunch-seo-shell');
+  }
+
+  function createPrelaunchTransitionShell(shell) {
+    if (!useFlutterPrelaunchOnly || prelaunchTransitionShell || !shell) return;
+
+    prelaunchTransitionShell = shell.cloneNode(true);
+    prelaunchTransitionShell.id = 'prelaunch-transition-shell';
+    prelaunchTransitionShell.setAttribute('aria-hidden', 'true');
+    prelaunchTransitionShell.style.pointerEvents = 'none';
+    prelaunchTransitionShell.style.zIndex = '2147483646';
+    prelaunchTransitionShell.dataset.flutterLoading = 'true';
+    document.body.appendChild(prelaunchTransitionShell);
   }
 
   function preparePrelaunchSeoShellForFlutter() {
     const shell = getPrelaunchSeoShell();
     if (!shell || shell.hidden) return;
 
-    // La racine publique utilise exclusivement la page Flutter complète.
-    // La coquille HTML reste présente dans le DOM pour le SEO et le mode sans
-    // JavaScript, mais elle est masquée avant le chargement de Flutter afin que
-    // l'utilisateur ne voie jamais deux versions successives de la même page.
+    // La copie visuelle reste au-dessus du moteur pendant son démarrage. Le
+    // visiteur conserve ainsi la page « Bientôt disponible » sans écran beige
+    // ni double rendu, tandis que la coquille originale reste disponible pour
+    // le SEO et le mode sans JavaScript.
     if (useFlutterPrelaunchOnly) {
+      createPrelaunchTransitionShell(shell);
       shell.style.visibility = 'hidden';
       shell.style.pointerEvents = 'none';
       shell.setAttribute('aria-hidden', 'true');
@@ -103,9 +119,26 @@
     shell.dataset.flutterLoading = 'true';
   }
 
+  function removeTransitionShellAfterPaint() {
+    if (!prelaunchTransitionShell || prelaunchTransitionRemovalScheduled) return;
+    prelaunchTransitionRemovalScheduled = true;
+
+    // Deux frames garantissent que le canvas Flutter a réellement peint la
+    // page publique avant le retrait de la copie HTML de transition.
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(function () {
+        if (prelaunchTransitionShell) {
+          prelaunchTransitionShell.remove();
+          prelaunchTransitionShell = null;
+        }
+      });
+    });
+  }
+
   function removePrelaunchSeoShell() {
     const shell = getPrelaunchSeoShell();
     if (shell) shell.remove();
+    removeTransitionShellAfterPaint();
   }
 
   // Run immediately when this same-origin bootstrap is evaluated, well before
