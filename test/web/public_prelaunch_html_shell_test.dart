@@ -129,6 +129,29 @@ void main() {
       );
     });
 
+    test(
+      'positionne explicitement la copie en plein écran malgré son id renommé',
+      () {
+        // La copie change d'id, donc les règles CSS ciblant
+        // #prelaunch-seo-shell (position fixe, z-index effectif, fond) ne
+        // s'appliquent plus : sans ces styles inline, la copie ne couvre
+        // plus l'écran et la page Flutter « Bientôt disponible » apparaît
+        // juste derrière, créant une double apparition.
+        expect(
+          bootstrap,
+          contains("prelaunchTransitionShell.style.position = 'fixed'"),
+        );
+        expect(
+          bootstrap,
+          contains("prelaunchTransitionShell.style.inset = '0'"),
+        );
+        expect(
+          bootstrap,
+          contains('prelaunchTransitionShell.style.background'),
+        );
+      },
+    );
+
     test('ne retire pas automatiquement la page visible à la première frame', () {
       expect(bootstrap, isNot(contains('removeTransitionShellAfterPaint')));
       expect(bootstrap, isNot(contains('prelaunchTransitionRemovalScheduled')));
