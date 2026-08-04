@@ -92,6 +92,7 @@ void main() {
         _image('second', 'https://cdn.example/second.png'),
       ]);
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
       expect(
         find.byKey(const ValueKey('network:https://cdn.example/first.png')),
