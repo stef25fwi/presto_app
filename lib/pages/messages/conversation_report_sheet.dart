@@ -12,6 +12,20 @@ final ReportRepository _reportRepository = ReportRepository();
 const MarketplaceHumanVerification _verification =
     MarketplaceHumanVerification();
 
+typedef MessageReportReasonPicker = Future<MessageReportReasonCode?> Function(
+  BuildContext context,
+);
+typedef MessageReportTextPicker = Future<String?> Function(
+  BuildContext context,
+);
+typedef MarketplaceVerificationTokenProvider = Future<String> Function(
+  MarketplaceHumanVerificationAction action,
+);
+typedef ConversationReportSubmitter = Future<bool> Function(
+  ConversationReportDraft draft, {
+  String? recaptchaToken,
+});
+
 @visibleForTesting
 String messageReportReasonLabel(MessageReportReasonCode reason) {
   return switch (reason) {
@@ -105,21 +119,26 @@ Future<String?> _askReasonText(BuildContext context) async {
 Future<void> showConversationReportSheet(
   BuildContext context, {
   required String conversationId,
+  @visibleForTesting MessageReportReasonPicker? reasonPicker,
+  @visibleForTesting MessageReportTextPicker? reasonTextPicker,
+  @visibleForTesting
+  MarketplaceVerificationTokenProvider? verificationTokenProvider,
+  @visibleForTesting ConversationReportSubmitter? reportSubmitter,
 }) async {
-  final reason = await _pickReason(context);
+  final reason = await (reasonPicker ?? _pickReason)(context);
   if (reason == null || !context.mounted) return;
 
   String? reasonText;
   if (reason == MessageReportReasonCode.other) {
-    reasonText = await _askReasonText(context);
+    reasonText = await (reasonTextPicker ?? _askReasonText)(context);
     if (!context.mounted) return;
   }
 
   try {
-    final recaptchaToken = await _verification.obtainToken(
-      MarketplaceHumanVerificationAction.messageReport,
-    );
-    final ok = await _reportRepository.reportConversation(
+    final recaptchaToken = await (
+      verificationTokenProvider ?? _verification.obtainToken
+    )(MarketplaceHumanVerificationAction.messageReport);
+    final ok = await (reportSubmitter ?? _reportRepository.reportConversation)(
       ConversationReportDraft(
         conversationId: conversationId,
         reasonCode: reason,
@@ -131,7 +150,9 @@ Future<void> showConversationReportSheet(
     if (!context.mounted) return;
     if (ok) {
       showSuccessSnackBar(
-          context, 'Signalement envoyé. Merci pour votre retour.');
+        context,
+        'Signalement envoyé. Merci pour votre retour.',
+      );
     } else {
       showErrorSnackBar(context, 'Le signalement n\'a pas pu être envoyé.');
     }
