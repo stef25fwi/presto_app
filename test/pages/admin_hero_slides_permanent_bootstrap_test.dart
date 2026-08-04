@@ -36,24 +36,33 @@ void main() {
   setUpAll(() async {
     setupFirebaseCoreMocks();
 
+    const options = FirebaseOptions(
+      apiKey: 'test-api-key',
+      appId: '1:1234567890:web:admin-hero-permanent',
+      messagingSenderId: '1234567890',
+      projectId: 'presto-test',
+      storageBucket: 'presto-test.appspot.com',
+    );
+
     // Some test bootstraps can already expose a mocked default application.
     // Recreating it would raise [core/duplicate-app], so initialization must
     // remain idempotent. Firebase.apps.isEmpty is not a reliable guard here
     // because test isolates are reused across files, so catch the exception
     // instead of pre-checking, the same idiom other suites in this repo use.
     try {
-      await Firebase.initializeApp(
-        options: const FirebaseOptions(
-          apiKey: 'test-api-key',
-          appId: '1:1234567890:web:admin-hero-permanent',
-          messagingSenderId: '1234567890',
-          projectId: 'presto-test',
-          storageBucket: 'presto-test.appspot.com',
-        ),
-      );
+      await Firebase.initializeApp(options: options);
     } on FirebaseException catch (error) {
       if (error.code != 'duplicate-app') {
         rethrow;
+      }
+      // A default app left behind by another test file in this reused
+      // isolate may have no storage bucket configured. Reusing it as-is
+      // breaks FirebaseStorage.instance (exercised by the real page
+      // bootstrap) with [firebase_storage/no-bucket], so replace it
+      // whenever the bucket is missing.
+      if (Firebase.app().options.storageBucket == null) {
+        await Firebase.app().delete();
+        await Firebase.initializeApp(options: options);
       }
     }
 
