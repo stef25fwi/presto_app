@@ -40,7 +40,29 @@
     return path;
   }
 
+  function injectBrandTheme() {
+    if (document.querySelector('style[data-ilipresto-brand-theme]')) return;
+
+    const style = document.createElement('style');
+    style.dataset.iliprestoBrandTheme = 'public-pages';
+    style.textContent = [
+      ':root,html,body{background:#fff!important}',
+      '#prelaunch-seo-shell{background:#f7f9fc!important;color:#12345b!important}',
+      '.prelaunch-card{background:#fff!important;border-color:#e3e8ef!important;box-shadow:0 16px 36px rgba(18,52,91,.08)!important}',
+      '.prelaunch-badge{color:#175db8!important;background:#eef4ff!important;border:1px solid rgba(26,115,232,.18)!important}',
+      '.prelaunch-card h1{color:#12345b!important}',
+      '.prelaunch-card p{color:#526477!important}',
+      '.prelaunch-features li{color:#33485e!important;background:#f8fafc!important;border-color:#e3e8ef!important}',
+      '.prelaunch-message{color:#6f370f!important;background:#fff!important;border:1px solid rgba(255,102,0,.4)!important;border-left:4px solid #ff6600!important;border-radius:16px!important}',
+      '.prelaunch-public-links a{color:#1a73e8!important}',
+      '.prelaunch-public-links a:focus-visible{outline:3px solid rgba(26,115,232,.35)!important;outline-offset:4px!important;border-radius:6px!important}',
+      '.prelaunch-domain{color:#6a7785!important}'
+    ].join('');
+    document.head.appendChild(style);
+  }
+
   const path = normalizePath(window.location.pathname);
+  injectBrandTheme();
 
   const publicHosts = new Set([
     'ilipresto.fr',
