@@ -78,59 +78,72 @@ class HomeCategoryChip extends StatelessWidget {
               'Catégorie "$label" : bientôt disponible',
             );
           },
-      child: Column(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: _homePrestoOrange,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: _homePrestoBlue,
-                width: _homeMarketplaceOutlineWidth,
+      child: SizedBox(
+        height: 86,
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: _homePrestoOrange,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: _homePrestoBlue,
+                  width: _homeMarketplaceOutlineWidth,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 14,
+                    offset: const Offset(0, 5),
+                  ),
+                  const BoxShadow(
+                    color: Color(0x2B1A73E8),
+                    blurRadius: 18,
+                    spreadRadius: 0.5,
+                    offset: Offset(0, 6),
+                  ),
+                ],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 14,
-                  offset: const Offset(0, 5),
+              child: Center(
+                child: Transform.scale(
+                  scale: iconScale,
+                  child: Icon(
+                    icon,
+                    color: Colors.white,
+                    size: 25,
+                  ),
                 ),
-                const BoxShadow(
-                  color: Color(0x2B1A73E8),
-                  blurRadius: 18,
-                  spreadRadius: 0.5,
-                  offset: Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Transform.scale(
-                scale: iconScale,
-                child: Icon(
-                  icon,
-                  color: Colors.white,
-                  size: 25,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          SizedBox(
-            width: 64,
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                height: 1.15,
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 6),
+            SizedBox(
+              width: 72,
+              height: 28,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  strutStyle: const StrutStyle(
+                    fontSize: 11,
+                    height: 1.15,
+                    forceStrutHeight: true,
+                  ),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    height: 1.15,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
