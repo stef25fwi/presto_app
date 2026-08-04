@@ -6,6 +6,7 @@ const _orange = Color(0xFFFF5A00);
 const _blue = Color(0xFF0B5BEA);
 const _navy = Color(0xFF07153D);
 const _border = Color(0xFFDDE3EE);
+const _brandLogoAsset = 'assets/images/logowebp.webp';
 
 class CookieConsentBanner extends StatelessWidget {
   const CookieConsentBanner({super.key});
@@ -50,69 +51,27 @@ class _Brand extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _BrandMark(),
-        SizedBox(width: 9),
-        Text(
-          'ilipresto',
-          style: TextStyle(
-            color: _navy,
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.7,
-          ),
-        ),
-      ],
-    );
+    return const _BrandMark(width: 156, height: 44);
   }
 }
 
 class _BrandMark extends StatelessWidget {
-  const _BrandMark();
+  const _BrandMark({this.width = 50, this.height = 50});
+
+  final double width;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(9),
-      child: SizedBox(
-        width: 38,
-        height: 38,
-        child: Row(
-          children: [
-            Expanded(
-              child: ColoredBox(
-                color: _blue,
-                child: Center(
-                  child: Text(
-                    'i',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 27,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: ColoredBox(
-                color: _orange,
-                child: Center(
-                  child: Text(
-                    'i',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 27,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+    return Semantics(
+      image: true,
+      label: 'Logo iliprestō',
+      child: Image.asset(
+        _brandLogoAsset,
+        width: width,
+        height: height,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
       ),
     );
   }
