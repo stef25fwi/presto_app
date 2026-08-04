@@ -115,25 +115,35 @@ void main() {
       );
     });
 
-    test('masque la coquille HTML sur la racine publique', () {
+    test('maintient une copie visuelle pendant le bootstrap Flutter', () {
       expect(bootstrap, contains('useFlutterPrelaunchOnly'));
+      expect(bootstrap, contains('createPrelaunchTransitionShell(shell)'));
+      expect(bootstrap, contains("prelaunchTransitionShell.id = 'prelaunch-transition-shell'"));
+      expect(bootstrap, contains("prelaunchTransitionShell.style.pointerEvents = 'none'"));
+      expect(bootstrap, contains("prelaunchTransitionShell.style.zIndex = '2147483646'"));
       expect(bootstrap, contains("shell.style.visibility = 'hidden';"));
-      expect(bootstrap, contains("shell.style.pointerEvents = 'none';"));
-      expect(bootstrap, contains("shell.setAttribute('aria-hidden', 'true')"));
       expect(
         bootstrap.indexOf('preparePrelaunchSeoShellForFlutter();'),
         lessThan(bootstrap.indexOf('_flutter.loader.load({')),
       );
-      expect(bootstrap, isNot(contains('shellRemovalScheduled')));
-      expect(bootstrap, isNot(contains('window.setTimeout(function ()')));
     });
 
-    test('retire la coquille dès la première frame Flutter', () {
+    test('retire la copie seulement après la peinture Flutter', () {
       expect(html, contains("window.addEventListener('flutter-first-frame'"));
-      expect(html, contains('shell.remove();'));
       expect(bootstrap, contains("window.addEventListener('flutter-first-frame'"));
-      expect(bootstrap, contains('removePrelaunchSeoShell'));
-      expect(bootstrap, contains('window.requestAnimationFrame(removePrelaunchSeoShell);'));
+      expect(bootstrap, contains('removeTransitionShellAfterPaint'));
+      expect(bootstrap, contains('prelaunchTransitionRemovalScheduled'));
+      expect(
+        RegExp(r'window\.requestAnimationFrame\(function \(\) \{[\s\S]*window\.requestAnimationFrame\(function \(\) \{')
+            .hasMatch(bootstrap),
+        isTrue,
+      );
+      expect(bootstrap, contains('prelaunchTransitionShell.remove();'));
+    });
+
+    test('la copie de transition ne bloque jamais les huit taps Flutter', () {
+      expect(bootstrap, contains("prelaunchTransitionShell.style.pointerEvents = 'none'"));
+      expect(bootstrap, isNot(contains("prelaunchTransitionShell.style.pointerEvents = 'auto'")));
     });
 
     test('préserve les routes administration et authentification', () {
