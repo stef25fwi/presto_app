@@ -3,6 +3,16 @@ name: SEO continuous monitoring
 on:
   schedule:
     - cron: '17 10 * * *'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/seo-continuous-monitoring.yml'
+      - 'config/seo-monitoring.json'
+      - 'tools/seo/**'
+      - 'tools/quality/check_seo_monitoring_readiness*'
+      - 'web/public-route-seo.js'
+      - 'web/sitemap.xml'
   workflow_dispatch:
     inputs:
       require_external_data:
@@ -24,7 +34,7 @@ jobs:
   monitor:
     environment: recaptcha
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
 
@@ -33,7 +43,9 @@ jobs:
           node-version: '22'
 
       - name: Validate SEO monitoring implementation
-        run: node tools/quality/check_seo_monitoring_readiness.test.mjs
+        run: |
+          node tools/quality/check_seo_monitoring_readiness.test.mjs
+          node tools/seo/runtime_seo_registry_contract.test.mjs
 
       - name: Authenticate to Google without a long-lived key
         id: google_auth
@@ -45,8 +57,26 @@ jobs:
           token_format: access_token
           access_token_lifetime: 1800s
           access_token_scopes: >-
+            https://www.googleapis.com/auth/cloud-platform,
             https://www.googleapis.com/auth/webmasters.readonly,
             https://www.googleapis.com/auth/analytics.readonly
+
+      - name: Setup Google Cloud CLI
+        if: steps.google_auth.outcome == 'success'
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Enable SEO measurement APIs
+        id: api_bootstrap
+        if: steps.google_auth.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          gcloud services enable \
+            searchconsole.googleapis.com \
+            analyticsadmin.googleapis.com \
+            analyticsdata.googleapis.com \
+            --project presto-app-74abe \
+            --quiet
 
       - name: Build daily SEO report
         id: report
@@ -55,7 +85,8 @@ jobs:
           SEO_GOOGLE_ACCESS_TOKEN: ${{ steps.google_auth.outputs.access_token }}
           SEO_GA4_PROPERTY_ID: ${{ vars.SEO_GA4_PROPERTY_ID }}
           SEO_GSC_SITE_URL: sc-domain:ilipresto.fr
-          REQUIRE_EXTERNAL_DATA: ${{ github.event_name == 'schedule' || inputs.require_external_data }}
+          REQUIRE_EXTERNAL_DATA: ${{ github.event_name != 'workflow_dispatch' || inputs.require_external_data }}
+          SEO_API_BOOTSTRAP_OUTCOME: ${{ steps.api_bootstrap.outcome }}
         run: |
           set -euo pipefail
           args=(--output build/seo/seo-monitoring-report.json --enforce)
@@ -73,6 +104,9 @@ jobs:
             echo "# Suivi SEO continu" >> "$GITHUB_STEP_SUMMARY"
             echo "Le rapport n'a pas pu être généré." >> "$GITHUB_STEP_SUMMARY"
           fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Authentification Google : ${{ steps.google_auth.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Activation des API : ${{ steps.api_bootstrap.outcome }}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload SEO monitoring evidence
         if: always()
