@@ -83,6 +83,20 @@
     prelaunchTransitionShell.setAttribute('aria-hidden', 'true');
     prelaunchTransitionShell.style.pointerEvents = 'none';
     prelaunchTransitionShell.style.zIndex = '2147483646';
+
+    // Le nouvel id ne correspond plus au sélecteur CSS #prelaunch-seo-shell
+    // (position plein écran, fond). Sans ce positionnement explicite, la
+    // copie perdait son "position: fixed" et donc son z-index, laissait
+    // apparaître la page Flutter en dessous et provoquait la double
+    // apparition « Bientôt disponible » signalée en production.
+    const shellStyle = window.getComputedStyle(shell);
+    prelaunchTransitionShell.style.position = 'fixed';
+    prelaunchTransitionShell.style.inset = '0';
+    prelaunchTransitionShell.style.overflow = 'auto';
+    prelaunchTransitionShell.style.boxSizing = 'border-box';
+    prelaunchTransitionShell.style.padding = shellStyle.padding;
+    prelaunchTransitionShell.style.background = shellStyle.background;
+
     prelaunchTransitionShell.dataset.flutterLoading = 'true';
     document.body.appendChild(prelaunchTransitionShell);
   }
