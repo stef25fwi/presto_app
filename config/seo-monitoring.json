@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "siteName": "iliprestō",
   "siteUrl": "https://ilipresto.fr",
   "searchConsoleSiteUrl": "sc-domain:ilipresto.fr",
@@ -9,6 +9,8 @@
   "comparisonPeriodDays": 28,
   "monitoredPages": [
     { "path": "/", "validationMode": "html", "priority": "critical" },
+    { "path": "/trouver-une-personne-disponible/", "validationMode": "html", "priority": "critical" },
+    { "path": "/guides/creer-micro-entreprise-services/", "validationMode": "html", "priority": "high" },
     { "path": "/a-propos", "validationMode": "html", "priority": "high" },
     { "path": "/guides/comment-fonctionne-ilipresto", "validationMode": "html", "priority": "high" },
     { "path": "/guadeloupe", "validationMode": "html", "priority": "high" },
