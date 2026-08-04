@@ -1,10 +1,10 @@
 // ignore_for_file: avoid_web_libraries_in_flutter
 
-import 'package:web/web.dart' as web;
+import 'dart:js_interop';
+
+@JS('iliprestoOpenApplication')
+external void _iliprestoOpenApplication();
 
 void revealApplicationAfterPublicPrelaunch() {
-  final callback = web.window['iliprestoOpenApplication'];
-  if (callback is web.JSFunction) {
-    callback.callAsFunction();
-  }
+  _iliprestoOpenApplication();
 }
