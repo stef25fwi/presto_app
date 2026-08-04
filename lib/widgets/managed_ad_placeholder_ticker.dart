@@ -246,7 +246,7 @@ class _ManagedAdPlaceholderTickerState
         final calculatedHeight = availableWidth / ratio;
 
         return SizedBox(
-          width: double.infinity,
+          width: availableWidth,
           height: calculatedHeight,
           child: ClipRRect(
             borderRadius: widget.borderRadius,
@@ -255,7 +255,7 @@ class _ManagedAdPlaceholderTickerState
               child: Image(
                 key: ValueKey<String>(image.key),
                 image: image.provider,
-                width: double.infinity,
+                width: availableWidth,
                 height: calculatedHeight,
                 fit: BoxFit.contain,
                 alignment: Alignment.center,
