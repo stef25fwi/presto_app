@@ -158,6 +158,12 @@ class AdminSpaceHubPage extends StatelessWidget {
                       : constraints.maxWidth >= 560
                           ? 2
                           : 1;
+                  // La hauteur de tuile suit le facteur de texte : figée à
+                  // 174 px, elle débordait dès 150 % d'agrandissement, à
+                  // toutes les largeurs.
+                  final tileExtent = MediaQuery.textScalerOf(
+                    context,
+                  ).scale(174);
                   return GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -166,7 +172,7 @@ class AdminSpaceHubPage extends StatelessWidget {
                       crossAxisCount: columns,
                       mainAxisSpacing: 12,
                       crossAxisSpacing: 12,
-                      mainAxisExtent: 174,
+                      mainAxisExtent: tileExtent,
                     ),
                     itemBuilder: (context, index) {
                       final section = _sections[index];

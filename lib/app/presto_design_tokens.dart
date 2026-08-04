@@ -21,7 +21,19 @@ abstract final class PrestoColors {
   static const surfaceMuted = Color(0xFFF4F7FB);
   static const surfaceSelected = Color(0xFFEAF2FF);
   static const border = Color(0xFFD7DEE8);
+
+  /// Remplissage discret appliqué à l’élément qui reçoit le focus.
+  ///
+  /// Ce ton ne suffit pas à signaler le focus : il n’atteint que 1,2:1 sur les
+  /// fonds clairs. Il est conservé comme fond, jamais comme indicateur.
   static const focus = Color(0xFFE2E8F0);
+
+  /// Anneau de focus visible, seul indicateur opposable.
+  ///
+  /// Atteint 6,4:1 sur [surface] et 5,9:1 sur [scaffold], au-delà des 3:1
+  /// exigés par WCAG 2.2 pour un composant non textuel.
+  static const focusRing = brandBlueDark;
+
   static const hover = Color(0xFFF1F5F9);
   static const shadow = Color(0x140F172A);
 
@@ -74,6 +86,18 @@ abstract final class PrestoAccessibility {
 
   /// Ratio minimal WCAG AA pour du texte large et les composants graphiques.
   static const largeTextContrast = 3.0;
+
+  /// Ratio minimal WCAG 2.2 (1.4.11) pour un indicateur de focus.
+  static const focusIndicatorContrast = 3.0;
+
+  /// Épaisseur minimale de l’anneau de focus, en pixels logiques.
+  static const focusRingWidth = 2.0;
+
+  /// Largeurs de référence testées, de la plus petite à la plus grande.
+  static const responsiveWidths = <double>[320, 375, 600, 1024, 1440];
+
+  /// Facteurs de texte couverts par la matrice responsive.
+  static const textScales = <double>[1.0, 1.5, 2.0];
 }
 
 /// Calcule le ratio de contraste WCAG de deux couleurs opaques.

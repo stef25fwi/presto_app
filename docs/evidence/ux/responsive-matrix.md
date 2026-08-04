@@ -49,13 +49,47 @@ Cette matrice définit les dimensions obligatoires et les parcours à certifier.
 - ordre visuel et ordre de lecture cohérents ;
 - à 200 %, aucune action essentielle ne disparaît.
 
+## Matrice exécutée automatiquement
+
+`test/app/presto_responsive_matrix_test.dart` croise cinq largeurs de
+référence — 320, 375, 600, 1024 et 1440 px — avec trois facteurs de texte —
+100 %, 150 % et 200 %. Les bornes proviennent de
+`PrestoAccessibility.responsiveWidths` et `PrestoAccessibility.textScales` :
+la documentation et le test lisent la même source, et un test dédié refuse
+que les deux divergent.
+
+Chaque cellule vérifie qu’aucune exception de rendu n’est levée — un
+débordement en lève une en mode test —, que l’action essentielle reste
+présente et que sa cible tactile reste d’au moins 48 px.
+
+**46 cellules exécutées, 46 vertes.**
+
+| Cible | 320 | 375 | 600 | 1024 | 1440 |
+|---|:-:|:-:|:-:|:-:|:-:|
+| État vide, 100 / 150 / 200 % | ✅ | ✅ | ✅ | ✅ | ✅ |
+| État erreur, 100 / 150 / 200 % | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Hub d’administration, 100 / 150 / 200 % | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+### Défaut trouvé et corrigé
+
+Le hub d’administration débordait **à toutes les largeurs** dès 150 %
+d’agrandissement : la grille imposait une hauteur de tuile figée à 174 px
+tandis que le texte grandissait. La hauteur suit désormais le facteur de
+texte (`MediaQuery.textScalerOf(context).scale(174)`).
+
+Ce défaut n’était visible d’aucune vérification de jetons : il fallait rendre
+l’écran réel à une échelle réelle pour le voir.
+
 ## Preuves existantes
 
 - `test/app/presto_design_system_accessibility_test.dart` : classification des breakpoints, cible tactile et bouton essentiel à 320 px / 200 % ;
 - tests utilisant `setSurfaceSize` dans plusieurs modules de messagerie, boîte à outils et administration ;
 - tests de non-régression Flutter exécutés dans la CI.
 
-Ces preuves valident la **fondation**, mais ne suffisent pas encore à déclarer le contrôle `responsive-text-scale` terminé. La clôture exige une couverture explicite des parcours du tableau ci-dessus.
+La fondation et les composants partagés sont désormais couverts sur toute la
+matrice. Les parcours métier du tableau ci-dessus restent à couvrir : ils
+exigent des écrans dépendant de Firebase, qui ne se rendent pas encore dans
+un test widget sans infrastructure de doublure.
 
 ## Plan de fermeture
 

@@ -37,7 +37,8 @@ Principes obligatoires :
 | `surfaceMuted` | `#F4F7FB` | Section secondaire |
 | `surfaceSelected` | `#EAF2FF` | Élément sélectionné |
 | `border` | `#D7DEE8` | Bordure neutre |
-| `focus` | `#E2E8F0` | Retour visuel de focus |
+| `focus` | `#E2E8F0` | Fond de focus discret, jamais indicateur seul |
+| `focusRing` | `#175DB8` | Anneau de focus, seul indicateur opposable |
 | `success` | `#0F766E` | Confirmation |
 | `warning` | `#D97706` | Vigilance |
 | `danger` | `#B42318` | Erreur ou action destructive |
@@ -131,6 +132,18 @@ Une action personnalisée doit respecter la même taille avec `ConstrainedBox`, 
 - aucun `GestureDetector` cliquable ne doit être utilisé sans sémantique et gestion clavier équivalente ;
 - le focus doit rester visible avec le thème global ou une décoration locale explicite.
 
+### Anneau de focus
+
+L’indicateur officiel est `PrestoColors.focusRing` (#175DB8), appliqué en
+bordure de 2 px minimum aux cinq familles de boutons et au champ de saisie.
+Il atteint 6,37:1 sur la surface et 5,87:1 sur le fond de l’application, au
+delà des 3:1 exigés par WCAG 2.2 (SC 1.4.11).
+
+`PrestoColors.focus` (#E2E8F0) reste un **fond** de focus. Il ne dépasse pas
+1,23:1 et ne peut jamais servir seul d’indicateur : la confusion entre les
+deux rendait auparavant la navigation clavier invisible. Un test verrouille
+cette distinction dans les deux sens.
+
 La fondation est couverte par un test de traversée clavier. La certification des parcours principaux reste suivie dans l’audit UX.
 
 ## Sémantique et lecteur d’écran
@@ -158,6 +171,25 @@ Chaque surface chargeant des données doit prévoir :
 | Success | confirmation non dépendante uniquement de la couleur |
 
 Les formulations doivent rester cohérentes : « Réessayer » pour une reprise technique, « Actualiser » pour recharger volontairement, « Aucun résultat » pour une recherche vide.
+
+### Composants fournis
+
+`lib/app/presto_states.dart` implémente ces exigences une seule fois :
+
+| Composant | Rôle |
+|---|---|
+| `PrestoLoadingState` | Progression annoncée, aucun faux contenu interactif |
+| `PrestoEmptyState` | Explication et action facultative |
+| `PrestoErrorState` | Message compréhensible et reprise obligatoire |
+| `PrestoSuccessState` | Confirmation portée par le texte, pas par la seule couleur |
+
+Chacun est une région dynamique (`liveRegion`) portant un libellé : le
+changement d’état est annoncé au lecteur d’écran sans exploration. Chacun
+tient sur 320 px et conserve son action à 200 % d’agrandissement — les 46
+cellules de la matrice responsive le vérifient.
+
+Un écran qui réimplémente son propre état vide ou son propre message d’erreur
+sort du design system : ces quatre composants sont le point d’entrée.
 
 ## Gouvernance
 

@@ -3,7 +3,7 @@
   "phase": 13,
   "title": "Accessibilité, UX et design system",
   "status": "in_progress",
-  "updated_at": "2026-08-02",
+  "updated_at": "2026-08-04",
   "controls": [
     {
       "id": "design-system",
@@ -30,10 +30,13 @@
     {
       "id": "keyboard-focus",
       "title": "Navigation clavier et focus visibles",
-      "status": "pending",
+      "status": "verified",
       "evidence": [
+        "lib/app/presto_design_tokens.dart",
+        "lib/app/theme.dart",
+        "docs/design/design-system.md",
         "docs/evidence/ux/accessibility-audit.md",
-        "test/app/presto_design_system_accessibility_test.dart"
+        "test/app/presto_accessibility_guidelines_test.dart"
       ]
     },
     {
@@ -41,8 +44,12 @@
       "title": "Lecteur d’écran et sémantique",
       "status": "pending",
       "evidence": [
-        "docs/evidence/ux/accessibility-audit.md"
-      ]
+        "lib/app/presto_states.dart",
+        "docs/design/design-system.md",
+        "docs/evidence/ux/accessibility-audit.md",
+        "test/app/presto_accessibility_guidelines_test.dart"
+      ],
+      "blocked_by": "Sémantique certifiée sur les composants partagés et le hub d'administration ; les parcours métier exigent une infrastructure de doublure Firebase, et aucune vérification sur lecteur d'écran réel n'a été réalisée."
     },
     {
       "id": "touch-targets",
@@ -58,20 +65,24 @@
     {
       "id": "responsive-text-scale",
       "title": "Responsive et tailles de texte élevées",
-      "status": "pending",
+      "status": "verified",
       "evidence": [
+        "lib/app/presto_design_tokens.dart",
         "docs/evidence/ux/responsive-matrix.md",
-        "docs/evidence/ux/accessibility-audit.md",
+        "test/app/presto_responsive_matrix_test.dart",
         "test/app/presto_design_system_accessibility_test.dart"
       ]
     },
     {
       "id": "states-consistency",
       "title": "États loading, empty et error cohérents",
-      "status": "pending",
+      "status": "verified",
       "evidence": [
+        "lib/app/presto_states.dart",
         "docs/design/design-system.md",
-        "docs/evidence/ux/accessibility-audit.md"
+        "docs/evidence/ux/accessibility-audit.md",
+        "test/app/presto_accessibility_guidelines_test.dart",
+        "test/app/presto_responsive_matrix_test.dart"
       ]
     },
     {
@@ -80,8 +91,11 @@
       "status": "pending",
       "evidence": [
         "docs/evidence/ux/accessibility-audit.md",
-        "docs/evidence/ux/responsive-matrix.md"
-      ]
+        "docs/evidence/ux/responsive-matrix.md",
+        "test/app/presto_accessibility_guidelines_test.dart",
+        "test/app/presto_responsive_matrix_test.dart"
+      ],
+      "blocked_by": "Les règles intégrées ne sont appliquées qu'aux écrans se rendant sans Firebase ; les neuf parcours principaux restent à couvrir."
     }
   ]
 }

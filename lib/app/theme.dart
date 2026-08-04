@@ -49,6 +49,24 @@ ThemeData _buildPrestoThemeData() {
     ),
   );
 
+  // Le seul indicateur de focus opposable est un anneau contrasté : la teinte
+  // de survol par défaut ne dépasse pas 1,2:1 sur fond clair et resterait
+  // invisible au clavier.
+  const focusRingSide = BorderSide(
+    color: PrestoColors.focusRing,
+    width: PrestoAccessibility.focusRingWidth,
+  );
+  final focusRing = WidgetStateProperty.resolveWith<BorderSide?>(
+    (states) => states.contains(WidgetState.focused) ? focusRingSide : null,
+  );
+  // Le bouton contourné conserve sa bordure au repos : renvoyer `null` la
+  // supprimerait, la valeur du thème primant sur celle du composant.
+  final outlinedFocusRing = WidgetStateProperty.resolveWith<BorderSide?>(
+    (states) => states.contains(WidgetState.focused)
+        ? focusRingSide
+        : const BorderSide(color: PrestoColors.border),
+  );
+
   return ThemeData(
     fontFamily: 'Inter',
     useMaterial3: true,
@@ -176,10 +194,7 @@ ThemeData _buildPrestoThemeData() {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(PrestoRadii.md),
-        borderSide: const BorderSide(
-          color: PrestoColors.brandBlue,
-          width: 1.4,
-        ),
+        borderSide: focusRingSide,
       ),
       contentPadding: const EdgeInsets.symmetric(
         horizontal: PrestoSpacing.lg,
@@ -194,13 +209,17 @@ ThemeData _buildPrestoThemeData() {
         fontWeight: FontWeight.w500,
       ),
     ),
-    iconButtonTheme: const IconButtonThemeData(
-      style: ButtonStyle(minimumSize: minimumInteractiveSize),
+    iconButtonTheme: IconButtonThemeData(
+      style: ButtonStyle(
+        minimumSize: minimumInteractiveSize,
+        side: focusRing,
+      ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: ButtonStyle(
         minimumSize: minimumInteractiveSize,
         padding: buttonPadding,
+        side: focusRing,
         textStyle: WidgetStatePropertyAll<TextStyle>(
           kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w700),
         ),
@@ -210,6 +229,7 @@ ThemeData _buildPrestoThemeData() {
       style: ButtonStyle(
         minimumSize: minimumInteractiveSize,
         padding: buttonPadding,
+        side: focusRing,
         textStyle: WidgetStatePropertyAll<TextStyle>(
           kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w800),
         ),
@@ -219,6 +239,7 @@ ThemeData _buildPrestoThemeData() {
       style: ButtonStyle(
         minimumSize: minimumInteractiveSize,
         padding: buttonPadding,
+        side: focusRing,
         textStyle: WidgetStatePropertyAll<TextStyle>(
           kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w800),
         ),
@@ -228,6 +249,7 @@ ThemeData _buildPrestoThemeData() {
       style: ButtonStyle(
         minimumSize: minimumInteractiveSize,
         padding: buttonPadding,
+        side: outlinedFocusRing,
         textStyle: WidgetStatePropertyAll<TextStyle>(
           kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w700),
         ),

@@ -69,11 +69,13 @@
       ],
       "validationCommands": [
         "flutter analyze --fatal-infos",
-        "flutter test --coverage --reporter expanded"
+        "flutter test --coverage --reporter expanded",
+        "node tools/quality/check_accessibility_ux_readiness.mjs",
+        "node --test tools/quality/check_accessibility_ux_readiness.test.mjs"
       ],
       "doneWhen": [
         "Le design system est centralisé et documenté.",
-        "Les contrastes, focus, lecteurs d’écran et cibles tactiles sont validés.",
+        "Les contrastes, focus, lecteurs d’écran et cibles tactiles sont validés, indicateur de focus compris.",
         "Les tailles 320 à 1440 px et le texte agrandi sont testés.",
         "Les états loading, empty, error et success sont cohérents.",
         "Tous les contrôles accessibility_ux_readiness sont verified."

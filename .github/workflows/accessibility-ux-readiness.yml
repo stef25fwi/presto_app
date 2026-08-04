@@ -25,3 +25,28 @@ jobs:
           name: accessibility-ux-readiness-report
           path: build/quality/accessibility-ux-readiness-report.json
           retention-days: 30
+
+  # Le registre seul ne prouve rien : ce travail exécute les règles
+  # d'accessibilité intégrées de Flutter et la matrice responsive sur des
+  # arbres de widgets réellement construits.
+  accessibility-guidelines:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+      - name: Install Dart dependencies
+        run: flutter pub get
+      - name: Analyze
+        run: flutter analyze --fatal-infos
+      - name: Run accessibility guidelines and responsive matrix
+        run: |
+          flutter test \
+            test/app/presto_accessibility_guidelines_test.dart \
+            test/app/presto_responsive_matrix_test.dart \
+            test/app/presto_design_system_accessibility_test.dart \
+            --reporter expanded

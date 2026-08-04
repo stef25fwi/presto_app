@@ -236,3 +236,59 @@ Contrôle maintenu `pending`. Cette baseline n’est pas une certification final
 - [ ] huit contrôles au statut `verified` ;
 - [ ] analyse Flutter et suite complète vertes ;
 - [ ] promotion séquentielle vers le point 3.
+
+## Vague du 4 août 2026 — focus, sémantique et états
+
+### Défaut corrigé : le focus clavier était invisible
+
+Le thème exposait `focusColor: #E2E8F0`, soit **1,23:1** sur la surface
+blanche et **1,13:1** sur le fond de l’application. WCAG 2.2 (SC 1.4.11)
+exige 3:1 pour un indicateur non textuel. Autrement dit, la navigation au
+clavier fonctionnait mais ne se voyait pas.
+
+Un anneau de focus explicite a été introduit : `PrestoColors.focusRing`
+(#175DB8), soit **6,37:1** sur la surface et **5,87:1** sur le fond, appliqué
+aux cinq familles de boutons et au champ de saisie avec une épaisseur
+minimale de 2 px. Le ton discret d’origine reste un fond, jamais un
+indicateur — un test le verrouille explicitement pour empêcher la confusion
+de revenir.
+
+### Composants d’état partagés
+
+`lib/app/presto_states.dart` fournit `PrestoLoadingState`,
+`PrestoEmptyState`, `PrestoErrorState` et `PrestoSuccessState`. Chacun est
+une région dynamique annoncée (`liveRegion`) portant un libellé : un lecteur
+d’écran est désormais informé du passage de « chargement » à « aucun
+résultat », ce qu’aucun écran ne faisait auparavant.
+
+L’état d’erreur porte systématiquement une action de reprise.
+
+### Contrôles automatisés
+
+`test/app/presto_accessibility_guidelines_test.dart` applique les règles
+intégrées de Flutter sur des arbres de widgets réellement construits :
+
+| Règle | Portée |
+|---|---|
+| `textContrastGuideline` | états partagés + hub d’administration |
+| `androidTapTargetGuideline` | états partagés + hub d’administration |
+| `iOSTapTargetGuideline` | états partagés + hub d’administration |
+| `labeledTapTargetGuideline` | états partagés + hub d’administration |
+
+S’y ajoutent le contraste de l’anneau de focus sur les deux fonds, la
+présence de l’anneau sur chaque famille de boutons et sur le champ de
+saisie, et le parcours de tabulation dans l’ordre visuel.
+
+**11 tests, tous verts.**
+
+### Ce qui reste ouvert
+
+Les règles ne sont appliquées qu’aux écrans qui se rendent sans Firebase. Les
+parcours métier — publication, consultation, messagerie, compte — exigent une
+infrastructure de doublure qui n’existe pas encore dans la suite de tests.
+Le contrôle `accessibility-audit` reste donc `pending`, et
+`screen-reader` limité aux composants partagés.
+
+Aucune vérification sur lecteur d’écran réel — VoiceOver, TalkBack, NVDA — n’a
+été réalisée : elle exige des appareils, hors de portée d’une exécution
+automatisée.
