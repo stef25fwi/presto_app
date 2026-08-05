@@ -12,16 +12,22 @@ updates:
       - dependencies
       - security
     groups:
-      firebase-functions:
+      firebase-compatible:
         patterns:
           - firebase-admin
           - firebase-functions
           - firebase
           - '@firebase/*'
-      email-providers:
+        update-types:
+          - minor
+          - patch
+      email-providers-compatible:
         patterns:
           - nodemailer
           - resend
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: github-actions
     directory: /
