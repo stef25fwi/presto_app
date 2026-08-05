@@ -1,4 +1,4 @@
-import admin from "firebase-admin";
+import admin from "../../../core/firebase_admin_compat";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { ENFORCE_APP_CHECK, MARKETPLACE_REPORT_REVIEW_THRESHOLD, PROJECT_REGION } from "../../../config/env";
 import { db } from "../../../core/firestore";

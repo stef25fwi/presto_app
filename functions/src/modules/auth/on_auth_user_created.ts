@@ -1,5 +1,5 @@
 import * as functionsV1 from "firebase-functions/v1";
-import * as admin from "firebase-admin";
+import admin from "../../core/firebase_admin_compat";
 import { PROJECT_REGION } from "../../config/env";
 
 /**

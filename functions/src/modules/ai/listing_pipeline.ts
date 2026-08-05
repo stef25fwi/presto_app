@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import admin from "firebase-admin";
+import admin from "../../core/firebase_admin_compat";
 import { HttpsError } from "firebase-functions/v2/https";
 import { toFile } from "openai";
 

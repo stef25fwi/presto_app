@@ -1,5 +1,5 @@
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
-import * as admin from "firebase-admin";
+import admin from "../../core/firebase_admin_compat";
 import * as nodemailer from "nodemailer";
 import { PROJECT_REGION } from "../../config/env";
 

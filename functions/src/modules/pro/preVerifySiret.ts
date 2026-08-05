@@ -1,4 +1,4 @@
-import * as admin from "firebase-admin";
+import admin from "../../core/firebase_admin_compat";
 import * as https from "https";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 

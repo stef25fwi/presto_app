@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import admin from "firebase-admin";
+import admin from "../../../core/firebase_admin_compat";
 
 import { isListingReadyForScheduledPublication } from "./listings";
 

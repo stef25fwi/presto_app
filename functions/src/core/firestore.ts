@@ -1,4 +1,4 @@
-import admin from "firebase-admin";
+import admin from "./firebase_admin_compat";
 
 let firestoreInstance: FirebaseFirestore.Firestore | null = null;
 

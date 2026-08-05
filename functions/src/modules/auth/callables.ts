@@ -1,5 +1,5 @@
 import { randomInt } from "node:crypto";
-import admin from "firebase-admin";
+import admin from "../../core/firebase_admin_compat";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { db } from "../../core/firestore";
 import { APP_BASE_URL, ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
