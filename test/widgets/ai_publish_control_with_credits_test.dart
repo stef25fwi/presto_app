@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/features/subscriptions/subscription_credit_service.dart';
 import 'package:presto_app/features/subscriptions/subscription_credits_card.dart';
-import 'package:presto_app/widgets/ai_publish_control.dart';
 import 'package:presto_app/widgets/ai_publish_control_with_credits.dart';
 
 void main() {
