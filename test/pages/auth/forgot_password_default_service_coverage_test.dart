@@ -76,7 +76,7 @@ void main() {
     expect(platform.resetEmail, 'USER@ILIPRESTO.FR');
     expect(
       platform.resetSettings?.url,
-      'https://www.ilipresto.fr/auth/action',
+      'https://ilipresto.fr/auth/action',
     );
     expect(find.text('RESET_OK:USER@ILIPRESTO.FR'), findsOneWidget);
   });
