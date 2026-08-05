@@ -25,6 +25,8 @@ jobs:
         run: node tools/seo/runtime_seo_registry_contract.test.mjs
       - name: Validate Google measurement bootstrap
         run: node tools/quality/check_seo_google_access_bootstrap.mjs
+      - name: Validate Lighthouse lot 13 tooling
+        run: node tools/performance/build_lighthouse_baseline.test.mjs
       - name: Validate registry
         run: node tools/quality/check_seo_acquisition_readiness.test.mjs
       - name: Build readiness report
