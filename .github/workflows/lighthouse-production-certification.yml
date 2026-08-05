@@ -1,0 +1,223 @@
+name: Lighthouse production certification (lot 13)
+
+on:
+  workflow_run:
+    workflows: ['Validate and Deploy Firebase']
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  statuses: write
+
+concurrency:
+  group: lighthouse-production-lot13-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: true
+
+jobs:
+  mark-pending:
+    if: github.event.workflow_run.conclusion == 'success'
+    name: Publish pending statuses
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish Lighthouse pending statuses
+        uses: actions/github-script@v8
+        env:
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+          TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const sha = process.env.TARGET_SHA;
+            const targetUrl = process.env.TARGET_URL;
+            for (const contextName of [
+              'quality/lighthouse-mobile',
+              'quality/lighthouse-desktop',
+              'quality/lighthouse-lot13',
+            ]) {
+              await github.rest.repos.createCommitStatus({
+                owner,
+                repo,
+                sha,
+                state: 'pending',
+                context: contextName,
+                description: 'Mesure Lighthouse production en cours',
+                target_url: targetUrl,
+              });
+            }
+
+  lighthouse:
+    needs: mark-pending
+    name: Lighthouse ${{ matrix.profile }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [mobile, desktop]
+    env:
+      LIGHTHOUSE_PROFILE: ${{ matrix.profile }}
+      LIGHTHOUSE_BASE_URL: https://ilipresto.fr
+      LIGHTHOUSE_REFERENCE_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Checkout deployed SHA
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Validate lot 13 tooling
+        run: node tools/performance/build_lighthouse_baseline.test.mjs
+
+      - name: Install Lighthouse CI
+        run: npm install --global @lhci/cli@0.15.1
+
+      - name: Collect three production runs per page
+        run: lhci collect --config=config/lighthouse-ci.cjs
+
+      - name: Apply blocking performance budgets
+        id: assertions
+        continue-on-error: true
+        run: lhci assert --config=config/lighthouse-ci.cjs
+
+      - name: Export HTML and JSON reports
+        if: always()
+        run: lhci upload --config=config/lighthouse-ci.cjs
+
+      - name: Build lot 13 evidence summary
+        if: always()
+        run: |
+          node tools/performance/build_lighthouse_baseline.mjs \
+            --profile "$LIGHTHOUSE_PROFILE" \
+            --manifest "build/quality/lighthouse/$LIGHTHOUSE_PROFILE/manifest.json" \
+            --output-json "build/quality/lighthouse/$LIGHTHOUSE_PROFILE/summary.json" \
+            --output-markdown "build/quality/lighthouse/$LIGHTHOUSE_PROFILE/summary.md" \
+            --reference-sha "$LIGHTHOUSE_REFERENCE_SHA"
+          cat "build/quality/lighthouse/$LIGHTHOUSE_PROFILE/summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Archive Lighthouse evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-lot13-${{ matrix.profile }}-${{ github.run_id }}
+          path: build/quality/lighthouse/${{ matrix.profile }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Enforce lot 13 budgets
+        if: always()
+        run: |
+          if [ "${{ steps.assertions.outcome }}" != "success" ]; then
+            echo "Lighthouse $LIGHTHOUSE_PROFILE budgets failed. Download the archived reports for details."
+            exit 1
+          fi
+
+  certify:
+    if: always() && needs.mark-pending.result == 'success'
+    needs: [mark-pending, lighthouse]
+    name: Certify production evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download Lighthouse evidence
+        id: download
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          pattern: lighthouse-lot13-*
+          path: lighthouse-evidence
+
+      - name: Verify evidence and publish final statuses
+        uses: actions/github-script@v8
+        env:
+          EVIDENCE_PATH: lighthouse-evidence
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+          TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          DOWNLOAD_OUTCOME: ${{ steps.download.outcome }}
+        with:
+          script: |
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const sha = process.env.TARGET_SHA;
+            const targetUrl = process.env.TARGET_URL;
+
+            function walk(directory) {
+              if (!fs.existsSync(directory)) return [];
+              return fs.readdirSync(directory, {withFileTypes: true}).flatMap((entry) => {
+                const absolute = path.join(directory, entry.name);
+                return entry.isDirectory() ? walk(absolute) : [absolute];
+              });
+            }
+
+            const summaries = new Map();
+            for (const file of walk(process.env.EVIDENCE_PATH).filter((file) => file.endsWith('summary.json'))) {
+              try {
+                const summary = JSON.parse(fs.readFileSync(file, 'utf8'));
+                if (summary.profile === 'mobile' || summary.profile === 'desktop') {
+                  summaries.set(summary.profile, summary);
+                }
+              } catch (error) {
+                core.warning(`Impossible de lire ${file}: ${error.message}`);
+              }
+            }
+
+            const results = {};
+            for (const profile of ['mobile', 'desktop']) {
+              const summary = summaries.get(profile);
+              const valid = Boolean(
+                summary &&
+                summary.lot === 13 &&
+                summary.referenceSha === sha &&
+                summary.status === 'passed' &&
+                Array.isArray(summary.pages) &&
+                summary.pages.length === 4 &&
+                summary.pages.every((page) => page.passed === true)
+              );
+              results[profile] = valid;
+              await github.rest.repos.createCommitStatus({
+                owner,
+                repo,
+                sha,
+                state: valid ? 'success' : 'failure',
+                context: `quality/lighthouse-${profile}`,
+                description: valid
+                  ? `Lot 13 ${profile}: 4 pages conformes sur ${sha.slice(0, 7)}`
+                  : `Lot 13 ${profile}: preuve absente, invalide ou hors seuil`,
+                target_url: targetUrl,
+              });
+            }
+
+            const overallPassed = process.env.DOWNLOAD_OUTCOME === 'success' && results.mobile && results.desktop;
+            await github.rest.repos.createCommitStatus({
+              owner,
+              repo,
+              sha,
+              state: overallPassed ? 'success' : 'failure',
+              context: 'quality/lighthouse-lot13',
+              description: overallPassed
+                ? 'Lot 13 certifié: mobile et desktop conformes'
+                : 'Lot 13 non certifié: consulter les rapports Lighthouse',
+              target_url: targetUrl,
+            });
+
+            await core.summary
+              .addHeading('Certification Lighthouse production — lot 13')
+              .addTable([
+                [{data: 'Contrôle', header: true}, {data: 'Résultat', header: true}],
+                ['SHA vérifié', sha],
+                ['Téléchargement des preuves', process.env.DOWNLOAD_OUTCOME],
+                ['Mobile', results.mobile ? 'PASS' : 'FAIL'],
+                ['Desktop', results.desktop ? 'PASS' : 'FAIL'],
+                ['Certification globale', overallPassed ? 'PASS' : 'FAIL'],
+              ])
+              .write();
+
+            if (!overallPassed) {
+              core.setFailed('Les preuves Lighthouse de production ne permettent pas la certification du lot 13.');
+            }
