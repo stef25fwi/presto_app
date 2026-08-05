@@ -1,0 +1,80 @@
+name: GitHub Actions runtime smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/actions-runtime-smoke.yml'
+      - '.github/workflows/build_apk.yml'
+      - '.github/workflows/release_android.yml'
+      - '.github/workflows/coverage-fastlane-planner.yml'
+      - '.github/workflows/pr-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: actions-runtime-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  java-runtime:
+    name: Java 17 runtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Temurin Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Verify Java and compiler versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          java -version 2>&1 | tee java-version.txt
+          javac -version 2>&1 | tee javac-version.txt
+          grep -Eq 'version "17\.' java-version.txt
+          grep -Eq '^javac 17\.' javac-version.txt
+
+  artifact-roundtrip:
+    name: Artifact v8 integrity roundtrip
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Create deterministic artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p smoke/source
+          printf 'ilipresto-actions-runtime-smoke\n' > smoke/source/payload.txt
+          (cd smoke/source && sha256sum payload.txt > expected.sha256)
+
+      - name: Upload smoke artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: actions-runtime-smoke-${{ github.run_id }}
+          path: smoke/source
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Download smoke artifact with v8
+        uses: actions/download-artifact@v8
+        with:
+          name: actions-runtime-smoke-${{ github.run_id }}
+          path: smoke/downloaded
+
+      - name: Verify downloaded artifact integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f smoke/downloaded/payload.txt
+          test -f smoke/downloaded/expected.sha256
+          (cd smoke/downloaded && sha256sum -c expected.sha256)
+          cmp smoke/source/payload.txt smoke/downloaded/payload.txt
