@@ -2,7 +2,7 @@ const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const functionsV1 = require("firebase-functions/v1");
 const { defineSecret } = require('firebase-functions/params');
-const admin = require('firebase-admin');
+const admin = require('./lib/core/firebase_admin_compat');
 const OpenAI = require('openai');
 const { createModerateNewOffer } = require('./moderation');
 
