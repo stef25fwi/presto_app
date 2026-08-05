@@ -29,7 +29,7 @@ void main() {
     expect(find.text('Renvoyer dans 1 s'), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 10));
-    expect(find.text('Renvoyer l’email'), findsOneWidget);
+    expect(find.text('Renvoyer l’e-mail'), findsOneWidget);
   });
 
   testWidgets('cooldown nul autorise immédiatement le renvoi réussi',
@@ -47,12 +47,12 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Renvoyer l’email'));
+    await tester.tap(find.text('Renvoyer l’e-mail'));
     await tester.pump();
 
     expect(resendCalls, 1);
-    expect(find.text('Email de confirmation renvoyé.'), findsOneWidget);
-    expect(find.text('Renvoyer l’email'), findsOneWidget);
+    expect(find.text('E-mail de confirmation renvoyé.'), findsOneWidget);
+    expect(find.text('Renvoyer l’e-mail'), findsOneWidget);
   });
 
   testWidgets('erreur de renvoi utilise le mapper injecté', (tester) async {
@@ -69,11 +69,11 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Renvoyer l’email'));
+    await tester.tap(find.text('Renvoyer l’e-mail'));
     await tester.pump();
 
     expect(find.textContaining('RENVOI:'), findsOneWidget);
-    expect(find.text('Renvoyer l’email'), findsOneWidget);
+    expect(find.text('Renvoyer l’e-mail'), findsOneWidget);
   });
 
   testWidgets('déconnexion appelle le callback injecté', (tester) async {
