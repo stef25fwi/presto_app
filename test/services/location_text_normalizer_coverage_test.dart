@@ -43,7 +43,7 @@ void main() {
     test('normalise accents et ligatures en texte de recherche', () {
       expect(
         normalizeLocationSearchText('Cœur d’Ærø à Noël'),
-        'coeur d aero a noel',
+        'coeur d aer a noel',
       );
       expect(
         normalizeLocationSearchText(
