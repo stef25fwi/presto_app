@@ -7,12 +7,18 @@ void main() {
   group('web public prelaunch shell', () {
     late String html;
     late String bootstrap;
+    late String webBridge;
+    late String appChrome;
     late Map<String, dynamic> structuredData;
     late List<Map<String, dynamic>> structuredNodes;
 
     setUpAll(() {
       html = File('web/index.html').readAsStringSync();
       bootstrap = File('web/flutter_bootstrap.js').readAsStringSync();
+      webBridge = File(
+        'lib/platform/public_prelaunch_shell_web.dart',
+      ).readAsStringSync();
+      appChrome = File('lib/app/presto_app_chrome.dart').readAsStringSync();
 
       final jsonLdMatch = RegExp(
         r'<script\s+type="application/ld\+json"[^>]*>([\s\S]*?)</script>',
@@ -40,7 +46,8 @@ void main() {
       expect(
         html,
         contains(
-          'Trouvez rapidement un particulier, un indépendant ou un professionnel près de chez vous',
+          'Trouvez rapidement un particulier, un indépendant ou un '
+          'professionnel près de chez vous',
         ),
       );
       expect(html, contains('Annonces assistées par IA'));
@@ -48,7 +55,8 @@ void main() {
       expect(
         html,
         contains(
-          'Plateforme nationale en cours de déploiement. Première ouverture en Guadeloupe, Martinique et Guyane.',
+          'Plateforme nationale en cours de déploiement. Première ouverture '
+          'en Guadeloupe, Martinique et Guyane.',
         ),
       );
     });
@@ -63,20 +71,31 @@ void main() {
       expect(html, contains('property="og:title"'));
       expect(html, contains('name="twitter:title"'));
       expect(html, contains('type="application/ld+json"'));
-      expect(html, contains('<title>iliprestō – Trouvez un service près de chez vous</title>'));
       expect(
         html,
         contains(
-          '<meta name="description" content="Trouvez rapidement un particulier, un indépendant ou un professionnel partout en France. Publiez une annonce assistée par IA et échangez directement, avec 0 % de commission.">',
+          '<title>iliprestō – Trouvez un service près de chez vous</title>',
         ),
       );
       expect(
         html,
-        isNot(contains('Ouverture prochaine en Guadeloupe, Martinique et Guyane.')),
+        contains(
+          '<meta name="description" content="Trouvez rapidement un '
+          'particulier, un indépendant ou un professionnel partout en France. '
+          'Publiez une annonce assistée par IA et échangez directement, avec '
+          '0 % de commission.">',
+        ),
+      );
+      expect(
+        html,
+        isNot(
+          contains('Ouverture prochaine en Guadeloupe, Martinique et Guyane.'),
+        ),
       );
     });
 
-    test('déclare un graphe JSON-LD national valide sans dépendre des espaces', () {
+    test('déclare un graphe JSON-LD national valide sans dépendre des espaces',
+        () {
       expect(structuredData['@context'], 'https://schema.org');
 
       final types = structuredNodes.map((node) => node['@type']).toSet();
@@ -99,72 +118,121 @@ void main() {
         (node) => node['@type'] == 'WebSite',
       );
       expect(website['@id'], 'https://ilipresto.fr/#website');
-      expect(website['publisher'], equals(<String, dynamic>{
-        '@id': 'https://ilipresto.fr/#organization',
-      }));
+      expect(
+        website['publisher'],
+        equals(<String, dynamic>{
+          '@id': 'https://ilipresto.fr/#organization',
+        }),
+      );
 
       final service = structuredNodes.firstWhere(
         (node) => node['@type'] == 'Service',
       );
-      expect(service['provider'], equals(<String, dynamic>{
-        '@id': 'https://ilipresto.fr/#organization',
-      }));
+      expect(
+        service['provider'],
+        equals(<String, dynamic>{
+          '@id': 'https://ilipresto.fr/#organization',
+        }),
+      );
       expect(
         service['areaServed'],
         equals(<String, dynamic>{'@type': 'Country', 'name': 'France'}),
       );
     });
 
-    test('maintient une seule page visible pendant tout le pré-lancement', () {
-      expect(bootstrap, contains('useFlutterPrelaunchOnly'));
-      expect(bootstrap, contains('createPrelaunchTransitionShell(shell)'));
-      expect(bootstrap, contains("prelaunchTransitionShell.id = 'prelaunch-transition-shell'"));
-      expect(bootstrap, contains("prelaunchTransitionShell.style.pointerEvents = 'none'"));
-      expect(bootstrap, contains("prelaunchTransitionShell.style.zIndex = '2147483646'"));
-      expect(bootstrap, contains("shell.style.visibility = 'hidden';"));
-      expect(bootstrap, contains('window.iliprestoOpenApplication = removePrelaunchTransitionShell'));
-      expect(
-        bootstrap.indexOf('preparePrelaunchSeoShellForFlutter();'),
-        lessThan(bootstrap.indexOf('_flutter.loader.load({')),
-      );
-    });
-
-    test(
-      'positionne explicitement la copie en plein écran malgré son id renommé',
-      () {
-        // La copie change d'id, donc les règles CSS ciblant
-        // #prelaunch-seo-shell (position fixe, z-index effectif, fond) ne
-        // s'appliquent plus : sans ces styles inline, la copie ne couvre
-        // plus l'écran et la page Flutter « Bientôt disponible » apparaît
-        // juste derrière, créant une double apparition.
-        expect(
-          bootstrap,
-          contains("prelaunchTransitionShell.style.position = 'fixed'"),
-        );
-        expect(
-          bootstrap,
-          contains("prelaunchTransitionShell.style.inset = '0'"),
-        );
-        expect(
-          bootstrap,
-          contains('prelaunchTransitionShell.style.background'),
-        );
-      },
-    );
-
-    test('ne retire pas automatiquement la page visible à la première frame', () {
-      expect(bootstrap, isNot(contains('removeTransitionShellAfterPaint')));
-      expect(bootstrap, isNot(contains('prelaunchTransitionRemovalScheduled')));
+    test('ne charge pas Flutter avant le déverrouillage de la racine publique',
+        () {
+      expect(bootstrap, contains('const deferredPublicPrelaunch ='));
       expect(
         bootstrap,
-        contains('if (!useFlutterPrelaunchOnly) {\n      removePrelaunchTransitionShell();'),
+        contains(
+          'useFlutterPrelaunchOnly && '
+          '!window.iliprestoHasPrelaunchAccess()',
+        ),
       );
-      expect(bootstrap, contains('window.iliprestoOpenApplication'));
+      expect(
+        bootstrap,
+        contains(
+          'if (deferredPublicPrelaunch) {\n'
+          '    armHiddenDeveloperAccess();\n'
+          '    return;\n'
+          '  }',
+        ),
+      );
+      expect(bootstrap, contains('function startFlutterApplication()'));
+      expect(bootstrap, contains('_flutter.loader.load({'));
     });
 
-    test('la page visible laisse passer les huit taps Flutter', () {
-      expect(bootstrap, contains("prelaunchTransitionShell.style.pointerEvents = 'none'"));
-      expect(bootstrap, isNot(contains("prelaunchTransitionShell.style.pointerEvents = 'auto'")));
+    test('conserve huit taps invisibles avec remise à zéro après huit secondes',
+        () {
+      expect(bootstrap, contains('const developerAccessTapCount = 8;'));
+      expect(bootstrap, contains('const tapSequenceTimeoutMs = 8000;'));
+      expect(
+        bootstrap,
+        contains("shell.querySelector('.prelaunch-card')"),
+      );
+      expect(bootstrap, contains("trigger.addEventListener('click'"));
+      expect(bootstrap, contains('tapCount >= developerAccessTapCount'));
+      expect(bootstrap, contains('tapCount = 0;'));
+      expect(bootstrap, isNot(contains('tapCount.toString')));
+      expect(bootstrap, isNot(contains('Compteur')));
+    });
+
+    test('mémorise le déverrouillage dans l’onglet et ouvre directement Home',
+        () {
+      expect(
+        bootstrap,
+        contains("const prelaunchAccessStorageKey = 'ilipresto-prelaunch-access'"),
+      );
+      expect(bootstrap, contains('window.iliprestoHasPrelaunchAccess'));
+      expect(bootstrap, contains('persistPrelaunchAccess();'));
+      expect(webBridge, contains("@JS('iliprestoHasPrelaunchAccess')"));
+      expect(webBridge, contains('bool hasPublicPrelaunchAccess()'));
+      expect(
+        appChrome,
+        contains(
+          '_temporaryDeveloperAccessGranted || hasPublicPrelaunchAccess()',
+        ),
+      );
+    });
+
+    test('maintient une seule page visible pendant le chargement après les taps',
+        () {
+      expect(bootstrap, contains('createPrelaunchTransitionShell(shell)'));
+      expect(
+        bootstrap,
+        contains(
+          "prelaunchTransitionShell.id = 'prelaunch-transition-shell'",
+        ),
+      );
+      expect(
+        bootstrap,
+        contains("prelaunchTransitionShell.style.pointerEvents = 'none'"),
+      );
+      expect(
+        bootstrap,
+        contains("prelaunchTransitionShell.style.zIndex = '2147483646'"),
+      );
+      expect(bootstrap, contains("shell.style.visibility = 'hidden';"));
+      expect(
+        bootstrap,
+        contains('window.iliprestoOpenApplication = function ()'),
+      );
+    });
+
+    test('corrige les contrastes du shell avant toute mesure Lighthouse', () {
+      expect(
+        bootstrap,
+        contains('.prelaunch-brand-name{color:#c64700!important}'),
+      );
+      expect(
+        bootstrap,
+        contains('.prelaunch-domain{color:#5f6b78!important}'),
+      );
+      expect(
+        bootstrap.indexOf('applyPrelaunchAccessibilityFixes();'),
+        lessThan(bootstrap.indexOf('const deferredPublicPrelaunch =')),
+      );
     });
 
     test('préserve les routes administration et authentification', () {

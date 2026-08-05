@@ -68,8 +68,50 @@
 
   const useFlutterPrelaunchOnly =
       normalizedPath === '/' && prodHosts.has(host);
+  const developerAccessTapCount = 8;
+  const tapSequenceTimeoutMs = 8000;
+  const prelaunchAccessStorageKey = 'ilipresto-prelaunch-access';
 
   let prelaunchTransitionShell = null;
+  let flutterStartRequested = false;
+  let tapCount = 0;
+  let lastTapAt = 0;
+  let tapResetTimer = null;
+  let prelaunchAccessGranted = false;
+
+  function readStoredPrelaunchAccess() {
+    try {
+      return window.sessionStorage.getItem(prelaunchAccessStorageKey) === '1';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function persistPrelaunchAccess() {
+    try {
+      window.sessionStorage.setItem(prelaunchAccessStorageKey, '1');
+    } catch (_) {
+      // Le mode privé peut refuser sessionStorage. Le drapeau mémoire suffit
+      // alors pour terminer l'ouverture dans l'onglet courant.
+    }
+  }
+
+  prelaunchAccessGranted = readStoredPrelaunchAccess();
+
+  window.iliprestoHasPrelaunchAccess = function () {
+    return prelaunchAccessGranted || readStoredPrelaunchAccess();
+  };
+
+  function applyPrelaunchAccessibilityFixes() {
+    if (document.getElementById('ilipresto-prelaunch-a11y-fixes')) return;
+    const style = document.createElement('style');
+    style.id = 'ilipresto-prelaunch-a11y-fixes';
+    style.textContent = [
+      '.prelaunch-brand-name{color:#c64700!important}',
+      '.prelaunch-domain{color:#5f6b78!important}',
+    ].join('');
+    document.head.appendChild(style);
+  }
 
   function getPrelaunchSeoShell() {
     return document.getElementById('prelaunch-seo-shell');
@@ -84,11 +126,6 @@
     prelaunchTransitionShell.style.pointerEvents = 'none';
     prelaunchTransitionShell.style.zIndex = '2147483646';
 
-    // Le nouvel id ne correspond plus au sélecteur CSS #prelaunch-seo-shell
-    // (position plein écran, fond). Sans ce positionnement explicite, la
-    // copie perdait son "position: fixed" et donc son z-index, laissait
-    // apparaître la page Flutter en dessous et provoquait la double
-    // apparition « Bientôt disponible » signalée en production.
     const shellStyle = window.getComputedStyle(shell);
     prelaunchTransitionShell.style.position = 'fixed';
     prelaunchTransitionShell.style.inset = '0';
@@ -106,11 +143,6 @@
     prelaunchTransitionShell.remove();
     prelaunchTransitionShell = null;
   }
-
-  // Appelé par Flutter uniquement après la séquence cachée de huit taps et
-  // après la préparation de l'accueil. Jusqu'à cet instant, une seule page
-  // publique reste visible : la copie HTML « Bientôt disponible ».
-  window.iliprestoOpenApplication = removePrelaunchTransitionShell;
 
   function preparePrelaunchSeoShellForFlutter() {
     const shell = getPrelaunchSeoShell();
@@ -141,18 +173,16 @@
     const shell = getPrelaunchSeoShell();
     if (shell) shell.remove();
 
-    // Sur la racine publique, ne jamais retirer automatiquement la copie :
-    // cela recréerait la succession HTML -> Flutter signalée en production.
-    if (!useFlutterPrelaunchOnly) {
+    if (!useFlutterPrelaunchOnly || window.iliprestoHasPrelaunchAccess()) {
       removePrelaunchTransitionShell();
     }
   }
 
-  preparePrelaunchSeoShellForFlutter();
-
-  window.addEventListener('flutter-first-frame', removePrelaunchSeoShell, {
-    once: true,
-  });
+  window.iliprestoOpenApplication = function () {
+    prelaunchAccessGranted = true;
+    persistPrelaunchAccess();
+    removePrelaunchTransitionShell();
+  };
 
   const isLocalHost =
       host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0';
@@ -166,16 +196,80 @@
       isPreviewHost ||
       !prodHosts.has(host);
 
-  _flutter.loader.load({
-    serviceWorkerSettings: disableServiceWorker
-        ? undefined
-        : {
-            serviceWorkerVersion: {{flutter_service_worker_version}},
-          },
-    onEntrypointLoaded: async function (engineInitializer) {
-      const appRunner = await engineInitializer.initializeEngine();
-      await appRunner.runApp();
-      window.requestAnimationFrame(removePrelaunchSeoShell);
-    },
-  });
+  function startFlutterApplication() {
+    if (flutterStartRequested) return;
+    flutterStartRequested = true;
+
+    preparePrelaunchSeoShellForFlutter();
+    window.addEventListener('flutter-first-frame', removePrelaunchSeoShell, {
+      once: true,
+    });
+
+    _flutter.loader.load({
+      serviceWorkerSettings: disableServiceWorker
+          ? undefined
+          : {
+              serviceWorkerVersion: {{flutter_service_worker_version}},
+            },
+      onEntrypointLoaded: async function (engineInitializer) {
+        const appRunner = await engineInitializer.initializeEngine();
+        await appRunner.runApp();
+        window.requestAnimationFrame(removePrelaunchSeoShell);
+      },
+    });
+  }
+
+  function grantHiddenDeveloperAccess() {
+    if (prelaunchAccessGranted) return;
+    prelaunchAccessGranted = true;
+    persistPrelaunchAccess();
+    if (tapResetTimer !== null) {
+      window.clearTimeout(tapResetTimer);
+      tapResetTimer = null;
+    }
+    startFlutterApplication();
+  }
+
+  function armHiddenDeveloperAccess() {
+    const shell = getPrelaunchSeoShell();
+    const trigger = shell && shell.querySelector('.prelaunch-card');
+    if (!trigger) return;
+
+    trigger.addEventListener('click', function () {
+      if (prelaunchAccessGranted) return;
+
+      const now = Date.now();
+      const sequenceExpired = lastTapAt === 0 ||
+          now - lastTapAt > tapSequenceTimeoutMs;
+      tapCount = sequenceExpired ? 1 : tapCount + 1;
+      lastTapAt = now;
+
+      if (tapResetTimer !== null) {
+        window.clearTimeout(tapResetTimer);
+      }
+
+      if (tapCount >= developerAccessTapCount) {
+        tapCount = developerAccessTapCount;
+        grantHiddenDeveloperAccess();
+        return;
+      }
+
+      tapResetTimer = window.setTimeout(function () {
+        tapCount = 0;
+        lastTapAt = 0;
+        tapResetTimer = null;
+      }, tapSequenceTimeoutMs);
+    });
+  }
+
+  applyPrelaunchAccessibilityFixes();
+
+  const deferredPublicPrelaunch =
+      useFlutterPrelaunchOnly && !window.iliprestoHasPrelaunchAccess();
+  if (deferredPublicPrelaunch) {
+    armHiddenDeveloperAccess();
+    return;
+  }
+
+  startFlutterApplication();
 })();

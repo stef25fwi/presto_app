@@ -59,7 +59,8 @@ class _PrestoAppChromeState extends State<PrestoAppChrome>
       PublicLandingConfigService.instance;
 
   Timer? _refreshTimer;
-  bool _publicLandingBypassed = _temporaryDeveloperAccessGranted;
+  bool _publicLandingBypassed =
+      _temporaryDeveloperAccessGranted || hasPublicPrelaunchAccess();
 
   @override
   void initState() {
