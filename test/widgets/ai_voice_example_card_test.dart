@@ -41,25 +41,27 @@ void main() {
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
-
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: SizedBox(width: 360, child: AiVoiceExampleCard()),
+    try {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: SizedBox(width: 360, child: AiVoiceExampleCard()),
+          ),
         ),
-      ),
-    );
+      );
 
-    expect(find.byIcon(Icons.record_voice_over_rounded), findsOneWidget);
-    final node = tester.getSemantics(find.byType(AiVoiceExampleCard));
-    expect(
-      node.label,
-      contains(
-        'Je cherche un jardinier pour tailler une haie et nettoyer mon jardin',
-      ),
-    );
-    expect(node.label, contains('dans le secteur de votre commune'));
+      expect(find.byIcon(Icons.record_voice_over_rounded), findsOneWidget);
+      final node = tester.getSemantics(find.byType(AiVoiceExampleCard));
+      expect(
+        node.label,
+        contains(
+          'Je cherche un jardinier pour tailler une haie et nettoyer mon jardin',
+        ),
+      );
+      expect(node.label, contains('dans le secteur de votre commune'));
+    } finally {
+      semantics.dispose();
+    }
   });
 
   testWidgets('conserve sa présentation dans une largeur mobile étroite', (
