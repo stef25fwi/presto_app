@@ -13,9 +13,6 @@ on:
         required: false
         default: ''
         type: string
-  workflow_run:
-    workflows: ['Validate and Deploy Firebase']
-    types: [completed]
   schedule:
     - cron: '23 09 * * 1'
 
@@ -23,12 +20,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: lighthouse-lot13-${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
+  group: lighthouse-lot13-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   lighthouse:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     name: Lighthouse ${{ matrix.profile }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -38,13 +34,13 @@ jobs:
         profile: [mobile, desktop]
     env:
       LIGHTHOUSE_PROFILE: ${{ matrix.profile }}
-      LIGHTHOUSE_BASE_URL: ${{ github.event.inputs.base_url || 'https://ilipresto.fr' }}
-      LIGHTHOUSE_REFERENCE_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.event.inputs.deployed_sha || github.sha }}
+      LIGHTHOUSE_BASE_URL: ${{ inputs.base_url || 'https://ilipresto.fr' }}
+      LIGHTHOUSE_REFERENCE_SHA: ${{ inputs.deployed_sha || github.sha }}
     steps:
-      - name: Checkout deployed SHA
+      - name: Checkout reference SHA
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ inputs.deployed_sha || github.sha }}
 
       - uses: actions/setup-node@v7
         with:
