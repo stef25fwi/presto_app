@@ -1,0 +1,90 @@
+name: Lighthouse performance baseline (lot 13)
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: URL de production à auditer
+        required: true
+        default: https://ilipresto.fr
+        type: string
+      deployed_sha:
+        description: SHA réellement déployé sur Firebase (requis pour certification)
+        required: false
+        default: ''
+        type: string
+  schedule:
+    - cron: '23 09 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lighthouse-lot13-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    name: Lighthouse ${{ matrix.profile }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [mobile, desktop]
+    env:
+      LIGHTHOUSE_PROFILE: ${{ matrix.profile }}
+      LIGHTHOUSE_BASE_URL: ${{ github.event.inputs.base_url || 'https://ilipresto.fr' }}
+      LIGHTHOUSE_REFERENCE_SHA: ${{ github.event.inputs.deployed_sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Validate lot 13 tooling
+        run: node tools/performance/build_lighthouse_baseline.test.mjs
+
+      - name: Install Lighthouse CI
+        run: npm install --global @lhci/cli@0.15.1
+
+      - name: Collect three production runs per page
+        run: lhci collect --config=config/lighthouse-ci.cjs
+
+      - name: Apply blocking performance budgets
+        id: assertions
+        continue-on-error: true
+        run: lhci assert --config=config/lighthouse-ci.cjs
+
+      - name: Export HTML and JSON reports
+        if: always()
+        run: lhci upload --config=config/lighthouse-ci.cjs
+
+      - name: Build lot 13 evidence summary
+        if: always()
+        run: |
+          node tools/performance/build_lighthouse_baseline.mjs \
+            --profile "$LIGHTHOUSE_PROFILE" \
+            --manifest "build/quality/lighthouse/$LIGHTHOUSE_PROFILE/manifest.json" \
+            --output-json "build/quality/lighthouse/$LIGHTHOUSE_PROFILE/summary.json" \
+            --output-markdown "build/quality/lighthouse/$LIGHTHOUSE_PROFILE/summary.md" \
+            --reference-sha "$LIGHTHOUSE_REFERENCE_SHA"
+          cat "build/quality/lighthouse/$LIGHTHOUSE_PROFILE/summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Archive Lighthouse evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-lot13-${{ matrix.profile }}-${{ github.run_id }}
+          path: build/quality/lighthouse/${{ matrix.profile }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Enforce lot 13 budgets
+        if: always()
+        run: |
+          if [ "${{ steps.assertions.outcome }}" != "success" ]; then
+            echo "Lighthouse $LIGHTHOUSE_PROFILE budgets failed. Download the archived reports for details."
+            exit 1
+          fi
