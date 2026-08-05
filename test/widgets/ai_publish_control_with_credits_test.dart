@@ -36,8 +36,16 @@ void main() {
     );
   }
 
+  Future<void> useTallViewport(WidgetTester tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 1000);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+  }
+
   testWidgets('affiche les crédits IA et transmet toutes les options',
       (tester) async {
+    await useTallViewport(tester);
     final link = LayerLink();
     final creditsService = deterministicCreditsService();
     var started = 0;
@@ -109,6 +117,7 @@ void main() {
   });
 
   testWidgets('conserve les valeurs optionnelles par défaut', (tester) async {
+    await useTallViewport(tester);
     final creditsService = deterministicCreditsService();
 
     await tester.pumpWidget(
