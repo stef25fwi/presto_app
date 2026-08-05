@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/account_social_auth_actions.dart';
@@ -61,47 +62,49 @@ void main() {
     await platform.authStateController.close();
   });
 
-  setUp(() {
-    AccountSocialAuthActions.configureWebEnvironmentForTesting(
-      isWeb: true,
-      baseHost: 'app.ilipresto.fr',
-    );
-  });
-
-  tearDown(AccountSocialAuthActions.resetTestingOverrides);
-
   testWidgets(
     'Google affiche Connexion annulée après le timeout de récupération auth',
     (tester) async {
-      final completed = Completer<void>();
+      debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+      AccountSocialAuthActions.configureWebEnvironmentForTesting(
+        isWeb: true,
+        baseHost: 'app.ilipresto.fr',
+      );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (context) => Scaffold(
-              body: ElevatedButton(
-                onPressed: () async {
-                  await AccountSocialAuthActions.signInWithGoogle(
-                    context: context,
-                    auth: auth,
-                    googleAuthService: GoogleAuthService(),
-                    trackLogin: ({authMethod, isNewUser = false}) async {},
-                  );
-                  completed.complete();
-                },
-                child: const Text('Connexion'),
+      try {
+        final completed = Completer<void>();
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: ElevatedButton(
+                  onPressed: () async {
+                    await AccountSocialAuthActions.signInWithGoogle(
+                      context: context,
+                      auth: auth,
+                      googleAuthService: GoogleAuthService(),
+                      trackLogin: ({authMethod, isNewUser = false}) async {},
+                    );
+                    completed.complete();
+                  },
+                  child: const Text('Connexion'),
+                ),
               ),
             ),
           ),
-        ),
-      );
+        );
 
-      await tester.tap(find.text('Connexion'));
-      await tester.pump(const Duration(seconds: 3));
-      await tester.pump();
-      await completed.future;
+        await tester.tap(find.text('Connexion'));
+        await tester.pump(const Duration(seconds: 3));
+        await tester.pump();
+        await completed.future;
 
-      expect(find.text('Connexion annulée.'), findsOneWidget);
+        expect(find.text('Connexion annulée.'), findsOneWidget);
+      } finally {
+        AccountSocialAuthActions.resetTestingOverrides();
+        debugDefaultTargetPlatformOverride = null;
+      }
     },
   );
 }

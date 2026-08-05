@@ -361,7 +361,7 @@ void main() {
     expect(platform.resetEmail, 'user@example.com');
     expect(
       platform.resetSettings?.url,
-      'https://www.ilipresto.fr/auth/action',
+      'https://ilipresto.fr/auth/action',
     );
 
     platform.resetError = FirebaseAuthException(code: 'user-not-found');
@@ -437,7 +437,7 @@ void main() {
     expect(current.pendingVerifiedEmail, 'new@example.com');
     expect(
       current.emailChangeSettings?.url,
-      'https://www.ilipresto.fr/auth/action',
+      'https://ilipresto.fr/auth/action',
     );
     final profile = await firestore.collection('users').doc('user-1').get();
     expect(profile.data()?['pendingEmail'], 'new@example.com');
