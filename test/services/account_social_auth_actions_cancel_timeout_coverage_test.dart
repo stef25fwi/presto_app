@@ -63,16 +63,16 @@ void main() {
   });
 
   setUp(() {
+    final previousPlatformOverride = debugDefaultTargetPlatformOverride;
     debugDefaultTargetPlatformOverride = TargetPlatform.linux;
     AccountSocialAuthActions.configureWebEnvironmentForTesting(
       isWeb: true,
       baseHost: 'app.ilipresto.fr',
     );
-  });
-
-  tearDown(() {
-    debugDefaultTargetPlatformOverride = null;
-    AccountSocialAuthActions.resetTestingOverrides();
+    addTearDown(() {
+      debugDefaultTargetPlatformOverride = previousPlatformOverride;
+      AccountSocialAuthActions.resetTestingOverrides();
+    });
   });
 
   testWidgets(
