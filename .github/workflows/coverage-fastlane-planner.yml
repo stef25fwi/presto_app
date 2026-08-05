@@ -84,7 +84,7 @@ jobs:
       - name: Reuse validated LCOV artifact
         if: steps.source_run.outputs.run_id != ''
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ steps.source_run.outputs.run_id }}
