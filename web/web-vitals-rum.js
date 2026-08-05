@@ -7,7 +7,7 @@
   if (!('PerformanceObserver' in window)) return;
   if (navigator.doNotTrack === '1' || navigator.globalPrivacyControl === true) return;
 
-  const endpoint = '/api/web-vitals';
+  const endpoint = 'https://europe-west1-presto-app-74abe.cloudfunctions.net/collectWebVitals';
   const pageViewId = createPageViewId();
   const route = normalizeRoute(window.location.pathname);
   const deviceCategory = window.matchMedia('(max-width: 767px)').matches
