@@ -237,5 +237,6 @@ flutter "${flutter_args[@]}" \
   "${extra_defines[@]}"
 
 if [[ "$is_web_release_build" == "true" ]]; then
+  node tools/seo/stamp_web_release_metadata.mjs build/web
   node tools/seo/inject_web_vitals_rum.mjs build/web
 fi
