@@ -43,7 +43,7 @@ void main() {
     await openSheet(tester);
 
     expect(find.text('Langue de l’application'), findsOneWidget);
-    expect(find.text('Langue de l’appareil'), findsOneWidget);
+    expect(find.text('Automatique — langue de l’appareil'), findsOneWidget);
     expect(find.text('Français'), findsOneWidget);
     expect(find.text('English'), findsOneWidget);
     expect(find.text('Español'), findsOneWidget);
@@ -59,7 +59,10 @@ void main() {
     expect(LocaleController.instance.locale, const Locale('fr'));
     final preferences = await SharedPreferences.getInstance();
     expect(preferences.getString('preferred_language'), 'fr');
-    expect(find.text('Langue modifiée'), findsOneWidget);
+    expect(
+      find.text('La langue de l’application a été mise à jour.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('sélectionne successivement anglais et espagnol',
@@ -83,7 +86,7 @@ void main() {
     await LocaleController.instance.setLocale(const Locale('en'));
     await openSheet(tester);
 
-    await tester.tap(find.text('Langue de l’appareil'));
+    await tester.tap(find.text('Automatique — langue de l’appareil'));
     await tester.pumpAndSettle();
 
     expect(LocaleController.instance.locale, isNull);
