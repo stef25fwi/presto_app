@@ -73,10 +73,8 @@ function isRateLimited(fingerprint: string): boolean {
   return current.count > RATE_LIMIT_MAX;
 }
 
-function isAllowedRequestHost(hostHeader: string, originHeader: string): boolean {
-  const host = hostHeader.split(":", 1)[0]?.toLowerCase() ?? "";
-  if (!ALLOWED_HOSTS.has(host)) return false;
-  if (!originHeader) return true;
+function isAllowedOrigin(originHeader: string): boolean {
+  if (!originHeader) return false;
   try {
     return ALLOWED_HOSTS.has(new URL(originHeader).hostname.toLowerCase());
   } catch {
@@ -110,7 +108,7 @@ export const collectWebVitals = onRequest(
     timeoutSeconds: 10,
     memory: "256MiB",
     maxInstances: 10,
-    cors: false,
+    cors: true,
   },
   async (req, res) => {
     res.set("Cache-Control", "no-store");
@@ -126,7 +124,7 @@ export const collectWebVitals = onRequest(
       return;
     }
 
-    if (!isAllowedRequestHost(req.get("host") ?? "", req.get("origin") ?? "")) {
+    if (!isAllowedOrigin(req.get("origin") ?? "")) {
       res.status(403).json({ ok: false, error: "origin_not_allowed" });
       return;
     }
