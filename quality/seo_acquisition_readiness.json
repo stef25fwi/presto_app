@@ -5,7 +5,7 @@
     {"id":"seo_metadata","status":"pending","evidence":"Métadonnées uniques et vérifiées sur les pages publiques"},
     {"id":"seo_sitemap","status":"pending","evidence":"Sitemap et robots.txt validés"},
     {"id":"seo_indexation","status":"pending","evidence":"Indexation réelle contrôlée dans les outils webmaster"},
-    {"id":"public_pages_performance","status":"pending","evidence":"Lot 13 instrumenté : Lighthouse mobile/desktop, quatre pages, trois runs médians, budgets bloquants et artefacts 90 jours. La certification exige les statuts quality/lighthouse-mobile, quality/lighthouse-desktop et quality/lighthouse-lot13 au vert sur le SHA Firebase réellement déployé."},
+    {"id":"public_pages_performance","status":"complete","evidence":"Lot 13 certifié en production le 2026-08-05 sur le SHA Firebase 79033ab51b7a41ac1377359f592a48f4ef95d5a8. Déploiement Firebase run 31048557909 réussi avec smoke tests. Lighthouse run 31049564594 réussi en mobile et desktop sur quatre pages, trois mesures médianes par page, budgets bloquants inchangés, artefacts conservés 90 jours et statuts quality/lighthouse-mobile, quality/lighthouse-desktop et quality/lighthouse-lot13 au vert sur le même SHA."},
     {"id":"campaign_attribution","status":"pending","evidence":"UTM et attribution des campagnes testées de bout en bout"},
     {"id":"deep_links_campaigns","status":"pending","evidence":"Deep links associés aux campagnes validés sur Web/Android/iOS"},
     {"id":"crm_consent","status":"pending","evidence":"Email et push segmentés avec consentement versionné"},
