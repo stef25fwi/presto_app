@@ -83,8 +83,17 @@ function isAllowedOrigin(originHeader: string): boolean {
 }
 
 function parsePayload(body: unknown): WebVitalPayload | null {
-  if (!body || typeof body !== "object" || Array.isArray(body)) return null;
-  return body as WebVitalPayload;
+  let candidate = body;
+  if (Buffer.isBuffer(candidate)) candidate = candidate.toString("utf8");
+  if (typeof candidate === "string") {
+    try {
+      candidate = JSON.parse(candidate);
+    } catch {
+      return null;
+    }
+  }
+  if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return null;
+  return candidate as WebVitalPayload;
 }
 
 function normalizeMetric(value: unknown): WebVitalMetric | null {
