@@ -1,0 +1,137 @@
+name: Lighthouse lot 13 certification status
+
+on:
+  workflow_run:
+    workflows: ['Lighthouse performance baseline (lot 13)']
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  statuses: write
+
+concurrency:
+  group: lighthouse-lot13-certification-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: true
+
+jobs:
+  certify:
+    name: Certify Lighthouse evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download Lighthouse evidence
+        id: download
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+          pattern: lighthouse-lot13-*
+          path: lighthouse-evidence
+
+      - name: Verify evidence and publish commit statuses
+        uses: actions/github-script@v8
+        env:
+          EVIDENCE_PATH: lighthouse-evidence
+          LIGHTHOUSE_RUN_URL: ${{ github.event.workflow_run.html_url }}
+          LIGHTHOUSE_RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+          DOWNLOAD_OUTCOME: ${{ steps.download.outcome }}
+        with:
+          script: |
+            const fs = require('node:fs');
+            const path = require('node:path');
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const sha = process.env.TARGET_SHA;
+            const targetUrl = process.env.LIGHTHOUSE_RUN_URL;
+            const evidenceRoot = process.env.EVIDENCE_PATH;
+
+            function walk(directory) {
+              if (!fs.existsSync(directory)) return [];
+              const entries = fs.readdirSync(directory, {withFileTypes: true});
+              return entries.flatMap((entry) => {
+                const absolute = path.join(directory, entry.name);
+                return entry.isDirectory() ? walk(absolute) : [absolute];
+              });
+            }
+
+            const summaries = new Map();
+            for (const file of walk(evidenceRoot).filter((file) => file.endsWith('summary.json'))) {
+              try {
+                const summary = JSON.parse(fs.readFileSync(file, 'utf8'));
+                if (summary.profile === 'mobile' || summary.profile === 'desktop') {
+                  summaries.set(summary.profile, {file, summary});
+                }
+              } catch (error) {
+                core.warning(`Impossible de lire ${file}: ${error.message}`);
+              }
+            }
+
+            async function publish(profile, state, description) {
+              await github.rest.repos.createCommitStatus({
+                owner,
+                repo,
+                sha,
+                state,
+                context: `quality/lighthouse-${profile}`,
+                description: description.slice(0, 140),
+                target_url: targetUrl,
+              });
+            }
+
+            const results = {};
+            for (const profile of ['mobile', 'desktop']) {
+              const evidence = summaries.get(profile);
+              const valid = Boolean(
+                evidence &&
+                evidence.summary.lot === 13 &&
+                evidence.summary.referenceSha === sha &&
+                evidence.summary.status === 'passed' &&
+                Array.isArray(evidence.summary.pages) &&
+                evidence.summary.pages.length === 4 &&
+                evidence.summary.pages.every((page) => page.passed === true)
+              );
+              results[profile] = valid;
+
+              const state = valid ? 'success' : 'failure';
+              const description = valid
+                ? `Lot 13 ${profile}: 4 pages conformes, preuves liées au SHA ${sha.slice(0, 7)}`
+                : `Lot 13 ${profile}: preuve absente, invalide ou hors seuil pour ${sha.slice(0, 7)}`;
+              await publish(profile, state, description);
+            }
+
+            const workflowSucceeded = process.env.LIGHTHOUSE_RUN_CONCLUSION === 'success';
+            const downloadSucceeded = process.env.DOWNLOAD_OUTCOME === 'success';
+            const overallPassed = workflowSucceeded && downloadSucceeded && results.mobile && results.desktop;
+
+            await github.rest.repos.createCommitStatus({
+              owner,
+              repo,
+              sha,
+              state: overallPassed ? 'success' : 'failure',
+              context: 'quality/lighthouse-lot13',
+              description: overallPassed
+                ? 'Lot 13 certifié: mobile et desktop conformes avec artefacts valides'
+                : 'Lot 13 non certifié: consulter les rapports Lighthouse',
+              target_url: targetUrl,
+            });
+
+            await core.summary
+              .addHeading('Certification Lighthouse — lot 13')
+              .addTable([
+                [{data: 'Contrôle', header: true}, {data: 'Résultat', header: true}],
+                ['SHA vérifié', sha],
+                ['Workflow Lighthouse', process.env.LIGHTHOUSE_RUN_CONCLUSION],
+                ['Téléchargement des preuves', process.env.DOWNLOAD_OUTCOME],
+                ['Mobile', results.mobile ? 'PASS' : 'FAIL'],
+                ['Desktop', results.desktop ? 'PASS' : 'FAIL'],
+                ['Certification globale', overallPassed ? 'PASS' : 'FAIL'],
+              ])
+              .write();
+
+            if (!overallPassed) {
+              core.setFailed('Les preuves Lighthouse du lot 13 ne permettent pas une certification complète.');
+            }
