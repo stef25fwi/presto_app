@@ -4,8 +4,32 @@
   if (window.__ILIPRESTO_WEB_VITALS_RUM__) return;
   window.__ILIPRESTO_WEB_VITALS_RUM__ = true;
 
+  const optOutKey = 'ilipresto-cwv-optout';
+  const observers = [];
+  let reportingDisabled = false;
+
+  function hasPersistentOptOut() {
+    try {
+      return window.localStorage.getItem(optOutKey) === '1';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  window.iliprestoDisableWebVitals = function () {
+    reportingDisabled = true;
+    try {
+      window.localStorage.setItem(optOutKey, '1');
+    } catch (_) {
+      // Le refus reste actif pour la page courante si le stockage est bloqué.
+    }
+    observers.forEach(function (observer) { observer.disconnect(); });
+  };
+
   if (!('PerformanceObserver' in window)) return;
+  if (navigator.webdriver === true || /HeadlessChrome|Lighthouse/i.test(navigator.userAgent)) return;
   if (navigator.doNotTrack === '1' || navigator.globalPrivacyControl === true) return;
+  if (hasPersistentOptOut()) return;
 
   const endpoint = 'https://europe-west1-presto-app-74abe.cloudfunctions.net/collectWebVitals';
   const pageViewId = createPageViewId();
@@ -18,7 +42,6 @@
       ? String(navigationEntry.type)
       : 'navigate';
   let releaseSha = 'unknown';
-  let reportingDisabled = false;
   let lcpValue = null;
   let clsValue = 0;
   let clsSessionValue = 0;
@@ -26,7 +49,6 @@
   let clsSessionEnd = 0;
   const interactions = new Map();
   const lastSent = new Map();
-  const observers = [];
 
   function createPageViewId() {
     if (window.crypto && typeof window.crypto.randomUUID === 'function') {
@@ -161,8 +183,7 @@
   window.addEventListener('ilipresto-consent-updated', function (event) {
     const detail = event && event.detail;
     if (detail && detail.analyticsAllowed === false) {
-      reportingDisabled = true;
-      observers.forEach(function (observer) { observer.disconnect(); });
+      window.iliprestoDisableWebVitals();
     }
   });
 
