@@ -84,12 +84,12 @@
       collectedAtClient: new Date().toISOString(),
     });
 
-    const body = new Blob([payload], { type: 'application/json' });
+    const body = new Blob([payload], { type: 'text/plain;charset=UTF-8' });
     if (navigator.sendBeacon && navigator.sendBeacon(endpoint, body)) return;
     fetch(endpoint, {
       method: 'POST',
       body: payload,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
       credentials: 'omit',
       keepalive: true,
       cache: 'no-store',
