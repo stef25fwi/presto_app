@@ -8,6 +8,7 @@ on:
       - '.github/workflows/firebase-admin-v14-migration.yml'
       - 'functions/package.json'
       - 'functions/package-lock.json'
+      - 'functions/index.js'
       - 'functions/src/**'
       - 'functions/scripts/migrate_firebase_admin_v14_imports.mjs'
 
@@ -58,12 +59,15 @@ jobs:
       - name: Build migrated Functions
         run: npm --prefix functions run build
 
+      - name: Run complete Functions test suite
+        run: npm --prefix functions test
+
       - name: Commit and push verified migration
         shell: bash
         run: |
           set -euo pipefail
-          if ! git diff --quiet -- functions/src; then
-            git add functions/src
-            git commit -m 'refactor(functions): migrate Firebase Admin v14 imports'
+          if ! git diff --quiet -- functions/src functions/index.js; then
+            git add functions/src functions/index.js
+            git commit -m 'refactor(functions): migrate Firebase Admin v14 entrypoints'
           fi
           git push origin HEAD:migration/firebase-admin-v14
