@@ -1,0 +1,59 @@
+name: Firebase Admin v14 migration
+
+on:
+  push:
+    branches:
+      - migration/firebase-admin-v14
+    paths:
+      - '.github/workflows/firebase-admin-v14-migration.yml'
+      - 'functions/package.json'
+      - 'functions/package-lock.json'
+      - 'functions/src/**'
+      - 'functions/scripts/migrate_firebase_admin_v14_imports.mjs'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: firebase-admin-v14-migration
+  cancel-in-progress: true
+
+jobs:
+  migrate-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout migration branch
+        uses: actions/checkout@v7
+        with:
+          ref: migration/firebase-admin-v14
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Apply deterministic import migration
+        run: node functions/scripts/migrate_firebase_admin_v14_imports.mjs
+
+      - name: Install Functions dependencies
+        run: npm --prefix functions ci
+
+      - name: Build migrated Functions
+        run: npm --prefix functions run build
+
+      - name: Commit verified migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- functions/src; then
+            echo 'No generated source changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add functions/src
+          git commit -m 'refactor(functions): migrate Firebase Admin v14 imports'
+          git push origin HEAD:migration/firebase-admin-v14
