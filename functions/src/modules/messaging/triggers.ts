@@ -1,4 +1,4 @@
-import admin from "firebase-admin";
+import admin from "../../core/firebase_admin_compat";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { db } from "../../core/firestore";
 import { canProceedRateLimited } from "../../core/rate_limit";

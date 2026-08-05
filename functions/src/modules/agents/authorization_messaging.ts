@@ -1,4 +1,4 @@
-import admin from "firebase-admin";
+import admin from "../../core/firebase_admin_compat";
 import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { db } from "../../core/firestore";
 

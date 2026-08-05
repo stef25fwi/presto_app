@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { posix as pathPosix } from "node:path";
 
-import admin from "firebase-admin";
+import admin from "../../core/firebase_admin_compat";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import sharp from "sharp";
 import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";

@@ -1,4 +1,4 @@
-import admin from "firebase-admin";
+import admin from "../../../core/firebase_admin_compat";
 import { db } from "../../../core/firestore";
 import { COLLECTIONS } from "../../../shared/constants";
 import { refreshUnreadMessageCount } from "../../notifications/counters";

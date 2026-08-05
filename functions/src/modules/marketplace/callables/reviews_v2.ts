@@ -1,4 +1,4 @@
-import admin from "firebase-admin";
+import admin from "../../../core/firebase_admin_compat";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../../config/env";

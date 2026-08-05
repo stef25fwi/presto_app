@@ -1,4 +1,4 @@
-import admin from "firebase-admin";
+import admin from "../../../core/firebase_admin_compat";
 import { HttpsError } from "firebase-functions/v2/https";
 import { db } from "../../../core/firestore";
 import { COLLECTIONS } from "../../../shared/constants";

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import admin from "firebase-admin";
+import admin from "../../core/firebase_admin_compat";
 import { logger } from "firebase-functions";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";

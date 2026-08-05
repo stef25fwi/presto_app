@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 
-import admin from "firebase-admin";
+import admin from "../../core/firebase_admin_compat";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 
 import { PROJECT_REGION } from "../../config/env";

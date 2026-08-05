@@ -1,4 +1,4 @@
-import admin from "firebase-admin";
+import admin from "../../core/firebase_admin_compat";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { db } from "../../core/firestore";
 import { APP_BASE_URL } from "../../config/env";
