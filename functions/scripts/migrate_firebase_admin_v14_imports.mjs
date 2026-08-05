@@ -5,6 +5,7 @@ import process from "node:process";
 const functionsDir = path.resolve(process.cwd(), "functions");
 const sourceDir = path.join(functionsDir, "src");
 const compatFile = path.join(sourceDir, "core", "firebase_admin_compat.ts");
+const legacyEntrypoint = path.join(functionsDir, "index.js");
 
 async function collectTypeScriptFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -65,6 +66,19 @@ for (const file of files) {
   }
 }
 
+const legacySource = await readFile(legacyEntrypoint, "utf8");
+const migratedLegacySource = legacySource.replace(
+  /const\s+admin\s*=\s*require\(["']firebase-admin["']\);?/u,
+  "const admin = require('./lib/core/firebase_admin_compat');",
+);
+
+if (/require\(["']firebase-admin["']\)/u.test(migratedLegacySource)) {
+  unresolved.push(path.relative(functionsDir, legacyEntrypoint));
+} else if (migratedLegacySource !== legacySource) {
+  await writeFile(legacyEntrypoint, migratedLegacySource, "utf8");
+  changedFiles += 1;
+}
+
 if (unresolved.length > 0) {
   console.error("Unsupported firebase-admin root imports remain:");
   for (const file of unresolved) {
@@ -72,5 +86,5 @@ if (unresolved.length > 0) {
   }
   process.exitCode = 1;
 } else {
-  console.log(`Migrated ${changedFiles} TypeScript file(s) to the v14 compatibility layer.`);
+  console.log(`Migrated ${changedFiles} source file(s) to the v14 compatibility layer.`);
 }
