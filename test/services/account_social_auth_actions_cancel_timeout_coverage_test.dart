@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/account_social_auth_actions.dart';
@@ -62,13 +63,17 @@ void main() {
   });
 
   setUp(() {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
     AccountSocialAuthActions.configureWebEnvironmentForTesting(
       isWeb: true,
       baseHost: 'app.ilipresto.fr',
     );
   });
 
-  tearDown(AccountSocialAuthActions.resetTestingOverrides);
+  tearDown(() {
+    debugDefaultTargetPlatformOverride = null;
+    AccountSocialAuthActions.resetTestingOverrides();
+  });
 
   testWidgets(
     'Google affiche Connexion annulée après le timeout de récupération auth',
