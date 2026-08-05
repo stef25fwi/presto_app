@@ -61,7 +61,6 @@ void main() {
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -84,13 +83,13 @@ void main() {
       find.bySemanticsLabel('Ouvrir les notifications'),
       findsOneWidget,
     );
+    semantics.dispose();
   });
 
   testWidgets('un état de chargement est annoncé sans exposer de détail technique', (
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -109,5 +108,6 @@ void main() {
 
     expect(find.bySemanticsLabel('Chargement en cours'), findsOneWidget);
     expect(find.textContaining('Exception'), findsNothing);
+    semantics.dispose();
   });
 }

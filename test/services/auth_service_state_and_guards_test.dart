@@ -182,7 +182,7 @@ void main() {
     expect(current.verificationCalls, 2);
     expect(
       current.verificationSettings?.url,
-      'https://www.ilipresto.fr/auth/action',
+      'https://ilipresto.fr/auth/action',
     );
     expect(current.verificationSettings?.handleCodeInApp, isFalse);
   });
