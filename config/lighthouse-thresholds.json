@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "profiles": {
+    "mobile": {
+      "performanceScoreMin": 0.65,
+      "seoScoreMin": 0.95,
+      "accessibilityScoreMin": 0.9,
+      "bestPracticesScoreMin": 0.9,
+      "firstContentfulPaintMsMax": 3000,
+      "largestContentfulPaintMsMax": 4000,
+      "cumulativeLayoutShiftMax": 0.15,
+      "totalBlockingTimeMsMax": 650,
+      "speedIndexMsMax": 5000
+    },
+    "desktop": {
+      "performanceScoreMin": 0.8,
+      "seoScoreMin": 0.95,
+      "accessibilityScoreMin": 0.9,
+      "bestPracticesScoreMin": 0.9,
+      "firstContentfulPaintMsMax": 2000,
+      "largestContentfulPaintMsMax": 3000,
+      "cumulativeLayoutShiftMax": 0.1,
+      "totalBlockingTimeMsMax": 400,
+      "speedIndexMsMax": 3500
+    }
+  }
+}
