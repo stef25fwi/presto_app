@@ -33,6 +33,33 @@ void main() {
       expect(codeSentId, 'verification-id-1');
     });
 
+    test('sendCode fixe le timeout et ignore la fin de récupération auto', () async {
+      Duration? capturedTimeout;
+
+      final service = PhoneVerificationService(
+        verifyStarter: ({
+          required phoneNumber,
+          required timeout,
+          required verificationCompleted,
+          required verificationFailed,
+          required codeSent,
+          required codeAutoRetrievalTimeout,
+        }) async {
+          capturedTimeout = timeout;
+          codeAutoRetrievalTimeout('verification-id-timeout');
+        },
+      );
+
+      await service.sendCode(
+        phoneNumber: '+33600000000',
+        onCodeSent: (_) => fail('onCodeSent ne doit pas être appelé'),
+        onFailed: (_) => fail('onFailed ne doit pas être appelé'),
+        onAutoVerified: () async => fail('onAutoVerified ne doit pas être appelé'),
+      );
+
+      expect(capturedTimeout, const Duration(seconds: 60));
+    });
+
     test('sendCode relaie verificationFailed', () async {
       FirebaseAuthException? capturedError;
 
@@ -59,6 +86,40 @@ void main() {
       );
 
       expect(capturedError?.code, 'invalid-phone-number');
+    });
+
+    test('sendCode relaie une erreur Firebase du lien automatique', () async {
+      FirebaseAuthException? capturedError;
+
+      final service = PhoneVerificationService(
+        verifyStarter: ({
+          required phoneNumber,
+          required timeout,
+          required verificationCompleted,
+          required verificationFailed,
+          required codeSent,
+          required codeAutoRetrievalTimeout,
+        }) async {
+          await verificationCompleted(
+            PhoneAuthProvider.credential(
+              verificationId: 'auto-link-error',
+              smsCode: '123456',
+            ),
+          );
+        },
+        linker: (_) async {
+          throw FirebaseAuthException(code: 'provider-already-linked');
+        },
+      );
+
+      await service.sendCode(
+        phoneNumber: '+33612345678',
+        onCodeSent: (_) => fail('onCodeSent ne doit pas être appelé'),
+        onFailed: (error) => capturedError = error,
+        onAutoVerified: () async => fail('onAutoVerified ne doit pas être appelé'),
+      );
+
+      expect(capturedError?.code, 'provider-already-linked');
     });
 
     test(
