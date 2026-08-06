@@ -37,9 +37,7 @@ class ProductAnalyticsService {
     }
 
     final attribution = CampaignAttributionService.instance;
-    if (attribution.hasObservedAttribution) {
-      await attribution.ensureReady();
-    }
+    await attribution.ensureReady();
 
     final enriched = <String, Object?>{
       ...attribution.parametersForProductEvent(),
