@@ -110,7 +110,7 @@ jobs:
 
       - name: Upload SEO monitoring evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: seo-monitoring-${{ github.run_id }}
           path: build/seo/
