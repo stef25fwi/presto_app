@@ -350,7 +350,7 @@ Uri? effectiveCampaignUri(String? rawLocation) {
   }
 
   return Uri(
-    pathSegments: pathSegments,
+    path: pathSegments.isEmpty ? '/' : '/${pathSegments.join('/')}',
     queryParameters: <String, String>{
       ...outer.queryParameters,
       ...routeUri.queryParameters,
