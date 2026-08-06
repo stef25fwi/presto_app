@@ -14,6 +14,9 @@ const read = (path) => {
 const requireText = (content, token, label) => {
   if (!content.includes(token)) failures.push(`missing ${label}: ${token}`);
 };
+const forbidText = (content, token, label) => {
+  if (content.includes(token)) failures.push(`forbidden ${label}: ${token}`);
+};
 const requireCondition = (condition, message) => {
   if (!condition) failures.push(message);
 };
@@ -21,14 +24,18 @@ const requireCondition = (condition, message) => {
 const configText = read('config/seo-monitoring.json');
 const readinessText = read('quality/seo-monitoring-readiness.json');
 const docs = read('docs/seo/monitoring-and-continuous-improvement.md');
+const lot15Docs = read('docs/seo/search-console-lot15.md');
 const auth = read('tools/seo/google_service_account_auth.mjs');
 const gsc = read('tools/seo/fetch_search_console_metrics.mjs');
+const gscReport = read('tools/seo/build_search_console_lot15_report.mjs');
+const gscContract = read('tools/seo/search_console_lot15_contract.test.mjs');
 const ga4 = read('tools/seo/fetch_ga4_metrics.mjs');
 const publicMonitor = read('tools/seo/monitor_public_seo.mjs');
 const runtimeContract = read('tools/seo/runtime_seo_registry_contract.mjs');
 const runtimeContractTest = read('tools/seo/runtime_seo_registry_contract.test.mjs');
 const report = read('tools/seo/build_seo_monitoring_report.mjs');
 const workflow = read('.github/workflows/seo-continuous-monitoring.yml');
+const searchConsoleWorkflow = read('.github/workflows/search-console-lot15.yml');
 const prWorkflow = read('.github/workflows/seo-acquisition-readiness.yml');
 const sitemap = read('web/sitemap.xml');
 const firebaseOptions = read('lib/firebase_options.dart');
@@ -107,9 +114,15 @@ for (const eventName of config.conversionEvents ?? []) {
 requireText(auth, 'directAccessToken', 'short-lived token support');
 requireText(auth, 'RSA-SHA256', 'local service-account fallback');
 requireText(gsc, 'webmasters.readonly', 'Search Console readonly scope');
+requireText(gsc, "'/sites'", 'Search Console property discovery');
 requireText(gsc, '/searchAnalytics/query', 'Search Console query endpoint');
+requireText(gsc, 'api_disabled', 'Search Console API disabled diagnosis');
+requireText(gsc, 'property_not_granted', 'Search Console property diagnosis');
 requireText(gsc, "dimensions: ['query']", 'query reporting');
 requireText(gsc, "dimensions: ['page']", 'page reporting');
+requireText(gscReport, 'zero-data-valid', 'valid zero traffic state');
+requireText(gscReport, 'quality/search-console-lot15', 'Search Console certification context');
+requireText(gscContract, 'Search Console lot 15 contract: OK', 'Search Console contract test');
 requireText(ga4, 'analyticsadmin.googleapis.com/v1beta/accountSummaries', 'GA4 property discovery');
 requireText(ga4, 'webStreamData?.measurementId', 'GA4 measurement matching');
 requireText(ga4, 'analyticsdata.googleapis.com/v1beta/properties', 'GA4 Data API endpoint');
@@ -132,31 +145,41 @@ requireText(workflow, 'push:', 'post-merge monitoring trigger');
 requireText(workflow, 'id-token: write', 'OIDC permission');
 requireText(workflow, 'issues: write', 'issue alert permission');
 requireText(workflow, 'google-github-actions/auth@v3', 'WIF authentication action');
-requireText(workflow, 'google-github-actions/setup-gcloud@v3', 'Google Cloud CLI setup');
 requireText(workflow, 'secrets.WIF_PROVIDER', 'WIF provider wiring');
 requireText(workflow, 'secrets.WIF_SERVICE_ACCOUNT', 'WIF service account wiring');
 requireText(workflow, 'SEO_GOOGLE_ACCESS_TOKEN', 'short-lived token wiring');
 requireText(workflow, 'SEO_GA4_PROPERTY_ID', 'optional GA4 override');
-requireText(workflow, 'cloud-platform', 'service activation token scope');
 requireText(workflow, 'webmasters.readonly', 'Search Console token scope');
 requireText(workflow, 'analytics.readonly', 'GA4 token scope');
-requireText(workflow, 'searchconsole.googleapis.com', 'Search Console API activation');
-requireText(workflow, 'analyticsadmin.googleapis.com', 'Analytics Admin API activation');
-requireText(workflow, 'analyticsdata.googleapis.com', 'Analytics Data API activation');
 requireText(workflow, 'build_seo_monitoring_report.mjs', 'monitoring report execution');
-requireText(workflow, 'actions/upload-artifact@v4', 'report retention');
-requireText(workflow, 'actions/github-script@v7', 'GitHub issue alerting');
+requireText(workflow, 'actions/upload-artifact@v7', 'report retention');
+requireText(workflow, 'actions/github-script@v8', 'GitHub issue alerting');
+forbidText(workflow, 'gcloud services enable', 'daily API activation');
+forbidText(workflow, 'google-github-actions/setup-gcloud@v3', 'unnecessary gcloud setup');
+
+requireText(searchConsoleWorkflow, 'schedule:', 'Search Console daily schedule');
+requireText(searchConsoleWorkflow, 'statuses: write', 'Search Console status permission');
+requireText(searchConsoleWorkflow, 'webmasters.readonly', 'Search Console dedicated scope');
+requireText(searchConsoleWorkflow, 'quality/search-console-lot15', 'Search Console commit status');
+requireText(searchConsoleWorkflow, 'actions/upload-artifact@v7', 'Search Console evidence retention');
+requireText(searchConsoleWorkflow, 'actions/github-script@v8', 'Search Console issue management');
+forbidText(searchConsoleWorkflow, 'analytics.readonly', 'GA4 scope in lot 15');
+forbidText(searchConsoleWorkflow, 'gcloud services enable', 'Search Console daily API activation');
 requireText(prWorkflow, 'check_seo_monitoring_readiness.test.mjs', 'PR regression gate');
+requireText(prWorkflow, 'search_console_lot15_contract.test.mjs', 'lot 15 PR gate');
 requireText(docs, 'Search Console', 'Search Console runbook');
 requireText(docs, 'Workload Identity Federation', 'WIF runbook');
 requireText(docs, 'SEO_GOOGLE_SERVICE_ACCOUNT_JSON', 'local fallback documentation');
 requireText(docs, 'Revue hebdomadaire', 'weekly improvement cycle');
 requireText(docs, 'Revue mensuelle', 'monthly improvement cycle');
+requireText(lot15Docs, '151421230024', 'Search Console Google project diagnosis');
+requireText(lot15Docs, 'serviceusage.services.enable', 'one-time activation permission');
 
 for (const [path, content] of [
   ['config/seo-monitoring.json', configText],
   ['quality/seo-monitoring-readiness.json', readinessText],
   ['.github/workflows/seo-continuous-monitoring.yml', workflow],
+  ['.github/workflows/search-console-lot15.yml', searchConsoleWorkflow],
 ]) {
   if (content.includes('-----BEGIN PRIVATE KEY-----')) {
     failures.push(`private key committed in ${path}`);
@@ -167,6 +190,8 @@ for (const script of [
   'tools/seo/google_service_account_auth.mjs',
   'tools/seo/seo_monitoring_utils.mjs',
   'tools/seo/fetch_search_console_metrics.mjs',
+  'tools/seo/build_search_console_lot15_report.mjs',
+  'tools/seo/search_console_lot15_contract.test.mjs',
   'tools/seo/fetch_ga4_metrics.mjs',
   'tools/seo/runtime_seo_registry_contract.mjs',
   'tools/seo/runtime_seo_registry_contract.test.mjs',
