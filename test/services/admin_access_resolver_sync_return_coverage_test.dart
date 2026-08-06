@@ -122,4 +122,36 @@ void main() {
     expect(state.profileRoles, const <String>['admin']);
     expect(state.lastStage, 'profile-loaded');
   });
+
+  test('synchronise en mémoire les rôles admin issus des claims', () async {
+    final state = await resolver.syncUserRoleFromClaimsIfNeeded(
+      FirebaseAuth.instance.currentUser!,
+      _SyncTokenResult(<String?, Object?>{
+        'roles': <String>['user', 'admin'],
+        'primaryRole': 'admin',
+      }),
+    );
+
+    expect(state.profileLoaded, isFalse);
+    expect(state.profileHasAdmin, isTrue);
+    expect(state.profileRoles, const <String>['user', 'admin']);
+    expect(state.profilePrimaryRole, 'admin');
+    expect(state.lastStage, 'profile-synced-from-token');
+  });
+
+  test('utilise le rôle normalisé quand primaryRole est absent', () async {
+    final state = await resolver.syncUserRoleFromClaimsIfNeeded(
+      FirebaseAuth.instance.currentUser!,
+      _SyncTokenResult(<String?, Object?>{
+        'roles': <String>['admin'],
+      }),
+      state: AdminAccessState.initial().copyWith(profileLoaded: true),
+    );
+
+    expect(state.profileLoaded, isTrue);
+    expect(state.profileHasAdmin, isTrue);
+    expect(state.profileRoles, const <String>['admin']);
+    expect(state.profilePrimaryRole, 'admin');
+    expect(state.lastStage, 'profile-synced-from-token');
+  });
 }
