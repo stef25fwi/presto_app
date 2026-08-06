@@ -93,7 +93,7 @@ void main() {
     expect(state.profileHasAdmin, isFalse);
     expect(state.profileRoles, isEmpty);
     expect(state.profilePrimaryRole, isNull);
-    expect(state.lastStage, 'initial');
+    expect(state.lastStage, 'idle');
   });
 
   test('préserve l’état existant quand le profil contient déjà la preuve admin',
