@@ -2,6 +2,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
 
+import 'campaign_attribution_service.dart';
 import 'cookie_consent_service.dart';
 import 'product_analytics_events.dart';
 
@@ -35,8 +36,17 @@ class ProductAnalyticsService {
       return;
     }
 
+    final attribution = CampaignAttributionService.instance;
+    if (attribution.hasObservedAttribution) {
+      await attribution.ensureReady();
+    }
+
+    final enriched = <String, Object?>{
+      ...attribution.parametersForProductEvent(),
+      ...parameters,
+    };
     final sanitized = <String, Object>{};
-    for (final entry in parameters.entries) {
+    for (final entry in enriched.entries) {
       final value = entry.value;
       if (value == null) continue;
       if (value is String || value is num || value is bool) {
