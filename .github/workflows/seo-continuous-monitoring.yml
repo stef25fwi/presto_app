@@ -57,26 +57,8 @@ jobs:
           token_format: access_token
           access_token_lifetime: 1800s
           access_token_scopes: >-
-            https://www.googleapis.com/auth/cloud-platform,
             https://www.googleapis.com/auth/webmasters.readonly,
             https://www.googleapis.com/auth/analytics.readonly
-
-      - name: Setup Google Cloud CLI
-        if: steps.google_auth.outcome == 'success'
-        uses: google-github-actions/setup-gcloud@v3
-
-      - name: Enable SEO measurement APIs
-        id: api_bootstrap
-        if: steps.google_auth.outcome == 'success'
-        continue-on-error: true
-        run: |
-          set -euo pipefail
-          gcloud services enable \
-            searchconsole.googleapis.com \
-            analyticsadmin.googleapis.com \
-            analyticsdata.googleapis.com \
-            --project presto-app-74abe \
-            --quiet
 
       - name: Build daily SEO report
         id: report
@@ -86,7 +68,7 @@ jobs:
           SEO_GA4_PROPERTY_ID: ${{ vars.SEO_GA4_PROPERTY_ID }}
           SEO_GSC_SITE_URL: sc-domain:ilipresto.fr
           REQUIRE_EXTERNAL_DATA: ${{ github.event_name != 'workflow_dispatch' || inputs.require_external_data }}
-          SEO_API_BOOTSTRAP_OUTCOME: ${{ steps.api_bootstrap.outcome }}
+          SEO_API_BOOTSTRAP_OUTCOME: managed-by-dedicated-lots
         run: |
           set -euo pipefail
           args=(--output build/seo/seo-monitoring-report.json --enforce)
@@ -106,11 +88,12 @@ jobs:
           fi
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- Authentification Google : ${{ steps.google_auth.outcome }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Activation des API : ${{ steps.api_bootstrap.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Search Console : contrôlée par le workflow dédié du lot 15" >> "$GITHUB_STEP_SUMMARY"
+          echo "- GA4 : contrôlé par le workflow dédié du lot 16" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload SEO monitoring evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: seo-monitoring-${{ github.run_id }}
           path: build/seo/
@@ -119,7 +102,7 @@ jobs:
 
       - name: Open, update or close the SEO alert issue
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
