@@ -145,6 +145,8 @@ class CampaignAttributionService {
 
   CampaignAttribution? get firstTouch => _firstTouch;
   CampaignAttribution? get lastTouch => _lastTouch ?? _pending;
+  bool get hasObservedAttribution =>
+      _pending != null || _firstTouch != null || _lastTouch != null;
 
   /// Capture synchrone et sans stockage : elle peut être appelée depuis le
   /// routeur. L'écriture et les événements GA4 ne sont déclenchés qu'après un
