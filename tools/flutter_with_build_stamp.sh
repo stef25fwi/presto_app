@@ -226,7 +226,7 @@ if [[ "$is_web_release_build" == "true" && -z "${APPCHECK_RECAPTCHA_SITE_KEY:-}"
   exit 2
 fi
 
-exec flutter "${flutter_args[@]}" \
+flutter "${flutter_args[@]}" \
   --dart-define=APP_VERSION="$app_version" \
   --dart-define=APP_BUILD_NUMBER="$app_build_number" \
   --dart-define=APP_REPOSITORY="$app_repository" \
@@ -235,3 +235,8 @@ exec flutter "${flutter_args[@]}" \
   --dart-define=APP_BUILD_TAG="$app_build_tag" \
   --dart-define=APP_BUILD_TIME="$app_build_time" \
   "${extra_defines[@]}"
+
+if [[ "$is_web_release_build" == "true" ]]; then
+  node tools/seo/stamp_web_release_metadata.mjs build/web
+  node tools/seo/inject_web_vitals_rum.mjs build/web
+fi

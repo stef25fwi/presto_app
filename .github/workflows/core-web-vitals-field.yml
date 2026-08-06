@@ -1,0 +1,83 @@
+name: Core Web Vitals field report
+
+on:
+  schedule:
+    - cron: '25 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  statuses: write
+
+concurrency:
+  group: core-web-vitals-field
+  cancel-in-progress: true
+
+jobs:
+  field-report:
+    environment: recaptcha
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Install Functions dependencies
+        run: npm --prefix functions ci
+
+      - name: Export 28-day field report
+        id: report
+        working-directory: functions
+        env:
+          GCLOUD_PROJECT: presto-app-74abe
+          CWV_OUTPUT_DIR: ../build/quality/core-web-vitals
+        run: node scripts/export_web_vitals_report.mjs
+
+      - name: Upload field evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: core-web-vitals-field-${{ github.sha }}
+          path: build/quality/core-web-vitals
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish commit status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATUS_STATE: ${{ steps.report.outputs.state }}
+          STATUS_DESCRIPTION: ${{ steps.report.outputs.description }}
+          TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          node <<'NODE' > /tmp/core-web-vitals-status.json
+          const payload = {
+            state: process.env.STATUS_STATE || 'error',
+            target_url: process.env.TARGET_URL,
+            description: String(process.env.STATUS_DESCRIPTION || 'Rapport Core Web Vitals indisponible').slice(0, 140),
+            context: 'quality/core-web-vitals-field',
+          };
+          process.stdout.write(JSON.stringify(payload));
+          NODE
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            --data-binary @/tmp/core-web-vitals-status.json \
+            "https://api.github.com/repos/$REPOSITORY/statuses/$COMMIT_SHA"
+
+      - name: Publish summary
+        run: cat build/quality/core-web-vitals/report.md >> "$GITHUB_STEP_SUMMARY"
