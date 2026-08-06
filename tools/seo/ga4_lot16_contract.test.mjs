@@ -138,7 +138,7 @@ if (control.status === 'complete') {
   assert.match(control.evidence, /propriété GA4 536902302/u);
   assert.match(control.evidence, /G-NT4PEHQ3CJ/u);
   assert.match(control.evidence, /zero-data-valid/u);
-  assert.match(control.evidence, /artefact 8964803988/u);
+  assert.match(control.evidence, /Artefact 8964803988/u);
   assert.match(control.evidence, /issue #1242 fermée/u);
 }
 
