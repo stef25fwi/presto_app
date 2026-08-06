@@ -1,4 +1,5 @@
 import 'app_route_parser.dart';
+import 'campaign_attribution_service.dart';
 
 enum InitialRouteKind {
   home,
@@ -48,17 +49,15 @@ class InitialRouteResolution {
 }
 
 String normalizeInitialRoutePath(String? rawLocation) {
-  final raw = (rawLocation ?? '').trim();
+  final effective = effectiveCampaignUri(rawLocation);
+  final raw = (effective?.path ?? rawLocation ?? '').trim();
   if (raw.isEmpty) return '/';
-
-  final uri = Uri.tryParse(raw);
-  final path = (uri?.path ?? raw).trim();
-  if (path.isEmpty || path == '/') return '/';
-
-  return path.endsWith('/') ? path.substring(0, path.length - 1) : path;
+  if (raw == '/') return '/';
+  return raw.endsWith('/') ? raw.substring(0, raw.length - 1) : raw;
 }
 
 InitialRouteResolution resolveInitialRoute(String? rawLocation) {
+  CampaignAttributionService.instance.observeRoute(rawLocation);
   final normalizedPath = normalizeInitialRoutePath(rawLocation);
 
   switch (normalizedPath) {

@@ -74,6 +74,40 @@ void main() {
       expect(target.offerId, 'listing_123');
       expect(target.preferMarketplace, isTrue);
     });
+
+    test('parse un App Link /app avec UTM', () {
+      final target = parseAppDeepLink(
+        'https://ilipresto.fr/app/listings/listing_utm'
+        '?utm_source=newsletter&utm_medium=email&utm_campaign=launch',
+      );
+
+      expect(target, isNotNull);
+      expect(target!.routeName, '/listings');
+      expect(target.offerId, 'listing_utm');
+      expect(target.preferMarketplace, isTrue);
+    });
+
+    test('parse un Universal Link vers une offre', () {
+      final target = parseAppDeepLink(
+        'https://ilipresto.fr/app/offers/offer_web'
+        '?utm_source=instagram&utm_medium=social&utm_campaign=offre',
+      );
+
+      expect(target, isNotNull);
+      expect(target!.routeName, '/offers');
+      expect(target.offerId, 'offer_web');
+    });
+
+    test('parse le schéma applicatif vers un profil', () {
+      final target = parseAppDeepLink(
+        'ilipresto://profile/user_1'
+        '?utm_source=push&utm_medium=notification&utm_campaign=profil',
+      );
+
+      expect(target, isNotNull);
+      expect(target!.routeName, '/profile');
+      expect(target.userId, 'user_1');
+    });
   });
 
   group('buildMessagesRoute', () {
