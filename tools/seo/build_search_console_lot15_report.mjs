@@ -13,6 +13,8 @@ import {
   writeJsonFile,
 } from './seo_monitoring_utils.mjs';
 
+const STATUS_CONTEXT = 'quality/search-console-lot15';
+
 function argumentValue(name, fallback) {
   const index = process.argv.indexOf(name);
   return index >= 0 && process.argv[index + 1] ? process.argv[index + 1] : fallback;
@@ -24,6 +26,7 @@ function markdownFor(report) {
     '',
     `- Statut : **${report.status}**`,
     `- Généré le : **${report.generatedAt}**`,
+    `- Contexte GitHub : **${report.statusContext}**`,
     `- Propriété demandée : **${report.requestedSiteUrl}**`,
   ];
 
@@ -102,6 +105,7 @@ try {
   report = {
     schemaVersion: 1,
     lot: 15,
+    statusContext: STATUS_CONTEXT,
     generatedAt,
     status: 'available',
     dataStatus: hasData ? 'data-present' : 'zero-data-valid',
@@ -118,6 +122,7 @@ try {
   report = {
     schemaVersion: 1,
     lot: 15,
+    statusContext: STATUS_CONTEXT,
     generatedAt,
     status: 'blocked',
     requestedSiteUrl,
