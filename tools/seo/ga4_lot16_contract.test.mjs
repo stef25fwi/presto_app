@@ -128,7 +128,18 @@ const control = registry.controls.find(
   (item) => item.id === 'ga4_organic_search',
 );
 assert.ok(control, 'ga4_organic_search control must exist');
-assert.equal(control.status, 'pending');
+assert.ok(
+  ['pending', 'complete'].includes(control.status),
+  'ga4_organic_search must be pending or complete',
+);
 assert.match(control.evidence, /quality\/ga4-organic-lot16/u);
+if (control.status === 'complete') {
+  assert.match(control.evidence, /run 31091519469/u);
+  assert.match(control.evidence, /propriété GA4 536902302/u);
+  assert.match(control.evidence, /G-NT4PEHQ3CJ/u);
+  assert.match(control.evidence, /zero-data-valid/u);
+  assert.match(control.evidence, /Artefact 8964803988/u);
+  assert.match(control.evidence, /issue #1242 fermée/u);
+}
 
 console.log('GA4 Organic Search lot 16 contract: OK');
