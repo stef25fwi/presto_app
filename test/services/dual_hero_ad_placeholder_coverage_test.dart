@@ -123,6 +123,37 @@ void main() {
     expect(image.updatedAt, updatedAt);
   });
 
+  test('AdPlaceholderImage.fromDoc neutralise les types inattendus', () async {
+    final firestore = FakeFirebaseFirestore();
+    final ref = firestore.collection('ad_placeholder_images').doc('malformed');
+    await ref.set(<String, dynamic>{
+      'imageUrl': 123,
+      'storagePath': false,
+      'isVisible': 'true',
+      'target': 7,
+      'sortOrder': 12.5,
+      'title': '',
+      'description': 0,
+      'linkUrl': false,
+      'createdAt': '2026-07-20',
+      'updatedAt': 42,
+    });
+
+    final image = AdPlaceholderImage.fromDoc(await ref.get());
+
+    expect(image.id, 'malformed');
+    expect(image.imageUrl, '123');
+    expect(image.storagePath, 'false');
+    expect(image.isVisible, isFalse);
+    expect(image.target, '7');
+    expect(image.sortOrder, 0);
+    expect(image.title, isNull);
+    expect(image.description, '0');
+    expect(image.linkUrl, 'false');
+    expect(image.createdAt, isNull);
+    expect(image.updatedAt, isNull);
+  });
+
   test('loadCachedSlides rejette une structure JSON qui n est pas une liste',
       () async {
     SharedPreferences.setMockInitialValues(<String, Object>{
