@@ -1,3 +1,5 @@
+import 'campaign_attribution_service.dart';
+
 class AppDeepLinkTarget {
   static const String messagesRouteName = '/messages';
   static const String messagesV2RouteName = '/messages-2';
@@ -118,22 +120,9 @@ AppDeepLinkTarget? parseAppDeepLink(String? rawName) {
   final name = (rawName ?? '').trim();
   if (name.isEmpty) return null;
 
-  Uri uri;
-  try {
-    uri = Uri.parse(name);
-  } catch (_) {
-    return null;
-  }
-
-  if (uri.pathSegments.isEmpty && uri.fragment.isNotEmpty) {
-    final fragment =
-        uri.fragment.startsWith('/') ? uri.fragment : '/${uri.fragment}';
-    try {
-      uri = Uri.parse(fragment);
-    } catch (_) {
-      return null;
-    }
-  }
+  CampaignAttributionService.instance.observeRoute(name);
+  final uri = effectiveCampaignUri(name);
+  if (uri == null) return null;
 
   final segments = uri.pathSegments
       .map((segment) => segment.trim())
