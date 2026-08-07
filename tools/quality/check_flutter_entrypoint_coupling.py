@@ -4,7 +4,8 @@
 `lib/main.dart` must remain a thin composition root, not a service locator.
 Production and test code must import the dedicated modules directly rather than
 the application entrypoint. The explicit production allowlist remains empty
-once the Lot 2 migration is complete so any future coupling fails CI.
+once the Lot 2 migration is complete so any future coupling fails CI. The
+entrypoint must not re-export application modules.
 """
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ from pathlib import Path
 _ALLOWED_MAIN_IMPORTERS: set[str] = set()
 
 _IMPORT_RE = re.compile(r"^\s*import\s+['\"]([^'\"]+)['\"]", re.MULTILINE)
+_EXPORT_RE = re.compile(r"^\s*export\s+['\"]([^'\"]+)['\"]", re.MULTILINE)
 _FORBIDDEN_ENTRYPOINT_DECLARATION_RE = re.compile(
     r"^\s*(?:class|mixin|enum|extension|typedef)\s+",
     re.MULTILINE,
@@ -62,6 +64,7 @@ def validate_main_entrypoint(root: Path) -> list[str]:
     errors: list[str] = []
     line_count = len(text.splitlines())
     imports = set(_IMPORT_RE.findall(text))
+    exports = sorted(set(_EXPORT_RE.findall(text)))
 
     if line_count > _MAX_MAIN_LINES:
         errors.append(
@@ -73,6 +76,12 @@ def validate_main_entrypoint(root: Path) -> list[str]:
         errors.append(
             "lib/main.dart has unexpected runtime imports: "
             + ", ".join(unexpected_imports)
+        )
+
+    if exports:
+        errors.append(
+            "lib/main.dart must not re-export application modules: "
+            + ", ".join(exports)
         )
 
     if _REQUIRED_MAIN not in text:
@@ -108,7 +117,7 @@ def main() -> int:
     print(
         "Flutter entrypoint coupling guardrail: OK "
         f"({len(importers)} transitional importer(s) remain; "
-        f"main.dart <= {_MAX_MAIN_LINES} lines; tests decoupled)"
+        f"main.dart <= {_MAX_MAIN_LINES} lines; export-free; tests decoupled)"
     )
     return 0
 
