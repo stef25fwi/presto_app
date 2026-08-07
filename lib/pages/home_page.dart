@@ -155,24 +155,6 @@ class _HomePageState extends State<HomePage>
 
   late final AnimationController _categoryController;
 
-  // Taille de police de référence pour les titres des slides (alignée sur le slide 1)
-  static const double _homeSlideTitleFontSize = 30;
-
-  double _responsiveHeroTitleFontSize(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    if (width < 360) return 21;
-    if (width < 430) return 24;
-    if (width < 700) return 26;
-    return 30;
-  }
-
-  double _responsiveHeroSubtitleFontSize(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    if (width < 360) return 13;
-    if (width < 430) return 14;
-    return 15;
-  }
-
   double _responsiveHomeSlideTitleFontSize(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     if (width < 360) return 21;
