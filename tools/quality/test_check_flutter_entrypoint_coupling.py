@@ -74,7 +74,8 @@ class EntrypointCouplingGuardTests(unittest.TestCase):
                 (
                     "import 'app/presto_app.dart';\n"
                     "import 'bootstrap/app_bootstrap.dart';\n"
-                    "import 'services/legacy_service.dart';\n\n"
+                    "import 'services/legacy_service.dart';\n"
+                    "export 'pages/home_page.dart';\n\n"
                     "class LegacyRuntime {}\n\n"
                     "Future<void> main() => bootstrapPrestoApp(const PrestoApp());\n"
                     f"{oversized_padding}\n"
@@ -86,6 +87,9 @@ class EntrypointCouplingGuardTests(unittest.TestCase):
             self.assertTrue(any("grew to" in error for error in errors))
             self.assertTrue(
                 any("unexpected runtime imports" in error for error in errors)
+            )
+            self.assertTrue(
+                any("must not re-export" in error for error in errors)
             )
             self.assertTrue(
                 any("must not declare classes" in error for error in errors)
