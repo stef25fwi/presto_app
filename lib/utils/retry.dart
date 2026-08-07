@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 /// Retry helper with exponential backoff + jitter.
@@ -48,11 +47,4 @@ Future<T> retry<T>(
   // Unreachable, but keeps analyzer happy.
   // ignore: only_throw_errors
   throw lastError ?? Exception('retry: failed') /* coverage */;
-}
-
-bool isRetryableTimeoutOrNetwork(Object error) {
-  if (error is TimeoutException) return true;
-  // Firebase Storage / Functions errors often come as FirebaseException.
-  // We keep this file dependency-free; callers can add additional checks.
-  return false;
 }
