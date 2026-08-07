@@ -82,15 +82,19 @@ class PublicPrelaunchLaunchPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBF7),
         borderRadius: BorderRadius.circular(18),
-        border: const Border(
-          left: BorderSide(color: Color(0xFFFF6600), width: 5),
-          top: BorderSide(color: Color(0x55FF6600)),
-          right: BorderSide(color: Color(0x55FF6600)),
-          bottom: BorderSide(color: Color(0x55FF6600)),
-        ),
+        border: Border.all(color: const Color(0x55FF6600)),
       ),
       child: Row(
         children: <Widget>[
+          Container(
+            width: 5,
+            height: compact ? 48 : 54,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF6600),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(width: 12),
           Container(
             width: compact ? 40 : 46,
             height: compact ? 40 : 46,
