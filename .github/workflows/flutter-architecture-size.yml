@@ -8,6 +8,7 @@ on:
       - 'tools/quality/check_flutter_architecture_size.py'
       - 'tools/quality/test_check_flutter_architecture_size.py'
       - 'tools/quality/check_flutter_entrypoint_coupling.py'
+      - 'tools/quality/test_check_flutter_entrypoint_coupling.py'
       - '.github/workflows/flutter-architecture-size.yml'
   workflow_dispatch:
 
@@ -23,6 +24,8 @@ jobs:
           fetch-depth: 0
       - name: Test architecture size guardrail
         run: python3 tools/quality/test_check_flutter_architecture_size.py
+      - name: Test entrypoint coupling guardrail
+        run: python3 tools/quality/test_check_flutter_entrypoint_coupling.py
       - name: Check Flutter screen and widget size budgets
         run: python3 tools/quality/check_flutter_architecture_size.py --changed-only --base-ref "$GITHUB_BASE_REF" --enforce
       - name: Prevent new main.dart dependencies
