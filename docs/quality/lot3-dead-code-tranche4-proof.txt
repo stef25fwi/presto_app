@@ -1,0 +1,4 @@
+Base certifiée production: a67e2b1647c79c7dc13a3b02f07cc100346b27a6
+Branche: refactor/lot3-home-dead-responsive-20260807
+Suppression nette code: 18 lignes dans lib/pages/home_page.dart
+Aucun seuil, skip ou exclusion ajouté.
