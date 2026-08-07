@@ -1,0 +1,131 @@
+name: Lot 2 atomic main import decoupling
+
+on:
+  push:
+    branches:
+      - 'refactor/lot2-decouple-main-imports-atomic-20260807'
+    paths:
+      - '.github/workflows/lot2-decouple-main-imports.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-main-importers:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Replace legacy main.dart imports atomically
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              'lib/pages/home_page.dart': (
+                  "import '../main.dart'\n    show PrestoMonitoring, prestoOverlayStyleFor, buildOfferDetailsOffer;",
+                  "import '../app/system_ui_style.dart' show prestoOverlayStyleFor;\n"
+                  "import '../services/offer_details_mapper.dart' show buildOfferDetailsOffer;\n"
+                  "import '../services/presto_monitoring.dart' show PrestoMonitoring;",
+              ),
+              'lib/pages/account_page.dart': (
+                  "import '../main.dart'\n"
+                  "    show\n"
+                  "        PrestoMonitoring,\n"
+                  "        prestoOverlayStyleFor,\n"
+                  "        adminAudioRuntimeStore,\n"
+                  "        pendingRedirectAuthResult,\n"
+                  "        pendingRedirectAuthError;",
+                  "import '../app/runtime_stores.dart' show adminAudioRuntimeStore;\n"
+                  "import '../app/startup_state.dart'\n"
+                  "    show pendingRedirectAuthError, pendingRedirectAuthResult;\n"
+                  "import '../app/system_ui_style.dart' show prestoOverlayStyleFor;\n"
+                  "import '../services/presto_monitoring.dart' show PrestoMonitoring;",
+              ),
+              'lib/pages/fiche_pro_page.dart': (
+                  "import '../main.dart' show buildOfferDetailsOffer, prestoOverlayStyleFor;",
+                  "import '../app/system_ui_style.dart' show prestoOverlayStyleFor;\n"
+                  "import '../services/offer_details_mapper.dart' show buildOfferDetailsOffer;",
+              ),
+              'lib/pages/user_offers_section.dart': (
+                  "import '../main.dart'\n"
+                  "    show buildOfferDetailsOffer, kOfferDeleteReasonFoundOnIliPresto;",
+                  "import '../app/app_runtime_config.dart'\n"
+                  "    show kOfferDeleteReasonFoundOnIliPresto;\n"
+                  "import '../services/offer_details_mapper.dart' show buildOfferDetailsOffer;",
+              ),
+              'lib/pages/publish_offer_page.dart': (
+                  "import '../main.dart' show prestoOverlayStyleFor;",
+                  "import '../app/system_ui_style.dart' show prestoOverlayStyleFor;",
+              ),
+              'lib/pages/consult_offers_page.dart': (
+                  "import '../main.dart'\n"
+                  "    show\n"
+                  "        CardShell,\n"
+                  "        PrestoMonitoring,\n"
+                  "        prestoOverlayStyleFor,\n"
+                  "        inferRegionFromPostalCode,\n"
+                  "        buildOfferDetailsOffer;",
+                  "import '../app/system_ui_style.dart' show prestoOverlayStyleFor;\n"
+                  "import '../services/offer_details_mapper.dart' show buildOfferDetailsOffer;\n"
+                  "import '../services/presto_monitoring.dart' show PrestoMonitoring;\n"
+                  "import '../services/region_resolver.dart' show inferRegionFromPostalCode;\n"
+                  "import '../widgets/app_shell_widgets.dart' show CardShell;",
+              ),
+          }
+
+          for filename, (old, new) in replacements.items():
+              path = Path(filename)
+              text = path.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{filename}: expected exactly 1 legacy import block, found {count}')
+              path.write_text(text.replace(old, new), encoding='utf-8')
+              print(f'patched {filename}')
+
+          checker = Path('tools/quality/check_flutter_entrypoint_coupling.py')
+          text = checker.read_text(encoding='utf-8')
+          old_allowlist = '''_ALLOWED_MAIN_IMPORTERS = {
+              "lib/pages/account_page.dart",
+              "lib/pages/consult_offers_page.dart",
+              "lib/pages/fiche_pro_page.dart",
+              "lib/pages/home_page.dart",
+              "lib/pages/publish_offer_page.dart",
+              "lib/pages/user_offers_section.dart",
+          }'''
+          new_allowlist = '_ALLOWED_MAIN_IMPORTERS: set[str] = set()'
+          count = text.count(old_allowlist)
+          if count != 1:
+              raise SystemExit(f'checker allowlist: expected exactly 1 block, found {count}')
+          checker.write_text(text.replace(old_allowlist, new_allowlist), encoding='utf-8')
+          print('reduced production main.dart allowlist to zero')
+          PY
+
+      - name: Validate zero entrypoint coupling
+        run: |
+          python3 tools/quality/test_check_flutter_entrypoint_coupling.py
+          python3 tools/quality/check_flutter_entrypoint_coupling.py
+          git diff --check
+          if git grep -nE "import[[:space:]]+['\"][^'\"]*main\.dart['\"]" -- lib test ':!lib/main.dart'; then
+            echo 'Unexpected main.dart importer remains.' >&2
+            exit 1
+          fi
+
+      - name: Commit atomic decoupling
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            lib/pages/home_page.dart \
+            lib/pages/account_page.dart \
+            lib/pages/fiche_pro_page.dart \
+            lib/pages/user_offers_section.dart \
+            lib/pages/publish_offer_page.dart \
+            lib/pages/consult_offers_page.dart \
+            tools/quality/check_flutter_entrypoint_coupling.py
+          git diff --cached --stat
+          git commit -m 'refactor(lot2): supprimer les derniers imports de main.dart'
+          git push origin HEAD:refactor/lot2-decouple-main-imports-atomic-20260807
