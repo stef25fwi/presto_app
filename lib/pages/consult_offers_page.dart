@@ -17,13 +17,11 @@ import '../constants.dart';
 import '../features/offers/presentation/consult_offers_pagination_policy.dart';
 import '../features/trust_score/trust_score_service.dart';
 import '../features/trust_score/trust_score_widgets.dart';
-import '../main.dart'
-    show
-        CardShell,
-        PrestoMonitoring,
-        prestoOverlayStyleFor,
-        inferRegionFromPostalCode,
-        buildOfferDetailsOffer;
+import '../app/system_ui_style.dart' show prestoOverlayStyleFor;
+import '../services/offer_details_mapper.dart' show buildOfferDetailsOffer;
+import '../services/presto_monitoring.dart' show PrestoMonitoring;
+import '../services/region_resolver.dart' show inferRegionFromPostalCode;
+import '../widgets/app_shell_widgets.dart' show CardShell;
 import 'home_page.dart' show UnreadInboxBell;
 import 'account_page.dart';
 import '../pages/offers/offer_details_page.dart';

@@ -17,7 +17,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
 
 import '../app/app_globals.dart';
-import '../main.dart' show prestoOverlayStyleFor;
+import '../app/system_ui_style.dart' show prestoOverlayStyleFor;
 import 'home_page.dart' show HomePage;
 import 'account_page.dart';
 import '../app/presto_overlay_theme.dart';

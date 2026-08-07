@@ -24,9 +24,9 @@ import '../utils/runtime_action_logger.dart';
 import '../services/public_offers_query_helpers.dart';
 import '../widgets/offer_network_image.dart';
 import '../widgets/phone_input_field.dart';
-
-import '../main.dart'
-    show buildOfferDetailsOffer, kOfferDeleteReasonFoundOnIliPresto;
+import '../app/app_runtime_config.dart'
+    show kOfferDeleteReasonFoundOnIliPresto;
+import '../services/offer_details_mapper.dart' show buildOfferDetailsOffer;
 
 // 🔥 SECTION "Mes annonces publiées" dans Mon compte
 class UserOffersSection extends StatefulWidget {
