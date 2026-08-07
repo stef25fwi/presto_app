@@ -14,7 +14,6 @@ import '../services/notification_service.dart';
 import 'consult_offers_page.dart' show UserPublicProfilePage;
 import 'home_page.dart';
 import 'messages/messages_page_v2.dart';
-import 'offers/offer_details_page.dart';
 import 'publish_offer_page.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -53,14 +52,19 @@ class _SplashScreenState extends State<SplashScreen>
 
   String _normalizedWebPath() {
     final rawPath = Uri.base.path.trim();
-    if (rawPath.isEmpty) return '/';
+    if (rawPath.isEmpty) {
+      return '/';
+    }
     return rawPath.endsWith('/') && rawPath.length > 1
         ? rawPath.substring(0, rawPath.length - 1)
         : rawPath;
   }
 
   Widget _destinationForCurrentLocation() {
-    final resolution = resolveInitialRoute(kIsWeb ? Uri.base.toString() : '/');
+    final resolution = resolveInitialRoute(
+      kIsWeb ? Uri.base.toString() : '/',
+    );
+
     pendingPostAuthRoute = null;
 
     switch (resolution.kind) {
@@ -94,7 +98,7 @@ class _SplashScreenState extends State<SplashScreen>
     _navTimer = Timer(duration, () {
       try {
         _navigateTo(_destinationForCurrentLocation());
-      } catch (_) {
+      } catch (e) {
         try {
           _navigateTo(const HomePage());
         } catch (_) {}
