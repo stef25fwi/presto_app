@@ -47,6 +47,11 @@ on:
       - 'lib/config/listing_taxonomy.dart'
       - 'tools/check_listing_taxonomy_sync.mjs'
       - '.github/workflows/ai-evaluations.yml'
+  workflow_run:
+    workflows:
+      - Validate and Deploy Firebase
+    types:
+      - completed
   schedule:
     # Les jeux d'évaluation réels tournent chaque lundi matin afin que la
     # qualité par accent et par format soit re-mesurée régulièrement et pas
@@ -69,12 +74,27 @@ permissions:
   contents: read
   id-token: write
 
+env:
+  EVIDENCE_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
 jobs:
   validate:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout evidence SHA
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.EVIDENCE_SHA }}
+
+      - name: Assert evidence SHA consistency
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_sha="$(git rev-parse HEAD)"
+          test "$actual_sha" = "$EVIDENCE_SHA"
+          printf 'Validation evidence will be generated for SHA %s\n' "$actual_sha"
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v7
@@ -121,7 +141,7 @@ jobs:
       - name: Archive validation evidence
         uses: actions/upload-artifact@v7
         with:
-          name: ai-validation-${{ github.sha }}
+          name: ai-validation-${{ env.EVIDENCE_SHA }}
           path: |
             build/quality/ai-readiness-report.json
             build/quality/ai-eval-corpus-report.json
@@ -133,13 +153,25 @@ jobs:
     if: >-
       github.event_name == 'push' ||
       github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
       (github.event_name == 'workflow_dispatch' && inputs.live == true)
     needs: validate
     environment: recaptcha
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout evidence SHA
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.EVIDENCE_SHA }}
+
+      - name: Assert evidence SHA consistency
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_sha="$(git rev-parse HEAD)"
+          test "$actual_sha" = "$EVIDENCE_SHA"
+          printf 'Live evaluation evidence will be generated for SHA %s\n' "$actual_sha"
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v7
@@ -188,7 +220,7 @@ jobs:
       - name: Archive live evaluation reports
         uses: actions/upload-artifact@v7
         with:
-          name: ai-evaluation-reports-${{ github.sha }}
+          name: ai-evaluation-reports-${{ env.EVIDENCE_SHA }}
           path: quality_reports/ai
           if-no-files-found: error
           retention-days: 90
