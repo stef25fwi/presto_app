@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:presto_app/main.dart' as app;
+import 'package:presto_app/pages/publish_offer_page.dart';
 import 'package:presto_app/widgets/ai_publish_control.dart';
 import 'package:presto_app/widgets/photo_selector_tile.dart';
 
@@ -23,7 +23,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      const MaterialApp(home: app.PublishOfferPage()),
+      const MaterialApp(home: PublishOfferPage()),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 250));
@@ -55,7 +55,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Galerie'), findsNothing);
-    expect(find.byType(app.PublishOfferPage), findsOneWidget);
+    expect(find.byType(PublishOfferPage), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
