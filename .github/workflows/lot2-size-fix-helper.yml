@@ -1,0 +1,77 @@
+name: Lot 2 legacy size fix helper
+
+on:
+  push:
+    branches:
+      - 'chore/lot2-size-fix-helper-20260807'
+    paths:
+      - '.github/workflows/lot2-size-fix-helper.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-target:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: refactor/lot2-decouple-main-imports-atomic-20260807
+          fetch-depth: 0
+
+      - name: Remove three non-semantic blank lines
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              'lib/pages/home_page.dart': (
+                  "import 'publish_offer_page.dart';\n\nimport '../app/system_ui_style.dart' show prestoOverlayStyleFor;",
+                  "import 'publish_offer_page.dart';\nimport '../app/system_ui_style.dart' show prestoOverlayStyleFor;",
+              ),
+              'lib/pages/fiche_pro_page.dart': (
+                  "import 'package:image_picker/image_picker.dart';\n\nimport '../app_core.dart' show kPrestoOrange;",
+                  "import 'package:image_picker/image_picker.dart';\nimport '../app_core.dart' show kPrestoOrange;",
+              ),
+              'lib/pages/user_offers_section.dart': (
+                  "import '../widgets/phone_input_field.dart';\n\nimport '../app/app_runtime_config.dart'",
+                  "import '../widgets/phone_input_field.dart';\nimport '../app/app_runtime_config.dart'",
+              ),
+          }
+
+          for filename, (old, new) in replacements.items():
+              path = Path(filename)
+              text = path.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{filename}: expected exactly 1 blank-line target, found {count}')
+              path.write_text(text.replace(old, new), encoding='utf-8')
+              print(f'patched {filename}')
+          PY
+
+      - name: Verify legacy files do not grow
+        run: |
+          for file in \
+            lib/pages/home_page.dart \
+            lib/pages/fiche_pro_page.dart \
+            lib/pages/user_offers_section.dart; do
+            base=$(git show origin/main:"$file" | wc -l)
+            current=$(wc -l < "$file")
+            echo "$file: current=$current base=$base"
+            test "$current" -le "$base"
+          done
+          python3 tools/quality/test_check_flutter_entrypoint_coupling.py
+          python3 tools/quality/check_flutter_entrypoint_coupling.py
+          git diff --check
+
+      - name: Commit size-neutral fix to PR branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            lib/pages/home_page.dart \
+            lib/pages/fiche_pro_page.dart \
+            lib/pages/user_offers_section.dart
+          git diff --cached --stat
+          git commit -m 'refactor(lot2): garder les pages legacy à taille constante'
+          git push origin HEAD:refactor/lot2-decouple-main-imports-atomic-20260807
