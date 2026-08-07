@@ -2,7 +2,10 @@
 
 import fs from 'node:fs/promises';
 
-const path = 'lib/main.dart';
+// Startup moved out of lib/main.dart during architecture lot 2. Keep this
+// hardening guard aligned with the real startup owner and make it idempotent
+// even when comments are moved by later architecture refactors.
+const path = 'lib/bootstrap/app_bootstrap.dart';
 let content = await fs.readFile(path, 'utf8');
 
 function replaceOnce(before, after, label) {
@@ -16,13 +19,13 @@ function replaceOnce(before, after, label) {
 
 replaceOnce(
   '    await typographySettings.load();',
-  '    // La typographie distante ne bloque plus le premier rendu.\n    unawaited(typographySettings.load());',
+  '    unawaited(typographySettings.load());',
   'typography startup',
 );
 
 replaceOnce(
   '    await CookieConsentService.instance.load();',
-  '    // Le consentement est chargé en parallèle et l’UI réagit à son état.\n    unawaited(CookieConsentService.instance.load());',
+  '    unawaited(CookieConsentService.instance.load());',
   'cookie consent startup',
 );
 
