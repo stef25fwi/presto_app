@@ -34,6 +34,7 @@ jobs:
     timeout-minutes: 40
     env:
       DEPLOYED_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.commit_sha || github.sha }}
+
     steps:
       - uses: actions/checkout@v7
         with:
@@ -83,17 +84,63 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          IOS_PROVISIONING_PROFILE_B64: ${{ secrets.IOS_PROVISIONING_PROFILE_B64 }}
         run: |
           set -euo pipefail
-          for name in KEYSTORE_B64 KEYSTORE_PASSWORD KEY_ALIAS IOS_TEAM_ID; do
+
+          for name in KEYSTORE_B64 KEYSTORE_PASSWORD KEY_ALIAS; do
             if [[ -z "${!name:-}" ]]; then
               echo "::error::Secret lot 17 manquant : $name"
               exit 1
             fi
           done
 
+          RESOLVED_IOS_TEAM_ID="${IOS_TEAM_ID:-}"
+          PROFILE_PATH=''
+          PROFILE_PLIST=''
+
+          if [[ -z "$RESOLVED_IOS_TEAM_ID" ]]; then
+            if [[ -z "${IOS_PROVISIONING_PROFILE_B64:-}" ]]; then
+              echo '::error::IOS_TEAM_ID absent et IOS_PROVISIONING_PROFILE_B64 indisponible.'
+              exit 1
+            fi
+
+            PROFILE_PATH="$RUNNER_TEMP/lot17-profile.mobileprovision"
+            PROFILE_PLIST="$RUNNER_TEMP/lot17-profile.plist"
+            printf '%s' "$IOS_PROVISIONING_PROFILE_B64" \
+              | tr -d '\r\n[:space:]' \
+              | base64 -d > "$PROFILE_PATH"
+
+            openssl smime -inform der -verify -noverify \
+              -in "$PROFILE_PATH" \
+              -out "$PROFILE_PLIST" >/dev/null 2>&1
+
+            RESOLVED_IOS_TEAM_ID=$(python3 - "$PROFILE_PLIST" <<'PY'
+          import plistlib
+          import sys
+
+          with open(sys.argv[1], 'rb') as handle:
+              profile = plistlib.load(handle)
+
+          candidates = profile.get('TeamIdentifier') or profile.get('ApplicationIdentifierPrefix') or []
+          team_id = candidates[0].strip() if candidates else ''
+          if not team_id:
+              raise SystemExit('Team ID iOS introuvable dans le profil de provisioning.')
+          print(team_id)
+          PY
+            )
+          fi
+
+          if [[ ! "$RESOLVED_IOS_TEAM_ID" =~ ^[A-Z0-9]{10}$ ]]; then
+            echo '::error::Team ID iOS invalide après résolution.'
+            exit 1
+          fi
+
           KEYSTORE_PATH="$RUNNER_TEMP/lot17-upload-keystore"
-          printf '%s' "$KEYSTORE_B64" | tr -d '\r\n[:space:]' | base64 -d > "$KEYSTORE_PATH"
+          printf '%s' "$KEYSTORE_B64" \
+            | tr -d '\r\n[:space:]' \
+            | base64 -d > "$KEYSTORE_PATH"
+
           FINGERPRINT=$(keytool -list -v \
             -keystore "$KEYSTORE_PATH" \
             -storepass "$KEYSTORE_PASSWORD" \
@@ -110,10 +157,10 @@ jobs:
             --output-dir build/web/.well-known \
             --android-package fr.ilipresto.app \
             --android-sha256 "$FINGERPRINT" \
-            --ios-app-id "$IOS_TEAM_ID.fr.ilipresto.app"
+            --ios-app-id "$RESOLVED_IOS_TEAM_ID.fr.ilipresto.app"
 
           node tools/seo/prepare_campaign_attribution_hosting.mjs
-          rm -f "$KEYSTORE_PATH"
+          rm -f "$KEYSTORE_PATH" "$PROFILE_PATH" "$PROFILE_PLIST"
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools@13
