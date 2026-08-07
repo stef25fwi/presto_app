@@ -80,7 +80,7 @@ void main() {
 
     expect(find.text('Four atelier'), findsOneWidget);
     expect(find.text('1200 W • 30,0 min • ×2'), findsOneWidget);
-    expect(find.text('1,0000 kWh\n0,25 €'), findsOneWidget);
+    expect(find.text('1,2000 kWh\n0,30 €'), findsOneWidget);
     expect(find.byIcon(Icons.precision_manufacturing_outlined), findsOneWidget);
 
     await tester.tap(find.byTooltip('Actions'));
