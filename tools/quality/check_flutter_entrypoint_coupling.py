@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Guard the Flutter application entrypoint during Lot 2 decomposition.
 
-`lib/main.dart` must remain a thin composition root, not a service locator. A
-small transitional allowlist tracks the remaining historical production imports
-while Lot 2 removes them progressively. Tests are not allowed to depend on the
-entrypoint. The production allowlist is intentionally monotonic: if an allowed
-file stops importing main.dart, CI asks us to remove it from the list.
+`lib/main.dart` must remain a thin composition root, not a service locator.
+Production and test code must import the dedicated modules directly rather than
+the application entrypoint. The explicit production allowlist remains empty
+once the Lot 2 migration is complete so any future coupling fails CI.
 """
 
 from __future__ import annotations
@@ -14,7 +13,7 @@ import re
 from pathlib import Path
 
 
-# Transitional production debt. This set must only shrink during Lot 2.
+# Lot 2 invariant: production code must not import lib/main.dart.
 _ALLOWED_MAIN_IMPORTERS: set[str] = set()
 
 _IMPORT_RE = re.compile(r"^\s*import\s+['\"]([^'\"]+)['\"]", re.MULTILINE)
