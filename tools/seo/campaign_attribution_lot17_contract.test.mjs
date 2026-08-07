@@ -127,6 +127,10 @@ for (const marker of [
   'Validate and Deploy Firebase',
   'KEYSTORE_B64',
   'IOS_TEAM_ID',
+  'IOS_PROVISIONING_PROFILE_B64',
+  'openssl smime -inform der -verify -noverify',
+  "profile.get('TeamIdentifier')",
+  'RESOLVED_IOS_TEAM_ID',
   'build_campaign_link_associations.mjs',
   'prepare_campaign_attribution_hosting.mjs',
   'verify_campaign_attribution_lot17.mjs',
@@ -135,6 +139,10 @@ for (const marker of [
 ]) {
   assert.match(workflow, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'u'));
 }
+assert.doesNotMatch(
+  workflow,
+  /for name in KEYSTORE_B64 KEYSTORE_PASSWORD KEY_ALIAS IOS_TEAM_ID/u,
+);
 
 const registry = JSON.parse(
   fs.readFileSync('quality/seo_acquisition_readiness.json', 'utf8'),
