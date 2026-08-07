@@ -37,7 +37,6 @@ import '../pages/messages/messages_page_v2.dart';
 import 'account_page.dart';
 import 'consult_offers_page.dart';
 import 'publish_offer_page.dart';
-
 import '../app/system_ui_style.dart' show prestoOverlayStyleFor;
 import '../services/offer_details_mapper.dart' show buildOfferDetailsOffer;
 import '../services/presto_monitoring.dart' show PrestoMonitoring;

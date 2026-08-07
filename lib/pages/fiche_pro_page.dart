@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'fiche_pro_form_widgets.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
-
 import '../app_core.dart' show kPrestoOrange;
 import '../app/system_ui_style.dart' show prestoOverlayStyleFor;
 import '../services/offer_details_mapper.dart' show buildOfferDetailsOffer;
