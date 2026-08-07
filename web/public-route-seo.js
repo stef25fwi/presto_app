@@ -57,6 +57,7 @@
       '.prelaunch-message{color:#6f370f!important;background:#fff!important;border:1px solid rgba(255,102,0,.4)!important;border-left:4px solid #ff6600!important;border-radius:16px!important}',
       '.prelaunch-public-links a{color:#1a73e8!important}',
       '.prelaunch-public-links a:focus-visible{outline:3px solid rgba(26,115,232,.35)!important;outline-offset:4px!important;border-radius:6px!important}',
+      'html[data-public-prelaunch="true"] .prelaunch-public-links a[href="/guadeloupe"],html[data-public-prelaunch="true"] .prelaunch-public-links a[href="/martinique"],html[data-public-prelaunch="true"] .prelaunch-public-links a[href="/guyane"]{display:none!important}',
       '.prelaunch-domain{color:#6a7785!important}',
       '.audience-measurement{margin:24px 0;padding:18px;text-align:left;border:1px solid #dbe5f0;border-radius:16px;background:#f8fbff}',
       '.audience-measurement h2{margin:0 0 10px;color:#12345b;font-size:1.15rem}',
@@ -66,6 +67,16 @@
       '.audience-measurement-status{margin-top:10px!important;color:#33485e!important;font-weight:700}'
     ].join('');
     document.head.appendChild(style);
+  }
+
+  function removePrelaunchRegionalLinks() {
+    document.querySelectorAll([
+      '#prelaunch-seo-shell .prelaunch-public-links a[href="/guadeloupe"]',
+      '#prelaunch-seo-shell .prelaunch-public-links a[href="/martinique"]',
+      '#prelaunch-seo-shell .prelaunch-public-links a[href="/guyane"]'
+    ].join(',')).forEach(function (link) {
+      link.remove();
+    });
   }
 
   const path = normalizePath(window.location.pathname);
@@ -79,8 +90,16 @@
     'presto-app-74abe.web.app',
     'presto-app-74abe.firebaseapp.com'
   ]);
+  const isPublicPrelaunch = path === '/' && publicHosts.has(window.location.hostname.toLowerCase());
 
-  if (path === '/' && publicHosts.has(window.location.hostname.toLowerCase())) {
+  if (isPublicPrelaunch) {
+    document.documentElement.dataset.publicPrelaunch = 'true';
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', removePrelaunchRegionalLinks, {once: true});
+    } else {
+      removePrelaunchRegionalLinks();
+    }
+
     window.addEventListener('flutter-first-frame', function (event) {
       event.stopImmediatePropagation();
 
