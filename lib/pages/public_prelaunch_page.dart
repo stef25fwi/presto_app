@@ -335,8 +335,19 @@ class _BrandHeader extends StatelessWidget {
           ),
           const SizedBox(width: 14),
           Flexible(
-            child: Text(
-              'iliprestō',
+            child: Text.rich(
+              const TextSpan(
+                children: <InlineSpan>[
+                  TextSpan(
+                    text: 'ili',
+                    style: TextStyle(color: Color(0xFF1A73E8)),
+                  ),
+                  TextSpan(
+                    text: 'prestō',
+                    style: TextStyle(color: Color(0xFFFF6600)),
+                  ),
+                ],
+              ),
               maxLines: 1,
               overflow: TextOverflow.fade,
               softWrap: false,
@@ -345,7 +356,6 @@ class _BrandHeader extends StatelessWidget {
                 fontSize: compact ? 32 : 40,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -1.4,
-                color: const Color(0xFFFF6600),
               ),
             ),
           ),
