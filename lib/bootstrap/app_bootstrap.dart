@@ -12,7 +12,6 @@ import '../app/app_runtime_config.dart';
 import '../app/runtime_stores.dart';
 import '../app/startup_state.dart';
 import '../app/system_ui_style.dart';
-import '../app/theme.dart';
 import '../app/typography_settings.dart';
 import '../app_core.dart';
 import '../debug_auth.dart';
