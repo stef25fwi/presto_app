@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../app/system_ui_style.dart';
 import '../../app_core.dart' show kPrestoOrange;
-import '../../main.dart' show prestoOverlayStyleFor;
 import '../../widgets/pro_siret_verification_card.dart';
 
 class VerifierSiretPage extends StatelessWidget {
