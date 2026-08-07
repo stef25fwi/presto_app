@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
-import 'package:presto_app/main.dart' as app;
+import 'package:presto_app/pages/publish_offer_page.dart';
 import 'package:presto_app/widgets/photo_selector_tile.dart';
 import 'package:presto_app/widgets/ai_publish_control.dart';
 
@@ -20,7 +20,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(const MaterialApp(home: app.PublishOfferPage()));
+    await tester.pumpWidget(const MaterialApp(home: PublishOfferPage()));
     await tester.pump();
   }
 
