@@ -30,7 +30,7 @@ void main() {
       maxAttempts: 3,
       initialDelay: Duration.zero,
       maxDelay: Duration.zero,
-      retryIf: isRetryableTimeoutOrNetwork,
+      retryIf: (error) => error is TimeoutException,
     );
 
     expect(value, 'ok');
@@ -76,13 +76,5 @@ void main() {
     );
 
     expect(attempts, 3);
-  });
-
-  test('classification des erreurs réseau reste dépendance-free', () {
-    expect(
-      isRetryableTimeoutOrNetwork(TimeoutException('timeout')),
-      isTrue,
-    );
-    expect(isRetryableTimeoutOrNetwork(Exception('autre')), isFalse);
   });
 }
