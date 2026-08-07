@@ -8,7 +8,7 @@ import '../app/app_globals.dart';
 import '../app/app_runtime_config.dart';
 import '../app/startup_state.dart';
 import '../app/system_ui_style.dart';
-import '../app/theme.dart';
+import '../app_core.dart';
 import '../services/initial_route_resolver.dart';
 import '../services/notification_service.dart';
 import 'consult_offers_page.dart' show UserPublicProfilePage;
