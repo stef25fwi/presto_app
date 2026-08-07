@@ -118,13 +118,13 @@ class _PublicPrelaunchPageState extends State<PublicPrelaunchPage> {
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 920),
                       child: GestureDetector(
-                        key: PublicPrelaunchPage.accessTriggerKey,
                         behavior: HitTestBehavior.opaque,
                         onTap: _handleStatusTap,
                         child: PublicPrelaunchContent(
                           config: widget.config,
                           compact: compact,
                           veryCompact: veryCompact,
+                          accessTriggerKey: PublicPrelaunchPage.accessTriggerKey,
                           onOpenPublicPage: _openPublicPage,
                         ),
                       ),
