@@ -15,14 +15,7 @@ from pathlib import Path
 
 
 # Transitional production debt. This set must only shrink during Lot 2.
-_ALLOWED_MAIN_IMPORTERS = {
-    "lib/pages/account_page.dart",
-    "lib/pages/consult_offers_page.dart",
-    "lib/pages/fiche_pro_page.dart",
-    "lib/pages/home_page.dart",
-    "lib/pages/publish_offer_page.dart",
-    "lib/pages/user_offers_section.dart",
-}
+_ALLOWED_MAIN_IMPORTERS: set[str] = set()
 
 _IMPORT_RE = re.compile(r"^\s*import\s+['\"]([^'\"]+)['\"]", re.MULTILINE)
 _FORBIDDEN_ENTRYPOINT_DECLARATION_RE = re.compile(

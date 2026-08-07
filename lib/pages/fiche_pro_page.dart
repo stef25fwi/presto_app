@@ -10,7 +10,8 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../app_core.dart' show kPrestoOrange;
-import '../main.dart' show buildOfferDetailsOffer, prestoOverlayStyleFor;
+import '../app/system_ui_style.dart' show prestoOverlayStyleFor;
+import '../services/offer_details_mapper.dart' show buildOfferDetailsOffer;
 import '../services/public_offers_query_helpers.dart';
 import '../services/user_profile_bootstrap_service.dart';
 import '../utils/friendly_snackbar.dart';

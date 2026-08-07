@@ -35,13 +35,11 @@ import '../services/app_check_bootstrap.dart';
 import '../widgets/account_menu_item.dart';
 import '../widgets/language_picker_sheet.dart';
 
-import '../main.dart'
-    show
-        PrestoMonitoring,
-        prestoOverlayStyleFor,
-        adminAudioRuntimeStore,
-        pendingRedirectAuthResult,
-        pendingRedirectAuthError;
+import '../app/runtime_stores.dart' show adminAudioRuntimeStore;
+import '../app/startup_state.dart'
+    show pendingRedirectAuthError, pendingRedirectAuthResult;
+import '../app/system_ui_style.dart' show prestoOverlayStyleFor;
+import '../services/presto_monitoring.dart' show PrestoMonitoring;
 import 'user_offers_section.dart';
 import 'fiche_pro_page.dart';
 import 'package:presto_app/pages/account/account_security_page.dart';
