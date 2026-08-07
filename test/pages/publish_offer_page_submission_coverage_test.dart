@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/features/offers/presentation/widgets/publish_offer_category_fields.dart';
 import 'package:presto_app/features/offers/presentation/widgets/publish_offer_contact_fields.dart';
 import 'package:presto_app/features/offers/presentation/widgets/publish_offer_mission_fields.dart';
-import 'package:presto_app/main.dart' as app;
+import 'package:presto_app/pages/publish_offer_page.dart';
 import 'package:presto_app/pages/publish_offer_widgets.dart';
 import 'package:presto_app/widgets/ai_publish_control.dart';
 
@@ -24,7 +24,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      const MaterialApp(home: app.PublishOfferPage()),
+      const MaterialApp(home: PublishOfferPage()),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 250));
