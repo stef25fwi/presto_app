@@ -65,4 +65,46 @@ void main() {
     expect(appCheckActivationSucceeded, isFalse);
     expect(appCheckLastTokenRefreshAt, isNull);
   });
+
+  test('de-duplique les refresh concurrents et libere le verrou apres echec',
+      () async {
+    appCheckActivationAttempted = true;
+
+    final first = refreshAppCheckToken(
+      reason: 'coverage-concurrent',
+      forceRefresh: true,
+    );
+    final second = refreshAppCheckToken(
+      reason: 'coverage-concurrent-duplicate',
+    );
+
+    expect(identical(first, second), isTrue);
+    await expectLater(first, throwsA(anything));
+    expect(appCheckActivationSucceeded, isFalse);
+    expect(appCheckActivationError, isNotNull);
+    expect(appCheckLastTokenRefreshError, isNotNull);
+
+    final third = refreshAppCheckToken(reason: 'coverage-after-release');
+    expect(identical(first, third), isFalse);
+    await expectLater(third, throwsA(anything));
+  });
+
+  test('bootstrap remet a zero un etat App Check obsolet avant tentative',
+      () async {
+    appCheckActivationAttempted = true;
+    appCheckActivationSucceeded = true;
+    appCheckActivationError = StateError('stale-error');
+    appCheckActivationStackTrace = StackTrace.current;
+    appCheckLastTokenRefreshAt = DateTime(2020, 1, 1);
+    appCheckLastTokenRefreshError = StateError('stale-refresh-error');
+
+    await bootstrapAppCheck();
+
+    expect(appCheckActivationAttempted, isTrue);
+    expect(appCheckActivationSucceeded, isFalse);
+    expect(appCheckActivationError, isNotNull);
+    expect(appCheckActivationError.toString(), isNot(contains('stale-error')));
+    expect(appCheckActivationStackTrace, isNotNull);
+    expect(appCheckLastTokenRefreshAt, isNull);
+  });
 }
