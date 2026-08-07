@@ -154,6 +154,36 @@ void main() {
     expect(image.updatedAt, isNull);
   });
 
+  test('AdPlaceholderImage.fromDoc conserve un ordre entier négatif et normalise les nulls', () async {
+    final firestore = FakeFirebaseFirestore();
+    final ref = firestore.collection('ad_placeholder_images').doc('explicit-nulls');
+    await ref.set(<String, dynamic>{
+      'imageUrl': null,
+      'storagePath': null,
+      'isVisible': null,
+      'target': null,
+      'sortOrder': -1000,
+      'title': null,
+      'description': null,
+      'linkUrl': null,
+      'createdAt': null,
+      'updatedAt': null,
+    });
+
+    final image = AdPlaceholderImage.fromDoc(await ref.get());
+
+    expect(image.imageUrl, isEmpty);
+    expect(image.storagePath, isEmpty);
+    expect(image.isVisible, isFalse);
+    expect(image.target, 'consult_offers');
+    expect(image.sortOrder, -1000);
+    expect(image.title, isNull);
+    expect(image.description, isNull);
+    expect(image.linkUrl, isNull);
+    expect(image.createdAt, isNull);
+    expect(image.updatedAt, isNull);
+  });
+
   test('loadCachedSlides rejette une structure JSON qui n est pas une liste',
       () async {
     SharedPreferences.setMockInitialValues(<String, Object>{
