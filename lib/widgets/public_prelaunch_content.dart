@@ -11,12 +11,14 @@ class PublicPrelaunchContent extends StatelessWidget {
     required this.config,
     required this.compact,
     required this.veryCompact,
+    required this.accessTriggerKey,
     required this.onOpenPublicPage,
   });
 
   final PublicLandingConfigService config;
   final bool compact;
   final bool veryCompact;
+  final Key accessTriggerKey;
   final Future<void> Function(String path) onOpenPublicPage;
 
   @override
@@ -50,6 +52,7 @@ class PublicPrelaunchContent extends StatelessWidget {
             title: config.title,
             compact: compact,
             veryCompact: veryCompact,
+            statusKey: accessTriggerKey,
           ),
           SizedBox(height: compact ? 18 : 22),
           ConstrainedBox(
