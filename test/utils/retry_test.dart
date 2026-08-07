@@ -28,7 +28,7 @@ void main() {
       maxAttempts: 3,
       initialDelay: Duration.zero,
       maxDelay: Duration.zero,
-      retryIf: isRetryableTimeoutOrNetwork,
+      retryIf: (error) => error is TimeoutException,
     );
 
     expect(result, 'ok');
@@ -67,16 +67,11 @@ void main() {
         initialDelay: Duration.zero,
         maxDelay: Duration.zero,
         backoffFactor: 3,
-        retryIf: isRetryableTimeoutOrNetwork,
+        retryIf: (error) => error is TimeoutException,
       ),
       throwsA(isA<TimeoutException>()),
     );
 
     expect(calls, 2);
-  });
-
-  test('identifie uniquement les timeouts par défaut', () {
-    expect(isRetryableTimeoutOrNetwork(TimeoutException('x')), isTrue);
-    expect(isRetryableTimeoutOrNetwork(StateError('x')), isFalse);
   });
 }
