@@ -5,7 +5,6 @@ export 'app/app_runtime_config.dart';
 export 'app/runtime_stores.dart';
 export 'app/startup_state.dart';
 export 'app/system_ui_style.dart';
-export 'pages/publish_offer_page.dart' show PublishOfferPage;
 export 'pages/splash_screen.dart' show SplashScreen;
 export 'services/offer_details_mapper.dart' show buildOfferDetailsOffer;
 export 'services/presto_monitoring.dart' show PrestoMonitoring;
