@@ -7,12 +7,14 @@ class PublicPrelaunchHeader extends StatelessWidget {
     required this.title,
     required this.compact,
     required this.veryCompact,
+    required this.statusKey,
   });
 
   final String badge;
   final String title;
   final bool compact;
   final bool veryCompact;
+  final Key statusKey;
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +24,7 @@ class PublicPrelaunchHeader extends StatelessWidget {
           badge: badge,
           compact: compact,
           veryCompact: veryCompact,
+          statusKey: statusKey,
         ),
         SizedBox(height: compact ? 28 : 40),
         _HeroTitle(title: title),
@@ -35,11 +38,13 @@ class _TopBar extends StatelessWidget {
     required this.badge,
     required this.compact,
     required this.veryCompact,
+    required this.statusKey,
   });
 
   final String badge;
   final bool compact;
   final bool veryCompact;
+  final Key statusKey;
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +101,7 @@ class _TopBar extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         _StatusBadge(
+          statusKey: statusKey,
           label: badge,
           compact: compact,
           veryCompact: veryCompact,
@@ -107,11 +113,13 @@ class _TopBar extends StatelessWidget {
 
 class _StatusBadge extends StatelessWidget {
   const _StatusBadge({
+    required this.statusKey,
     required this.label,
     required this.compact,
     required this.veryCompact,
   });
 
+  final Key statusKey;
   final String label;
   final bool compact;
   final bool veryCompact;
@@ -119,6 +127,7 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      key: statusKey,
       constraints: BoxConstraints(maxWidth: veryCompact ? 112 : 150),
       padding: EdgeInsets.symmetric(
         horizontal: veryCompact ? 9 : compact ? 11 : 14,
