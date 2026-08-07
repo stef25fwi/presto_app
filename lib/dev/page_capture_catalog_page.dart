@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../main.dart' as app;
+import '../pages/splash_screen.dart';
 import '../pages/account/account_security_page.dart';
 import '../pages/account/change_email_page.dart';
 import '../pages/account/change_password_page.dart';
@@ -84,7 +84,7 @@ class PageCaptureCatalogPage extends StatelessWidget {
       group: 'Navigation principale',
       description: 'Écran de démarrage de l\'application.',
       status: PageStatus.active,
-      builder: (_) => const app.SplashScreen(),
+      builder: (_) => const SplashScreen(),
     ),
     PageCaptureEntry(
       number: 2,

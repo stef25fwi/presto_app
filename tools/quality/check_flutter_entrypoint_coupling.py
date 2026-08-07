@@ -15,7 +15,6 @@ from pathlib import Path
 
 # Transitional debt. This set must only shrink during Lot 2.
 _ALLOWED_MAIN_IMPORTERS = {
-    "lib/dev/page_capture_catalog_page.dart",
     "lib/pages/account_page.dart",
     "lib/pages/consult_offers_page.dart",
     "lib/pages/fiche_pro_page.dart",
