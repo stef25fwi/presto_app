@@ -2,7 +2,9 @@
 
 import fs from 'node:fs/promises';
 
-const path = 'lib/main.dart';
+// Startup moved out of lib/main.dart during architecture lot 2. Keep this
+// hardening guard aligned with the real startup owner so CI remains idempotent.
+const path = 'lib/bootstrap/app_bootstrap.dart';
 let content = await fs.readFile(path, 'utf8');
 
 function replaceOnce(before, after, label) {
