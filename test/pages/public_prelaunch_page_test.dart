@@ -60,7 +60,7 @@ void main() {
 
     expect(find.text('iliprestō'), findsOneWidget);
     expect(
-      find.text(PublicLandingConfigService.defaultTitle),
+      find.byKey(const Key('public-prelaunch-title')),
       findsOneWidget,
     );
     expect(
