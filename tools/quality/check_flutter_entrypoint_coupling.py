@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-"""Guard the Flutter application entrypoint during Lot 2 decomposition.
+"""Guard the Flutter application entrypoint after Lot 2 decomposition.
 
-`lib/main.dart` must remain a thin composition root, not a service locator.
-Production and test code must import the dedicated modules directly rather than
-the application entrypoint. The explicit production allowlist remains empty
-once the Lot 2 migration is complete so any future coupling fails CI. The
-entrypoint must not re-export application modules.
+`lib/main.dart` must remain a thin, export-free composition root. Production and
+test code must import dedicated modules directly rather than the application
+entrypoint, so any future coupling fails CI immediately.
 """
 
 from __future__ import annotations
@@ -13,9 +11,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-
-# Lot 2 invariant: production code must not import lib/main.dart.
-_ALLOWED_MAIN_IMPORTERS: set[str] = set()
 
 _IMPORT_RE = re.compile(r"^\s*import\s+['\"]([^'\"]+)['\"]", re.MULTILINE)
 _EXPORT_RE = re.compile(r"^\s*export\s+['\"]([^'\"]+)['\"]", re.MULTILINE)
@@ -96,28 +91,22 @@ def validate_main_entrypoint(root: Path) -> list[str]:
 def main() -> int:
     root = Path(__file__).resolve().parents[2]
     entrypoint_errors = validate_main_entrypoint(root)
-    importers = find_main_importers(root)
-    unexpected = sorted(importers - _ALLOWED_MAIN_IMPORTERS)
-    stale = sorted(_ALLOWED_MAIN_IMPORTERS - importers)
+    importers = sorted(find_main_importers(root))
 
-    if entrypoint_errors or unexpected or stale:
+    if entrypoint_errors or importers:
         print("Flutter entrypoint coupling guardrail: FAIL")
         for error in entrypoint_errors:
             print(f"- {error}")
-        if unexpected:
-            print("New imports of lib/main.dart are forbidden:")
-            for path in unexpected:
-                print(f"- {path}")
-        if stale:
-            print("Shrink the transitional allowlist; these files are now decoupled:")
-            for path in stale:
+        if importers:
+            print("Imports of lib/main.dart are forbidden:")
+            for path in importers:
                 print(f"- {path}")
         return 1
 
     print(
         "Flutter entrypoint coupling guardrail: OK "
-        f"({len(importers)} transitional importer(s) remain; "
-        f"main.dart <= {_MAX_MAIN_LINES} lines; export-free; tests decoupled)"
+        f"(0 importer(s); main.dart <= {_MAX_MAIN_LINES} lines; "
+        "export-free; tests decoupled)"
     )
     return 0
 
