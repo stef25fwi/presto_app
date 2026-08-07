@@ -7,7 +7,7 @@ import 'package:presto_app/features/offers/presentation/widgets/publish_offer_co
 import 'package:presto_app/features/offers/presentation/widgets/publish_offer_mission_fields.dart';
 import 'package:presto_app/features/subscriptions/subscription_credit_service.dart';
 import 'package:presto_app/features/subscriptions/subscription_credits_card.dart';
-import 'package:presto_app/main.dart' as app;
+import 'package:presto_app/pages/publish_offer_page.dart';
 import 'package:presto_app/widgets/ai_publish_control_with_credits.dart';
 import 'package:presto_app/widgets/photo_selector_tile.dart';
 
@@ -31,7 +31,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: app.PublishOfferPage(onScroll: onScroll),
+        home: PublishOfferPage(onScroll: onScroll),
       ),
     );
     await tester.pump();
@@ -197,7 +197,6 @@ void main() {
       find.byType(PublishOfferCategoryFields),
     );
     expect(categoryFields.selectedSubcategory, firstSubcategory);
-
     final nextCategory = categoryFields.categories.length > 1
         ? categoryFields.categories[1]
         : firstCategory;
