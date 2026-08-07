@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../app/system_ui_style.dart';
 import '../../features/trust_score/trust_score_v2_card.dart';
 import '../../app_core.dart' show kPrestoOrange;
-import '../../main.dart' show prestoOverlayStyleFor;
 
 class MesAvisPage extends StatelessWidget {
   const MesAvisPage({super.key, this.uidOverride});
