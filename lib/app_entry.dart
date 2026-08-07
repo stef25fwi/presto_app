@@ -30,7 +30,6 @@ import 'pages/home_page.dart';
 import 'pages/legal/account_deletion_info_page.dart';
 import 'pages/legal_info_page.dart';
 import 'pages/messages/messages_page_v2.dart';
-import 'pages/offers/offer_details_page.dart';
 import 'pages/publish_offer_page.dart';
 import 'pages/splash_screen.dart';
 import 'pages/toolbox_je_me_lance_page.dart';
