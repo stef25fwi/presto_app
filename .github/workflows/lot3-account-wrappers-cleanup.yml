@@ -1,0 +1,49 @@
+name: Lot 3 account dead wrappers patch
+
+on:
+  push:
+    branches:
+      - refactor/lot3-account-dead-wrappers-20260807
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Remove proven-dead account wrappers
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('lib/pages/account_page.dart')
+          text = path.read_text(encoding='utf-8')
+
+          blocks = [
+              """  Future<void> _loadUserProfile(User user, {int attempt = 0}) async {\n    await _startInstantProfileHydration(user);\n  }\n\n""",
+              """  Future<void> _toggleFavoriteSubcategory(User user, String subcategory) async {\n    setState(() {\n      if (_selectedFavoriteSubcategories.contains(subcategory)) {\n        _selectedFavoriteSubcategories.remove(subcategory);\n      } else {\n        _selectedFavoriteSubcategories.add(subcategory);\n      }\n    });\n    await _saveProfile(user, showSuccess: false);\n  }\n\n""",
+          ]
+          for block in blocks:
+              count = text.count(block)
+              if count != 1:
+                  raise SystemExit(f'expected one dead wrapper block, found {count}')
+              text = text.replace(block, '', 1)
+
+          path.write_text(text, encoding='utf-8')
+          Path('.github/workflows/lot3-account-wrappers-cleanup.yml').unlink()
+          PY
+      - name: Commit patch and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/pages/account_page.dart .github/workflows/lot3-account-wrappers-cleanup.yml
+          git diff --cached --check
+          git commit -m "refactor(lot3): supprimer wrappers morts du compte"
+          git push origin HEAD:refactor/lot3-account-dead-wrappers-20260807
