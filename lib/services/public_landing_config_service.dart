@@ -67,18 +67,22 @@ class PublicLandingConfigService extends ChangeNotifier {
   static const bool defaultEnabled = true;
   static const String defaultBadge = 'Bientôt disponible';
   static const String defaultTitle =
-      'Trouvez rapidement un particulier, un indépendant ou un professionnel '
-      'près de chez vous';
+      'La solution instantanée pour trouver un service près de chez vous';
   static const String defaultDescription =
-      'Publiez votre besoin en quelques secondes, par texte ou à la voix. '
-      'Votre annonce est assistée par IA et vous échangez directement avec '
-      'des particuliers, indépendants et professionnels, sans commission.';
+      'iliprestō est un site de petites annonces de services et micro-services '
+      'du quotidien. Publiez votre besoin, indiquez votre prix ou votre budget '
+      'et trouvez un particulier, un indépendant ou un professionnel disponible '
+      'à l’instant près de chez vous. Les personnes disponibles peuvent vous '
+      'contacter immédiatement, avec 0 % de commission.';
   static const String defaultLaunchMessage =
-      'Plateforme nationale en cours de déploiement. Première ouverture en '
-      'Guadeloupe, Martinique et Guyane.';
+      'Site national en cours de déploiement. Première ouverture en Guadeloupe, '
+      'Martinique et Guyane.';
 
-  static const String _legacyDefaultTitle =
-      'Trouvez rapidement un particulier ou un professionnel près de chez vous';
+  static const Set<String> _legacyDefaultTitles = <String>{
+    'Trouvez rapidement un particulier ou un professionnel près de chez vous',
+    'Trouvez rapidement un particulier, un indépendant ou un professionnel '
+        'près de chez vous',
+  };
   static const Set<String> _legacyDefaultDescriptions = <String>{
     'iliprestō met en relation particuliers, indépendants et professionnels '
         'pour répondre rapidement à vos besoins en services et microservices du '
@@ -86,9 +90,15 @@ class PublicLandingConfigService extends ChangeNotifier {
     'Trouvez rapidement un particulier, un indépendant ou un professionnel '
         'partout en France. Publiez une annonce assistée par IA et échangez '
         'directement, avec 0 % de commission.',
+    'Publiez votre besoin en quelques secondes, par texte ou à la voix. '
+        'Votre annonce est assistée par IA et vous échangez directement avec '
+        'des particuliers, indépendants et professionnels, sans commission.',
   };
-  static const String _legacyDefaultLaunchMessage =
-      'Ouverture prochaine en Guadeloupe, Martinique et Guyane.';
+  static const Set<String> _legacyDefaultLaunchMessages = <String>{
+    'Ouverture prochaine en Guadeloupe, Martinique et Guyane.',
+    'Plateforme nationale en cours de déploiement. Première ouverture en '
+        'Guadeloupe, Martinique et Guyane.',
+  };
 
   static const Set<String> _publicHosts = <String>{
     'ilipresto.fr',
@@ -230,15 +240,15 @@ class PublicLandingConfigService extends ChangeNotifier {
     );
 
     // Remote Config peut encore contenir les anciennes valeurs publiées.
-    // Cette migration maintient immédiatement le positionnement national sans
-    // attendre une modification manuelle de la console Firebase.
-    if (_title == _legacyDefaultTitle) {
+    // Cette migration maintient immédiatement le nouveau positionnement SEO
+    // sans attendre une modification manuelle de la console Firebase.
+    if (_legacyDefaultTitles.contains(_title)) {
       _title = defaultTitle;
     }
     if (_legacyDefaultDescriptions.contains(_description)) {
       _description = defaultDescription;
     }
-    if (_launchMessage == _legacyDefaultLaunchMessage) {
+    if (_legacyDefaultLaunchMessages.contains(_launchMessage)) {
       _launchMessage = defaultLaunchMessage;
     }
   }
