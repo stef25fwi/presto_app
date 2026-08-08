@@ -1,0 +1,55 @@
+name: Lot3 fix cascade city import
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.pull_request.head.ref == 'refactor/lot3-enable-unused-element-final-20260808' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/lot3-enable-unused-element-final-20260808
+          fetch-depth: 0
+
+      - name: Replace exactly the proven marketplace import URI
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('.github/workflows/lot3-unused-element-cascade.yml')
+          text = path.read_text()
+          old = "              '../services/city_search.dart',\n"
+          new = "              'city_search.dart',\n"
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'fail-fast: expected exactly one old city_search URI, got {count}')
+          text = text.replace(old, new)
+          if text.count(new) != 1:
+              raise SystemExit('fail-fast: corrected city_search URI is not unique')
+          path.write_text(text)
+          Path('.github/workflows/lot3-fix-cascade-city-import.yml').unlink()
+
+      - name: Commit URI-only correction
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only)"
+          test "$changed" = ".github/workflows/lot3-fix-cascade-city-import.yml
+.github/workflows/lot3-unused-element-cascade.yml" || {
+            echo "Unexpected changed files:" >&2
+            printf '%s\n' "$changed" >&2
+            exit 1
+          }
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "chore(lot3): corriger le garde-fou city_search"
+          git push origin HEAD:refactor/lot3-enable-unused-element-final-20260808
