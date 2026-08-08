@@ -64,12 +64,13 @@ for (const page of implemented) {
 }
 
 const demandPage = read('web/trouver-une-personne-disponible/index.html');
+const normalizedDemandPage = demandPage.toLowerCase();
 for (const concept of ['personne', 'compétente', 'disponible', 'service']) {
-  assert.ok(demandPage.toLowerCase().includes(concept), `Page demandeur: concept ${concept} absent`);
+  assert.ok(normalizedDemandPage.includes(concept), `Page demandeur: concept ${concept} absent`);
 }
-assert.ok(demandPage.includes('petites annonces'), 'Page demandeur: positionnement petites annonces absent');
-assert.ok(demandPage.includes('solution instantanée'), 'Page demandeur: notion de solution instantanée absente');
-assert.ok(demandPage.includes('ne garantit pas'), 'Page demandeur: réserve sur le délai de réponse absente');
+assert.ok(normalizedDemandPage.includes('petites annonces'), 'Page demandeur: positionnement petites annonces absent');
+assert.ok(normalizedDemandPage.includes('solution instantanée'), 'Page demandeur: notion de solution instantanée absente');
+assert.ok(normalizedDemandPage.includes('ne garantit pas'), 'Page demandeur: réserve sur le délai de réponse absente');
 
 const overseasPage = read('web/services-outre-mer/index.html');
 for (const territory of registry.territories) {
