@@ -486,16 +486,6 @@ class NotificationService {
   }
 
   /// Handler pour les messages reçus en background (app fermée)
-  static Future<void> _backgroundHandler(RemoteMessage message) async {
-    debugPrint('[Notifications-Background] Message reçu: ${message.messageId}');
-    debugPrint(
-        '[Notifications-Background] Title: ${message.notification?.title}');
-    debugPrint(
-        '[Notifications-Background] Body: ${message.notification?.body}');
-
-    // Traiter le message
-    _handleMessage(message);
-  }
 
   /// Handler pour les messages reçus en foreground (app ouverte)
   void _foregroundHandler(RemoteMessage message) {

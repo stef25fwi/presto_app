@@ -13,7 +13,6 @@ import '../data/marketplace/marketplace_listing_ui_mapper.dart';
 import '../models/marketplace_listing.dart' show ListingSubmissionResult;
 import '../models/marketplace_listing_draft.dart';
 import 'firebase_functions_region.dart';
-import 'city_search.dart';
 import 'french_city_postal_validator.dart';
 import 'geo_api_gouv_service.dart';
 import 'location_text_normalizer.dart';
@@ -158,23 +157,6 @@ class MarketplacePublishService {
     String? mimeType,
   }) {
     return _storageContentType(XFile(path, mimeType: mimeType));
-  }
-
-  String _resolveOwnerDisplayName(String ownerId, {User? currentUser}) {
-    final user = currentUser ?? FirebaseAuth.instance.currentUser;
-    if (user?.uid.trim() == ownerId.trim()) {
-      final displayName = user?.displayName?.trim() ?? '';
-      if (displayName.isNotEmpty) {
-        return displayName;
-      }
-
-      final emailPrefix = (user?.email ?? '').trim().split('@').first.trim();
-      if (emailPrefix.isNotEmpty) {
-        return emailPrefix;
-      }
-    }
-
-    return 'Annonceur iliprestō';
   }
 
   void _validateDraftInputs({
@@ -410,16 +392,6 @@ class MarketplacePublishService {
             '[MarketplacePublish] raw media rollback failed for $storagePath: $error');
       }
     }
-  }
-
-  CityRecord? _resolveCanonicalCity({
-    required String city,
-    required String postalCode,
-  }) {
-    return FrenchCityPostalValidator.instance.resolveCanonicalCity(
-      city: city,
-      postalCode: postalCode,
-    );
   }
 
   Future<GeoApiGouvCommune?> _resolveGeoApiGouvCommune({

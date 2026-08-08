@@ -66,21 +66,6 @@ Future<void> _enterTextIfPresent(
 /// texte apparaît plusieurs fois — ce qui est le cas de plusieurs contenus de
 /// fiche répétés entre sections). On teste `evaluate().isNotEmpty`, qui ne
 /// lève jamais, que le finder matche 0, 1 ou plusieurs widgets.
-Future<void> _scrollUntilFound(
-  WidgetTester tester,
-  Finder target, {
-  int maxDrags = 45,
-}) async {
-  for (var i = 0; i < maxDrags; i++) {
-    if (target.evaluate().isNotEmpty) return;
-    // Pas de 700px : bien inférieur à la hauteur du viewport de test
-    // (3200px + cacheExtent), donc aucune tuile n'est « sautée » entre deux
-    // vérifications ; et 45 pas couvrent ~31 500px, largement de quoi
-    // atteindre la section 6 (coûts) même après les sections 4-5 très hautes.
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -700));
-    await _settle(tester, times: 3);
-  }
-}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

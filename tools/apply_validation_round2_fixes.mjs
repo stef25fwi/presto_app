@@ -87,7 +87,13 @@ async function patchRegionPickerAndContactWidth() {
     "      child: Container(\n" +
     "        constraints: const BoxConstraints(maxWidth: 280),\n" +
     "        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),";
-  if (!content.includes('constraints: const BoxConstraints(maxWidth: 280)')) {
+  const hasTaskContactLinkChip = content.includes(
+    'class _TaskContactLinkChip extends StatelessWidget',
+  );
+  if (
+    hasTaskContactLinkChip &&
+    !content.includes('constraints: const BoxConstraints(maxWidth: 280)')
+  ) {
     content = replaceOnce(
       content,
       contactBefore,

@@ -65,17 +65,6 @@ Future<void> _enterTextIfPresent(
 /// Fait défiler jusqu'à ce que [target] soit monté (evaluate().isNotEmpty ne
 /// lève jamais, que le finder matche 0, 1 ou plusieurs widgets — contrairement
 /// à dragUntilVisible qui exige une cible unique).
-Future<void> _scrollUntilFound(
-  WidgetTester tester,
-  Finder target, {
-  int maxDrags = 45,
-}) async {
-  for (var i = 0; i < maxDrags; i++) {
-    if (target.evaluate().isNotEmpty) return;
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -700));
-    await _settle(tester, times: 3);
-  }
-}
 
 /// Déroule le parcours région → [statusLabel] → Agriculteur et vérifie le
 /// contenu de la fiche officielle correspondante.
