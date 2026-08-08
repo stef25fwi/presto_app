@@ -1,0 +1,151 @@
+name: Lot 3 unused_element targeted fix v3
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  fix-unused-elements:
+    if: github.head_ref == 'refactor/lot3-enable-unused-element-20260808'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/lot3-enable-unused-element-20260808
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Reproduce validated first cleanup layer
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          src=Path('.github/workflows/lot3-unused-element-fix-v2.yml').read_text().splitlines()
+          inside=False; lines=[]
+          for line in src:
+            if "python3 - <<'PY'" in line:
+              inside=True; continue
+            if inside and line.strip()=='PY':
+              break
+            if inside:
+              lines.append(line[10:] if line.startswith('          ') else line)
+          code='\n'.join(lines)+'\n'
+          if 'Removed 57 analyzer-confirmed declarations' not in code:
+            raise RuntimeError('phase1 extraction guard failed')
+          exec(compile(code,'phase1.py','exec'), {'__name__':'__main__'})
+          PY
+          dart fix --apply --code=unused_import
+          git diff --name-only -- '*.dart' | xargs -r dart format
+      - name: Remove second analyzer-confirmed cascade
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          targets={
+            'lib/pages/account_page.dart': [(334,'_isProfileSyncExpired')],
+            'lib/pages/consult_offers_page.dart': [(3752,'_isDeletedUserMap'),(265,'_lastCachedQuerySignature')],
+            'lib/pages/home_page.dart': [(1135,'_showNotificationsDialog')],
+            'lib/pages/messages/conversations_list_page.dart': [(2710,'_isDeletedUserMap'),(443,'_conversationPreview'),(410,'_conversationTitle')],
+            'lib/pages/offers/offer_details_page.dart': [(4162,'_isDeletedUserMap')],
+            'lib/pages/toolbox_je_me_lance_page.dart': [(5691,'_ResourceLinkTile'),(5541,'_PlanTaskSummaryTile'),(5443,'_TutorialStepSummaryTile'),(5391,'_StatusGuidanceCard'),(5353,'_SummaryFactRow'),(5277,'_AidStatusSummaryTile'),(5017,'_UpgradeBottomSheet'),(4532,'_PlanTaskTile'),(4393,'_AidStatusTile'),(4104,'_JourneyInfoTile'),(4074,'_Bullet'),(3940,'_ResultMetricTile'),(3842,'_RecommendationHero'),(3808,'_NumberField'),(3772,'_DropdownField'),(3509,'_HeaderInfoCard'),(2626,'_showStatusPicker'),(2494,'_buildStarterSelector'),(2134,'_buildHeroHighlights'),(2056,'_buildJourneyStatusStrip'),(2046,'_launchUrl'),(257,'_showStarterErrors'),(242,'kMutedText'),(78,'_planContactsForTask')],
+          }
+          def offsets(t):
+            return [0]+[i+1 for i,c in enumerate(t) if c=='\n']
+          def skip_string(t,i):
+            q=t[i]; tri=t.startswith(q*3,i); d=q*(3 if tri else 1); j=i+len(d)
+            while j<len(t):
+              if t.startswith(d,j): return j+len(d)
+              j += 2 if t[j]=='\\' and not tri else 1
+            raise RuntimeError('unterminated string')
+          def skip_comment(t,i):
+            if t.startswith('//',i):
+              j=t.find('\n',i+2); return len(t) if j<0 else j+1
+            if t.startswith('/*',i):
+              j=t.find('*/',i+2)
+              if j<0: raise RuntimeError('unterminated comment')
+              return j+2
+            return i
+          def end_decl(t,pos):
+            i=pos+1; p=b=0
+            while i<len(t):
+              if t.startswith('//',i) or t.startswith('/*',i): i=skip_comment(t,i); continue
+              c=t[i]
+              if c in "'\"": i=skip_string(t,i); continue
+              if c=='(': p+=1
+              elif c==')': p-=1
+              elif c=='[': b+=1
+              elif c==']': b-=1
+              elif p==0 and b==0 and t.startswith('=>',i):
+                i+=2; pp=bb=br=0
+                while i<len(t):
+                  if t.startswith('//',i) or t.startswith('/*',i): i=skip_comment(t,i); continue
+                  c=t[i]
+                  if c in "'\"": i=skip_string(t,i); continue
+                  if c=='(': pp+=1
+                  elif c==')': pp-=1
+                  elif c=='[': bb+=1
+                  elif c==']': bb-=1
+                  elif c=='{': br+=1
+                  elif c=='}': br-=1
+                  elif c==';' and pp==bb==br==0: return i+1
+                  i+=1
+                raise RuntimeError('arrow end missing')
+              elif c=='{' and p==0 and b==0:
+                depth=1; i+=1
+                while i<len(t) and depth:
+                  if t.startswith('//',i) or t.startswith('/*',i): i=skip_comment(t,i); continue
+                  c=t[i]
+                  if c in "'\"": i=skip_string(t,i); continue
+                  if c=='{': depth+=1
+                  elif c=='}': depth-=1
+                  i+=1
+                if depth: raise RuntimeError('unbalanced body')
+                return i
+              elif c==';' and p==0 and b==0: return i+1
+              i+=1
+            raise RuntimeError('end missing')
+          n=0
+          for file,entries in targets.items():
+            p=Path(file); t=p.read_text(); ls=offsets(t)
+            for line_no,name in sorted(entries,reverse=True):
+              s=ls[line_no-1]; le=t.find('\n',s); le=len(t) if le<0 else le
+              pos=t.find(name,s,le)
+              if pos<0: raise RuntimeError(f'{file}:{line_no}:{name} not found')
+              e=end_decl(t,pos)
+              while e<len(t) and t[e] in ' \t': e+=1
+              if e<len(t) and t[e]=='\n': e+=1
+              t=t[:s]+t[e:]; ls=offsets(t); n+=1
+            p.write_text(t)
+          if n!=32: raise RuntimeError(f'expected 32 removals, got {n}')
+          print('Removed 32 second-cascade declarations/fields')
+          PY
+      - name: Clean fallout and optional dead parameters
+        shell: bash
+        run: |
+          # _showStarterErrors was write-only; after deleting the field, remove its pure boolean writes.
+          sed -i '/^[[:space:]]*_showStarterErrors = \(true\|false\);[[:space:]]*$/d' lib/pages/toolbox_je_me_lance_page.dart
+          dart fix --apply --code=unused_import || true
+          dart fix --apply --code=unused_element_parameter || true
+          git diff --name-only -- '*.dart' | xargs -r dart format
+      - name: Verify analyzer is fully green
+        run: flutter analyze
+      - name: Commit complete dead-code cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$(git diff --name-only -- '*.dart')"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- '*.dart'
+          git commit -m 'refactor(lot3): remove unused private elements and cascade'
+          git push origin HEAD:refactor/lot3-enable-unused-element-20260808
