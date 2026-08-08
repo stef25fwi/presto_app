@@ -67,13 +67,16 @@ const demandPage = read('web/trouver-une-personne-disponible/index.html');
 for (const concept of ['personne', 'compétente', 'disponible', 'service']) {
   assert.ok(demandPage.toLowerCase().includes(concept), `Page demandeur: concept ${concept} absent`);
 }
+assert.ok(demandPage.includes('petites annonces'), 'Page demandeur: positionnement petites annonces absent');
+assert.ok(demandPage.includes('solution instantanée'), 'Page demandeur: notion de solution instantanée absente');
 assert.ok(demandPage.includes('ne garantit pas'), 'Page demandeur: réserve sur le délai de réponse absente');
 
 const overseasPage = read('web/services-outre-mer/index.html');
 for (const territory of registry.territories) {
   assert.ok(overseasPage.includes(territory), `Hub Outre-mer: ${territory} absent`);
 }
-assert.ok(overseasPage.includes('plateforme nationale'), 'Hub Outre-mer: rappel du positionnement national absent');
+assert.ok(overseasPage.includes('site national'), 'Hub Outre-mer: rappel du positionnement national absent');
+assert.ok(overseasPage.includes('petites annonces'), 'Hub Outre-mer: positionnement petites annonces absent');
 
 const creationGuide = read('web/guides/creer-micro-entreprise-services/index.html');
 assert.ok(creationGuide.includes('https://procedures.inpi.fr/'), 'Guide création: Guichet unique INPI absent');
