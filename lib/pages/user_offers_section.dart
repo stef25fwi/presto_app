@@ -3258,7 +3258,6 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         );
       }
 
-      final latestData = listingsSnap.data() ?? item.data;
       final shouldKeepVisibleWithJobDone = isOfferJobDoneDeletionReason(reason);
 
       debugPrint('Suppression offre ${item.offerId} avec motif: $reason');
