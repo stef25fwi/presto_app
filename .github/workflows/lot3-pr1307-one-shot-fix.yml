@@ -1,0 +1,44 @@
+name: Lot 3 PR1307 one-shot fix
+
+on:
+  push:
+    branches:
+      - refactor/lot3-user-offers-unused-20260807
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: refactor/lot3-user-offers-unused-20260807
+          fetch-depth: 0
+
+      - name: Remove the single dead local and self-delete
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('lib/pages/user_offers_section.dart')
+          text = path.read_text()
+          needle = '      final latestData = listingsSnap.data() ?? item.data;\n'
+          count = text.count(needle)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one latestData dead local, found {count}')
+          path.write_text(text.replace(needle, '', 1))
+          PY
+
+          rm .github/workflows/lot3-pr1307-one-shot-fix.yml
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/pages/user_offers_section.dart .github/workflows/lot3-pr1307-one-shot-fix.yml
+          git commit -m 'fix(lot3): remove unused latestData local'
+          git push origin HEAD:refactor/lot3-user-offers-unused-20260807
