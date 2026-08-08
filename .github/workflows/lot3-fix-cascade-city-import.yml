@@ -1,17 +1,16 @@
 name: Lot3 fix cascade city import
 
 on:
-  pull_request:
+  push:
     branches:
-      - main
-    types: [opened, synchronize, reopened]
+      - refactor/lot3-enable-unused-element-final-20260808
 
 permissions:
   contents: write
 
 jobs:
   patch:
-    if: github.event.pull_request.head.ref == 'refactor/lot3-enable-unused-element-final-20260808' && github.actor != 'github-actions[bot]'
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,8 +41,8 @@ jobs:
           set -euo pipefail
           git diff --check
           changed="$(git diff --name-only)"
-          test "$changed" = ".github/workflows/lot3-fix-cascade-city-import.yml
-.github/workflows/lot3-unused-element-cascade.yml" || {
+          expected="$(printf '%s\n%s' '.github/workflows/lot3-fix-cascade-city-import.yml' '.github/workflows/lot3-unused-element-cascade.yml')"
+          test "$changed" = "$expected" || {
             echo "Unexpected changed files:" >&2
             printf '%s\n' "$changed" >&2
             exit 1
