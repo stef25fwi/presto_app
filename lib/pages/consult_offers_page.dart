@@ -201,7 +201,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
 
   Future<void> _copyToClipboard(BuildContext context, String text) async {
     await Clipboard.setData(ClipboardData(text: text));
@@ -223,7 +222,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   final TextEditingController _cityCtrl = TextEditingController();
 
   int _filterPanelKey = 0;
-  int _lastSnapshotRawCount = 0;
   DateTime? _lastPaginationRequestAt;
 
   String? _selectedCategory;
@@ -273,8 +271,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   final FocusNode _deptFocus = FocusNode();
   final FocusNode _filterCityFocusNode = FocusNode();
   final Set<String> _manualAutoApplyCriteria = <String>{};
-  List<CityRecord> _filterCitySuggestions = [];
-  int _filterCityHighlightedIndex = -1;
   Timer? _filterCityDebounce;
 
   final ScrollController _scrollController = ScrollController();
@@ -298,7 +294,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   List<_ConsultOfferListItem>? _renderItemsCache;
 
   // ✅ Cache des résultats Firestore pour éviter les re-queries
-  Map<String, List<DocumentSnapshot<Map<String, dynamic>>>>? _queryResultsCache;
   String? _lastCachedQuerySignature;
   Timer? _cacheInvalidationTimer;
   Timer? _jobDoneOverlayTimer;
@@ -796,7 +791,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
           requestedLimit: requestedLimit,
           totalLoadedCount: _paginationDocs.length,
         );
-        _lastSnapshotRawCount = _paginationDocs.length;
         _lastResultCount = _buildDisplayedOfferDocs(_paginationDocs).length;
         _offersWarmCache[key] = _paginationDocs;
         _displayedDocsCacheSignature = null;
@@ -836,19 +830,16 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   ) {
     // Si la signature a changé, invalider le cache
     if (_lastCachedQuerySignature != querySignature) {
-      _queryResultsCache = null;
       _lastCachedQuerySignature = querySignature;
       _cacheInvalidationTimer?.cancel();
 
       // Cache expire après 5 minutes
       _cacheInvalidationTimer = Timer(const Duration(minutes: 5), () {
-        _queryResultsCache = null;
         _lastCachedQuerySignature = null;
       });
     }
 
     // Mettre en cache les résultats
-    _queryResultsCache = {'results': freshResults};
     return freshResults;
   }
 
@@ -1568,8 +1559,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       _filterRegionCode = null;
       _filterDepartmentCode = null;
       _filterCityName = null;
-      _filterCitySuggestions = [];
-      _filterCityHighlightedIndex = -1;
       _activeSearchQuery = null;
       _budgetRangeWarning = null;
       _manualAutoApplyCriteria.clear();
@@ -1703,8 +1692,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
               _locationController.clear();
               _postalCodeController.clear();
               _filterCityName = null;
-              _filterCitySuggestions = [];
-              _filterCityHighlightedIndex = -1;
             });
           },
         ),
@@ -2131,7 +2118,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                             _paginationDocs.isNotEmpty
                         ? _paginationDocs
                         : snapshotDocs;
-                    _lastSnapshotRawCount = rawDocs.length;
 
                     final docs = _getDisplayedOfferDocsMemo(
                       currentOffersStreamKey,
@@ -2438,8 +2424,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
             _filterCityController.clear();
             _filterPostalCodeController.clear();
             _filterCityName = null;
-            _filterCitySuggestions = [];
-            _filterCityHighlightedIndex = -1;
           });
 
           _onAnyFilterChanged(); // ✅ auto-apply
@@ -2479,8 +2463,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
           _filterCityController.clear();
           _filterPostalCodeController.clear();
           _filterCityName = null;
-          _filterCitySuggestions = [];
-          _filterCityHighlightedIndex = -1;
         });
 
         _onAnyFilterChanged();
@@ -2532,8 +2514,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
               _filterCityController.clear();
               _filterPostalCodeController.clear();
               _filterCityName = null;
-              _filterCitySuggestions = [];
-              _filterCityHighlightedIndex = -1;
             } else {
               _filterRegionCode = null;
             }
@@ -2643,8 +2623,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
             }
           }
 
-          _filterCitySuggestions = [];
-          _filterCityHighlightedIndex = -1;
         });
 
         _onAnyFilterChanged();
@@ -2672,8 +2650,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                         _filterCityController.clear();
                         _filterPostalCodeController.clear();
                         _filterCityName = null;
-                        _filterCitySuggestions = [];
-                        _filterCityHighlightedIndex = -1;
                         _trackManualFilterCriterion('city', isActive: false);
                       });
                       textCtrl.clear();

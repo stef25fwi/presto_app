@@ -47,7 +47,6 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
   final Set<String> _busySlideIds = <String>{};
   bool _isSubmitting = false;
   bool _isReordering = false;
-  double? _uploadProgress;
 
   Future<void> _openSlideEditor({HeroSlide? existing}) async {
     final titleController = TextEditingController(text: existing?.title ?? '');
@@ -669,7 +668,6 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
 
                                       setState(() {
                                         _isSubmitting = true;
-                                        _uploadProgress = null;
                                       });
                                       setSheetState(() {
                                         isSubmittingSheet = true;
@@ -706,8 +704,6 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                               if (!mounted) {
                                                 return;
                                               }
-                                              setState(() =>
-                                                  _uploadProgress = progress);
                                               setSheetState(() {
                                                 uploadProgressSheet = progress;
                                               });
@@ -769,8 +765,6 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                               if (!mounted) {
                                                 return;
                                               }
-                                              setState(() =>
-                                                  _uploadProgress = progress);
                                               setSheetState(() {
                                                 uploadProgressSheet = progress;
                                               });
@@ -851,7 +845,6 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                         if (mounted) {
                                           setState(() {
                                             _isSubmitting = false;
-                                            _uploadProgress = null;
                                           });
                                           setSheetState(() {
                                             isSubmittingSheet = false;

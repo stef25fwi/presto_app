@@ -102,7 +102,6 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool _isLoadingMoreMessages = false;
   bool _hasMoreMessages = true;
   List<String> threadParticipants = const [];
-  Map<String, String> _participantNames = const {};
   Map<String, dynamic> threadLastReadAt = const {};
   bool _metaLoaded = false;
   bool didApplyInitialDraft = false;
@@ -132,7 +131,6 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool blockedForCurrentUser = false;
   bool blockedByAnotherParticipant = false;
   bool archivedForCurrentUser = false;
-  bool _isDeletedForCurrentUser = false;
   bool _hasHandledConversationRemoval = false;
   int _messageStreamRetryCount = 0;
   String _offerId = '';
@@ -1273,7 +1271,6 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         if (mounted) {
           setState(() {
             threadParticipants = participants;
-            _participantNames = participantNames;
             otherParticipantIdState = otherParticipantId;
             otherParticipantNameState = otherParticipantName;
             if (participantChanged) {
@@ -1306,7 +1303,6 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               data,
               widget.currentUserId,
             );
-            _isDeletedForCurrentUser = isDeletedForCurrentUser;
           });
         }
         if (isDeletedForCurrentUser) {

@@ -162,16 +162,8 @@ class _AccountPageState extends State<AccountPage> {
   bool _isPublishedOffersExpanded = false;
   bool _isFavoriteOffersExpanded = false;
   bool _profileLoadError = false;
-  int _profileLoadRetries = 0;
   bool _profileSyncInProgress = false;
-  static const int _maxProfileLoadRetries = 3;
   int _lastMissingRequiredCount = -1;
-
-  static const List<String> _requiredProfileFieldLabels = <String>[
-    'Pseudo',
-    'Ville',
-    'Numéro de téléphone',
-  ];
 
   Future<AdminAccessState>? _adminAccessFuture;
   String? _adminAccessFutureUid;
@@ -811,7 +803,6 @@ class _AccountPageState extends State<AccountPage> {
     _activeProfileUid = null;
     _profileLoaded = false;
     _profileLoadError = false;
-    _profileLoadRetries = 0;
     _lastMissingRequiredCount = -1;
     _isEditingProfile = false;
     _profilePhoneCountryCode = '+33';
@@ -1577,7 +1568,6 @@ class _AccountPageState extends State<AccountPage> {
 
     _isEditingProfile = !_hasProfileValuesInMemory();
     _profileLoadError = false;
-    _profileLoadRetries = 0;
   }
 
   Future<void> _checkFederatedRedirectResult() async {

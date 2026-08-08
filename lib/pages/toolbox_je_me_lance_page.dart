@@ -251,7 +251,6 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   static const Color kOrange = Color(0xFFFF6600);
   static const Color kBlue = Color(0xFF1A73E8);
   static const Color kBg = Color(0xFFF6F7FB);
-  static const Color kCardBg = Color(0xFFE8E8E8); // Gris clair pour les tuiles
   static const Color kTextDark = Color(0xFF071B4D);
   static const Color kMutedText = Color(0xFF66728A);
   static const Color kBorder = Color(0xFFE2E6EF);
