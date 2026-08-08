@@ -3955,8 +3955,6 @@ class _UserOfferMiniCard extends StatelessWidget {
     final budget = data['budget'];
     final priceText = (budget is num) ? "${budget.toStringAsFixed(0)} €" : '';
 
-    final annonceurId = (data['userId'] ?? data['uid'] ?? '').toString().trim();
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -3965,14 +3963,6 @@ class _UserOfferMiniCard extends StatelessWidget {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) {
-                final description = (data['description'] ?? '').toString();
-                final phone = data['phone']?.toString();
-
-                final List<String> imageUrls =
-                    (data['imageUrls'] as List<dynamic>? ?? [])
-                        .map((e) => e.toString())
-                        .toList();
-
                 return OfferDetailsPage(
                   offer: buildOfferDetailsOffer(offerId: offerId, data: data),
                   currentUserId: FirebaseAuth.instance.currentUser?.uid ?? '',
