@@ -1690,10 +1690,6 @@ class _AccountPageState extends State<AccountPage> {
     super.dispose();
   }
 
-  Future<void> _loadUserProfile(User user, {int attempt = 0}) async {
-    await _startInstantProfileHydration(user);
-  }
-
   bool _validateProfile() {
     final pseudo = _profilePseudoController.text.trim();
     final city = _profileCityController.text.trim();
@@ -2493,17 +2489,6 @@ class _AccountPageState extends State<AccountPage> {
         _draftFavoriteSelections = validatedSelections.toSet();
       });
     }
-  }
-
-  Future<void> _toggleFavoriteSubcategory(User user, String subcategory) async {
-    setState(() {
-      if (_selectedFavoriteSubcategories.contains(subcategory)) {
-        _selectedFavoriteSubcategories.remove(subcategory);
-      } else {
-        _selectedFavoriteSubcategories.add(subcategory);
-      }
-    });
-    await _saveProfile(user, showSuccess: false);
   }
 
   Future<void> _signOut() async {
