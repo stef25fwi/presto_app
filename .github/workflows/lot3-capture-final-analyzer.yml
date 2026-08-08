@@ -1,0 +1,79 @@
+name: Lot3 capture final analyzer cascade
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.pull_request.head.ref == 'refactor/lot3-enable-unused-element-final-20260808' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/lot3-enable-unused-element-final-20260808
+          fetch-depth: 0
+
+      - name: Patch cascade workflow to archive final analyzer only
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('.github/workflows/lot3-unused-element-cascade.yml')
+          text = path.read_text()
+          old = """      - name: Analyze final candidate with both unused rules enabled
+        run: flutter analyze --fatal-infos
+
+      - name: Commit only a globally clean candidate
+"""
+          new = """      - name: Analyze final candidate with both unused rules enabled
+        id: final_analyze
+        shell: bash
+        run: |
+          set +e
+          flutter analyze --fatal-infos 2>&1 | tee /tmp/lot3-final-analyze.txt
+          status=${PIPESTATUS[0]}
+          set -e
+          echo \"status=$status\" >> \"$GITHUB_OUTPUT\"
+
+      - name: Archive final analyzer diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: lot3-final-analyzer-${{ github.sha }}
+          path: /tmp/lot3-final-analyze.txt
+          retention-days: 7
+
+      - name: Enforce final analyzer result
+        if: steps.final_analyze.outputs.status != '0'
+        run: exit 1
+
+      - name: Commit only a globally clean candidate
+"""
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'fail-fast: expected one final analyzer block, got {count}')
+          path.write_text(text.replace(old, new))
+          Path('.github/workflows/lot3-capture-final-analyzer.yml').unlink()
+
+      - name: Commit diagnostic-only workflow patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only)"
+          expected="$(printf '%s\n%s' '.github/workflows/lot3-capture-final-analyzer.yml' '.github/workflows/lot3-unused-element-cascade.yml')"
+          test "$changed" = "$expected" || {
+            echo "Unexpected changed files:" >&2
+            printf '%s\n' "$changed" >&2
+            exit 1
+          }
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "chore(lot3): archiver le diagnostic final unused_element"
+          git push origin HEAD:refactor/lot3-enable-unused-element-final-20260808
