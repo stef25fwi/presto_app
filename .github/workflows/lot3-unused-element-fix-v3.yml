@@ -221,8 +221,13 @@ jobs:
           toolbox=Path('lib/pages/toolbox_je_me_lance_page.dart')
           t=toolbox.read_text()
           t=re.sub(r'^\s*setState\(\(\) => _saving = (?:true|false)\);\s*\n','',t,flags=re.M)
+          t=re.sub(r'^\s*if \(mounted\) setState\(\(\) => _saving = false\);\s*\n','',t,flags=re.M)
           t=re.sub(r'^\s*_saving = (?:true|false);\s*\n','',t,flags=re.M)
           t=re.sub(r'^\s*_isFromCache = (?:true|false);\s*\n','',t,flags=re.M)
+          if '_saving' in t:
+            raise RuntimeError(f"unexpected remaining _saving references: {t.count('_saving')}")
+          if '_isFromCache' in t:
+            raise RuntimeError(f"unexpected remaining _isFromCache references: {t.count('_isFromCache')}")
           toolbox.write_text(t)
           print('Removed final 11 analyzer-confirmed diagnostics and write-only assignments')
           PY
