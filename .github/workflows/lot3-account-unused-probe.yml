@@ -1,11 +1,9 @@
 name: Lot 3 account unused atomic cleanup
 
 on:
-  push:
-    branches:
-      - refactor/lot3-account-unused-probe-20260807
-    paths:
-      - .github/workflows/lot3-account-unused-probe.yml
+  pull_request:
+    branches: [main]
+    types: [reopened]
 
 permissions:
   contents: write
