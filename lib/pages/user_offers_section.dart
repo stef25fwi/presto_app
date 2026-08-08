@@ -1,5 +1,3 @@
-// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter
-
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -3260,7 +3258,6 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         );
       }
 
-      final latestData = listingsSnap.data() ?? item.data;
       final shouldKeepVisibleWithJobDone = isOfferJobDoneDeletionReason(reason);
 
       debugPrint('Suppression offre ${item.offerId} avec motif: $reason');
