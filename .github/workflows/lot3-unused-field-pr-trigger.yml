@@ -1,0 +1,53 @@
+name: Lot3 unused field PR trigger
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.pull_request.head.ref == 'refactor/lot3-enable-unused-field-20260808' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/lot3-enable-unused-field-20260808
+          fetch-depth: 0
+
+      - name: Execute fail-fast cleanup payload
+        shell: python
+        run: |
+          from pathlib import Path
+
+          source_path = Path('.github/workflows/lot3-unused-field-cleanup.yml')
+          source = source_path.read_text()
+          start_marker = "      - name: Remove analyzer-confirmed unused fields\n        shell: python\n        run: |\n"
+          end_marker = "\n      - name: Commit atomic cleanup\n"
+          start = source.find(start_marker)
+          end = source.find(end_marker, start + len(start_marker))
+          if start < 0 or end < 0:
+              raise SystemExit('fail-fast: cleanup payload markers not found')
+          block = source[start + len(start_marker):end]
+          lines = block.splitlines()
+          script = '\n'.join(
+              line[10:] if line.startswith('          ') else line
+              for line in lines
+          ) + '\n'
+          exec(compile(script, str(source_path), 'exec'), {})
+          Path('.github/workflows/lot3-unused-field-pr-trigger.yml').unlink()
+
+      - name: Commit atomic cleanup
+        run: |
+          git diff --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --stat
+          git diff --cached --quiet && { echo 'No cleanup produced'; exit 1; }
+          git commit -m "refactor(lot3): supprimer les champs inutilisés révélés"
+          git push origin HEAD:refactor/lot3-enable-unused-field-20260808
