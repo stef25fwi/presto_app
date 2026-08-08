@@ -1,17 +1,15 @@
 name: Lot 3 unused_element targeted fix
 
 on:
-  push:
-    branches:
-      - refactor/lot3-enable-unused-element-20260808
-    paths:
-      - .github/workflows/lot3-unused-element-fix.yml
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
 
 jobs:
   fix-unused-elements:
+    if: github.head_ref == 'refactor/lot3-enable-unused-element-20260808'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
