@@ -58,18 +58,18 @@ class _FakePublicLandingRemoteConfigAdapter
 
 void main() {
   group('PublicLandingConfigService', () {
-    test('publie un positionnement national par défaut', () {
+    test('publie le positionnement petites annonces instantané par défaut', () {
       expect(
         PublicLandingConfigService.defaultTitle,
-        'Trouvez rapidement un particulier, un indépendant ou un professionnel près de chez vous',
+        'La solution instantanée pour trouver un service près de chez vous',
       );
       expect(
         PublicLandingConfigService.defaultDescription,
-        'Publiez votre besoin en quelques secondes, par texte ou à la voix. Votre annonce est assistée par IA et vous échangez directement avec des particuliers, indépendants et professionnels, sans commission.',
+        'iliprestō est un site de petites annonces de services et micro-services du quotidien. Publiez votre besoin, indiquez votre prix ou votre budget et trouvez un particulier, un indépendant ou un professionnel disponible à l’instant près de chez vous. Les personnes disponibles peuvent vous contacter immédiatement, avec 0 % de commission.',
       );
       expect(
         PublicLandingConfigService.defaultLaunchMessage,
-        'Plateforme nationale en cours de déploiement. Première ouverture en Guadeloupe, Martinique et Guyane.',
+        'Site national en cours de déploiement. Première ouverture en Guadeloupe, Martinique et Guyane.',
       );
     });
 
@@ -193,7 +193,7 @@ void main() {
         ..enabled = false
         ..badge = 'Site ouvert'
         ..title = 'Bienvenue sur iliprestō'
-        ..description = 'La plateforme est maintenant accessible.'
+        ..description = 'Le site est maintenant accessible.'
         ..launchMessage = 'Les inscriptions sont ouvertes.';
 
       await service.refresh();
@@ -202,12 +202,37 @@ void main() {
       expect(service.enabled, isFalse);
       expect(service.badge, 'Site ouvert');
       expect(service.title, 'Bienvenue sur iliprestō');
-      expect(service.description, 'La plateforme est maintenant accessible.');
+      expect(service.description, 'Le site est maintenant accessible.');
       expect(service.launchMessage, 'Les inscriptions sont ouvertes.');
     });
 
-    test('migre les anciennes valeurs Remote Config vers le national',
+    test('migre les anciennes valeurs Remote Config vers le nouveau positionnement',
         () async {
+      final service = PublicLandingConfigService(
+        adapter: _FakePublicLandingRemoteConfigAdapter(
+          title:
+              'Trouvez rapidement un particulier, un indépendant ou un professionnel près de chez vous',
+          description:
+              'Publiez votre besoin en quelques secondes, par texte ou à la voix. Votre annonce est assistée par IA et vous échangez directement avec des particuliers, indépendants et professionnels, sans commission.',
+          launchMessage:
+              'Plateforme nationale en cours de déploiement. Première ouverture en Guadeloupe, Martinique et Guyane.',
+        ),
+      );
+
+      await service.initialize();
+
+      expect(service.title, PublicLandingConfigService.defaultTitle);
+      expect(
+        service.description,
+        PublicLandingConfigService.defaultDescription,
+      );
+      expect(
+        service.launchMessage,
+        PublicLandingConfigService.defaultLaunchMessage,
+      );
+    });
+
+    test('migre aussi les valeurs historiques Remote Config', () async {
       final service = PublicLandingConfigService(
         adapter: _FakePublicLandingRemoteConfigAdapter(
           title:
