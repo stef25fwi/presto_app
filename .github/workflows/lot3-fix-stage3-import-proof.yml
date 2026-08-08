@@ -1,0 +1,71 @@
+name: Lot3 fix stage3 import proof
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.pull_request.head.ref == 'refactor/lot3-enable-unused-element-final-20260808' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/lot3-enable-unused-element-final-20260808
+          fetch-depth: 0
+
+      - name: Patch exactly six analyzer import proof fragments
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('.github/workflows/lot3-unused-element-final-cascade.yml')
+          text = path.read_text()
+          replacements = {
+              "Unused import: 'package:presto_app/widgets/deleted_user_profile.dart' • lib/pages/consult_offers_page.dart":
+                  "Unused import: 'package:presto_app/widgets/deleted_user_profile.dart'. Try removing the import directive • lib/pages/consult_offers_page.dart",
+              "Unused import: '../services/app_route_parser.dart' • lib/pages/home_page.dart":
+                  "Unused import: '../services/app_route_parser.dart'. Try removing the import directive • lib/pages/home_page.dart",
+              "Unused import: 'package:presto_app/widgets/deleted_user_profile.dart' • lib/pages/messages/conversations_list_page.dart":
+                  "Unused import: 'package:presto_app/widgets/deleted_user_profile.dart'. Try removing the import directive • lib/pages/messages/conversations_list_page.dart",
+              "Unused import: 'package:presto_app/widgets/deleted_user_profile.dart' • lib/pages/offers/offer_details_page.dart":
+                  "Unused import: 'package:presto_app/widgets/deleted_user_profile.dart'. Try removing the import directive • lib/pages/offers/offer_details_page.dart",
+              "Unused import: 'package:presto_app/features/subscriptions/subscription_action_placeholders.dart' • lib/pages/toolbox_je_me_lance_page.dart":
+                  "Unused import: 'package:presto_app/features/subscriptions/subscription_action_placeholders.dart'. Try removing the import directive • lib/pages/toolbox_je_me_lance_page.dart",
+              "Unused import: 'package:url_launcher/url_launcher.dart' • lib/pages/toolbox_je_me_lance_page.dart":
+                  "Unused import: 'package:url_launcher/url_launcher.dart'. Try removing the import directive • lib/pages/toolbox_je_me_lance_page.dart",
+          }
+          if len(replacements) != 6:
+              raise SystemExit('fail-fast: replacement set must contain exactly six entries')
+          for old, new in replacements.items():
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'fail-fast: expected exactly one old proof fragment, got {count}: {old}')
+              if text.count(new) != 0:
+                  raise SystemExit(f'fail-fast: new proof fragment already present unexpectedly: {new}')
+              text = text.replace(old, new)
+          path.write_text(text)
+          Path('.github/workflows/lot3-fix-stage3-import-proof.yml').unlink()
+
+      - name: Commit proof-only patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only)"
+          expected="$(printf '%s\n%s' '.github/workflows/lot3-fix-stage3-import-proof.yml' '.github/workflows/lot3-unused-element-final-cascade.yml')"
+          test "$changed" = "$expected" || {
+            echo "Unexpected changed files:" >&2
+            printf '%s\n' "$changed" >&2
+            exit 1
+          }
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "chore(lot3): corriger les preuves import stage 3"
+          git push origin HEAD:refactor/lot3-enable-unused-element-final-20260808
