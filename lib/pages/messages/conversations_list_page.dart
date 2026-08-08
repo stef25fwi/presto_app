@@ -24,7 +24,6 @@ import '../../services/user_profile_bootstrap_service.dart';
 import '../../utils/friendly_snackbar.dart';
 import 'conversation_thread_page.dart';
 import 'package:presto_app/utils/profile_avatar_resolver.dart';
-import 'package:presto_app/widgets/deleted_user_profile.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -336,15 +335,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     return null;
   }
 
-  Object? _conversationValue(Map<String, dynamic> data, List<String> keys) {
-    for (final key in keys) {
-      if (!data.containsKey(key)) continue;
-      final value = data[key];
-      if (value != null) return value;
-    }
-    return null;
-  }
-
   @override
   void dispose() {
     _initialConversationRetryTimer?.cancel();
@@ -405,121 +395,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       return 'Connexion à la messagerie…';
     }
     return 'Erreur de chargement des conversations. Consultez les logs de debug.';
-  }
-
-  String _conversationTitle(Map<String, dynamic> data, String userId) {
-    final participantNames = _conversationValue(data, const [
-      'participantNames',
-      'participant_names',
-    ]);
-    if (participantNames is Map) {
-      for (final entry in participantNames.entries) {
-        if (entry.key.toString() == userId) continue;
-        final value = (entry.value ?? '').toString().trim();
-        if (value.isNotEmpty) return value;
-      }
-    }
-
-    final candidates = [
-      _conversationValue(data, const ['otherUserName', 'other_user_name']),
-      _conversationValue(data, const ['participantName', 'participant_name']),
-      _conversationValue(data, const [
-        'participantDisplayName',
-        'participant_display_name',
-      ]),
-      _conversationValue(data, const [
-        'listingTitle',
-        'offerTitle',
-        'offer_title',
-      ]),
-    ];
-    for (final candidate in candidates) {
-      final value = (candidate ?? '').toString().trim();
-      if (value.isNotEmpty) return value;
-    }
-    return 'Conversation';
-  }
-
-  String _conversationPreview(Map<String, dynamic> data, String userId) {
-    final lastMessage = _conversationValue(data, const [
-      'lastMessage',
-      'last_message',
-    ]).toString().trim();
-    final lastSenderId = _conversationValue(data, const [
-      'lastSenderId',
-      'last_sender_id',
-    ]).toString().trim();
-    final offerTitle = _conversationValue(data, const [
-      'listingTitle',
-      'offerTitle',
-      'offer_title',
-    ]).toString().trim();
-
-    if (lastMessage.isNotEmpty) {
-      if (lastSenderId == userId) {
-        return 'Vous : $lastMessage';
-      }
-      return lastMessage;
-    }
-
-    if (offerTitle.isNotEmpty) {
-      return offerTitle;
-    }
-
-    return 'Touchez pour ouvrir la conversation';
-  }
-
-  String _searchableConversationText(Map<String, dynamic> data, String userId) {
-    return [
-      _conversationTitle(data, userId),
-      _conversationPreview(data, userId),
-      _conversationValue(data, const [
-        'listingTitle',
-        'offerTitle',
-        'offer_title',
-      ]).toString(),
-      _conversationValue(data, const [
-        'lastMessage',
-        'last_message',
-      ]).toString(),
-      _conversationValue(data, const [
-        'lastSenderName',
-        'last_sender_name',
-      ]).toString(),
-    ].join(' ').toLowerCase();
-  }
-
-  DateTime? _conversationSortDate(Map<String, dynamic> data) {
-    return parseFirestoreDateTime(
-          _conversationValue(data, const ['lastMessageAt', 'last_message_at']),
-        ) ??
-        parseFirestoreDateTime(
-          _conversationValue(data, const ['updatedAt', 'updated_at']),
-        ) ??
-        parseFirestoreDateTime(
-          _conversationValue(data, const ['createdAt', 'created_at']),
-        );
-  }
-
-  String? _notificationConversationId(Map<String, dynamic> data) {
-    final directValue = _conversationValue(data, const [
-      'conversationId',
-      'conversation_id',
-    ]);
-    final normalizedDirectValue = (directValue ?? '').toString().trim();
-    if (normalizedDirectValue.isNotEmpty) {
-      return normalizedDirectValue;
-    }
-
-    final routeName =
-        (data['routeName'] ?? data['route_name'] ?? '').toString().trim();
-    if (routeName.isEmpty) return null;
-    if (!routeName.startsWith('/messages/')) return null;
-
-    final segments = routeName.split('/');
-    if (segments.length < 3) return null;
-    final conversationId = Uri.decodeComponent(segments[2]).trim();
-    return conversationId.isEmpty ? null : conversationId;
   }
 
   Stream<_ConversationQueryState> _buildConversationStateStream(
@@ -2758,30 +2633,4 @@ class _ConversationStateChip extends StatelessWidget {
       ),
     );
   }
-}
-
-bool _isDeletedUserMap(Map<String, dynamic>? data) {
-  return DeletedUserProfile.isDeletedMap(data);
-}
-
-String _deletedAwareDisplayName(
-  Map<String, dynamic>? data,
-  String? fallbackName,
-) {
-  return DeletedUserProfile.displayName(
-    isDeleted: _isDeletedUserMap(data),
-    fallbackName: fallbackName,
-  );
-}
-
-Widget _deletedAwareAvatar({
-  required Map<String, dynamic>? data,
-  required Widget fallback,
-  double radius = 22,
-}) {
-  if (_isDeletedUserMap(data)) {
-    return DeletedUserAvatar(radius: radius);
-  }
-
-  return fallback;
 }

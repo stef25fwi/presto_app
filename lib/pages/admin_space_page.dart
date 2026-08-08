@@ -212,17 +212,6 @@ extension on _MessagingModerationMode {
     }
   }
 
-  String get shortLabel {
-    switch (this) {
-      case _MessagingModerationMode.visibleThenRetract:
-        return 'Souple';
-      case _MessagingModerationMode.hiddenUntilValidated:
-        return 'Strict';
-      case _MessagingModerationMode.hybrid:
-        return 'Hybride';
-    }
-  }
-
   String get description {
     switch (this) {
       case _MessagingModerationMode.visibleThenRetract:

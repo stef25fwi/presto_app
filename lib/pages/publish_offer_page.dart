@@ -703,25 +703,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _appendPublishAiTrace(stage, parts.join(' | '), level: level);
   }
 
-  String _publishAdminRuntimeDetail(AdminAccessState state) {
-    if (state.serverCheckSucceeded && state.serverIsAdmin == true) {
-      return 'Accès admin confirmé';
-    }
-    if (state.effectiveIsAdmin) {
-      final source = state.sourceOfTruth.trim().isEmpty
-          ? 'token/profil'
-          : state.sourceOfTruth;
-      return 'Accès admin confirmé via $source';
-    }
-    if ((state.serverErrorMessage ?? '').trim().isNotEmpty) {
-      return state.serverErrorMessage!.trim();
-    }
-    if ((state.serverErrorCode ?? '').trim().isNotEmpty) {
-      return 'Vérification admin indisponible (${state.serverErrorCode})';
-    }
-    return 'Accès admin non confirmé';
-  }
-
   String _currentPublishAiRuntimeState() {
     if (_isListening) return 'Ecoute micro';
     if (_isAnalyzing) return 'Analyse en cours';
@@ -851,8 +832,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (!mounted) return;
         setState(() {
           _adminAudioRuntimeAccessState = -1;
-          if (_adminAudioRuntimeLabel == 'Mode serveur') {
-          }
+          if (_adminAudioRuntimeLabel == 'Mode serveur') {}
         });
         return;
       }
@@ -860,8 +840,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (!mounted) return;
       setState(() {
         _adminAudioRuntimeAccessState = 1;
-        if (_adminAudioRuntimeLabel == 'Mode serveur') {
-        }
+        if (_adminAudioRuntimeLabel == 'Mode serveur') {}
       });
       unawaited(_adminAudioRuntimeStore.enableCloudSync());
 
@@ -903,8 +882,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (!mounted) return;
         setState(() {
           _adminAudioRuntimeMode = mode;
-          if (_adminAudioRuntimeLabel == 'Mode serveur') {
-          }
+          if (_adminAudioRuntimeLabel == 'Mode serveur') {}
         });
         unawaited(_adminAudioRuntimeStore.enableCloudSync());
         _adminAudioRuntimeStore.updateConfiguredMode(mode);
@@ -917,8 +895,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (!mounted) return;
         setState(() {
           _adminAudioRuntimeAccessState = 1;
-          if (_adminAudioRuntimeLabel == 'Mode serveur') {
-          }
+          if (_adminAudioRuntimeLabel == 'Mode serveur') {}
         });
       } catch (error) {
         _appendPublishAiTrace(
@@ -960,8 +937,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           if (!mounted) return;
           setState(() {
             _adminAudioRuntimeAccessState = 1;
-            if (_adminAudioRuntimeLabel == 'Mode serveur') {
-            }
+            if (_adminAudioRuntimeLabel == 'Mode serveur') {}
           });
           return;
         } on FirebaseFunctionsException {
@@ -974,8 +950,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (e.code == 'permission-denied' || e.code == 'unauthenticated') {
         setState(() {
           _adminAudioRuntimeAccessState = -1;
-          if (_adminAudioRuntimeLabel == 'Mode serveur') {
-          }
+          if (_adminAudioRuntimeLabel == 'Mode serveur') {}
         });
       }
     } catch (_) {
@@ -987,8 +962,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (!mounted) return;
       setState(() {
         _adminAudioRuntimeAccessState = -1;
-        if (_adminAudioRuntimeLabel == 'Mode serveur') {
-        }
+        if (_adminAudioRuntimeLabel == 'Mode serveur') {}
       });
     }
   }
@@ -1184,7 +1158,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final isCompleted = _isPublishFlowCompleted;
     final isAnalyzing =
         _publishAiFlowStep == PublishOfferAiFlowStep.voiceAnalyzing ||
-        _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
+            _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
 
     return AnimatedContainer(
       key: _publishAiFlowHintKey,
@@ -1195,9 +1169,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         color: isCompleted ? const Color(0xFFF2F8FF) : const Color(0xFFF8FAFD),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isCompleted
-              ? const Color(0xFFD7E7FF)
-              : const Color(0xFFE5E7EB),
+          color:
+              isCompleted ? const Color(0xFFD7E7FF) : const Color(0xFFE5E7EB),
         ),
       ),
       child: Row(
@@ -1207,8 +1180,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             isAnalyzing
                 ? Icons.auto_awesome_rounded
                 : isCompleted
-                ? Icons.check_circle_outline_rounded
-                : Icons.tips_and_updates_outlined,
+                    ? Icons.check_circle_outline_rounded
+                    : Icons.tips_and_updates_outlined,
             color: isCompleted ? kPrestoBlue : const Color(0xFF5B6475),
             size: 18,
           ),
@@ -1550,9 +1523,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             .trim();
     final details = (draft['details'] is List)
         ? (draft['details'] as List)
-              .map((e) => e.toString().trim())
-              .where((e) => e.isNotEmpty)
-              .toList()
+            .map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .toList()
         : const <String>[];
     final availabilities =
         ((draft['disponibilites'] ?? '') as String?)?.trim() ?? '';
@@ -1668,8 +1641,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         .toString()
         .trim()
         .toLowerCase();
-    final wantsNegotiation =
-        rawBudgetType == 'negotiable' ||
+    final wantsNegotiation = rawBudgetType == 'negotiable' ||
         rawBudgetType == 'a_negocier' ||
         rawBudgetType == 'à négocier';
 
@@ -1728,13 +1700,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _applyDetectedCityData(
       city: detectedCity,
       postalCode: detectedPostalCode,
-      departmentHint:
-          (draft['department'] ??
-                  draft['departement'] ??
-                  draft['departmentName'] ??
-                  draft['departmentCode'] ??
-                  '')
-              .toString(),
+      departmentHint: (draft['department'] ??
+              draft['departement'] ??
+              draft['departmentName'] ??
+              draft['departmentCode'] ??
+              '')
+          .toString(),
       regionHint:
           (draft['region'] ?? draft['regionName'] ?? draft['regionCode'] ?? '')
               .toString(),
@@ -1919,8 +1890,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final candidates = communes.where((commune) {
         final normalizedCommune = normalizeLocationLookupKey(commune.name);
 
-        final nameMatches =
-            normalizedCommune == normalizedCity ||
+        final nameMatches = normalizedCommune == normalizedCity ||
             normalizedCommune.contains(normalizedCity) ||
             normalizedCity.contains(normalizedCommune);
 
@@ -1934,9 +1904,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         );
       }).toList();
 
-      final selected = candidates.isNotEmpty
-          ? candidates.first
-          : communes.first;
+      final selected =
+          candidates.isNotEmpty ? candidates.first : communes.first;
       final resolvedCp = selected.primaryPostalCode.trim();
 
       if (resolvedCp.isEmpty) return;
@@ -2013,17 +1982,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     final currentCategory = (_category ?? '').trim();
     final currentSubCategory = (_selectedSubCategory ?? '').trim();
-    final sameCategory =
-        currentCategory.isNotEmpty &&
+    final sameCategory = currentCategory.isNotEmpty &&
         normalizeOfferText(currentCategory) ==
             normalizeOfferText(match.category);
     final canSetCategory = !_categoryEditedByUser && currentCategory.isEmpty;
-    final canSetSubCategory =
-        !_categoryEditedByUser &&
+    final canSetSubCategory = !_categoryEditedByUser &&
         currentSubCategory.isEmpty &&
         (canSetCategory || sameCategory);
-    final canSetTitle =
-        !_titleEditedByUser &&
+    final canSetTitle = !_titleEditedByUser &&
         _titleController.text.trim().isEmpty &&
         (match.suggestedTitle ?? '').trim().isNotEmpty;
 
@@ -2232,8 +2198,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final normalizedLimit = configuredLimit < _minimumMaxListingPhotos
           ? _minimumMaxListingPhotos
           : configuredLimit > _publishPhotoHardLimit
-          ? _publishPhotoHardLimit
-          : configuredLimit;
+              ? _publishPhotoHardLimit
+              : configuredLimit;
       if (!mounted || normalizedLimit == _maxListingPhotos) {
         return;
       }
@@ -2301,9 +2267,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final allDigits = compact.replaceAll(RegExp(r'\D'), '');
 
     final normalizedExplicitCode = (explicitCountryCode ?? '').trim();
-    final knownCodes = kPhoneCountryCodes
-        .map((country) => country.code)
-        .toList();
+    final knownCodes =
+        kPhoneCountryCodes.map((country) => country.code).toList();
 
     String selectedCode = normalizedExplicitCode;
     if (selectedCode.isEmpty || !knownCodes.contains(selectedCode)) {
@@ -2334,8 +2299,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   Future<void> _prefillPublishFromProfile() async {
     final phoneNeeded = _phoneController.text.trim().isEmpty;
-    final locationNeeded =
-        !_locationEditedByUser &&
+    final locationNeeded = !_locationEditedByUser &&
         !_postalCodeEditedByUser &&
         _locationController.text.trim().isEmpty &&
         _postalCodeController.text.trim().isEmpty;
@@ -2413,19 +2377,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (profileCity.isNotEmpty || profilePostalCode.isNotEmpty) {
           CityRecord? cityRecord;
           if (profilePostalCode.isNotEmpty) {
-            cityRecord = FrenchCityPostalValidator.instance
-                .resolveCanonicalCity(
-                  city: profileCity,
-                  postalCode: profilePostalCode,
-                );
+            cityRecord =
+                FrenchCityPostalValidator.instance.resolveCanonicalCity(
+              city: profileCity,
+              postalCode: profilePostalCode,
+            );
           }
           if (cityRecord == null && profileCity.isNotEmpty) {
-            final matches = FrenchCityPostalValidator.instance
-                .searchSuggestions(
-                  profileCity,
-                  postalCodeHint: profilePostalCode,
-                  limit: 5,
-                );
+            final matches =
+                FrenchCityPostalValidator.instance.searchSuggestions(
+              profileCity,
+              postalCodeHint: profilePostalCode,
+              limit: 5,
+            );
             for (final candidate in matches) {
               if (profilePostalCode.isEmpty ||
                   candidate.cp == profilePostalCode) {
@@ -2457,15 +2421,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 _setControllerText(_postalCodeController, resolvedPostalCode);
                 changed = true;
               }
-              final dept =
-                  cityRecord?.dept ??
+              final dept = cityRecord?.dept ??
                   departmentFromPostalCode(resolvedPostalCode);
               if (dept != null && dept.isNotEmpty) {
                 _selectedPhoneCountryCode = countryCodeForDept(dept);
               }
               final region = cityRecord?.region;
-              if (region != null && region.isNotEmpty) {
-              }
+              if (region != null && region.isNotEmpty) {}
             });
             if (changed) _recompute();
           }
@@ -2483,8 +2445,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   Widget _requiredLabel(String text) {
     final theme = Theme.of(context);
-    final base =
-        theme.inputDecorationTheme.labelStyle ??
+    final base = theme.inputDecorationTheme.labelStyle ??
         theme.textTheme.bodyLarge ??
         const TextStyle(fontSize: 16, color: Colors.black87);
     final baseColor = base.color ?? Colors.black87;
@@ -2734,14 +2695,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Iterable<String> get _requiredPublishFieldOrder => const <String>[
-    'title',
-    'category',
-    'description',
-    'city',
-    'phone',
-    'delay',
-    'budget',
-  ];
+        'title',
+        'category',
+        'description',
+        'city',
+        'phone',
+        'delay',
+        'budget',
+      ];
 
   GlobalKey _publishFieldKeyFor(String fieldId) {
     switch (fieldId) {
@@ -2818,16 +2779,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _scrollToDescription() async {
     final shouldShowHintFirst =
         _publishAiFlowStep == PublishOfferAiFlowStep.textSelected ||
-        _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
+            _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
     BuildContext? hintCtx = _publishAiFlowHintKey.currentContext;
     if (shouldShowHintFirst && hintCtx == null) {
       await WidgetsBinding.instance.endOfFrame;
       hintCtx = _publishAiFlowHintKey.currentContext;
     }
     final descriptionCtx = _descriptionFieldKey.currentContext;
-    final targetCtx = shouldShowHintFirst && hintCtx != null
-        ? hintCtx
-        : descriptionCtx;
+    final targetCtx =
+        shouldShowHintFirst && hintCtx != null ? hintCtx : descriptionCtx;
     if (targetCtx == null) return;
 
     await Scrollable.ensureVisible(
@@ -2906,9 +2866,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       tween: Tween<double>(begin: 0, end: isShaking ? 1 : 0),
       duration: const Duration(milliseconds: 420),
       builder: (context, value, animatedChild) {
-        final dx = isShaking
-            ? math.sin(value * math.pi * 6) * (1 - value) * 12
-            : 0.0;
+        final dx =
+            isShaking ? math.sin(value * math.pi * 6) * (1 - value) * 12 : 0.0;
         return Transform.translate(offset: Offset(dx, 0), child: animatedChild);
       },
       child: AnimatedContainer(
@@ -3627,8 +3586,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _applyKeywordCategoryPairFromText(input);
         _markLocationPostalPrefilledByAiIfChanged(beforeSnapshot);
 
-        final didChange =
-            beforeSnapshot['title'] != _titleController.text ||
+        final didChange = beforeSnapshot['title'] != _titleController.text ||
             beforeSnapshot['description'] != _descriptionController.text ||
             beforeSnapshot['location'] != _locationController.text ||
             beforeSnapshot['postal'] != _postalCodeController.text ||
@@ -3737,8 +3695,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    final hasLocationValue =
-        _locationController.text.trim().isNotEmpty ||
+    final hasLocationValue = _locationController.text.trim().isNotEmpty ||
         _postalCodeController.text.trim().isNotEmpty;
 
     if (hasLocationValue) {
@@ -3753,8 +3710,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    final hasValue =
-        _locationController.text.trim().isNotEmpty ||
+    final hasValue = _locationController.text.trim().isNotEmpty ||
         _postalCodeController.text.trim().isNotEmpty;
 
     if (!hasValue) {
@@ -3773,69 +3729,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
     _isClearingAiPrefilledLocationPostal = false;
     _recompute();
-  }
-
-  void _onCityChanged(String value) {
-    final query = value.trim();
-    if (query.length < 2) {
-      setState(() {
-        _citySuggestions = [];
-      });
-      return;
-    }
-
-    final results = FrenchCityPostalValidator.instance.searchSuggestions(
-      query,
-      postalCodeHint: _postalCodeController.text,
-      limit: 10,
-    );
-    final exactMatch = FrenchCityPostalValidator.instance.resolveExactTypedCity(
-      city: query,
-      postalCode: _postalCodeController.text,
-    );
-    setState(() {
-      _citySuggestions = results;
-    });
-
-    if (exactMatch != null) {
-      _applyCity(exactMatch, forceApply: true);
-    }
-  }
-
-  void _onPostalCodeChanged(String value) {
-    final cp = value.trim();
-    if (cp.length < 2) {
-      // On ne spam pas si l'utilisateur tape juste "7"
-      return;
-    }
-
-    final results = FrenchCityPostalValidator.instance.searchSuggestions(
-      '',
-      postalCodeHint: cp,
-      limit: 10,
-    );
-
-    if (!mounted) return;
-
-    if (results.isEmpty) {
-      setState(() {
-        _citySuggestions = [];
-      });
-      return;
-    }
-
-    final best = FrenchCityPostalValidator.instance.resolveCanonicalCity(
-      city: _locationController.text,
-      postalCode: cp,
-    );
-
-    setState(() {
-      _citySuggestions = results;
-    });
-
-    if (best != null) {
-      _applyCity(best, forceApply: true);
-    }
   }
 
   void _applyCity(
@@ -4269,8 +4162,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final budgetValue = _budgetType == 'À négocier'
         ? 0.0
         : (parseBudget(_budgetController.text) ?? 0.0);
-    final publishService = _marketplacePublishService ??=
-        MarketplacePublishService();
+    final publishService =
+        _marketplacePublishService ??= MarketplacePublishService();
 
     // UX « instantané » : on lance l'envoi (upload photos + création annonce)
     // en arrière-plan, puis on affiche immédiatement le popup « en attente de
@@ -4374,63 +4267,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         );
       }
     }
-  }
-
-  Widget _buildPublishAiAnalyzingBanner() {
-    if (!_isAnalyzing) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, 14),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF13C8FF), Color(0xFF0078FF), Color(0xFF004BE8)],
-          ),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x6613A8FF),
-              blurRadius: 22,
-              offset: Offset(0, 10),
-            ),
-          ],
-        ),
-        child: const Row(
-          children: [
-            OrbitingAiVisual(size: 60),
-            SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Analyse IA en cours...',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Nous préparons automatiquement votre annonce.',
-                    style: TextStyle(
-                      color: Color(0xE6FFFFFF),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -4573,9 +4409,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                 controller: _descriptionController,
                                 focusNode: _descriptionFocusNode,
                                 readOnly: _descriptionTapToEditPrimed,
-                                showCursor: _descriptionTapToEditPrimed
-                                    ? true
-                                    : null,
+                                showCursor:
+                                    _descriptionTapToEditPrimed ? true : null,
                                 textAlignVertical: TextAlignVertical.top,
                                 onTap: _unlockDescriptionEditing,
                                 decoration: InputDecoration(
@@ -4653,17 +4488,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             subcategories: _category == null
                                 ? const <String>[]
                                 : (kCategorySubcategories[_category] ??
-                                      const <String>[]),
+                                    const <String>[]),
                             selectedCategory: _category,
                             selectedSubcategory: _selectedSubCategory,
                             categoryDecorator: (child) =>
                                 _withPublishFieldHighlight(
-                                  fieldId: 'category',
-                                  child: _withAiPendingOverlay(
-                                    showPending: _showAiPendingForCategory,
-                                    child: child,
-                                  ),
-                                ),
+                              fieldId: 'category',
+                              child: _withAiPendingOverlay(
+                                showPending: _showAiPendingForCategory,
+                                child: child,
+                              ),
+                            ),
                             onCategoryChanged: (value) {
                               setState(() {
                                 _categoryEditedByUser = true;
@@ -4698,14 +4533,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             cityLabel: _requiredLabel('Ville'),
                             cityDecorator: (child) =>
                                 _withPublishFieldHighlight(
-                                  fieldId: 'city',
-                                  child: _withAiPendingOverlay(
-                                    showPending: _showAiPendingForController(
-                                      _locationController,
-                                    ),
-                                    child: child,
-                                  ),
+                              fieldId: 'city',
+                              child: _withAiPendingOverlay(
+                                showPending: _showAiPendingForController(
+                                  _locationController,
                                 ),
+                                child: child,
+                              ),
+                            ),
                             postalDecorator: (child) => _withAiPendingOverlay(
                               showPending: _showAiPendingForController(
                                 _postalCodeController,
@@ -4738,9 +4573,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             initialCountryCode: _selectedPhoneCountryCode,
                             phoneDecorator: (child) =>
                                 _withPublishFieldHighlight(
-                                  fieldId: 'phone',
-                                  child: child,
-                                ),
+                              fieldId: 'phone',
+                              child: child,
+                            ),
                             onCountryCodeChanged: (code) {
                               setState(() {
                                 _selectedPhoneCountryCode = code;
@@ -4766,9 +4601,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             selectedDelay: _missionDelay,
                             delayDecorator: (child) =>
                                 _withPublishFieldHighlight(
-                                  fieldId: 'delay',
-                                  child: child,
-                                ),
+                              fieldId: 'delay',
+                              child: child,
+                            ),
                             onDelayChanged: (value) {
                               setState(() {
                                 _delayEditedByUser = true;
@@ -4785,9 +4620,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                 : _requiredLabel('Budget (€)'),
                             budgetDecorator: (child) =>
                                 _withPublishFieldHighlight(
-                                  fieldId: 'budget',
-                                  child: child,
-                                ),
+                              fieldId: 'budget',
+                              child: child,
+                            ),
                             onBudgetTypeChanged: (value) {
                               setState(() {
                                 _budgetEditedByUser = true;
@@ -4824,9 +4659,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : _onPublishPressed,
+                              onPressed:
+                                  _isSubmitting ? null : _onPublishPressed,
                               icon: _isSubmitting
                                   ? const SizedBox(
                                       width: 18,

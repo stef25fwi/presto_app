@@ -331,60 +331,6 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  bool _isProfileSyncExpired(Object? error) {
-    if (error is UserProfileBootstrapException) {
-      return error.isTimeout;
-    }
-    if (error is TimeoutException) {
-      return true;
-    }
-    final message = error?.toString().toLowerCase() ?? '';
-    return message.contains('timeout') ||
-        message.contains('deadline-exceeded') ||
-        message.contains('profile-access-timeout');
-  }
-
-  Future<bool> _suppressProfileSyncSnackBarWhenAdminConfirmed(
-    Object error, {
-    required String trigger,
-  }) async {
-    var state = _lastAdminAccessState;
-    if (state?.hasConfirmedAdminAccess != true) {
-      try {
-        state = await _adminAccessResolver.resolveAdminAccess();
-        if (mounted) {
-          setState(() {
-            _lastAdminAccessState = state;
-            _adminLastCheckedAt = state?.serverCheckedAt ?? _adminLastCheckedAt;
-          });
-        }
-      } catch (resolverError) {
-        debugPrint(
-          '[ProfileSync][AdminGuard] resolver failed trigger=$trigger error=$resolverError',
-        );
-      }
-    }
-
-    final finalCanAccessAdmin = state?.hasConfirmedAdminAccess == true;
-    final reason = finalCanAccessAdmin
-        ? 'admin-confirmed-by-${state!.consolidatedSourceOfTruth}'
-        : 'no-admin-source-confirmed';
-    debugPrint(
-      '[ProfileSync][AdminGuard] trigger=$trigger '
-      'profileSyncExpired=${_isProfileSyncExpired(error)} '
-      'serverIsAdmin=${state?.serverIsAdmin} '
-      'tokenHasAdmin=${state?.tokenHasAdmin ?? false} '
-      'profileHasAdmin=${state?.profileHasAdmin ?? false} '
-      'adminDocHasAdmin=${state?.adminDocHasAdmin ?? false} '
-      'finalCanAccessAdmin=$finalCanAccessAdmin '
-      'reason=$reason',
-    );
-    if (finalCanAccessAdmin) {
-      unawaited(adminAudioRuntimeStore.enableCloudSync());
-    }
-    return finalCanAccessAdmin;
-  }
-
   Map<String, dynamic> _adminServerDebug(AdminAccessState state) {
     return state.serverDebug;
   }
@@ -846,60 +792,6 @@ class _AccountPageState extends State<AccountPage> {
     return _profilePseudoController.text.trim().isNotEmpty ||
         _profileCityController.text.trim().isNotEmpty ||
         _profilePhoneController.text.trim().isNotEmpty;
-  }
-
-  Future<DocumentSnapshot<Map<String, dynamic>>> _fetchUserProfileDocument(
-    String uid,
-  ) async {
-    final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
-    try {
-      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-        user: FirebaseAuth.instance.currentUser,
-        forceRefreshToken: false,
-        forceRefreshAppCheckToken: false,
-      );
-      return await userRef
-          .get(const GetOptions(source: Source.server))
-          .timeout(const Duration(seconds: 6));
-    } on FirebaseException catch (error) {
-      if (error.code == 'permission-denied' ||
-          error.code == 'unauthenticated') {
-        // Token may be stale — force one refresh and retry.
-        debugPrint(
-          '[Profile] Auth error, forcing token refresh: ${error.code}',
-        );
-        await FirebaseAuth.instance.currentUser
-            ?.getIdToken(true)
-            .timeout(const Duration(seconds: 8));
-        return await userRef
-            .get(const GetOptions(source: Source.server))
-            .timeout(const Duration(seconds: 5));
-      }
-      // Network or quota issue — serve from cache.
-      debugPrint('[Profile] Server unavailable (${error.code}), using cache');
-      return userRef
-          .get(const GetOptions(source: Source.cache))
-          .timeout(const Duration(seconds: 3));
-    } catch (error) {
-      debugPrint('[Profile] Fallback cache: $error');
-      return userRef
-          .get(const GetOptions(source: Source.cache))
-          .timeout(const Duration(seconds: 3));
-    }
-  }
-
-  Future<DocumentSnapshot<Map<String, dynamic>>?>
-      _fetchCachedUserProfileDocument(String uid) async {
-    try {
-      return await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get(const GetOptions(source: Source.cache))
-          .timeout(const Duration(milliseconds: 800));
-    } catch (error) {
-      debugPrint('[Profile] Cache profil indisponible: $error');
-      return null;
-    }
   }
 
   String _firstNonEmptyProfileValue(
@@ -3428,20 +3320,6 @@ class _AccountPageState extends State<AccountPage> {
         ],
       ),
     );
-  }
-
-  List<String> _getSubcategoriesForCategory(String category) {
-    final subcats = kCategorySubcategories[category] ?? [];
-    return ['', ...subcats];
-  }
-
-  List<String> _getAvailableSubcategories() {
-    final allSubcats = <String>{};
-    for (final cat in _selectedFavoriteCategories) {
-      final subcats = kCategorySubcategories[cat] ?? [];
-      allSubcats.addAll(subcats);
-    }
-    return allSubcats.toList();
   }
 
   String get _profileFirstName {
