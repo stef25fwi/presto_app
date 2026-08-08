@@ -1,0 +1,107 @@
+name: Lot3 unused element strict autofix
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.event.pull_request.head.ref == 'refactor/lot3-enable-unused-element-final-20260808' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/lot3-enable-unused-element-final-20260808
+          fetch-depth: 0
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Flutter dependencies
+        run: flutter pub get
+
+      - name: Verify dry-run is exactly the 57 unused_element fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart fix --dry-run | tee /tmp/dart-fix-dry-run.txt
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          text = Path('/tmp/dart-fix-dry-run.txt').read_text()
+          match = re.search(r'(\d+) proposed fixes? in \d+ files?', text)
+          if match is None:
+              raise SystemExit('fail-fast: unable to read proposed fix count')
+          count = int(match.group(1))
+          if count != 57:
+              raise SystemExit(f'fail-fast: expected 57 proposed fixes, got {count}')
+
+          codes = set()
+          for line in text.splitlines():
+              match = re.match(r'^\s+([a-z][a-z0-9_]*)\s+•\s+\d+\s+fix(?:es)?\s*$', line)
+              if match:
+                  codes.add(match.group(1))
+          if codes != {'unused_element'}:
+              raise SystemExit(f'fail-fast: unexpected fix diagnostics: {sorted(codes)}')
+          PY
+
+      - name: Apply only analyzer-proposed fixes
+        run: dart fix --apply
+
+      - name: Verify modified file scope
+        shell: python
+        run: |
+          import subprocess
+
+          allowed = {
+              'lib/pages/account_page.dart',
+              'lib/pages/admin_space_page.dart',
+              'lib/pages/consult_offers_page.dart',
+              'lib/pages/home_page.dart',
+              'lib/pages/messages/conversations_list_page.dart',
+              'lib/pages/offers/offer_details_page.dart',
+              'lib/pages/publish_offer_page.dart',
+              'lib/pages/toolbox_je_me_lance_page.dart',
+              'lib/pages/user_offers_section.dart',
+              'lib/services/admin_access_resolver.dart',
+              'lib/services/marketplace_publish_service.dart',
+              'lib/services/notification_service.dart',
+              'test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart',
+              'test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart',
+          }
+          changed = {
+              line.strip()
+              for line in subprocess.check_output(
+                  ['git', 'diff', '--name-only'], text=True
+              ).splitlines()
+              if line.strip()
+          }
+          if changed != allowed:
+              raise SystemExit(
+                  'fail-fast: changed file scope mismatch; '
+                  f'unexpected={sorted(changed - allowed)}, missing={sorted(allowed - changed)}'
+              )
+
+      - name: Analyze after autofix
+        run: flutter analyze --fatal-infos
+
+      - name: Remove temporary workflow and commit candidate
+        run: |
+          rm .github/workflows/lot3-unused-element-autofix.yml
+          git diff --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet && { echo 'No cleanup produced'; exit 1; }
+          git commit -m "refactor(lot3): supprimer les 57 éléments privés inutilisés"
+          git push origin HEAD:refactor/lot3-enable-unused-element-final-20260808
