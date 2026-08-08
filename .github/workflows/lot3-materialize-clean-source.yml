@@ -1,0 +1,267 @@
+name: Lot3 materialize clean source
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.event.pull_request.head.ref == 'refactor/lot3-enable-unused-element-final-20260808' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/lot3-enable-unused-element-final-20260808
+          fetch-depth: 0
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Prepare ephemeral AST parser
+        run: |
+          set -euo pipefail
+          flutter pub get
+          cp pubspec.yaml /tmp/pubspec.yaml.before-lot3
+          cp pubspec.lock /tmp/pubspec.lock.before-lot3
+          flutter pub add --dev 'analyzer:^7.7.1'
+
+      - name: Generate and apply validated stage 1 — 57 declarations
+        shell: python
+        run: |
+          from pathlib import Path
+
+          workflow = Path('.github/workflows/lot3-unused-element-ast-v7.yml').read_text()
+          marker = "      - name: Extract guarded cleanup script from previous workflow\n        shell: python\n        run: |\n"
+          start = workflow.find(marker)
+          end = workflow.find("\n      - name: Remove exactly the 57 analyzer-proven declarations", start + len(marker))
+          if start < 0 or end < 0:
+              raise SystemExit('fail-fast: stage-1 generator not found')
+          block = workflow[start + len(marker):end]
+          script = '\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines()) + '\n'
+          exec(compile(script, '.github/workflows/lot3-unused-element-ast-v7.yml', 'exec'), {})
+      - run: dart run tool/lot3_unused_element_cleanup.dart
+
+      - name: Format stage 1
+        run: |
+          rm tool/lot3_unused_element_cleanup.dart
+          rmdir tool 2>/dev/null || true
+          dart format \
+            lib/pages/account_page.dart \
+            lib/pages/admin_space_page.dart \
+            lib/pages/consult_offers_page.dart \
+            lib/pages/home_page.dart \
+            lib/pages/messages/conversations_list_page.dart \
+            lib/pages/offers/offer_details_page.dart \
+            lib/pages/publish_offer_page.dart \
+            lib/pages/toolbox_je_me_lance_page.dart \
+            lib/pages/user_offers_section.dart \
+            lib/services/admin_access_resolver.dart \
+            lib/services/marketplace_publish_service.dart \
+            lib/services/notification_service.dart \
+            test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart \
+            test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart
+
+      - name: Prove stage 2 remains exactly 46 diagnostics
+        shell: bash
+        run: |
+          set +e
+          flutter analyze --fatal-infos 2>&1 | tee /tmp/lot3-stage2.txt
+          status=${PIPESTATUS[0]}
+          set -e
+          test "$status" -ne 0
+          python - <<'PY'
+          from collections import Counter
+          from pathlib import Path
+          import re
+          text = Path('/tmp/lot3-stage2.txt').read_text()
+          codes = [m.group(1) for line in text.splitlines() if (m := re.search(r'•\s+([a-z][a-z0-9_]*)\s*$', line))]
+          expected = Counter({'unused_element': 29, 'unused_import': 11, 'unused_field': 3, 'unused_element_parameter': 3})
+          if len(codes) != 46 or Counter(codes) != expected:
+              raise SystemExit(f'fail-fast: stage-2 drift total={len(codes)} codes={Counter(codes)}')
+          PY
+
+      - name: Extract and apply validated stage 2
+        shell: python
+        run: |
+          from pathlib import Path
+          source = Path('.github/workflows/lot3-unused-element-cascade.yml').read_text()
+          start_marker = "          cat > tool/lot3_unused_element_cascade.dart <<'DART'\n"
+          end_marker = "\n          DART\n          dart run tool/lot3_unused_element_cascade.dart"
+          start = source.find(start_marker)
+          end = source.find(end_marker, start + len(start_marker))
+          if start < 0 or end < 0:
+              raise SystemExit('fail-fast: stage-2 cleanup payload not found')
+          block = source[start + len(start_marker):end]
+          Path('tool').mkdir(exist_ok=True)
+          Path('tool/lot3_unused_element_cascade.dart').write_text(
+              '\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines()) + '\n'
+          )
+      - run: dart run tool/lot3_unused_element_cascade.dart
+
+      - name: Format stage 2
+        run: |
+          rm tool/lot3_unused_element_cascade.dart
+          rmdir tool 2>/dev/null || true
+          dart format \
+            lib/pages/account_page.dart \
+            lib/pages/admin_space_page.dart \
+            lib/pages/consult_offers_page.dart \
+            lib/pages/home_page.dart \
+            lib/pages/messages/conversations_list_page.dart \
+            lib/pages/offers/offer_details_page.dart \
+            lib/pages/publish_offer_page.dart \
+            lib/pages/toolbox_je_me_lance_page.dart \
+            lib/pages/user_offers_section.dart \
+            lib/services/admin_access_resolver.dart \
+            lib/services/marketplace_publish_service.dart \
+            lib/services/notification_service.dart \
+            test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart \
+            test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart
+
+      - name: Restore project dependencies and prove stage 3 remains exactly 18 diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp /tmp/pubspec.yaml.before-lot3 pubspec.yaml
+          cp /tmp/pubspec.lock.before-lot3 pubspec.lock
+          flutter pub get
+          git diff --exit-code -- pubspec.yaml pubspec.lock
+          set +e
+          flutter analyze --fatal-infos 2>&1 | tee /tmp/lot3-stage3.txt
+          status=${PIPESTATUS[0]}
+          set -e
+          test "$status" -ne 0
+          python - <<'PY'
+          from collections import Counter
+          from pathlib import Path
+          import re
+          text = Path('/tmp/lot3-stage3.txt').read_text()
+          codes = [m.group(1) for line in text.splitlines() if (m := re.search(r'•\s+([a-z][a-z0-9_]*)\s*$', line))]
+          expected = Counter({'unused_element': 7, 'unused_import': 6, 'unused_field': 5})
+          if len(codes) != 18 or Counter(codes) != expected:
+              raise SystemExit(f'fail-fast: stage-3 drift total={len(codes)} codes={Counter(codes)}')
+          required = [
+              "field '_notificationsFuture' isn't used",
+              "field '_notificationsLastFetchAt' isn't used",
+              "field '_notificationsCachedUserId' isn't used",
+              "declaration '_conversationValue' isn't referenced",
+              "field '_saving' isn't used",
+              "field '_isFromCache' isn't used",
+              "declaration '_HeroMetricPill' isn't referenced",
+              "declaration '_JourneyStatusChip' isn't referenced",
+              "declaration '_PriorityChip' isn't referenced",
+              "declaration '_JourneyInfoBullet' isn't referenced",
+              "declaration '_CostRow' isn't referenced",
+              "declaration '_TaskContactLinkChip' isn't referenced",
+          ]
+          missing = [fragment for fragment in required if text.count(fragment) != 1]
+          if missing:
+              raise SystemExit(f'fail-fast: stage-3 target mismatch: {missing}')
+          PY
+
+      - name: Reinstall ephemeral AST parser for stage 3
+        run: flutter pub add --dev 'analyzer:^7.7.1'
+
+      - name: Extract and apply validated stage 3 cleanup
+        shell: python
+        run: |
+          from pathlib import Path
+          source = Path('.github/workflows/lot3-unused-element-final-cascade.yml').read_text()
+          start_marker = "          cat > tool/lot3_unused_element_stage3.dart <<'DART'\n"
+          end_marker = "\n          DART\n          dart run tool/lot3_unused_element_stage3.dart"
+          start = source.find(start_marker)
+          end = source.find(end_marker, start + len(start_marker))
+          if start < 0 or end < 0:
+              raise SystemExit('fail-fast: stage-3 cleanup payload not found')
+          block = source[start + len(start_marker):end]
+          Path('tool').mkdir(exist_ok=True)
+          Path('tool/lot3_unused_element_stage3.dart').write_text(
+              '\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines()) + '\n'
+          )
+      - run: dart run tool/lot3_unused_element_stage3.dart
+
+      - name: Restore dependencies, format and verify exact source scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm tool/lot3_unused_element_stage3.dart
+          rmdir tool 2>/dev/null || true
+          cp /tmp/pubspec.yaml.before-lot3 pubspec.yaml
+          cp /tmp/pubspec.lock.before-lot3 pubspec.lock
+          flutter pub get
+          git diff --exit-code -- pubspec.yaml pubspec.lock
+          dart format \
+            lib/pages/account_page.dart \
+            lib/pages/admin_space_page.dart \
+            lib/pages/consult_offers_page.dart \
+            lib/pages/home_page.dart \
+            lib/pages/messages/conversations_list_page.dart \
+            lib/pages/offers/offer_details_page.dart \
+            lib/pages/publish_offer_page.dart \
+            lib/pages/toolbox_je_me_lance_page.dart \
+            lib/pages/user_offers_section.dart \
+            lib/services/admin_access_resolver.dart \
+            lib/services/marketplace_publish_service.dart \
+            lib/services/notification_service.dart \
+            test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart \
+            test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart
+          python - <<'PY'
+          import subprocess
+          expected = {
+              'lib/pages/account_page.dart',
+              'lib/pages/admin_space_page.dart',
+              'lib/pages/consult_offers_page.dart',
+              'lib/pages/home_page.dart',
+              'lib/pages/messages/conversations_list_page.dart',
+              'lib/pages/offers/offer_details_page.dart',
+              'lib/pages/publish_offer_page.dart',
+              'lib/pages/toolbox_je_me_lance_page.dart',
+              'lib/pages/user_offers_section.dart',
+              'lib/services/admin_access_resolver.dart',
+              'lib/services/marketplace_publish_service.dart',
+              'lib/services/notification_service.dart',
+              'test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart',
+              'test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart',
+          }
+          changed = {p for p in subprocess.check_output(['git','diff','--name-only'], text=True).splitlines() if p}
+          if changed != expected:
+              raise SystemExit(f'fail-fast: source scope mismatch unexpected={sorted(changed-expected)} missing={sorted(expected-changed)}')
+          PY
+          git diff --check
+
+      - name: Final analyzer must be globally clean
+        run: flutter analyze --fatal-infos
+
+      - name: Commit only the 14 cleaned source files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            lib/pages/account_page.dart \
+            lib/pages/admin_space_page.dart \
+            lib/pages/consult_offers_page.dart \
+            lib/pages/home_page.dart \
+            lib/pages/messages/conversations_list_page.dart \
+            lib/pages/offers/offer_details_page.dart \
+            lib/pages/publish_offer_page.dart \
+            lib/pages/toolbox_je_me_lance_page.dart \
+            lib/pages/user_offers_section.dart \
+            lib/services/admin_access_resolver.dart \
+            lib/services/marketplace_publish_service.dart \
+            lib/services/notification_service.dart \
+            test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart \
+            test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart
+          git diff --cached --quiet && { echo 'No source cleanup produced'; exit 1; }
+          git commit -m "refactor(lot3): supprimer le code mort global unused_element"
+          git push origin HEAD:refactor/lot3-enable-unused-element-final-20260808
