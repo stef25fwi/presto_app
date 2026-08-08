@@ -23,18 +23,19 @@ iliprestō — services locaux
 ## Description courte (80 caractères max)
 
 ```
-Trouvez près de chez vous un particulier ou un pro pour vos services du jour.
+Petites annonces de services : trouvez une personne disponible près de vous.
 ```
 
-Variante : `Annonces de services locaux, mise en relation directe, 0 % de commission.` (72)
+Variante : `Solution instantanée pour vos services : publiez, fixez votre prix, échangez.` (77)
 
 ## Description longue (4 000 caractères max)
 
 ```
-iliprestō met en relation particuliers, indépendants et professionnels pour
-les services et microservices du quotidien. Publier une annonce, trouver
-quelqu'un près de chez soi et échanger directement : tout se fait dans
-l'application, sans intermédiaire et sans commission.
+iliprestō est un site de petites annonces de services et micro-services du
+quotidien, conçu comme une solution instantanée pour trouver une personne
+disponible près de chez vous. Publiez votre besoin, indiquez votre prix ou
+votre budget : les particuliers, indépendants et professionnels disponibles
+peuvent vous contacter directement, avec 0 % de commission.
 
 TROUVER UN SERVICE
 Parcourez les annonces publiées autour de vous, filtrez par ville, par code
@@ -44,14 +45,15 @@ budget attendu.
 
 PUBLIER EN QUELQUES MINUTES
 Décrivez ce que vous proposez ou ce que vous cherchez, ajoutez des photos,
-indiquez votre ville et votre budget. Une assistance par intelligence
-artificielle vous aide à rédiger une annonce claire et complète si vous le
-souhaitez — vous gardez la main sur le texte final.
+indiquez votre ville et votre prix ou votre budget. Une assistance par
+intelligence artificielle vous aide à rédiger une annonce claire et complète
+si vous le souhaitez — vous gardez la main sur le texte final.
 
-ÉCHANGER DIRECTEMENT
-La messagerie intégrée vous permet de discuter, d'envoyer des photos et des
-messages vocaux, et de convenir des détails avant de vous engager. Vous êtes
-prévenu par notification dès qu'un message arrive.
+RECEVOIR DES RÉPONSES DIRECTES
+Les particuliers, indépendants et professionnels disponibles peuvent répondre
+à votre annonce. La messagerie intégrée vous permet ensuite de discuter,
+d'envoyer des photos et des messages vocaux et de convenir des détails avant
+de vous engager. Vous êtes prévenu par notification dès qu'un message arrive.
 
 DES OUTILS POUR SE LANCER
 Un parcours guidé accompagne celles et ceux qui démarrent une activité :
@@ -101,7 +103,7 @@ détail d'une annonce · rédaction assistée par IA · messagerie · parcours
 
 ## Zones de diffusion
 
-Ouverture annoncée en Guadeloupe, Martinique et Guyane
+Première ouverture annoncée en Guadeloupe, Martinique et Guyane
 (`PublicLandingConfigService.defaultLaunchMessage`). Décider si la fiche est
 publiée pour la France entière dès le départ ou restreinte à ces
 départements pendant la phase bêta — ce choix conditionne le volume de
