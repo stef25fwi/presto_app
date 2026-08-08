@@ -264,8 +264,7 @@ class _SeoIntroSlide extends StatelessWidget {
         return Semantics(
           container: true,
           header: true,
-          label:
-              'Trouvez rapidement un particulier ou un professionnel près de chez vous',
+          label: 'La solution instantanée pour vos services du quotidien',
           child: Container(
             color: const Color(0xFFFF6600),
             padding: EdgeInsets.symmetric(
@@ -282,7 +281,7 @@ class _SeoIntroSlide extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Trouvez rapidement un particulier ou un professionnel près de chez vous',
+                      'La solution instantanée pour vos services du quotidien',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: titleSize,
@@ -299,7 +298,7 @@ class _SeoIntroSlide extends StatelessWidget {
                     ),
                     SizedBox(height: compact ? 8 : 12),
                     Text(
-                      'iliprestō est une plateforme de mise en relation entre particuliers, indépendants et professionnels, conçue pour apporter une réponse rapide à vos besoins de services et de micro-services du quotidien.',
+                      'iliprestō est un site de petites annonces de services et micro-services du quotidien pour trouver un particulier, un indépendant ou un professionnel disponible à l’instant près de chez vous.',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: bodySize,
@@ -309,7 +308,7 @@ class _SeoIntroSlide extends StatelessWidget {
                     ),
                     SizedBox(height: compact ? 6 : 9),
                     Text(
-                      'Publiez facilement une annonce assistée et préremplie par l’IA : les utilisateurs disponibles et intéressés peuvent vous répondre directement, sans commission.',
+                      'Publiez votre besoin, indiquez votre prix ou votre budget : les personnes disponibles peuvent vous contacter immédiatement, avec 0 % de commission.',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.92),
                         fontSize: bodySize,
@@ -331,7 +330,7 @@ class _SeoIntroSlide extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        'Besoin d’un coup de main ou d’un professionnel ? Sur iliprestō, l’offre et la demande se rencontrent rapidement, simplement et près de chez vous.',
+                        'Petites annonces, disponibilité immédiate et échange direct : une solution simple pour tous vos besoins du quotidien.',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: footerSize,
