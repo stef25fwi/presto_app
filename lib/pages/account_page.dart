@@ -472,26 +472,6 @@ class _AccountPageState extends State<AccountPage> {
     _adminCfgFuture = _adminGetMicroIaConfig();
   }
 
-  bool _isAdminAccessDenied(Object? error) {
-    if (error is FirebaseFunctionsException) {
-      return error.code == 'permission-denied' ||
-          error.code == 'unauthenticated';
-    }
-
-    final errStr = error?.toString() ?? '';
-    return errStr.contains('permission-denied') ||
-        errStr.contains('unauthenticated');
-  }
-
-  bool _isAdminAccessUnauthenticated(Object? error) {
-    if (error is FirebaseFunctionsException) {
-      return error.code == 'unauthenticated';
-    }
-
-    final errStr = error?.toString() ?? '';
-    return errStr.contains('unauthenticated');
-  }
-
   String _adminErrorDetail(Object? error) {
     if (error is FirebaseFunctionsException) {
       final message = error.message?.trim();
