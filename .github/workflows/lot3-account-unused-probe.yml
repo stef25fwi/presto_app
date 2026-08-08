@@ -1,4 +1,4 @@
-name: Lot 3 account unused probe
+name: Lot 3 account unused cleanup
 
 on:
   push:
@@ -9,11 +9,11 @@ permissions:
   contents: write
 
 concurrency:
-  group: lot3-account-unused-probe
+  group: lot3-account-unused-cleanup
   cancel-in-progress: true
 
 jobs:
-  probe:
+  cleanup:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -22,6 +22,58 @@ jobs:
         with:
           ref: refactor/lot3-account-unused-probe-20260807
 
+      - name: Apply proven account dead-code cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('lib/pages/account_page.dart')
+          text = path.read_text()
+
+          header = '// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter\n\n'
+          if not text.startswith(header):
+              raise SystemExit('Unexpected account_page.dart ignore header')
+          text = text[len(header):]
+
+          dead = """    final visibleEmail = _profileEmail.trim().isNotEmpty
+        ? _profileEmail.trim()
+        : (user.email ?? '');
+"""
+          count = text.count(dead)
+          if count != 1:
+              raise SystemExit(f'visibleEmail block: expected 1 occurrence, found {count}')
+          text = text.replace(dead, '', 1)
+          path.write_text(text)
+          PY
+
+          rm -f docs/quality/lot3-account-unused-probe.md
+          mkdir -p docs/quality
+          cat > docs/quality/lot3-dead-code-tranche7-account-unused.md <<'EOF'
+          # Lot 3 — Code mort, tranche 7
+
+          Base : `f873b0845f9ca691e9e7bba1ac23e5a938af9221`.
+
+          ## Cible
+
+          `lib/pages/account_page.dart`
+
+          ## Preuve
+
+          Le masque global `unused_element, unused_field, unused_local_variable, unused_element_parameter` a été retiré uniquement dans un workspace CI de diagnostic avec Flutter 3.44.6.
+
+          L'analyseur n'a remonté qu'un seul diagnostic `unused_*` : la variable locale `visibleEmail` dans `_buildProfile`, sans lecture ultérieure. Cette variable a été supprimée, puis le masque global a été retiré du fichier.
+
+          ## Garde-fous
+
+          - aucune méthode, champ ou paramètre supplémentaire supprimé ;
+          - aucune logique Auth, App Check, Firebase, Firestore, Functions, routing ou deep link modifiée ;
+          - aucun seuil qualité abaissé ;
+          - aucun skip/exclusion ajouté ;
+          - aucune mission LCOV créée ou relancée.
+          EOF
+
       - name: Setup Flutter 3.44.6
         uses: subosito/flutter-action@v2
         with:
@@ -29,56 +81,26 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Resolve dependencies
-        run: flutter pub get
-
-      - name: Probe account unused diagnostics
-        shell: bash
-        run: |
-          set -uo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('lib/pages/account_page.dart')
-          text = path.read_text()
-          expected = '// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter\n'
-          if not text.startswith(expected):
-              raise SystemExit('Unexpected account_page.dart ignore header')
-          path.write_text(text[len(expected):])
-          PY
-
-          set +e
-          flutter analyze --fatal-infos lib/pages/account_page.dart 2>&1 | tee /tmp/account-analyze.log
-          analyze_status=${PIPESTATUS[0]}
-          set -e
-
-          mkdir -p docs/quality
-          {
-            echo '# Lot 3 — account_page.dart unused diagnostics probe'
-            echo
-            echo 'Base: f873b0845f9ca691e9e7bba1ac23e5a938af9221'
-            echo
-            echo 'The ignore_for_file header was removed only inside the CI workspace.'
-            echo
-            echo '```text'
-            grep -E 'unused_(element|field|local_variable|element_parameter)' /tmp/account-analyze.log || true
-            echo '```'
-            echo
-            echo "Analyzer exit status: ${analyze_status}"
-          } > docs/quality/lot3-account-unused-probe.md
-
-          git checkout -- lib/pages/account_page.dart
-          git diff -- lib/pages/account_page.dart --exit-code
-
-      - name: Commit probe report
+      - name: Validate targeted cleanup
         shell: bash
         run: |
           set -euo pipefail
+          flutter pub get
+          flutter analyze --fatal-infos lib/pages/account_page.dart
+          git diff --check
+          if grep -q '^// ignore_for_file: .*unused_' lib/pages/account_page.dart; then
+            echo 'unused_* file-level suppression still present in account_page.dart'
+            exit 1
+          fi
+
+      - name: Commit validated cleanup and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/lot3-account-unused-probe.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs/quality/lot3-account-unused-probe.md
-          if git diff --cached --quiet; then
-            echo 'Probe report unchanged.'
-            exit 0
-          fi
-          git commit -m 'chore(lot3): record account unused diagnostics'
+          git add lib/pages/account_page.dart docs/quality/lot3-dead-code-tranche7-account-unused.md docs/quality/lot3-account-unused-probe.md .github/workflows/lot3-account-unused-probe.yml
+          git diff --cached --check
+          git commit -m 'refactor(lot3): retirer le masque unused du compte'
           git push origin HEAD:refactor/lot3-account-unused-probe-20260807
