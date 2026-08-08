@@ -1,0 +1,47 @@
+name: Lot3 account dead field patch v2
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/lot3-unused-masks-final-20260807
+          fetch-depth: 0
+      - name: Prove and remove dead flag
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('lib/pages/account_page.dart')
+          lines = p.read_text().splitlines(keepends=True)
+          matches = [(i + 1, line) for i, line in enumerate(lines) if '_profileLoadRequested' in line]
+          allowed = {'bool _profileLoadRequested = false;', '_profileLoadRequested = false;', '_profileLoadRequested = true;'}
+          if not matches:
+              raise SystemExit('symbol not found')
+          if any(line.strip() not in allowed for _, line in matches):
+              raise SystemExit(f'non-assignment usage found: {[(n, s.rstrip()) for n, s in matches]}')
+          if sum(line.strip() == 'bool _profileLoadRequested = false;' for _, line in matches) != 1:
+              raise SystemExit('expected exactly one declaration')
+          print('dead occurrences:', [(n, s.rstrip()) for n, s in matches])
+          p.write_text(''.join(line for line in lines if '_profileLoadRequested' not in line))
+      - name: Verify
+        run: |
+          ! grep -n "_profileLoadRequested" lib/pages/account_page.dart
+          git diff --check
+      - name: Commit cleanup
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm .github/workflows/lot3-account-dead-field-patch-v2.yml
+          git add -A
+          git commit -m "refactor(lot3): supprimer le flag profil jamais lu"
+          git push origin HEAD:refactor/lot3-unused-masks-final-20260807
