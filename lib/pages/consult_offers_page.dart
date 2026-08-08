@@ -5,39 +5,30 @@ import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter/services.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../app_core.dart';
 import '../constants.dart';
 import '../features/offers/presentation/consult_offers_pagination_policy.dart';
-import '../features/trust_score/trust_score_service.dart';
 import '../features/trust_score/trust_score_widgets.dart';
 import '../app/system_ui_style.dart' show prestoOverlayStyleFor;
 import '../services/offer_details_mapper.dart' show buildOfferDetailsOffer;
 import '../services/presto_monitoring.dart' show PrestoMonitoring;
 import '../services/region_resolver.dart' show inferRegionFromPostalCode;
 import '../widgets/app_shell_widgets.dart' show CardShell;
-import 'home_page.dart' show UnreadInboxBell;
 import 'account_page.dart';
 import '../pages/offers/offer_details_page.dart';
-import '../services/app_route_parser.dart';
 import '../services/conversation_service.dart';
 import '../services/city_search.dart';
-import '../services/firebase_functions_region.dart';
 import '../services/offer_indexing.dart';
 import '../services/public_offers_query_helpers.dart';
-import '../utils/friendly_snackbar.dart';
 import '../utils/offer_helpers.dart';
 
 import '../utils/runtime_action_logger.dart';
 import '../widgets/ad_banner.dart';
-import '../widgets/home_interactions.dart';
 import '../widgets/offer_network_image.dart';
 import 'messages/messages_page_v2.dart';
-import 'package:presto_app/widgets/deleted_user_profile.dart';
 import 'package:presto_app/services/profile_department_resolver.dart';
 
 class ConsultOffersPage extends StatefulWidget {
@@ -179,14 +170,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     return '${cp}_${_slugId(city)}';
   }
 
-  String? _makeCityCategoryKey({
-    required String? cityId,
-    required String? categoryId,
-  }) {
-    if (cityId == null || categoryId == null) return null;
-    return '${cityId}_$categoryId';
-  }
-
   // ✅ Range budget (AVANCÉ) — évite requêtes “impossibles” + explosion d’index
   final bool _advancedFilters = false;
   final TextEditingController _budgetMinCtrl = TextEditingController();
@@ -201,22 +184,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
-
-  Future<void> _copyToClipboard(BuildContext context, String text) async {
-    await Clipboard.setData(ClipboardData(text: text));
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Copié")));
-  }
-
-  Future<void> _openExternalUrl(String url) async {
-    final uri = Uri.tryParse(url);
-    if (uri == null) return;
-    final ok = await canLaunchUrl(uri);
-    if (!ok) return;
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
 
   final TextEditingController _keywordCtrl = TextEditingController();
   final TextEditingController _cityCtrl = TextEditingController();
@@ -294,7 +261,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   List<_ConsultOfferListItem>? _renderItemsCache;
 
   // ✅ Cache des résultats Firestore pour éviter les re-queries
-  String? _lastCachedQuerySignature;
   Timer? _cacheInvalidationTimer;
   Timer? _jobDoneOverlayTimer;
   DateTime? _nextJobDoneOverlayRefreshAt;
@@ -330,10 +296,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     return normalized;
   }
 
-  String _normalizeForCategoryMatch(String input) {
-    return _normalizeText(input);
-  }
-
   String? _matchKnownCategory(String input) {
     return canonicalizeOfferCategory(input);
   }
@@ -365,50 +327,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   }
 
   /// Badge = messages non lus + notifications d'annonces (dont favoris)
-  Widget _buildConsultNotificationBell() {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, authSnapshot) {
-        final user = authSnapshot.data;
-
-        if (user == null) {
-          return IconButton(
-            tooltip: 'Notifications',
-            onPressed: () {
-              showSuccessSnackBar(
-                context,
-                'Connecte-toi pour recevoir les notifications.',
-              );
-            },
-            icon: const PrestoNotificationBellBase(
-              badgeCount: 0,
-              showBackground: false,
-              iconColor: Colors.white,
-            ),
-            splashRadius: 20,
-            padding: EdgeInsets.zero,
-          );
-        }
-
-        return UnreadInboxBell(
-          userId: user.uid,
-          builder: (context, badgeCount) => IconButton(
-            tooltip: 'Messages',
-            onPressed: () {
-              Navigator.of(context).pushNamed(buildMessagesRoute());
-            },
-            icon: PrestoNotificationBellBase(
-              badgeCount: badgeCount,
-              showBackground: false,
-              iconColor: Colors.white,
-            ),
-            splashRadius: 20,
-            padding: EdgeInsets.zero,
-          ),
-        );
-      },
-    );
-  }
 
   bool get _hasActiveClientFilters {
     final selectedCategory =
@@ -824,24 +742,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   }
 
   /// ✅ Cache les résultats Firestore pour éviter les re-queries inutiles (template pour utilisation future)
-  List<DocumentSnapshot<Map<String, dynamic>>> _getCachedOrFreshResults(
-    String querySignature,
-    List<DocumentSnapshot<Map<String, dynamic>>> freshResults,
-  ) {
-    // Si la signature a changé, invalider le cache
-    if (_lastCachedQuerySignature != querySignature) {
-      _lastCachedQuerySignature = querySignature;
-      _cacheInvalidationTimer?.cancel();
-
-      // Cache expire après 5 minutes
-      _cacheInvalidationTimer = Timer(const Duration(minutes: 5), () {
-        _lastCachedQuerySignature = null;
-      });
-    }
-
-    // Mettre en cache les résultats
-    return freshResults;
-  }
 
   @override
   void dispose() {
@@ -2622,7 +2522,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
               }
             }
           }
-
         });
 
         _onAnyFilterChanged();
@@ -2794,183 +2693,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         return Icons.local_shipping_outlined;
       default:
         return Icons.work_outline_rounded;
-    }
-  }
-
-  bool _isQuickResponse(Map<String, dynamic> data) {
-    final dynamic direct = data['quickResponse'] ?? data['isQuickResponse'];
-    if (direct is bool) return direct;
-
-    final statusBadges = (data['statusBadges'] as List<dynamic>? ?? const [])
-        .map((e) => e.toString().toLowerCase())
-        .toList();
-    if (statusBadges.any((b) => b.contains('rapide'))) {
-      return true;
-    }
-
-    final availability = (data['availability'] ?? '').toString().toLowerCase();
-    if (availability.contains('rapide')) {
-      return true;
-    }
-
-    final averageDelay = (data['averageDelay'] ?? '').toString().toLowerCase();
-    if (averageDelay.contains('min')) {
-      return true;
-    }
-
-    return false;
-  }
-
-  Future<void> _showEditOfferDialog(
-    BuildContext context,
-    String offerId,
-    Map<String, dynamic> data,
-  ) async {
-    final titleCtrl = TextEditingController(
-      text: (data['title'] ?? '').toString(),
-    );
-    final cityCtrl = TextEditingController(
-      text: (data['city'] ?? '').toString(),
-    );
-    final descCtrl = TextEditingController(
-      text: (data['description'] ?? '').toString(),
-    );
-
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text(
-          'Modifier l\'annonce',
-          style: kPrestoSectionTitleStyle,
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleCtrl,
-                decoration: const InputDecoration(labelText: 'Titre'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: cityCtrl,
-                decoration: const InputDecoration(labelText: 'Ville'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: descCtrl,
-                decoration: const InputDecoration(labelText: 'Description'),
-                minLines: 3,
-                maxLines: 6,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuler'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Enregistrer'),
-          ),
-        ],
-      ),
-    );
-
-    if (ok != true) return;
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'La modification d\'annonce doit passer par le flux canonique Marketplace. Cette edition directe n\'est plus autorisee ici.',
-          ),
-        ),
-      );
-    }
-  }
-
-  Future<void> _confirmDeleteOffer(
-    BuildContext context,
-    String offerId,
-    String title,
-  ) async {
-    final reason = await showDialog<String>(
-      context: context,
-      builder: (_) => const CloseOfferReasonDialog(),
-    );
-
-    if (reason == null) return;
-
-    try {
-      final listingsRef = FirebaseFirestore.instance
-          .collection(kListingsCollection)
-          .doc(offerId);
-      final listingsSnap = await listingsRef.get();
-      if (listingsSnap.exists) {
-        final shouldKeepVisibleWithJobDone = isOfferJobDoneDeletionReason(
-          reason,
-        );
-        if (shouldKeepVisibleWithJobDone) {
-          await TrustScoreService().closeOfferWithReason(
-            offerId: offerId,
-            reason: reason,
-            jobDone: true,
-          );
-        } else {
-          final callable = prestoFirebaseFunctions.httpsCallable(
-            'deleteListing',
-            options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
-          );
-          await callable.call<dynamic>({
-            'listingId': offerId,
-            'reason': reason,
-          });
-        }
-        await _refreshOffers();
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                shouldKeepVisibleWithJobDone
-                    ? 'Annonce "$title" marquée comme réalisée. Elle restera visible 10 h avec son état de clôture.'
-                    : 'Annonce supprimée.',
-              ),
-            ),
-          );
-        }
-      } else if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Cette annonce legacy doit etre migree vers Marketplace avant suppression.',
-            ),
-          ),
-        );
-      }
-    } on FirebaseFunctionsException catch (error) {
-      if (context.mounted) {
-        final message = error.code == 'permission-denied'
-            ? 'Suppression refusée. Cette annonce ne vous appartient pas ou plus.'
-            : error.code == 'not-found'
-                ? 'Annonce introuvable.'
-                : 'Suppression temporairement indisponible. Réessayez dans un instant.';
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Suppression temporairement indisponible. Réessayez dans un instant.',
-            ),
-          ),
-        );
-      }
     }
   }
 }
@@ -3434,31 +3156,6 @@ class _OfferMissionDelayChip extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _StandardResponseBadge extends StatelessWidget {
-  const _StandardResponseBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 38,
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3EEF4),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      alignment: Alignment.center,
-      child: const Text(
-        'Standard',
-        style: TextStyle(
-          fontSize: 12.5,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF666C87),
-        ),
       ),
     );
   }
@@ -4048,30 +3745,4 @@ String formatAgeSince(Timestamp? ts) {
 
   final d = diff.inDays;
   return "il y a $d j";
-}
-
-bool _isDeletedUserMap(Map<String, dynamic>? data) {
-  return DeletedUserProfile.isDeletedMap(data);
-}
-
-String _deletedAwareDisplayName(
-  Map<String, dynamic>? data,
-  String? fallbackName,
-) {
-  return DeletedUserProfile.displayName(
-    isDeleted: _isDeletedUserMap(data),
-    fallbackName: fallbackName,
-  );
-}
-
-Widget _deletedAwareAvatar({
-  required Map<String, dynamic>? data,
-  required Widget fallback,
-  double radius = 22,
-}) {
-  if (_isDeletedUserMap(data)) {
-    return DeletedUserAvatar(radius: radius);
-  }
-
-  return fallback;
 }

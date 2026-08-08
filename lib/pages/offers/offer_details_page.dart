@@ -24,7 +24,6 @@ import 'package:presto_app/widgets/offer_network_image.dart';
 import 'dart:async';
 import 'package:presto_app/pages/offers/widgets/animated_payment_info_pill.dart';
 import 'package:presto_app/pages/offers/widgets/payment_info_popup.dart';
-import 'package:presto_app/widgets/deleted_user_profile.dart';
 import 'package:presto_app/pages/fiche_pro_page.dart';
 
 // ─── Data models ─────────────────────────────────────────────────────────────
@@ -55,17 +54,6 @@ String _extractOfferDetailImageUrl(dynamic entry) {
   }
 
   return entry.toString().trim();
-}
-
-String _firstOfferDetailPhotoField(dynamic data, List<String> keys) {
-  if (data is! Map) return '';
-  for (final key in keys) {
-    final value = (data[key] ?? '').toString().trim();
-    if (value.isNotEmpty) {
-      return value;
-    }
-  }
-  return '';
 }
 
 List<String> _collectOfferDetailImageUrls({
@@ -495,10 +483,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     }
 
     return rawId;
-  }
-
-  String _extractImageUrl(dynamic entry) {
-    return _extractOfferDetailImageUrl(entry);
   }
 
   List<String> _collectImageUrls({
@@ -1565,52 +1549,6 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     };
   }
 
-  Map<String, dynamic> _buildFavoriteOfferPayload(_OfferUiData data) {
-    final dynamic rawOffer = widget.offer;
-    final imageUrls = ((_OfferUiData._read(() => rawOffer['imageUrls']) ??
-                    _OfferUiData._read(() => rawOffer.imageUrls))
-                as List<dynamic>? ??
-            const [])
-        .map((e) => e.toString().trim())
-        .where((e) => e.isNotEmpty)
-        .toList(growable: false);
-    final createdAt = _OfferUiData._read(() => rawOffer.createdAt);
-
-    return {
-      'offerId': data.offerId,
-      'title': data.title,
-      'location': data.city,
-      'city': data.city,
-      'postalCode': data.postalCode,
-      'category': data.category,
-      'description': data.description,
-      'urgent': data.isUrgent,
-      'budget': data.price,
-      'price': data.price,
-      'imageUrls': imageUrls,
-      'imageUrl': imageUrls.isNotEmpty ? imageUrls.first : '',
-      'userId': data.advertiserId,
-      'pseudo': data.advertiserName,
-      'userName': data.advertiserName,
-      'serviceArea': data.serviceArea,
-      'canTravel': data.canTravel,
-      'schedule': data.schedule,
-      'missionDelay': data.missionDelay,
-      'averageDelay': data.averageDelay,
-      'paymentMethod': data.paymentMethod,
-      'serviceType': data.serviceType,
-      'phone': data.phone,
-      'availability': data.availability,
-      'verified': data.verified,
-      'rating': data.advertiserRating,
-      'reviewsCount': data.advertiserReviewCount,
-      'bio': data.advertiserRole,
-      'avatarUrl': data.advertiserAvatarUrl,
-      'addedAt': FieldValue.serverTimestamp(),
-      if (createdAt is Timestamp) 'createdAt': createdAt,
-    };
-  }
-
   Widget _buildFavoriteAction(BuildContext context, _OfferUiData data) {
     final authUser = FirebaseAuth.instance.currentUser;
     final uid = authUser?.uid.trim() ?? '';
@@ -2329,83 +2267,6 @@ class _BackgroundDecor extends StatelessWidget {
   }
 }
 
-class _TopHeader extends StatelessWidget {
-  final String title;
-  final bool compact;
-
-  const _TopHeader({required this.title, required this.compact});
-
-  @override
-  Widget build(BuildContext context) {
-    const orange = Color(0xFFFF8A00);
-    const blue = Color(0xFF1565D8);
-
-    return SizedBox(
-      height: compact ? 42 : 46,
-      child: Row(
-        children: [
-          IconButton(
-            tooltip: 'Retour',
-            onPressed: () => Navigator.of(context).maybePop(),
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: orange,
-              size: compact ? 28 : 32,
-            ),
-            splashRadius: compact ? 18 : 22,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-          SizedBox(width: compact ? 12 : 16),
-          Expanded(
-            child: Text(
-              _truncatedTitle(title),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: blue,
-                fontSize: compact ? 24 : 27,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.5,
-                height: 1.0,
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: () {
-              logRuntimeAction(
-                area: 'offers',
-                action: 'listing-alert-unavailable',
-                details: <String, Object?>{'title': title},
-              );
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Les alertes sur annonce arrivent bientot.'),
-                ),
-              );
-            },
-            tooltip: 'Alertes bientot disponibles',
-            icon: Icon(
-              Icons.notifications_none_rounded,
-              color: blue,
-              size: compact ? 28 : 32,
-            ),
-            splashRadius: compact ? 18 : 22,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _truncatedTitle(String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) return 'Montage me...';
-    return trimmed.length > 12 ? '${trimmed.substring(0, 10)}...' : trimmed;
-  }
-}
-
 class _HeroCard extends StatelessWidget {
   final _OfferUiData data;
   final bool compact;
@@ -2816,49 +2677,6 @@ class _PendingPhotoNotice extends StatelessWidget {
   }
 }
 
-class _HeroInfoChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool compact;
-
-  const _HeroInfoChip({
-    required this.icon,
-    required this.label,
-    required this.compact,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: compact ? 52 : 58,
-      padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0EDF6),
-        borderRadius: BorderRadius.circular(29),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: compact ? 21 : 24, color: const Color(0xFF2B2F52)),
-          SizedBox(width: compact ? 8 : 10),
-          Flexible(
-            child: Text(
-              label,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: compact ? 16 : 18,
-                height: 1,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF2B2F52),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _PhotoGalleryTapOverlay extends StatelessWidget {
   final VoidCallback onTap;
 
@@ -2880,91 +2698,6 @@ class _PhotoGalleryTapOverlay extends StatelessWidget {
 }
 
 // ─── Photo gallery ───────────────────────────────────────────────────────────
-
-class _PhotoThumbnailStrip extends StatelessWidget {
-  final List<String> imageUrls;
-
-  const _PhotoThumbnailStrip({required this.imageUrls});
-
-  @override
-  Widget build(BuildContext context) {
-    if (imageUrls.isEmpty) return const SizedBox.shrink();
-
-    const double thumbSize = 76;
-    const double borderRadius = 14;
-
-    return SizedBox(
-      height: thumbSize,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        itemCount: imageUrls.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemBuilder: (context, index) {
-          return Container(
-            width: thumbSize,
-            height: thumbSize,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(borderRadius),
-              border: Border.all(color: const Color(0xFFE5E7EB), width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(borderRadius - 1),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  _OfferImage(
-                    rawUrl: imageUrls[index],
-                    fit: BoxFit.cover,
-                    errorChild: Container(
-                      color: const Color(0xFFF3F4F6),
-                      child: const Icon(
-                        Icons.broken_image_outlined,
-                        color: Color(0xFF9CA3AF),
-                        size: 28,
-                      ),
-                    ),
-                    loadingChild: Container(
-                      color: const Color(0xFFF3F4F6),
-                      child: const Center(
-                        child: SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Color(0xFFFF6A00),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  _PhotoGalleryTapOverlay(
-                    onTap: () => _openFullScreenGallery(context, index),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _openFullScreenGallery(BuildContext context, int initialIndex) {
-    _showPhotoGalleryPopup(
-      context,
-      imageUrls: imageUrls,
-      initialIndex: initialIndex,
-    );
-  }
-}
 
 Future<void> _showPhotoGalleryPopup(
   BuildContext context, {
@@ -4423,96 +4156,4 @@ class _ShareOptionTile extends StatelessWidget {
       ),
     );
   }
-}
-
-class _AvatarFallback extends StatelessWidget {
-  final String initials;
-
-  const _AvatarFallback({required this.initials});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFFF7D25B), Color(0xFFC98E27)],
-        ),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Positioned(
-            bottom: 0,
-            left: 4,
-            right: 4,
-            child: Container(
-              height: 13,
-              decoration: const BoxDecoration(
-                color: Color(0xFFDAA065),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          const Positioned(
-            top: 7,
-            left: 9,
-            child: CircleAvatar(radius: 2, backgroundColor: Color(0xFF50371E)),
-          ),
-          const Positioned(
-            top: 7,
-            right: 9,
-            child: CircleAvatar(radius: 2, backgroundColor: Color(0xFF50371E)),
-          ),
-          Positioned(
-            top: 12,
-            left: 9,
-            right: 9,
-            child: Container(
-              height: 6,
-              decoration: BoxDecoration(
-                color: const Color(0xFF8B5A31).withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-          ),
-          if (initials.isNotEmpty)
-            Align(
-              alignment: const Alignment(0, 0.9),
-              child: Text(
-                initials,
-                style: const TextStyle(color: Colors.transparent, fontSize: 1),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-bool _isDeletedUserMap(Map<String, dynamic>? data) {
-  return DeletedUserProfile.isDeletedMap(data);
-}
-
-String _deletedAwareDisplayName(
-  Map<String, dynamic>? data,
-  String? fallbackName,
-) {
-  return DeletedUserProfile.displayName(
-    isDeleted: _isDeletedUserMap(data),
-    fallbackName: fallbackName,
-  );
-}
-
-Widget _deletedAwareAvatar({
-  required Map<String, dynamic>? data,
-  required Widget fallback,
-  double radius = 22,
-}) {
-  if (_isDeletedUserMap(data)) {
-    return DeletedUserAvatar(radius: radius);
-  }
-
-  return fallback;
 }

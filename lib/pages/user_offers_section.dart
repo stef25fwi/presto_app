@@ -22,8 +22,7 @@ import '../utils/runtime_action_logger.dart';
 import '../services/public_offers_query_helpers.dart';
 import '../widgets/offer_network_image.dart';
 import '../widgets/phone_input_field.dart';
-import '../app/app_runtime_config.dart'
-    show kOfferDeleteReasonFoundOnIliPresto;
+import '../app/app_runtime_config.dart' show kOfferDeleteReasonFoundOnIliPresto;
 import '../services/offer_details_mapper.dart' show buildOfferDetailsOffer;
 
 // 🔥 SECTION "Mes annonces publiées" dans Mon compte
@@ -3427,14 +3426,4 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       builder: (_) => const CloseOfferReasonDialog(),
     );
   }
-}
-
-class _QuerySnapshotAdapter implements QuerySnapshot<Map<String, dynamic>> {
-  _QuerySnapshotAdapter(this.docs);
-
-  @override
-  final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs;
-
-  @override
-  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
