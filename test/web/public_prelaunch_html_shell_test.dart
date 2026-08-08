@@ -45,17 +45,20 @@ void main() {
       expect(html, contains('id="prelaunch-seo-shell"'));
       expect(
         html,
-        contains(
-          'Trouvez rapidement un particulier, un indépendant ou un '
-          'professionnel près de chez vous',
-        ),
+        contains('La solution instantanée pour vos services du quotidien'),
       );
+      expect(
+        html,
+        contains('site de petites annonces de services et micro-services'),
+      );
+      expect(html, contains('Prix ou budget indiqué par l’utilisateur'));
+      expect(html, contains('Réponses immédiates'));
       expect(html, contains('Annonces assistées par IA'));
       expect(html, contains('0 % de commission'));
       expect(
         html,
         contains(
-          'Plateforme nationale en cours de déploiement. Première ouverture '
+          'Site national en cours de déploiement. Première ouverture '
           'en Guadeloupe, Martinique et Guyane.',
         ),
       );
@@ -74,17 +77,20 @@ void main() {
       expect(
         html,
         contains(
-          '<title>iliprestō – Trouvez un service près de chez vous</title>',
+          '<title>iliprestō – Petites annonces de services instantanées</title>',
         ),
       );
       expect(
         html,
         contains(
-          '<meta name="description" content="Trouvez rapidement un '
-          'particulier, un indépendant ou un professionnel partout en France. '
-          'Publiez une annonce assistée par IA et échangez directement, avec '
-          '0 % de commission.">',
+          '<meta name="description" content="Petites annonces de services : '
+          'publiez votre besoin, indiquez votre prix et trouvez instantanément '
+          'un particulier ou professionnel disponible près de chez vous.">',
         ),
+      );
+      expect(
+        html.toLowerCase(),
+        isNot(contains('plateforme nationale de mise en relation')),
       );
       expect(
         html,
@@ -113,6 +119,10 @@ void main() {
         organization['areaServed'],
         equals(<String, dynamic>{'@type': 'Country', 'name': 'France'}),
       );
+      expect(
+        organization['description'],
+        contains('solution instantanée'),
+      );
 
       final website = structuredNodes.firstWhere(
         (node) => node['@type'] == 'WebSite',
@@ -138,6 +148,11 @@ void main() {
         service['areaServed'],
         equals(<String, dynamic>{'@type': 'Country', 'name': 'France'}),
       );
+      expect(
+        service['serviceType'],
+        'Site de petites annonces pour services et micro-services',
+      );
+      expect(service['description'], contains('Solution instantanée'));
     });
 
     test('ne charge pas Flutter avant le déverrouillage de la racine publique',
