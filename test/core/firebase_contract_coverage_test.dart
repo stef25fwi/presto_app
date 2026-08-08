@@ -2,6 +2,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/core/firebase_contract.dart';
 
 void main() {
+  test('expose le contrat Firestore canonique des listings', () {
+    expect(FirestoreCollections.listings, 'listings');
+    expect(ListingFields.ownerId, 'ownerId');
+    expect(ListingFields.status, 'status');
+    expect(ListingFields.visibility, 'visibility');
+    expect(ListingFields.createdAt, 'createdAt');
+  });
+
   test('construit les chemins Storage canoniques', () {
     expect(
       StoragePaths.listingDraftRaw(
