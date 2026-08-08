@@ -6,7 +6,7 @@ on:
       - refactor/lot3-account-unused-probe-20260807
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: lot3-account-unused-probe
@@ -14,10 +14,13 @@ concurrency:
 
 jobs:
   probe:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: refactor/lot3-account-unused-probe-20260807
 
       - name: Setup Flutter 3.44.6
         uses: subosito/flutter-action@v2
@@ -29,7 +32,7 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
 
-      - name: Probe account unused diagnostics without changing repository
+      - name: Probe account unused diagnostics
         shell: bash
         run: |
           set -uo pipefail
@@ -48,10 +51,34 @@ jobs:
           analyze_status=${PIPESTATUS[0]}
           set -e
 
-          echo '--- LOT3_UNUSED_DIAGNOSTICS_BEGIN ---'
-          grep -E 'unused_(element|field|local_variable|element_parameter)' /tmp/account-analyze.log || true
-          echo '--- LOT3_UNUSED_DIAGNOSTICS_END ---'
-          echo "Analyzer exit status: ${analyze_status}"
+          mkdir -p docs/quality
+          {
+            echo '# Lot 3 — account_page.dart unused diagnostics probe'
+            echo
+            echo 'Base: f873b0845f9ca691e9e7bba1ac23e5a938af9221'
+            echo
+            echo 'The ignore_for_file header was removed only inside the CI workspace.'
+            echo
+            echo '```text'
+            grep -E 'unused_(element|field|local_variable|element_parameter)' /tmp/account-analyze.log || true
+            echo '```'
+            echo
+            echo "Analyzer exit status: ${analyze_status}"
+          } > docs/quality/lot3-account-unused-probe.md
 
           git checkout -- lib/pages/account_page.dart
-          git diff --exit-code
+          git diff -- lib/pages/account_page.dart --exit-code
+
+      - name: Commit probe report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/quality/lot3-account-unused-probe.md
+          if git diff --cached --quiet; then
+            echo 'Probe report unchanged.'
+            exit 0
+          fi
+          git commit -m 'chore(lot3): record account unused diagnostics'
+          git push origin HEAD:refactor/lot3-account-unused-probe-20260807
