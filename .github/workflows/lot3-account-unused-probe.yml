@@ -1,4 +1,4 @@
-name: Lot 3 account unused cleanup
+name: Lot 3 account unused cascade probe
 
 on:
   push:
@@ -9,11 +9,11 @@ permissions:
   contents: write
 
 concurrency:
-  group: lot3-account-unused-cleanup
+  group: lot3-account-unused-cascade-probe
   cancel-in-progress: true
 
 jobs:
-  cleanup:
+  probe:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -22,20 +22,28 @@ jobs:
         with:
           ref: refactor/lot3-account-unused-probe-20260807
 
-      - name: Apply proposed cleanup
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Probe cascade after removing visibleEmail
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
           python3 - <<'PY'
           from pathlib import Path
-
           path = Path('lib/pages/account_page.dart')
           text = path.read_text()
           header = '// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter\n\n'
           if not text.startswith(header):
               raise SystemExit('Unexpected account_page.dart ignore header')
           text = text[len(header):]
-
           dead = """    final visibleEmail = _profileEmail.trim().isNotEmpty
         ? _profileEmail.trim()
         : (user.email ?? '');
@@ -47,94 +55,39 @@ jobs:
           path.write_text(text)
           PY
 
-      - name: Setup Flutter 3.44.6
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.44.6'
-          channel: stable
-          cache: true
-
-      - name: Validate and persist result
-        shell: bash
-        run: |
-          set -uo pipefail
-          flutter pub get
-
           set +e
-          flutter analyze --fatal-infos lib/pages/account_page.dart 2>&1 | tee /tmp/account-cleanup-analyze.log
+          flutter analyze --fatal-infos lib/pages/account_page.dart 2>&1 | tee /tmp/account-cascade-analyze.log
           analyze_status=${PIPESTATUS[0]}
-          git diff --check 2>&1 | tee /tmp/account-cleanup-diffcheck.log
-          diff_status=${PIPESTATUS[0]}
           set -e
 
           mkdir -p docs/quality
-          if [ "$analyze_status" -ne 0 ] || [ "$diff_status" -ne 0 ]; then
-            git checkout -- lib/pages/account_page.dart
-            rm -f docs/quality/lot3-dead-code-tranche7-account-unused.md
-            {
-              echo '# Lot 3 — account cleanup validation failure'
-              echo
-              echo 'Base: f873b0845f9ca691e9e7bba1ac23e5a938af9221'
-              echo
-              echo '## flutter analyze'
-              echo '```text'
-              cat /tmp/account-cleanup-analyze.log
-              echo '```'
-              echo
-              echo '## git diff --check'
-              echo '```text'
-              cat /tmp/account-cleanup-diffcheck.log
-              echo '```'
-              echo
-              echo "Analyzer exit status: ${analyze_status}"
-              echo "Diff check exit status: ${diff_status}"
-            } > docs/quality/lot3-account-cleanup-validation.md
-          else
-            rm -f docs/quality/lot3-account-cleanup-validation.md
-            rm -f docs/quality/lot3-account-unused-probe.md
-            cat > docs/quality/lot3-dead-code-tranche7-account-unused.md <<'EOF'
-          # Lot 3 — Code mort, tranche 7
+          {
+            echo '# Lot 3 — account_page.dart unused cascade probe'
+            echo
+            echo 'Base: f873b0845f9ca691e9e7bba1ac23e5a938af9221'
+            echo
+            echo 'Workspace simulation: file-level unused ignore removed and visibleEmail deleted.'
+            echo
+            echo '```text'
+            grep -E 'unused_(element|field|local_variable|element_parameter)' /tmp/account-cascade-analyze.log || true
+            echo '```'
+            echo
+            echo "Analyzer exit status: ${analyze_status}"
+          } > docs/quality/lot3-account-unused-cascade-probe.md
 
-          Base : `f873b0845f9ca691e9e7bba1ac23e5a938af9221`.
+          git checkout -- lib/pages/account_page.dart
+          git diff -- lib/pages/account_page.dart --exit-code
 
-          ## Cible
-
-          `lib/pages/account_page.dart`
-
-          ## Preuve
-
-          Le masque global `unused_element, unused_field, unused_local_variable, unused_element_parameter` a été retiré uniquement dans un workspace CI de diagnostic avec Flutter 3.44.6.
-
-          L'analyseur n'a remonté qu'un seul diagnostic `unused_*` : la variable locale `visibleEmail` dans `_buildProfile`, sans lecture ultérieure. Cette variable a été supprimée, puis le masque global a été retiré du fichier.
-
-          La version nettoyée repasse ensuite `flutter analyze --fatal-infos lib/pages/account_page.dart` et `git diff --check` sans erreur.
-
-          ## Garde-fous
-
-          - aucune méthode, champ ou paramètre supplémentaire supprimé ;
-          - aucune logique Auth, App Check, Firebase, Firestore, Functions, routing ou deep link modifiée ;
-          - aucun seuil qualité abaissé ;
-          - aucun skip/exclusion ajouté ;
-          - aucune mission LCOV créée ou relancée.
-          EOF
-          fi
-
-      - name: Commit result and remove temporary workflow
+      - name: Commit cascade probe report
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .github/workflows/lot3-account-unused-probe.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git diff --cached --check
+          git add docs/quality/lot3-account-unused-cascade-probe.md
           if git diff --cached --quiet; then
-            echo 'No changes to commit.'
+            echo 'Cascade probe report unchanged.'
             exit 0
           fi
-          if [ -f docs/quality/lot3-account-cleanup-validation.md ]; then
-            git commit -m 'chore(lot3): archiver échec validation nettoyage compte'
-          else
-            git commit -m 'refactor(lot3): retirer le masque unused du compte'
-          fi
+          git commit -m 'chore(lot3): record account unused cascade probe'
           git push origin HEAD:refactor/lot3-account-unused-probe-20260807
