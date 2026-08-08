@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - refactor/lot3-unused-masks-final-20260807
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -36,8 +39,7 @@ jobs:
                   raise SystemExit(f'fail-fast: expected {count} occurrences, got {actual}: {needle!r}')
               text = text.replace(needle, '')
           p.write_text(text)
-          wf = Path('.github/workflows/lot3-account-dead-field-patch.yml')
-          wf.unlink()
+          Path('.github/workflows/lot3-account-dead-field-patch.yml').unlink()
       - name: Commit atomic cleanup
         run: |
           git config user.name github-actions[bot]
