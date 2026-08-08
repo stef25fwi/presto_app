@@ -38,6 +38,11 @@ jobs:
               line[10:] if line.startswith('          ') else line
               for line in lines
           ) + '\n'
+          old_toolbox_pattern = r"r'(?m)^[ \t]*static const Color kCardBg = [^;]+;\n'"
+          new_toolbox_pattern = r"r'(?m)^[ \t]*static const Color kCardBg = [^;\n]+;[^\n]*\n'"
+          if script.count(old_toolbox_pattern) != 1:
+              raise SystemExit('fail-fast: expected one kCardBg cleanup pattern')
+          script = script.replace(old_toolbox_pattern, new_toolbox_pattern)
           exec(compile(script, str(source_path), 'exec'), {})
           Path('.github/workflows/lot3-unused-field-pr-trigger.yml').unlink()
 
