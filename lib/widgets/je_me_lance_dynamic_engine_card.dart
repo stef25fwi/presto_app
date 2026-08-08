@@ -14,7 +14,6 @@ class JeMeLanceDynamicEngineCard extends StatefulWidget {
 class _JeMeLanceDynamicEngineCardState
     extends State<JeMeLanceDynamicEngineCard> {
   static const Color _orange = Color(0xFFFF6600);
-  static const Color _blue = Color(0xFF1A73E8);
   static const Color _softBg = Color(0xFFFFF7F0);
 
   final _engine = const JeMeLanceDecisionEngine();
