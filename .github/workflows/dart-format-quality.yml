@@ -28,49 +28,6 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Lot 3 probe home_page.dart unused diagnostics
-        if: github.head_ref == 'refactor/lot3-home-unused-20260807'
-        shell: bash
-        run: |
-          set -euo pipefail
-          flutter pub get
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('lib/pages/home_page.dart')
-          text = path.read_text()
-          header = '// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter\n\n'
-          if not text.startswith(header):
-              raise SystemExit('Unexpected home_page.dart unused ignore header')
-          path.write_text(text[len(header):])
-          PY
-
-          set +e
-          flutter analyze --fatal-infos lib/pages/home_page.dart 2>&1 | tee /tmp/home-analyze.log
-          analyze_status=${PIPESTATUS[0]}
-          set -e
-
-          mkdir -p build/lot3-home-probe
-          {
-            echo "Analyzer exit status: ${analyze_status}"
-            echo
-            echo '--- unused diagnostics ---'
-            grep -E 'unused_(element|field|local_variable|element_parameter)' /tmp/home-analyze.log || true
-            echo '--- end unused diagnostics ---'
-          } | tee build/lot3-home-probe/unused-diagnostics.txt
-          cp /tmp/home-analyze.log build/lot3-home-probe/full-analyze.log
-
-          git checkout -- lib/pages/home_page.dart
-          git diff -- lib/pages/home_page.dart --exit-code
-
-      - name: Upload Lot 3 home probe
-        if: github.head_ref == 'refactor/lot3-home-unused-20260807'
-        uses: actions/upload-artifact@v7
-        with:
-          name: lot3-home-unused-probe
-          path: build/lot3-home-probe
-          if-no-files-found: error
-          retention-days: 2
-
       - name: Format Auth email files exactly
         run: |
           dart format \

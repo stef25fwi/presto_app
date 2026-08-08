@@ -1,14 +1,7 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
-import {
-  mkdtempSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -18,89 +11,6 @@ import {
   promoteRegistry,
   validateRegistry,
 } from "./check_18_point_completion.mjs";
-
-const LOT3_HOME_BRANCH = "refactor/lot3-home-unused-20260807";
-const LOT3_HOME_BASE_SHA = "93e801dda9685720f8e7d08c3df6a8085ee1eb79";
-
-function run(command, args) {
-  execFileSync(command, args, { stdio: "inherit" });
-}
-
-function applyLot3HomeCleanup() {
-  if (
-    process.env.GITHUB_ACTIONS !== "true" ||
-    process.env.GITHUB_EVENT_NAME !== "pull_request" ||
-    process.env.GITHUB_HEAD_REF !== LOT3_HOME_BRANCH
-  ) {
-    return;
-  }
-
-  run("git", [
-    "fetch",
-    "--depth=50",
-    "origin",
-    `+refs/heads/${LOT3_HOME_BRANCH}:refs/remotes/origin/${LOT3_HOME_BRANCH}`,
-  ]);
-  run("git", [
-    "checkout",
-    "-B",
-    LOT3_HOME_BRANCH,
-    `refs/remotes/origin/${LOT3_HOME_BRANCH}`,
-  ]);
-
-  const homePath = "lib/pages/home_page.dart";
-  const header =
-    "// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter\n\n";
-  const source = readFileSync(homePath, "utf8");
-  assert.ok(
-    source.startsWith(header),
-    "home_page.dart must still start with the expected unused_* ignore header",
-  );
-  writeFileSync(homePath, source.slice(header.length));
-
-  mkdirSync("docs/quality", { recursive: true });
-  writeFileSync(
-    "docs/quality/lot3-dead-code-tranche8-home-unused.md",
-    `# Lot 3 — Code mort, tranche 8 — home\n\nBase certifiée production : \`${LOT3_HOME_BASE_SHA}\`.\n\n## Cible\n\n\`lib/pages/home_page.dart\`\n\n## Sonde Flutter ciblée\n\nLe workflow léger \`Dart format quality\` a retiré le masque global \`unused_element, unused_field, unused_local_variable, unused_element_parameter\` uniquement dans le workspace GitHub Actions, puis a exécuté :\n\n\`flutter analyze --fatal-infos lib/pages/home_page.dart\`\n\nPreuve archivée : run \`31235994921\`, artefact \`lot3-home-unused-probe\` (id \`9015409641\`).\n\nRésultat :\n\n- code de sortie analyseur : \`0\` ;\n- aucun diagnostic \`unused_*\` ;\n- sortie finale : \`No issues found!\`.\n\n## Changement\n\nAucun symbole métier n'est supprimé. Le correctif retire uniquement le masque global \`unused_*\` devenu inutile dans \`home_page.dart\`.\n\n## Garde-fous\n\n- aucune route, Auth, App Check, Firebase, Firestore, Functions ou deep link modifiée ;\n- aucun seuil qualité abaissé ;\n- aucun skip/exclusion ajouté ;\n- aucune mission LCOV créée ou relancée ;\n- fusion uniquement après validation complète du SHA final.\n`,
-  );
-
-  run("git", [
-    "checkout",
-    LOT3_HOME_BASE_SHA,
-    "--",
-    ".github/workflows/dart-format-quality.yml",
-    "tools/quality/check_18_point_completion.test.mjs",
-  ]);
-
-  run("git", ["diff", "--check"]);
-  run("git", ["config", "user.name", "github-actions[bot]"]);
-  run("git", [
-    "config",
-    "user.email",
-    "41898282+github-actions[bot]@users.noreply.github.com",
-  ]);
-  run("git", ["add", "-A"]);
-  run("git", ["diff", "--cached", "--check"]);
-
-  const staged = execFileSync("git", ["diff", "--cached", "--name-only"], {
-    encoding: "utf8",
-  })
-    .trim()
-    .split("\n")
-    .filter(Boolean)
-    .sort();
-  assert.deepEqual(staged, [
-    ".github/workflows/dart-format-quality.yml",
-    "docs/quality/lot3-dead-code-tranche8-home-unused.md",
-    "lib/pages/home_page.dart",
-    "tools/quality/check_18_point_completion.test.mjs",
-  ]);
-
-  run("git", ["commit", "-m", "refactor(lot3): retirer le masque unused de home"]);
-  run("git", ["push", "origin", `HEAD:${LOT3_HOME_BRANCH}`]);
-}
-
-applyLot3HomeCleanup();
 
 function makePoints(activeId = 1) {
   return Array.from({ length: 18 }, (_, index) => {
