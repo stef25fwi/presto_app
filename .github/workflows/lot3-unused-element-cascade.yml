@@ -178,7 +178,7 @@ jobs:
               'package:presto_app/services/journey_pdf_export_service.dart',
             },
             'lib/services/marketplace_publish_service.dart': {
-              '../services/city_search.dart',
+              'city_search.dart',
             },
           };
 
@@ -494,6 +494,7 @@ jobs:
           rm .github/workflows/lot3-unused-element-autofix.yml
           rm .github/workflows/lot3-unused-element-ast-v7.yml
           rm .github/workflows/lot3-unused-element-cascade.yml
+          rm .github/workflows/lot3-fix-cascade-city-import.yml
           git diff --check
           git diff --exit-code -- pubspec.yaml pubspec.lock
           git config user.name github-actions[bot]
