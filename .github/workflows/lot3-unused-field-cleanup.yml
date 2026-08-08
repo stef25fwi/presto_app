@@ -1,0 +1,186 @@
+name: Lot3 unused field cleanup
+
+on:
+  push:
+    branches:
+      - refactor/lot3-enable-unused-field-20260808
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/lot3-enable-unused-field-20260808
+          fetch-depth: 0
+
+      - name: Remove analyzer-confirmed unused fields
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          def read(path):
+              return Path(path).read_text()
+
+          def write(path, text):
+              Path(path).write_text(text)
+
+          def exact(text, old, new, expected, label):
+              actual = text.count(old)
+              if actual != expected:
+                  raise SystemExit(f'{label}: expected {expected}, got {actual}')
+              return text.replace(old, new)
+
+          def sub(text, pattern, repl, expected, label, flags=0):
+              text, actual = re.subn(pattern, repl, text, flags=flags)
+              if actual != expected:
+                  raise SystemExit(f'{label}: expected {expected}, got {actual}')
+              return text
+
+          def assert_absent(path, text, names):
+              for name in names:
+                  if name in text:
+                      raise SystemExit(f'{path}: residual occurrence of {name}')
+
+          # Firebase options: three duplicated Android constants are never read;
+          # the actual Android FirebaseOptions values remain unchanged below.
+          path = 'lib/firebase_options.dart'
+          text = read(path)
+          for name in ('_androidApiKey', '_androidAppId', '_androidClientId'):
+              text = sub(
+                  text,
+                  rf"(?m)^  static const String {re.escape(name)} =\n      '[^'\n]+';\n",
+                  '',
+                  1,
+                  f'{path}:{name}',
+              )
+          assert_absent(path, text, ('_androidApiKey', '_androidAppId', '_androidClientId'))
+          write(path, text)
+
+          # Account: retry counter/constants are written or declared but never read.
+          path = 'lib/pages/account_page.dart'
+          text = read(path)
+          text = exact(text, '  int _profileLoadRetries = 0;\n', '', 1, f'{path}:retry declaration')
+          text = sub(text, r'(?m)^[ \t]*_profileLoadRetries = 0;\n', '', 2, f'{path}:retry writes')
+          text = exact(text, '  static const int _maxProfileLoadRetries = 3;\n', '', 1, f'{path}:max retry')
+          text = exact(
+              text,
+              "  static const List<String> _requiredProfileFieldLabels = <String>[\n    'Pseudo',\n    'Ville',\n    'Numéro de téléphone',\n  ];\n\n",
+              '',
+              1,
+              f'{path}:required labels',
+          )
+          assert_absent(path, text, ('_profileLoadRetries', '_maxProfileLoadRetries', '_requiredProfileFieldLabels'))
+          write(path, text)
+
+          # Hero admin: the sheet-local uploadProgressSheet remains the displayed
+          # progress source; this state field was only mirrored and never read.
+          path = 'lib/pages/admin_hero_slides_page.dart'
+          text = read(path)
+          text = exact(text, '  double? _uploadProgress;\n', '', 1, f'{path}:declaration')
+          text = sub(text, r'(?m)^[ \t]*_uploadProgress = null;\n', '', 2, f'{path}:null writes')
+          text = sub(
+              text,
+              r'(?m)^[ \t]*setState\(\(\) =>\s*\n[ \t]*_uploadProgress = progress\);\n',
+              '',
+              2,
+              f'{path}:progress mirror writes',
+          )
+          assert_absent(path, text, ('_uploadProgress',))
+          write(path, text)
+
+          # Consult offers: remove write-only form/cache/autocomplete state.
+          path = 'lib/pages/consult_offers_page.dart'
+          text = read(path)
+          for old, label in (
+              ('  final _formKey = GlobalKey<FormState>();\n', 'form key'),
+              ('  int _lastSnapshotRawCount = 0;\n', 'raw count declaration'),
+              ('  List<CityRecord> _filterCitySuggestions = [];\n', 'city suggestions declaration'),
+              ('  int _filterCityHighlightedIndex = -1;\n', 'city index declaration'),
+              ('  Map<String, List<DocumentSnapshot<Map<String, dynamic>>>>? _queryResultsCache;\n', 'query cache declaration'),
+          ):
+              text = exact(text, old, '', 1, f'{path}:{label}')
+          text = sub(text, r'(?m)^[ \t]*_lastSnapshotRawCount = [^;\n]+;\n', '', 2, f'{path}:raw count writes')
+          text = sub(text, r'(?m)^[ \t]*_filterCitySuggestions = \[\];\n', '', 7, f'{path}:suggestion writes')
+          text = sub(text, r'(?m)^[ \t]*_filterCityHighlightedIndex = -1;\n', '', 7, f'{path}:index writes')
+          text = sub(text, r'(?m)^[ \t]*_queryResultsCache = null;\n', '', 2, f'{path}:cache null writes')
+          text = exact(text, "    _queryResultsCache = {'results': freshResults};\n", '', 1, f'{path}:cache result write')
+          assert_absent(path, text, ('_formKey', '_lastSnapshotRawCount', '_filterCitySuggestions', '_filterCityHighlightedIndex', '_queryResultsCache'))
+          write(path, text)
+
+          # Fiche pro: _hasChanges is never read. Preserve all actual field edits,
+          # save calls and snackbars; remove only the unused mirror state writes.
+          path = 'lib/pages/fiche_pro_page.dart'
+          text = read(path)
+          text = exact(text, '  bool _hasChanges = false;\n', '', 1, f'{path}:declaration')
+          text = sub(text, r'(?m)^[ \t]*setState\(\(\) => _hasChanges = false\);\n', '', 1, f'{path}:false write')
+          text = sub(text, r'(?m)^[ \t]*_hasChanges = true;\n', '', 4, f'{path}:true writes')
+          assert_absent(path, text, ('_hasChanges',))
+          write(path, text)
+
+          # Conversation: keep resolved participant/deletion locals and behavior;
+          # only remove the two state mirrors that are never read.
+          path = 'lib/pages/messages/conversation_thread_page.dart'
+          text = read(path)
+          text = exact(text, '  Map<String, String> _participantNames = const {};\n', '', 1, f'{path}:participant names declaration')
+          text = sub(text, r'(?m)^[ \t]*_participantNames = participantNames;\n', '', 1, f'{path}:participant names write')
+          text = exact(text, '  bool _isDeletedForCurrentUser = false;\n', '', 1, f'{path}:deleted declaration')
+          text = sub(text, r'(?m)^[ \t]*_isDeletedForCurrentUser = isDeletedForCurrentUser;\n', '', 1, f'{path}:deleted write')
+          assert_absent(path, text, ('_participantNames', '_isDeletedForCurrentUser'))
+          write(path, text)
+
+          # Publish offer: autocomplete region/index state is write-only. The phone
+          # country-code computation and city/postal mutations remain untouched.
+          path = 'lib/pages/publish_offer_page.dart'
+          text = read(path)
+          for old, label in (
+              ('  int _highlightedIndex = -1;\n', 'highlight declaration'),
+              ('  String? _selectedRegionCode;\n', 'region declaration'),
+              ('  String? _selectedDeptCode;\n', 'department declaration'),
+              ("  String _adminAudioRuntimeDetail = 'En attente de verification admin';\n", 'runtime detail declaration'),
+          ):
+              text = exact(text, old, '', 1, f'{path}:{label}')
+          text = sub(text, r'(?m)^[ \t]*_highlightedIndex = [^;\n]+;\n', '', 7, f'{path}:highlight writes')
+          text = sub(text, r'(?m)^[ \t]*_selectedRegionCode = [^;\n]+;\n', '', 6, f'{path}:region writes')
+          text = sub(text, r'(?m)^[ \t]*_selectedDeptCode = [^;\n]+;\n', '', 6, f'{path}:department writes')
+          text = sub(
+              text,
+              r'(?ms)^[ \t]*_adminAudioRuntimeDetail\s*=\s*.*?;\n',
+              '',
+              8,
+              f'{path}:runtime detail writes',
+          )
+          assert_absent(path, text, ('_highlightedIndex', '_selectedRegionCode', '_selectedDeptCode', '_adminAudioRuntimeDetail'))
+          write(path, text)
+
+          # Toolbox: unused visual constant only.
+          path = 'lib/pages/toolbox_je_me_lance_page.dart'
+          text = read(path)
+          text = sub(
+              text,
+              r'(?m)^[ \t]*static const Color kCardBg = [^;]+;\n',
+              '',
+              1,
+              f'{path}:kCardBg',
+          )
+          assert_absent(path, text, ('kCardBg',))
+          write(path, text)
+
+          # The patch workflow must not remain in the final PR diff.
+          Path('.github/workflows/lot3-unused-field-cleanup.yml').unlink()
+
+      - name: Commit atomic cleanup
+        run: |
+          git diff --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --stat
+          git diff --cached --quiet && { echo 'No cleanup produced'; exit 1; }
+          git commit -m "refactor(lot3): supprimer les champs inutilisés révélés"
+          git push origin HEAD:refactor/lot3-enable-unused-field-20260808
