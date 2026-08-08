@@ -507,11 +507,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   // Autocomplétion villes
   List<CityRecord> _citySuggestions = [];
-  int _highlightedIndex = -1;
 
   // Région / département (optionnel à exploiter dans le futur)
-  String? _selectedRegionCode;
-  String? _selectedDeptCode;
 
   bool _isSubmitting = false;
   bool _isAnalyzing = false;
@@ -584,7 +581,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   int _adminAudioRuntimeAccessState = 0;
   String _adminAudioRuntimeMode = 'HYBRID';
   String _adminAudioRuntimeLabel = 'Mode serveur';
-  String _adminAudioRuntimeDetail = 'En attente de verification admin';
 
   void _runWithoutMarkingUserEdits(VoidCallback action) {
     final previous = _isApplyingProgrammaticPublishUpdate;
@@ -856,7 +852,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         setState(() {
           _adminAudioRuntimeAccessState = -1;
           if (_adminAudioRuntimeLabel == 'Mode serveur') {
-            _adminAudioRuntimeDetail = _publishAdminRuntimeDetail(accessState);
           }
         });
         return;
@@ -866,7 +861,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       setState(() {
         _adminAudioRuntimeAccessState = 1;
         if (_adminAudioRuntimeLabel == 'Mode serveur') {
-          _adminAudioRuntimeDetail = _publishAdminRuntimeDetail(accessState);
         }
       });
       unawaited(_adminAudioRuntimeStore.enableCloudSync());
@@ -910,8 +904,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         setState(() {
           _adminAudioRuntimeMode = mode;
           if (_adminAudioRuntimeLabel == 'Mode serveur') {
-            _adminAudioRuntimeDetail =
-                'Mode configure: ${adminAudioModeLabel(mode)}';
           }
         });
         unawaited(_adminAudioRuntimeStore.enableCloudSync());
@@ -926,8 +918,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         setState(() {
           _adminAudioRuntimeAccessState = 1;
           if (_adminAudioRuntimeLabel == 'Mode serveur') {
-            _adminAudioRuntimeDetail =
-                '${_publishAdminRuntimeDetail(accessState)}. Config serveur indisponible';
           }
         });
       } catch (error) {
@@ -971,7 +961,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           setState(() {
             _adminAudioRuntimeAccessState = 1;
             if (_adminAudioRuntimeLabel == 'Mode serveur') {
-              _adminAudioRuntimeDetail = 'Accès admin confirmé';
             }
           });
           return;
@@ -986,8 +975,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         setState(() {
           _adminAudioRuntimeAccessState = -1;
           if (_adminAudioRuntimeLabel == 'Mode serveur') {
-            _adminAudioRuntimeDetail =
-                'Vérification admin serveur indisponible. Recharge la session.';
           }
         });
       }
@@ -1001,8 +988,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       setState(() {
         _adminAudioRuntimeAccessState = -1;
         if (_adminAudioRuntimeLabel == 'Mode serveur') {
-          _adminAudioRuntimeDetail =
-              'Vérification admin impossible pour cette session';
         }
       });
     }
@@ -1016,7 +1001,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     String? backendModeUsed,
   }) {
     _adminAudioRuntimeLabel = label;
-    _adminAudioRuntimeDetail = detail;
     _adminAudioRuntimeStore.recordRuntime(
       flowKey: flowKey,
       label: label,
@@ -1969,8 +1953,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           _setControllerText(_postalCodeController, resolvedCp);
         }
 
-        _selectedDeptCode = selected.departmentCode;
-        _selectedRegionCode = selected.regionCode;
         _selectedPhoneCountryCode = countryCodeForDept(selected.departmentCode);
       });
 
@@ -2123,8 +2105,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         // bonus cohérence UI: indicatif selon dept (déjà présent dans le code)
         if (!mounted) return;
         setState(() {
-          _selectedDeptCode = cityRec.dept;
-          _selectedRegionCode = cityRec.region;
           _selectedPhoneCountryCode = countryCodeForDept(cityRec.dept);
         });
       }
@@ -2481,12 +2461,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   cityRecord?.dept ??
                   departmentFromPostalCode(resolvedPostalCode);
               if (dept != null && dept.isNotEmpty) {
-                _selectedDeptCode = dept;
                 _selectedPhoneCountryCode = countryCodeForDept(dept);
               }
               final region = cityRecord?.region;
               if (region != null && region.isNotEmpty) {
-                _selectedRegionCode = region;
               }
             });
             if (changed) _recompute();
@@ -3730,9 +3708,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _isApplyingProgrammaticPublishUpdate = false;
       _publishAiTraceEntries.clear();
       _citySuggestions.clear();
-      _highlightedIndex = -1;
-      _selectedRegionCode = null;
-      _selectedDeptCode = null;
       _selectedPhoneCountryCode = '+33';
       _hidePhone = false;
 
@@ -3794,7 +3769,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _locationEditedByUser = false;
       _postalCodeEditedByUser = false;
       _citySuggestions = [];
-      _highlightedIndex = -1;
       _locationPostalPrefilledByAi = false;
     });
     _isClearingAiPrefilledLocationPostal = false;
@@ -3806,7 +3780,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (query.length < 2) {
       setState(() {
         _citySuggestions = [];
-        _highlightedIndex = -1;
       });
       return;
     }
@@ -3822,7 +3795,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
     setState(() {
       _citySuggestions = results;
-      _highlightedIndex = results.isNotEmpty ? 0 : -1;
     });
 
     if (exactMatch != null) {
@@ -3848,7 +3820,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (results.isEmpty) {
       setState(() {
         _citySuggestions = [];
-        _highlightedIndex = -1;
       });
       return;
     }
@@ -3860,7 +3831,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     setState(() {
       _citySuggestions = results;
-      _highlightedIndex = 0;
     });
 
     if (best != null) {
@@ -3881,8 +3851,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _setControllerText(_postalCodeController, city.cp);
       }
 
-      _selectedDeptCode = city.dept;
-      _selectedRegionCode = city.region;
       _selectedPhoneCountryCode = countryCodeForDept(city.dept);
       if (markAsUserEdited) {
         _locationEditedByUser = true;
@@ -3890,7 +3858,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
 
       _citySuggestions = [];
-      _highlightedIndex = -1;
     });
   }
 
@@ -4747,8 +4714,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             ),
                             onCitySelected: (city) {
                               setState(() {
-                                _selectedDeptCode = city.dept;
-                                _selectedRegionCode = null;
                                 _selectedPhoneCountryCode = countryCodeForDept(
                                   city.dept,
                                 );

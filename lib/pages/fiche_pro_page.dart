@@ -52,7 +52,6 @@ class _FicheProPageState extends State<FicheProPage> {
   List<Map<String, String>> _disponibilites = [];
   List<String> _realisations = [];
 
-  bool _hasChanges = false;
   bool _isUploadingRealisation = false;
 
   @override
@@ -222,7 +221,6 @@ class _FicheProPageState extends State<FicheProPage> {
       }, SetOptions(merge: true));
 
       if (mounted) {
-        setState(() => _hasChanges = false);
         showPrestoSnackBar(context, 'Fiche Pro enregistrée');
       }
     } catch (_) {
@@ -348,7 +346,6 @@ class _FicheProPageState extends State<FicheProPage> {
     if (result != null && result != _description) {
       setState(() {
         _description = result;
-        _hasChanges = true;
       });
     }
   }
@@ -374,7 +371,6 @@ class _FicheProPageState extends State<FicheProPage> {
     if (result != null && result != _experience) {
       setState(() {
         _experience = result;
-        _hasChanges = true;
       });
     }
   }
@@ -461,7 +457,6 @@ class _FicheProPageState extends State<FicheProPage> {
     if (result != null) {
       setState(() {
         onSave(result);
-        _hasChanges = true;
       });
     }
   }
@@ -566,7 +561,6 @@ class _FicheProPageState extends State<FicheProPage> {
     if (result != null) {
       setState(() {
         _disponibilites = result;
-        _hasChanges = true;
       });
     }
   }
