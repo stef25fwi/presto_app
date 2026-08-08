@@ -1,4 +1,4 @@
-name: Lot3 unused element strict autofix
+name: Lot3 unused element AST cleanup
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  fix:
+  cleanup:
     if: github.event.pull_request.head.ref == 'refactor/lot3-enable-unused-element-final-20260808' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -29,41 +29,303 @@ jobs:
       - name: Flutter dependencies
         run: flutter pub get
 
-      - name: Verify dry-run is exactly the 57 unused_element fixes
+      - name: Install analyzer parser ephemerally
+        run: |
+          cp pubspec.yaml /tmp/pubspec.yaml.before-lot3
+          cp pubspec.lock /tmp/pubspec.lock.before-lot3
+          flutter pub add --dev analyzer
+
+      - name: Remove exactly the 57 analyzer-proven declarations with Dart AST
         shell: bash
         run: |
           set -euo pipefail
-          dart fix --dry-run | tee /tmp/dart-fix-dry-run.txt
-          python - <<'PY'
-          from pathlib import Path
-          import re
+          mkdir -p tool
+          cat > tool/lot3_unused_element_cleanup.dart <<'DART'
+          import 'dart:io';
 
-          text = Path('/tmp/dart-fix-dry-run.txt').read_text()
-          match = re.search(r'(\d+) proposed fixes? in \d+ files?', text)
-          if match is None:
-              raise SystemExit('fail-fast: unable to read proposed fix count')
-          count = int(match.group(1))
-          if count != 57:
-              raise SystemExit(f'fail-fast: expected 57 proposed fixes, got {count}')
+          import 'package:analyzer/dart/analysis/utilities.dart';
+          import 'package:analyzer/dart/ast/ast.dart';
+          import 'package:analyzer/dart/ast/utilities.dart';
 
-          codes = set()
-          for line in text.splitlines():
-              match = re.match(r'^\s+([a-z][a-z0-9_]*)\s+•\s+\d+\s+fix(?:es)?\s*$', line)
-              if match:
-                  codes.add(match.group(1))
-          if codes != {'unused_element'}:
-              raise SystemExit(f'fail-fast: unexpected fix diagnostics: {sorted(codes)}')
-          PY
+          final class Target {
+            const Target(this.file, this.line, this.column, this.name);
+            final String file;
+            final int line;
+            final int column;
+            final String name;
+          }
 
-      - name: Apply only analyzer-proposed fixes
-        run: dart fix --apply
+          const targets = <Target>[
+            Target('lib/pages/account_page.dart', 347, 16, '_suppressProfileSyncSnackBarWhenAdminConfirmed'),
+            Target('lib/pages/account_page.dart', 851, 50, '_fetchUserProfileDocument'),
+            Target('lib/pages/account_page.dart', 892, 7, '_fetchCachedUserProfileDocument'),
+            Target('lib/pages/account_page.dart', 3433, 16, '_getSubcategoriesForCategory'),
+            Target('lib/pages/account_page.dart', 3438, 16, '_getAvailableSubcategories'),
+            Target('lib/pages/admin_space_page.dart', 215, 14, 'shortLabel'),
+            Target('lib/pages/consult_offers_page.dart', 182, 11, '_makeCityCategoryKey'),
+            Target('lib/pages/consult_offers_page.dart', 205, 16, '_copyToClipboard'),
+            Target('lib/pages/consult_offers_page.dart', 213, 16, '_openExternalUrl'),
+            Target('lib/pages/consult_offers_page.dart', 333, 10, '_normalizeForCategoryMatch'),
+            Target('lib/pages/consult_offers_page.dart', 368, 10, '_buildConsultNotificationBell'),
+            Target('lib/pages/consult_offers_page.dart', 827, 48, '_getCachedOrFreshResults'),
+            Target('lib/pages/consult_offers_page.dart', 2800, 8, '_isQuickResponse'),
+            Target('lib/pages/consult_offers_page.dart', 2824, 16, '_showEditOfferDialog'),
+            Target('lib/pages/consult_offers_page.dart', 2895, 16, '_confirmDeleteOffer'),
+            Target('lib/pages/consult_offers_page.dart', 3442, 7, '_StandardResponseBadge'),
+            Target('lib/pages/consult_offers_page.dart', 4057, 8, '_deletedAwareDisplayName'),
+            Target('lib/pages/consult_offers_page.dart', 4067, 8, '_deletedAwareAvatar'),
+            Target('lib/pages/home_page.dart', 589, 31, '_recentOffersQuery'),
+            Target('lib/pages/home_page.dart', 1141, 10, '_buildNotificationBell'),
+            Target('lib/pages/home_page.dart', 1406, 10, '_buildInfoIcon'),
+            Target('lib/pages/home_page.dart', 2205, 7, '_HowItWorksStepWithProgress'),
+            Target('lib/pages/messages/conversations_list_page.dart', 472, 10, '_searchableConversationText'),
+            Target('lib/pages/messages/conversations_list_page.dart', 492, 13, '_conversationSortDate'),
+            Target('lib/pages/messages/conversations_list_page.dart', 504, 11, '_notificationConversationId'),
+            Target('lib/pages/messages/conversations_list_page.dart', 2767, 8, '_deletedAwareDisplayName'),
+            Target('lib/pages/messages/conversations_list_page.dart', 2777, 8, '_deletedAwareAvatar'),
+            Target('lib/pages/offers/offer_details_page.dart', 60, 8, '_firstOfferDetailPhotoField'),
+            Target('lib/pages/offers/offer_details_page.dart', 500, 10, '_extractImageUrl'),
+            Target('lib/pages/offers/offer_details_page.dart', 1568, 24, '_buildFavoriteOfferPayload'),
+            Target('lib/pages/offers/offer_details_page.dart', 2332, 7, '_TopHeader'),
+            Target('lib/pages/offers/offer_details_page.dart', 2819, 7, '_HeroInfoChip'),
+            Target('lib/pages/offers/offer_details_page.dart', 2884, 7, '_PhotoThumbnailStrip'),
+            Target('lib/pages/offers/offer_details_page.dart', 4428, 7, '_AvatarFallback'),
+            Target('lib/pages/offers/offer_details_page.dart', 4498, 8, '_deletedAwareDisplayName'),
+            Target('lib/pages/offers/offer_details_page.dart', 4508, 8, '_deletedAwareAvatar'),
+            Target('lib/pages/publish_offer_page.dart', 706, 10, '_publishAdminRuntimeDetail'),
+            Target('lib/pages/publish_offer_page.dart', 3778, 8, '_onCityChanged'),
+            Target('lib/pages/publish_offer_page.dart', 3805, 8, '_onPostalCodeChanged'),
+            Target('lib/pages/publish_offer_page.dart', 4379, 10, '_buildPublishAiAnalyzingBanner'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 80, 14, '_openExternalUrl'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 2113, 10, '_buildHeaderStatusPanel'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 2183, 16, '_currentStepIcon'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 2558, 10, '_buildStarterCard'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 2989, 10, '_buildStepProject'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 3645, 10, '_buildMyPath'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 3898, 10, '_buildRegionGuichets'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 3981, 7, '_StepperBar'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 4488, 7, '_StarterRecapChip'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 5619, 7, '_JourneySummaryPage'),
+            Target('lib/pages/user_offers_section.dart', 3432, 7, '_QuerySnapshotAdapter'),
+            Target('lib/services/admin_access_resolver.dart', 642, 28, '_verifyServerAccessRetry'),
+            Target('lib/services/marketplace_publish_service.dart', 163, 10, '_resolveOwnerDisplayName'),
+            Target('lib/services/marketplace_publish_service.dart', 415, 15, '_resolveCanonicalCity'),
+            Target('lib/services/notification_service.dart', 489, 23, '_backgroundHandler'),
+            Target('test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart', 69, 14, '_scrollUntilFound'),
+            Target('test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart', 68, 14, '_scrollUntilFound'),
+          ];
 
-      - name: Verify modified file scope
+          int offsetFor(String content, int line, int column) {
+            if (line < 1 || column < 1) {
+              throw StateError('Invalid location $line:$column');
+            }
+            var currentLine = 1;
+            var offset = 0;
+            while (currentLine < line) {
+              final newline = content.indexOf('\n', offset);
+              if (newline < 0) {
+                throw StateError('Line $line is outside the file');
+              }
+              offset = newline + 1;
+              currentLine++;
+            }
+            return offset + column - 1;
+          }
+
+          AstNode? declarationFor(AstNode? node) {
+            var current = node;
+            while (current != null) {
+              if (current is FunctionDeclaration ||
+                  current is MethodDeclaration ||
+                  current is ClassDeclaration ||
+                  current is EnumDeclaration ||
+                  current is MixinDeclaration ||
+                  current is ExtensionDeclaration ||
+                  current is ExtensionTypeDeclaration ||
+                  current is FunctionTypeAlias ||
+                  current is GenericTypeAlias) {
+                return current;
+              }
+              if (current is VariableDeclaration) {
+                final list = current.parent;
+                if (list is VariableDeclarationList) {
+                  if (list.variables.length != 1) {
+                    throw StateError(
+                      'Refusing multi-variable declaration containing ${current.name.lexeme}',
+                    );
+                  }
+                  final owner = list.parent;
+                  if (owner is TopLevelVariableDeclaration || owner is FieldDeclaration) {
+                    return owner;
+                  }
+                }
+              }
+              current = current.parent;
+            }
+            return null;
+          }
+
+          String declarationName(AstNode node) {
+            if (node is FunctionDeclaration) return node.name.lexeme;
+            if (node is MethodDeclaration) return node.name.lexeme;
+            if (node is ClassDeclaration) return node.name.lexeme;
+            if (node is EnumDeclaration) return node.name.lexeme;
+            if (node is MixinDeclaration) return node.name.lexeme;
+            if (node is ExtensionDeclaration) return node.name?.lexeme ?? '';
+            if (node is ExtensionTypeDeclaration) return node.name.lexeme;
+            if (node is FunctionTypeAlias) return node.name.lexeme;
+            if (node is GenericTypeAlias) return node.name.lexeme;
+            if (node is TopLevelVariableDeclaration) {
+              return node.variables.variables.single.name.lexeme;
+            }
+            if (node is FieldDeclaration) {
+              return node.fields.variables.single.name.lexeme;
+            }
+            return '';
+          }
+
+          (int, int) expandedRange(String content, AstNode node, int identifierOffset) {
+            var start = node.offset;
+            var end = node.end;
+
+            final prefix = content.substring(start, identifierOffset);
+            if (prefix.contains('@')) {
+              throw StateError(
+                'Refusing annotated declaration at offset $start; inspect manually',
+              );
+            }
+
+            final previousNewline = start == 0 ? -1 : content.lastIndexOf('\n', start - 1);
+            final lineStart = previousNewline + 1;
+            if (content.substring(lineStart, start).trim().isEmpty) {
+              start = lineStart;
+            }
+
+            while (end < content.length &&
+                (content.codeUnitAt(end) == 32 || content.codeUnitAt(end) == 9)) {
+              end++;
+            }
+            if (end < content.length && content.codeUnitAt(end) == 13) end++;
+            if (end < content.length && content.codeUnitAt(end) == 10) end++;
+            return (start, end);
+          }
+
+          void main() {
+            if (targets.length != 57) {
+              throw StateError('Expected exactly 57 targets, got ${targets.length}');
+            }
+
+            final byFile = <String, List<Target>>{};
+            for (final target in targets) {
+              byFile.putIfAbsent(target.file, () => <Target>[]).add(target);
+            }
+            if (byFile.length != 14) {
+              throw StateError('Expected 14 files, got ${byFile.length}');
+            }
+
+            var removed = 0;
+            for (final entry in byFile.entries) {
+              final file = File(entry.key);
+              final content = file.readAsStringSync();
+              final parsed = parseString(
+                content: content,
+                path: entry.key,
+                throwIfDiagnostics: false,
+              );
+              final ranges = <(int, int, String)>[];
+
+              for (final target in entry.value) {
+                final identifierOffset = offsetFor(content, target.line, target.column);
+                final end = identifierOffset + target.name.length;
+                if (end > content.length ||
+                    content.substring(identifierOffset, end) != target.name) {
+                  final actual = end <= content.length
+                      ? content.substring(identifierOffset, end)
+                      : '<out-of-range>';
+                  throw StateError(
+                    '${target.file}:${target.line}:${target.column}: expected '
+                    '${target.name}, found $actual',
+                  );
+                }
+
+                final located = NodeLocator(identifierOffset).searchWithin(parsed.unit);
+                final declaration = declarationFor(located);
+                if (declaration == null) {
+                  throw StateError(
+                    '${target.file}:${target.line}:${target.column}: no declaration AST node '
+                    'for ${target.name}',
+                  );
+                }
+                final actualName = declarationName(declaration);
+                if (actualName != target.name) {
+                  throw StateError(
+                    '${target.file}:${target.line}:${target.column}: declaration mismatch '
+                    'expected=${target.name} actual=$actualName type=${declaration.runtimeType}',
+                  );
+                }
+                final range = expandedRange(content, declaration, identifierOffset);
+                ranges.add((range.$1, range.$2, target.name));
+              }
+
+              ranges.sort((a, b) => a.$1.compareTo(b.$1));
+              for (var i = 1; i < ranges.length; i++) {
+                if (ranges[i].$1 < ranges[i - 1].$2) {
+                  throw StateError(
+                    '${entry.key}: overlapping declarations ${ranges[i - 1].$3} and ${ranges[i].$3}',
+                  );
+                }
+              }
+
+              var updated = content;
+              for (final range in ranges.reversed) {
+                updated = updated.replaceRange(range.$1, range.$2, '');
+                stdout.writeln('removed ${entry.key}:${range.$3}');
+                removed++;
+              }
+              file.writeAsStringSync(updated);
+            }
+
+            if (removed != 57) {
+              throw StateError('Expected to remove 57 declarations, removed $removed');
+            }
+            stdout.writeln('Removed exactly 57 analyzer-proven unused_element declarations.');
+          }
+          DART
+
+          dart run tool/lot3_unused_element_cleanup.dart
+          rm tool/lot3_unused_element_cleanup.dart
+
+      - name: Restore dependency files and format only diagnosed Dart files
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp /tmp/pubspec.yaml.before-lot3 pubspec.yaml
+          cp /tmp/pubspec.lock.before-lot3 pubspec.lock
+          flutter pub get
+          git diff --exit-code -- pubspec.yaml pubspec.lock
+
+          dart format \
+            lib/pages/account_page.dart \
+            lib/pages/admin_space_page.dart \
+            lib/pages/consult_offers_page.dart \
+            lib/pages/home_page.dart \
+            lib/pages/messages/conversations_list_page.dart \
+            lib/pages/offers/offer_details_page.dart \
+            lib/pages/publish_offer_page.dart \
+            lib/pages/toolbox_je_me_lance_page.dart \
+            lib/pages/user_offers_section.dart \
+            lib/services/admin_access_resolver.dart \
+            lib/services/marketplace_publish_service.dart \
+            lib/services/notification_service.dart \
+            test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart \
+            test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart
+
+      - name: Verify exact modified source scope
         shell: python
         run: |
           import subprocess
 
-          allowed = {
+          expected = {
               'lib/pages/account_page.dart',
               'lib/pages/admin_space_page.dart',
               'lib/pages/consult_offers_page.dart',
@@ -81,24 +343,26 @@ jobs:
           }
           changed = {
               line.strip()
-              for line in subprocess.check_output(
-                  ['git', 'diff', '--name-only'], text=True
-              ).splitlines()
+              for line in subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines()
               if line.strip()
           }
-          if changed != allowed:
+          if changed != expected:
               raise SystemExit(
-                  'fail-fast: changed file scope mismatch; '
-                  f'unexpected={sorted(changed - allowed)}, missing={sorted(allowed - changed)}'
+                  'fail-fast: source scope mismatch; '
+                  f'unexpected={sorted(changed - expected)}, missing={sorted(expected - changed)}'
               )
 
-      - name: Analyze after autofix
+      - name: Analyze cleaned source with both global unused masks removed
         run: flutter analyze --fatal-infos
 
-      - name: Remove temporary workflow and commit candidate
+      - name: Remove temporary workflow and commit only the clean candidate
+        shell: bash
         run: |
+          set -euo pipefail
           rm .github/workflows/lot3-unused-element-autofix.yml
           git diff --check
+          test ! -e tool/lot3_unused_element_cleanup.dart
+          git diff --exit-code -- pubspec.yaml pubspec.lock
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
