@@ -1,0 +1,48 @@
+name: Lot3 account dead field patch
+
+on:
+  push:
+    branches:
+      - refactor/lot3-unused-masks-final-20260807
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/lot3-unused-masks-final-20260807
+          fetch-depth: 0
+      - name: Remove proven-dead profile load flag
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('lib/pages/account_page.dart')
+          text = p.read_text()
+          targets = [
+              '  bool _profileLoadRequested = false;\n',
+              '    _profileLoadRequested = false;\n',
+              '      _profileLoadRequested = true;\n',
+              '          _profileLoadRequested = true;\n',
+          ]
+          expected = {targets[0]: 1, targets[1]: 1, targets[2]: 1, targets[3]: 2}
+          for needle, count in expected.items():
+              actual = text.count(needle)
+              if actual != count:
+                  raise SystemExit(f'fail-fast: expected {count} occurrences, got {actual}: {needle!r}')
+              text = text.replace(needle, '')
+          p.write_text(text)
+          wf = Path('.github/workflows/lot3-account-dead-field-patch.yml')
+          wf.unlink()
+      - name: Commit atomic cleanup
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "refactor(lot3): supprimer le flag profil jamais lu"
+          git push origin HEAD:refactor/lot3-unused-masks-final-20260807
