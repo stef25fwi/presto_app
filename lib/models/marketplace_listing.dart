@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../data/firestore/firestore_schema.dart';
 import '../services/firestore_date_parser.dart';
 import 'marketplace_enums.dart';
 
@@ -67,45 +68,52 @@ class MarketplaceListing {
   ) {
     return MarketplaceListing(
       id: id,
-      ownerId: (data['ownerId'] ?? '').toString().trim(),
-      title: (data['title'] ?? '').toString().trim(),
-      description: (data['description'] ?? '').toString().trim(),
-      price: (data['price'] is num) ? (data['price'] as num).toDouble() : 0,
-      categoryId: (data['categoryId'] ?? '').toString().trim(),
-      cityId: (data['cityId'] ?? '').toString().trim(),
-      media: ((data['media'] as List?) ?? const <dynamic>[])
+      ownerId: (data[ListingFields.ownerId] ?? '').toString().trim(),
+      title: (data[ListingFields.title] ?? '').toString().trim(),
+      description: (data[ListingFields.description] ?? '').toString().trim(),
+      price: (data[ListingFields.price] is num)
+          ? (data[ListingFields.price] as num).toDouble()
+          : 0,
+      categoryId: (data[ListingFields.categoryId] ?? '').toString().trim(),
+      cityId: (data[ListingFields.cityId] ?? '').toString().trim(),
+      media: ((data[ListingFields.media] as List?) ?? const <dynamic>[])
           .whereType<Map>()
           .map((entry) =>
               Map<String, dynamic>.from(entry.cast<String, dynamic>()))
           .toList(growable: false),
-      thumbnailUrl: (data['thumbnailUrl'] ?? '').toString().trim(),
-      status:
-          ListingStatusParsing.fromString((data['status'] ?? '').toString()),
+      thumbnailUrl:
+          (data[ListingFields.thumbnailUrl] ?? '').toString().trim(),
+      status: ListingStatusParsing.fromString(
+        (data[ListingFields.status] ?? '').toString(),
+      ),
       moderationStatus: ModerationStatusParsing.fromString(
-        (data['moderationStatus'] ?? '').toString(),
+        (data[ListingFields.moderationStatus] ?? '').toString(),
       ),
       visibility: ListingVisibilityParsing.fromString(
-        (data['visibility'] ?? '').toString(),
+        (data[ListingFields.visibility] ?? '').toString(),
       ),
-      createdAt: parseFirestoreDateTime(data['createdAt']),
-      updatedAt: parseFirestoreDateTime(data['updatedAt']),
-      publishedAt: parseFirestoreDateTime(data['publishedAt']),
-      expiresAt: parseFirestoreDateTime(data['expiresAt']),
-      reportCount: (data['reportCount'] is num)
-          ? (data['reportCount'] as num).toInt()
+      createdAt: parseFirestoreDateTime(data[ListingFields.createdAt]),
+      updatedAt: parseFirestoreDateTime(data[ListingFields.updatedAt]),
+      publishedAt: parseFirestoreDateTime(data[ListingFields.publishedAt]),
+      expiresAt: parseFirestoreDateTime(data[ListingFields.expiresAt]),
+      reportCount: (data[ListingFields.reportCount] is num)
+          ? (data[ListingFields.reportCount] as num).toInt()
           : 0,
-      favoriteCount: (data['favoriteCount'] is num)
-          ? (data['favoriteCount'] as num).toInt()
+      favoriteCount: (data[ListingFields.favoriteCount] is num)
+          ? (data[ListingFields.favoriteCount] as num).toInt()
           : 0,
-      viewCount:
-          (data['viewCount'] is num) ? (data['viewCount'] as num).toInt() : 0,
-      contactCount: (data['contactCount'] is num)
-          ? (data['contactCount'] as num).toInt()
+      viewCount: (data[ListingFields.viewCount] is num)
+          ? (data[ListingFields.viewCount] as num).toInt()
           : 0,
-      isBoosted: data['isBoosted'] == true,
-      boostExpiresAt: parseFirestoreDateTime(data['boostExpiresAt']),
-      riskScore:
-          (data['riskScore'] is num) ? (data['riskScore'] as num).toInt() : 0,
+      contactCount: (data[ListingFields.contactCount] is num)
+          ? (data[ListingFields.contactCount] as num).toInt()
+          : 0,
+      isBoosted: data[ListingFields.isBoosted] == true,
+      boostExpiresAt:
+          parseFirestoreDateTime(data[ListingFields.boostExpiresAt]),
+      riskScore: (data[ListingFields.riskScore] is num)
+          ? (data[ListingFields.riskScore] as num).toInt()
+          : 0,
     );
   }
 

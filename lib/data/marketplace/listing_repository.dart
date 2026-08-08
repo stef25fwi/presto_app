@@ -8,6 +8,7 @@ import '../../models/marketplace_listing_draft.dart';
 import '../../services/firebase_functions_region.dart';
 import '../../services/product_analytics_service.dart';
 import '../../services/firestore_web_safe_reads.dart';
+import '../firestore/firestore_schema.dart';
 
 int normalizePublicListingsPageSize(int value) {
   if (value < 1) return 1;
@@ -60,7 +61,7 @@ class ListingRepository {
   final ExpiringMemoryCache<String, PublicListingsPage> _publicListingsCache;
 
   CollectionReference<Map<String, dynamic>> get _listings =>
-      _firestore.collection('listings');
+      _firestore.collection(FirestoreCollections.listings);
 
   Future<String> createDraft(MarketplaceListingDraft draft) async {
     await _analytics.logEvent(
@@ -147,8 +148,8 @@ class ListingRepository {
 
   Stream<List<MarketplaceListing>> watchMyListings(String userId) {
     return _listings
-        .where('ownerId', isEqualTo: userId)
-        .orderBy('updatedAt', descending: true)
+        .where(ListingFields.ownerId, isEqualTo: userId)
+        .orderBy(ListingFields.updatedAt, descending: true)
         .limit(500)
         .webSafeSnapshots(debugKey: 'home.latestOffers')
         .map(
@@ -163,15 +164,18 @@ class ListingRepository {
     String? cityId,
   }) {
     Query<Map<String, dynamic>> query = _listings
-        .where('status', isEqualTo: 'active')
-        .where('visibility', isEqualTo: 'public');
+        .where(ListingFields.status, isEqualTo: 'active')
+        .where(ListingFields.visibility, isEqualTo: 'public');
     if (categoryId != null && categoryId.trim().isNotEmpty) {
-      query = query.where('categoryId', isEqualTo: categoryId.trim());
+      query = query.where(
+        ListingFields.categoryId,
+        isEqualTo: categoryId.trim(),
+      );
     }
     if (cityId != null && cityId.trim().isNotEmpty) {
-      query = query.where('cityId', isEqualTo: cityId.trim());
+      query = query.where(ListingFields.cityId, isEqualTo: cityId.trim());
     }
-    return query.orderBy('createdAt', descending: true);
+    return query.orderBy(ListingFields.createdAt, descending: true);
   }
 
   Stream<List<MarketplaceListing>> watchPublicListings({
