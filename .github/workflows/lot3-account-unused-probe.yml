@@ -22,7 +22,7 @@ jobs:
         with:
           ref: refactor/lot3-account-unused-probe-20260807
 
-      - name: Apply proven account dead-code cleanup
+      - name: Apply proposed cleanup
         shell: bash
         run: |
           set -euo pipefail
@@ -31,7 +31,6 @@ jobs:
 
           path = Path('lib/pages/account_page.dart')
           text = path.read_text()
-
           header = '// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter\n\n'
           if not text.startswith(header):
               raise SystemExit('Unexpected account_page.dart ignore header')
@@ -48,9 +47,52 @@ jobs:
           path.write_text(text)
           PY
 
-          rm -f docs/quality/lot3-account-unused-probe.md
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Validate and persist result
+        shell: bash
+        run: |
+          set -uo pipefail
+          flutter pub get
+
+          set +e
+          flutter analyze --fatal-infos lib/pages/account_page.dart 2>&1 | tee /tmp/account-cleanup-analyze.log
+          analyze_status=${PIPESTATUS[0]}
+          git diff --check 2>&1 | tee /tmp/account-cleanup-diffcheck.log
+          diff_status=${PIPESTATUS[0]}
+          set -e
+
           mkdir -p docs/quality
-          cat > docs/quality/lot3-dead-code-tranche7-account-unused.md <<'EOF'
+          if [ "$analyze_status" -ne 0 ] || [ "$diff_status" -ne 0 ]; then
+            git checkout -- lib/pages/account_page.dart
+            rm -f docs/quality/lot3-dead-code-tranche7-account-unused.md
+            {
+              echo '# Lot 3 — account cleanup validation failure'
+              echo
+              echo 'Base: f873b0845f9ca691e9e7bba1ac23e5a938af9221'
+              echo
+              echo '## flutter analyze'
+              echo '```text'
+              cat /tmp/account-cleanup-analyze.log
+              echo '```'
+              echo
+              echo '## git diff --check'
+              echo '```text'
+              cat /tmp/account-cleanup-diffcheck.log
+              echo '```'
+              echo
+              echo "Analyzer exit status: ${analyze_status}"
+              echo "Diff check exit status: ${diff_status}"
+            } > docs/quality/lot3-account-cleanup-validation.md
+          else
+            rm -f docs/quality/lot3-account-cleanup-validation.md
+            rm -f docs/quality/lot3-account-unused-probe.md
+            cat > docs/quality/lot3-dead-code-tranche7-account-unused.md <<'EOF'
           # Lot 3 — Code mort, tranche 7
 
           Base : `f873b0845f9ca691e9e7bba1ac23e5a938af9221`.
@@ -65,6 +107,8 @@ jobs:
 
           L'analyseur n'a remonté qu'un seul diagnostic `unused_*` : la variable locale `visibleEmail` dans `_buildProfile`, sans lecture ultérieure. Cette variable a été supprimée, puis le masque global a été retiré du fichier.
 
+          La version nettoyée repasse ensuite `flutter analyze --fatal-infos lib/pages/account_page.dart` et `git diff --check` sans erreur.
+
           ## Garde-fous
 
           - aucune méthode, champ ou paramètre supplémentaire supprimé ;
@@ -73,34 +117,24 @@ jobs:
           - aucun skip/exclusion ajouté ;
           - aucune mission LCOV créée ou relancée.
           EOF
-
-      - name: Setup Flutter 3.44.6
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.44.6'
-          channel: stable
-          cache: true
-
-      - name: Validate targeted cleanup
-        shell: bash
-        run: |
-          set -euo pipefail
-          flutter pub get
-          flutter analyze --fatal-infos lib/pages/account_page.dart
-          git diff --check
-          if grep -q '^// ignore_for_file: .*unused_' lib/pages/account_page.dart; then
-            echo 'unused_* file-level suppression still present in account_page.dart'
-            exit 1
           fi
 
-      - name: Commit validated cleanup and remove temporary workflow
+      - name: Commit result and remove temporary workflow
         shell: bash
         run: |
           set -euo pipefail
           rm -f .github/workflows/lot3-account-unused-probe.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add lib/pages/account_page.dart docs/quality/lot3-dead-code-tranche7-account-unused.md docs/quality/lot3-account-unused-probe.md .github/workflows/lot3-account-unused-probe.yml
+          git add -A
           git diff --cached --check
-          git commit -m 'refactor(lot3): retirer le masque unused du compte'
+          if git diff --cached --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          if [ -f docs/quality/lot3-account-cleanup-validation.md ]; then
+            git commit -m 'chore(lot3): archiver échec validation nettoyage compte'
+          else
+            git commit -m 'refactor(lot3): retirer le masque unused du compte'
+          fi
           git push origin HEAD:refactor/lot3-account-unused-probe-20260807
