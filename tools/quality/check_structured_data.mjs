@@ -69,7 +69,14 @@ function validateOrganization(node, route) {
   assert.equal(node.name, 'iliprestō', `${route}: nom Organization`);
   assert.equal(node.alternateName, 'ilipresto', `${route}: alternateName Organization`);
   assert.equal(node.url, `${base}/`, `${route}: URL Organization`);
-  assert.ok(node.description?.includes('plateforme') || node.description?.includes('Plateforme'), `${route}: description Organization`);
+  assert.ok(
+    node.description?.toLowerCase().includes('petites annonces'),
+    `${route}: positionnement petites annonces absent de la description Organization`,
+  );
+  assert.ok(
+    node.description?.toLowerCase().includes('solution instantanée'),
+    `${route}: notion de solution instantanée absente de la description Organization`,
+  );
   const logo = node.logo;
   assert.equal(logo?.['@type'], 'ImageObject', `${route}: logo doit être ImageObject`);
   assert.equal(logo?.['@id'], registry.logoId, `${route}: @id logo`);
