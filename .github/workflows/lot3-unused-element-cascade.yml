@@ -1,0 +1,504 @@
+name: Lot3 unused element cascade cleanup
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.event.pull_request.head.ref == 'refactor/lot3-enable-unused-element-final-20260808' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/lot3-enable-unused-element-final-20260808
+          fetch-depth: 0
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Flutter dependencies
+        run: flutter pub get
+
+      - name: Install compatible AST parser ephemerally
+        run: |
+          cp pubspec.yaml /tmp/pubspec.yaml.before-lot3
+          cp pubspec.lock /tmp/pubspec.lock.before-lot3
+          flutter pub add --dev 'analyzer:^7.7.1'
+
+      - name: Recreate the already-validated 57-declaration first pass
+        shell: python
+        run: |
+          from pathlib import Path
+
+          workflow = Path('.github/workflows/lot3-unused-element-ast-v7.yml').read_text()
+          marker = "      - name: Extract guarded cleanup script from previous workflow\n        shell: python\n        run: |\n"
+          start = workflow.find(marker)
+          end = workflow.find("\n      - name: Remove exactly the 57 analyzer-proven declarations", start + len(marker))
+          if start < 0 or end < 0:
+              raise SystemExit('fail-fast: unable to recover validated stage-1 generator')
+          block = workflow[start + len(marker):end]
+          script = '\n'.join(
+              line[10:] if line.startswith('          ') else line
+              for line in block.splitlines()
+          ) + '\n'
+          exec(compile(script, '.github/workflows/lot3-unused-element-ast-v7.yml', 'exec'), {})
+
+      - name: Apply exactly the validated first 57 removals
+        run: dart run tool/lot3_unused_element_cleanup.dart
+
+      - name: Format stage 1 before cascade probe
+        run: |
+          rm tool/lot3_unused_element_cleanup.dart
+          rmdir tool 2>/dev/null || true
+          dart format \
+            lib/pages/account_page.dart \
+            lib/pages/admin_space_page.dart \
+            lib/pages/consult_offers_page.dart \
+            lib/pages/home_page.dart \
+            lib/pages/messages/conversations_list_page.dart \
+            lib/pages/offers/offer_details_page.dart \
+            lib/pages/publish_offer_page.dart \
+            lib/pages/toolbox_je_me_lance_page.dart \
+            lib/pages/user_offers_section.dart \
+            lib/services/admin_access_resolver.dart \
+            lib/services/marketplace_publish_service.dart \
+            lib/services/notification_service.dart \
+            test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart \
+            test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart
+
+      - name: Prove the exact 46-item cascade before deleting it
+        shell: bash
+        run: |
+          set +e
+          flutter analyze --fatal-infos 2>&1 | tee /tmp/post57-analyze.txt
+          status=${PIPESTATUS[0]}
+          set -e
+          test "$status" -ne 0
+          python - <<'PY'
+          from collections import Counter
+          from pathlib import Path
+          import re
+
+          text = Path('/tmp/post57-analyze.txt').read_text()
+          codes = []
+          for line in text.splitlines():
+              match = re.search(r'•\s+([a-z][a-z0-9_]*)\s*$', line)
+              if match:
+                  codes.append(match.group(1))
+          counts = Counter(codes)
+          expected = Counter({
+              'unused_element': 29,
+              'unused_import': 11,
+              'unused_field': 3,
+              'unused_element_parameter': 3,
+          })
+          if counts != expected:
+              raise SystemExit(f'fail-fast: cascade changed: expected={expected}, actual={counts}')
+          if len(codes) != 46:
+              raise SystemExit(f'fail-fast: expected 46 cascade diagnostics, got {len(codes)}')
+          PY
+
+      - name: Generate guarded cascade AST cleanup
+        shell: bash
+        run: |
+          mkdir -p tool
+          cat > tool/lot3_unused_element_cascade.dart <<'DART'
+          import 'dart:io';
+
+          import 'package:analyzer/dart/analysis/utilities.dart';
+          import 'package:analyzer/dart/ast/ast.dart';
+          import 'package:analyzer/dart/ast/visitor.dart';
+
+          final class Target {
+            const Target(this.file, this.line, this.column, this.name);
+            final String file;
+            final int line;
+            final int column;
+            final String name;
+          }
+
+          const targets = <Target>[
+            Target('lib/pages/account_page.dart', 334, 8, '_isProfileSyncExpired'),
+            Target('lib/pages/consult_offers_page.dart', 273, 11, '_lastCachedQuerySignature'),
+            Target('lib/pages/consult_offers_page.dart', 3756, 6, '_isDeletedUserMap'),
+            Target('lib/pages/home_page.dart', 1133, 8, '_showNotificationsDialog'),
+            Target('lib/pages/messages/conversations_list_page.dart', 410, 10, '_conversationTitle'),
+            Target('lib/pages/messages/conversations_list_page.dart', 443, 10, '_conversationPreview'),
+            Target('lib/pages/messages/conversations_list_page.dart', 2710, 6, '_isDeletedUserMap'),
+            Target('lib/pages/offers/offer_details_page.dart', 4162, 6, '_isDeletedUserMap'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 80, 22, '_planContactsForTask'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 244, 22, 'kMutedText'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 259, 8, '_showStarterErrors'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 2048, 16, '_launchUrl'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 2058, 10, '_buildJourneyStatusStrip'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 2136, 10, '_buildHeroHighlights'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 2496, 10, '_buildStarterSelector'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 2628, 8, '_showStatusPicker'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 3511, 7, '_HeaderInfoCard'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 3774, 7, '_DropdownField'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 3810, 7, '_NumberField'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 3844, 7, '_RecommendationHero'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 3942, 7, '_ResultMetricTile'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 4076, 7, '_Bullet'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 4106, 7, '_JourneyInfoTile'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 4395, 7, '_AidStatusTile'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 4534, 7, '_PlanTaskTile'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 5019, 7, '_UpgradeBottomSheet'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 5279, 7, '_AidStatusSummaryTile'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 5355, 7, '_SummaryFactRow'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 5393, 7, '_StatusGuidanceCard'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 5445, 7, '_TutorialStepSummaryTile'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 5543, 7, '_PlanTaskSummaryTile'),
+            Target('lib/pages/toolbox_je_me_lance_page.dart', 5693, 7, '_ResourceLinkTile'),
+          ];
+
+          const importsToRemove = <String, Set<String>>{
+            'lib/pages/consult_offers_page.dart': {
+              'package:cloud_functions/cloud_functions.dart',
+              'package:url_launcher/url_launcher.dart',
+              '../features/trust_score/trust_score_service.dart',
+              'home_page.dart',
+              '../services/app_route_parser.dart',
+              '../services/firebase_functions_region.dart',
+              '../utils/friendly_snackbar.dart',
+              '../widgets/home_interactions.dart',
+            },
+            'lib/pages/toolbox_je_me_lance_page.dart': {
+              'package:presto_app/features/subscriptions/journey_entitlements_service.dart',
+              'package:presto_app/services/journey_pdf_export_service.dart',
+            },
+            'lib/services/marketplace_publish_service.dart': {
+              '../services/city_search.dart',
+            },
+          };
+
+          final class _OffsetLocator extends GeneralizingAstVisitor<void> {
+            _OffsetLocator(this.offset);
+            final int offset;
+            AstNode? result;
+            @override
+            void visitNode(AstNode node) {
+              if (node.offset <= offset && offset < node.end) {
+                result = node;
+                super.visitNode(node);
+              }
+            }
+          }
+
+          final class _StarterErrorAssignments extends GeneralizingAstVisitor<void> {
+            final List<ExpressionStatement> statements = <ExpressionStatement>[];
+            @override
+            void visitAssignmentExpression(AssignmentExpression node) {
+              final left = node.leftHandSide;
+              if (left is SimpleIdentifier && left.name == '_showStarterErrors') {
+                final parent = node.parent;
+                if (parent is! ExpressionStatement) {
+                  throw StateError('Unexpected _showStarterErrors assignment parent: ${parent.runtimeType}');
+                }
+                statements.add(parent);
+              }
+              super.visitAssignmentExpression(node);
+            }
+          }
+
+          int offsetFor(String content, int line, int column) {
+            var currentLine = 1;
+            var offset = 0;
+            while (currentLine < line) {
+              final newline = content.indexOf('\n', offset);
+              if (newline < 0) throw StateError('Line $line outside file');
+              offset = newline + 1;
+              currentLine++;
+            }
+            return offset + column - 1;
+          }
+
+          AstNode? declarationFor(AstNode? node) {
+            var current = node;
+            while (current != null) {
+              if (current is FunctionDeclaration ||
+                  current is MethodDeclaration ||
+                  current is ClassDeclaration ||
+                  current is EnumDeclaration ||
+                  current is MixinDeclaration ||
+                  current is ExtensionDeclaration ||
+                  current is ExtensionTypeDeclaration ||
+                  current is FunctionTypeAlias ||
+                  current is GenericTypeAlias) {
+                return current;
+              }
+              if (current is VariableDeclaration) {
+                final list = current.parent;
+                if (list is VariableDeclarationList) {
+                  if (list.variables.length != 1) {
+                    throw StateError('Refusing multi-variable declaration ${current.name.lexeme}');
+                  }
+                  final owner = list.parent;
+                  if (owner is TopLevelVariableDeclaration || owner is FieldDeclaration) return owner;
+                }
+              }
+              current = current.parent;
+            }
+            return null;
+          }
+
+          String declarationName(AstNode node) {
+            if (node is FunctionDeclaration) return node.name.lexeme;
+            if (node is MethodDeclaration) return node.name.lexeme;
+            if (node is ClassDeclaration) return node.name.lexeme;
+            if (node is EnumDeclaration) return node.name.lexeme;
+            if (node is MixinDeclaration) return node.name.lexeme;
+            if (node is ExtensionDeclaration) return node.name?.lexeme ?? '';
+            if (node is ExtensionTypeDeclaration) return node.name.lexeme;
+            if (node is FunctionTypeAlias) return node.name.lexeme;
+            if (node is GenericTypeAlias) return node.name.lexeme;
+            if (node is TopLevelVariableDeclaration) return node.variables.variables.single.name.lexeme;
+            if (node is FieldDeclaration) return node.fields.variables.single.name.lexeme;
+            return '';
+          }
+
+          (int, int) lineRange(String content, int start, int end) {
+            final previous = start == 0 ? -1 : content.lastIndexOf('\n', start - 1);
+            final lineStart = previous + 1;
+            if (content.substring(lineStart, start).trim().isEmpty) start = lineStart;
+            while (end < content.length && (content.codeUnitAt(end) == 32 || content.codeUnitAt(end) == 9)) end++;
+            if (end < content.length && content.codeUnitAt(end) == 13) end++;
+            if (end < content.length && content.codeUnitAt(end) == 10) end++;
+            return (start, end);
+          }
+
+          String simpleCostRow = r'''
+          class _CostRow extends StatelessWidget {
+            final IconData icon;
+            final String label;
+            final String value;
+
+            const _CostRow({
+              required this.icon,
+              required this.label,
+              required this.value,
+            });
+
+            @override
+            Widget build(BuildContext context) {
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: null,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(6, 12, 6, 12),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF3F4F6),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(icon, size: 18, color: const Color(0xFF374151)),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              label,
+                              style: const TextStyle(
+                                color: Color(0xFF111827),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            value,
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+          }
+          ''';
+
+          void main() {
+            if (targets.length != 32) throw StateError('Expected 32 declaration targets, got ${targets.length}');
+            if (importsToRemove.values.fold<int>(0, (n, v) => n + v.length) != 11) {
+              throw StateError('Expected 11 unused imports');
+            }
+
+            final files = <String>{...targets.map((t) => t.file), ...importsToRemove.keys};
+            for (final path in files) {
+              final file = File(path);
+              final content = file.readAsStringSync();
+              final parsed = parseString(content: content, path: path, throwIfDiagnostics: false);
+              if (parsed.errors.isNotEmpty) throw StateError('$path parser diagnostics: ${parsed.errors.join(' | ')}');
+
+              final edits = <({int start, int end, String replacement, String label})>[];
+
+              for (final target in targets.where((t) => t.file == path)) {
+                final identifierOffset = offsetFor(content, target.line, target.column);
+                final actualEnd = identifierOffset + target.name.length;
+                if (actualEnd > content.length || content.substring(identifierOffset, actualEnd) != target.name) {
+                  throw StateError('${target.file}:${target.line}:${target.column}: expected ${target.name}');
+                }
+                final locator = _OffsetLocator(identifierOffset);
+                parsed.unit.accept(locator);
+                final declaration = declarationFor(locator.result);
+                if (declaration == null || declarationName(declaration) != target.name) {
+                  throw StateError('${target.file}:${target.name}: declaration mismatch ${declaration?.runtimeType}');
+                }
+                final range = lineRange(content, declaration.offset, declaration.end);
+                edits.add((start: range.$1, end: range.$2, replacement: '', label: target.name));
+              }
+
+              final expectedImports = importsToRemove[path] ?? const <String>{};
+              for (final uri in expectedImports) {
+                final matches = parsed.unit.directives.whereType<ImportDirective>().where((d) => d.uri.stringValue == uri).toList();
+                if (matches.length != 1) throw StateError('$path: expected exactly one import $uri, got ${matches.length}');
+                final range = lineRange(content, matches.single.offset, matches.single.end);
+                edits.add((start: range.$1, end: range.$2, replacement: '', label: 'import:$uri'));
+              }
+
+              if (path == 'lib/pages/toolbox_je_me_lance_page.dart') {
+                final assignmentVisitor = _StarterErrorAssignments();
+                parsed.unit.accept(assignmentVisitor);
+                if (assignmentVisitor.statements.isEmpty) {
+                  throw StateError('Expected write-only _showStarterErrors assignments');
+                }
+                for (final statement in assignmentVisitor.statements) {
+                  final range = lineRange(content, statement.offset, statement.end);
+                  edits.add((start: range.$1, end: range.$2, replacement: '', label: '_showStarterErrors write'));
+                }
+
+                final costRow = parsed.unit.declarations.whereType<ClassDeclaration>().where((d) => d.name.lexeme == '_CostRow').toList();
+                final costRowState = parsed.unit.declarations.whereType<ClassDeclaration>().where((d) => d.name.lexeme == '_CostRowState').toList();
+                if (costRow.length != 1 || costRowState.length != 1) {
+                  throw StateError('Expected exactly one _CostRow and one _CostRowState');
+                }
+                final between = content.substring(costRow.single.end, costRowState.single.offset);
+                if (between.trim().isNotEmpty) throw StateError('Unexpected declaration between _CostRow and _CostRowState');
+                final range = lineRange(content, costRow.single.offset, costRowState.single.end);
+                edits.add((start: range.$1, end: range.$2, replacement: '$simpleCostRow\n', label: '_CostRow simplification'));
+              }
+
+              edits.sort((a, b) => a.start.compareTo(b.start));
+              final filtered = <({int start, int end, String replacement, String label})>[];
+              for (final edit in edits) {
+                final contained = edits.any((other) =>
+                    !identical(other, edit) &&
+                    other.start <= edit.start &&
+                    edit.end <= other.end &&
+                    (other.start < edit.start || edit.end < other.end));
+                if (!contained) filtered.add(edit);
+              }
+              for (var i = 1; i < filtered.length; i++) {
+                if (filtered[i].start < filtered[i - 1].end) {
+                  throw StateError('$path overlapping edits: ${filtered[i - 1].label} / ${filtered[i].label}');
+                }
+              }
+
+              var updated = content;
+              for (final edit in filtered.reversed) {
+                updated = updated.replaceRange(edit.start, edit.end, edit.replacement);
+                stdout.writeln('cascade removed/replaced $path:${edit.label}');
+              }
+              if (path == 'lib/pages/toolbox_je_me_lance_page.dart' && updated.contains('_showStarterErrors')) {
+                throw StateError('Residual _showStarterErrors reference after cascade cleanup');
+              }
+              file.writeAsStringSync(updated);
+            }
+          }
+          DART
+          dart run tool/lot3_unused_element_cascade.dart
+
+      - name: Restore dependency files and format final candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm tool/lot3_unused_element_cascade.dart
+          rmdir tool 2>/dev/null || true
+          cp /tmp/pubspec.yaml.before-lot3 pubspec.yaml
+          cp /tmp/pubspec.lock.before-lot3 pubspec.lock
+          flutter pub get
+          git diff --exit-code -- pubspec.yaml pubspec.lock
+          dart format \
+            lib/pages/account_page.dart \
+            lib/pages/admin_space_page.dart \
+            lib/pages/consult_offers_page.dart \
+            lib/pages/home_page.dart \
+            lib/pages/messages/conversations_list_page.dart \
+            lib/pages/offers/offer_details_page.dart \
+            lib/pages/publish_offer_page.dart \
+            lib/pages/toolbox_je_me_lance_page.dart \
+            lib/pages/user_offers_section.dart \
+            lib/services/admin_access_resolver.dart \
+            lib/services/marketplace_publish_service.dart \
+            lib/services/notification_service.dart \
+            test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart \
+            test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart
+
+      - name: Verify exact final source scope
+        shell: python
+        run: |
+          import subprocess
+          expected = {
+              'lib/pages/account_page.dart',
+              'lib/pages/admin_space_page.dart',
+              'lib/pages/consult_offers_page.dart',
+              'lib/pages/home_page.dart',
+              'lib/pages/messages/conversations_list_page.dart',
+              'lib/pages/offers/offer_details_page.dart',
+              'lib/pages/publish_offer_page.dart',
+              'lib/pages/toolbox_je_me_lance_page.dart',
+              'lib/pages/user_offers_section.dart',
+              'lib/services/admin_access_resolver.dart',
+              'lib/services/marketplace_publish_service.dart',
+              'lib/services/notification_service.dart',
+              'test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart',
+              'test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart',
+          }
+          changed = {p for p in subprocess.check_output(['git','diff','--name-only'], text=True).splitlines() if p}
+          if changed != expected:
+              raise SystemExit(f'fail-fast source scope mismatch unexpected={sorted(changed-expected)} missing={sorted(expected-changed)}')
+
+      - name: Analyze final candidate with both unused rules enabled
+        run: flutter analyze --fatal-infos
+
+      - name: Commit only a globally clean candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/lot3-unused-element-autofix.yml
+          rm .github/workflows/lot3-unused-element-ast-v7.yml
+          rm .github/workflows/lot3-unused-element-cascade.yml
+          git diff --check
+          git diff --exit-code -- pubspec.yaml pubspec.lock
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet && { echo 'No cleanup produced'; exit 1; }
+          git commit -m "refactor(lot3): supprimer le code mort global unused_element"
+          git push origin HEAD:refactor/lot3-enable-unused-element-final-20260808
