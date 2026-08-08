@@ -1,0 +1,145 @@
+name: Lot3 unused element AST v7 cleanup
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.event.pull_request.head.ref == 'refactor/lot3-enable-unused-element-final-20260808' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/lot3-enable-unused-element-final-20260808
+          fetch-depth: 0
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Flutter dependencies
+        run: flutter pub get
+
+      - name: Install compatible AST parser ephemerally
+        run: |
+          cp pubspec.yaml /tmp/pubspec.yaml.before-lot3
+          cp pubspec.lock /tmp/pubspec.lock.before-lot3
+          flutter pub add --dev 'analyzer:^7.7.1'
+
+      - name: Extract guarded cleanup script from previous workflow
+        shell: python
+        run: |
+          from pathlib import Path
+
+          source = Path('.github/workflows/lot3-unused-element-autofix.yml').read_text()
+          start_marker = "          cat > tool/lot3_unused_element_cleanup.dart <<'DART'\n"
+          end_marker = "\n          DART\n\n          dart run tool/lot3_unused_element_cleanup.dart"
+          start = source.find(start_marker)
+          end = source.find(end_marker, start + len(start_marker))
+          if start < 0 or end < 0:
+              raise SystemExit('fail-fast: AST payload markers not found')
+          block = source[start + len(start_marker):end]
+          lines = block.splitlines()
+          script = '\n'.join(
+              line[10:] if line.startswith('          ') else line
+              for line in lines
+          ) + '\n'
+
+          needle = """    final parsed = parseString(\n      content: content,\n      path: entry.key,\n      throwIfDiagnostics: false,\n    );\n    final ranges = <(int, int, String)>[];\n"""
+          replacement = """    final parsed = parseString(\n      content: content,\n      path: entry.key,\n      throwIfDiagnostics: false,\n    );\n    if (parsed.errors.isNotEmpty) {\n      throw StateError(\n        '${entry.key}: parser diagnostics: ${parsed.errors.join(' | ')}',\n      );\n    }\n    final ranges = <(int, int, String)>[];\n"""
+          if script.count(needle) != 1:
+              raise SystemExit('fail-fast: parseString guard insertion point mismatch')
+          script = script.replace(needle, replacement)
+
+          Path('tool').mkdir(exist_ok=True)
+          Path('tool/lot3_unused_element_cleanup.dart').write_text(script)
+
+      - name: Remove exactly the 57 analyzer-proven declarations
+        run: dart run tool/lot3_unused_element_cleanup.dart
+
+      - name: Restore dependency files and format only diagnosed files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm tool/lot3_unused_element_cleanup.dart
+          rmdir tool 2>/dev/null || true
+          cp /tmp/pubspec.yaml.before-lot3 pubspec.yaml
+          cp /tmp/pubspec.lock.before-lot3 pubspec.lock
+          flutter pub get
+          git diff --exit-code -- pubspec.yaml pubspec.lock
+
+          dart format \
+            lib/pages/account_page.dart \
+            lib/pages/admin_space_page.dart \
+            lib/pages/consult_offers_page.dart \
+            lib/pages/home_page.dart \
+            lib/pages/messages/conversations_list_page.dart \
+            lib/pages/offers/offer_details_page.dart \
+            lib/pages/publish_offer_page.dart \
+            lib/pages/toolbox_je_me_lance_page.dart \
+            lib/pages/user_offers_section.dart \
+            lib/services/admin_access_resolver.dart \
+            lib/services/marketplace_publish_service.dart \
+            lib/services/notification_service.dart \
+            test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart \
+            test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart
+
+      - name: Verify exact modified source scope
+        shell: python
+        run: |
+          import subprocess
+
+          expected = {
+              'lib/pages/account_page.dart',
+              'lib/pages/admin_space_page.dart',
+              'lib/pages/consult_offers_page.dart',
+              'lib/pages/home_page.dart',
+              'lib/pages/messages/conversations_list_page.dart',
+              'lib/pages/offers/offer_details_page.dart',
+              'lib/pages/publish_offer_page.dart',
+              'lib/pages/toolbox_je_me_lance_page.dart',
+              'lib/pages/user_offers_section.dart',
+              'lib/services/admin_access_resolver.dart',
+              'lib/services/marketplace_publish_service.dart',
+              'lib/services/notification_service.dart',
+              'test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart',
+              'test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart',
+          }
+          changed = {
+              line.strip()
+              for line in subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines()
+              if line.strip()
+          }
+          if changed != expected:
+              raise SystemExit(
+                  'fail-fast: source scope mismatch; '
+                  f'unexpected={sorted(changed - expected)}, missing={sorted(expected - changed)}'
+              )
+
+      - name: Analyze with unused_field and unused_element both enabled
+        run: flutter analyze --fatal-infos
+
+      - name: Commit only validated cleanup candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/lot3-unused-element-autofix.yml
+          rm .github/workflows/lot3-unused-element-ast-v7.yml
+          git diff --check
+          test ! -e tool/lot3_unused_element_cleanup.dart
+          git diff --exit-code -- pubspec.yaml pubspec.lock
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet && { echo 'No cleanup produced'; exit 1; }
+          git commit -m "refactor(lot3): supprimer les 57 éléments privés inutilisés"
+          git push origin HEAD:refactor/lot3-enable-unused-element-final-20260808
