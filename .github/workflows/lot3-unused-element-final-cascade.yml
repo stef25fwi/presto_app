@@ -1,0 +1,510 @@
+name: Lot3 unused element final cascade
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.event.pull_request.head.ref == 'refactor/lot3-enable-unused-element-final-20260808' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/lot3-enable-unused-element-final-20260808
+          fetch-depth: 0
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Flutter dependencies
+        run: flutter pub get
+
+      - name: Save dependency files and install compatible AST parser ephemerally
+        run: |
+          cp pubspec.yaml /tmp/pubspec.yaml.before-lot3
+          cp pubspec.lock /tmp/pubspec.lock.before-lot3
+          flutter pub add --dev 'analyzer:^7.7.1'
+
+      - name: Recreate validated stage 1 generator
+        shell: python
+        run: |
+          from pathlib import Path
+
+          workflow = Path('.github/workflows/lot3-unused-element-ast-v7.yml').read_text()
+          marker = "      - name: Extract guarded cleanup script from previous workflow\n        shell: python\n        run: |\n"
+          start = workflow.find(marker)
+          end = workflow.find("\n      - name: Remove exactly the 57 analyzer-proven declarations", start + len(marker))
+          if start < 0 or end < 0:
+              raise SystemExit('fail-fast: unable to recover validated stage-1 generator')
+          block = workflow[start + len(marker):end]
+          script = '\n'.join(
+              line[10:] if line.startswith('          ') else line
+              for line in block.splitlines()
+          ) + '\n'
+          exec(compile(script, '.github/workflows/lot3-unused-element-ast-v7.yml', 'exec'), {})
+
+      - name: Apply exactly the validated first 57 removals
+        run: dart run tool/lot3_unused_element_cleanup.dart
+
+      - name: Format stage 1
+        run: |
+          rm tool/lot3_unused_element_cleanup.dart
+          rmdir tool 2>/dev/null || true
+          dart format \
+            lib/pages/account_page.dart \
+            lib/pages/admin_space_page.dart \
+            lib/pages/consult_offers_page.dart \
+            lib/pages/home_page.dart \
+            lib/pages/messages/conversations_list_page.dart \
+            lib/pages/offers/offer_details_page.dart \
+            lib/pages/publish_offer_page.dart \
+            lib/pages/toolbox_je_me_lance_page.dart \
+            lib/pages/user_offers_section.dart \
+            lib/services/admin_access_resolver.dart \
+            lib/services/marketplace_publish_service.dart \
+            lib/services/notification_service.dart \
+            test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart \
+            test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart
+
+      - name: Prove stage 2 cascade is still exactly 46 diagnostics
+        shell: bash
+        run: |
+          set +e
+          flutter analyze --fatal-infos 2>&1 | tee /tmp/lot3-stage2-probe.txt
+          status=${PIPESTATUS[0]}
+          set -e
+          test "$status" -ne 0
+          python - <<'PY'
+          from collections import Counter
+          from pathlib import Path
+          import re
+          text = Path('/tmp/lot3-stage2-probe.txt').read_text()
+          codes = [m.group(1) for line in text.splitlines() if (m := re.search(r'•\s+([a-z][a-z0-9_]*)\s*$', line))]
+          expected = Counter({'unused_element': 29, 'unused_import': 11, 'unused_field': 3, 'unused_element_parameter': 3})
+          actual = Counter(codes)
+          if len(codes) != 46 or actual != expected:
+              raise SystemExit(f'fail-fast: stage-2 cascade drift expected={expected} actual={actual} total={len(codes)}')
+          PY
+
+      - name: Extract and apply validated stage 2 AST cleanup
+        shell: python
+        run: |
+          from pathlib import Path
+
+          source = Path('.github/workflows/lot3-unused-element-cascade.yml').read_text()
+          start_marker = "          cat > tool/lot3_unused_element_cascade.dart <<'DART'\n"
+          end_marker = "\n          DART\n          dart run tool/lot3_unused_element_cascade.dart"
+          start = source.find(start_marker)
+          end = source.find(end_marker, start + len(start_marker))
+          if start < 0 or end < 0:
+              raise SystemExit('fail-fast: stage-2 AST payload markers not found')
+          block = source[start + len(start_marker):end]
+          script = '\n'.join(
+              line[10:] if line.startswith('          ') else line
+              for line in block.splitlines()
+          ) + '\n'
+          Path('tool').mkdir(exist_ok=True)
+          Path('tool/lot3_unused_element_cascade.dart').write_text(script)
+      - run: dart run tool/lot3_unused_element_cascade.dart
+
+      - name: Restore project dependency files before exact stage 3 probe
+        run: |
+          rm tool/lot3_unused_element_cascade.dart
+          rmdir tool 2>/dev/null || true
+          cp /tmp/pubspec.yaml.before-lot3 pubspec.yaml
+          cp /tmp/pubspec.lock.before-lot3 pubspec.lock
+          flutter pub get
+          git diff --exit-code -- pubspec.yaml pubspec.lock
+          dart format \
+            lib/pages/account_page.dart \
+            lib/pages/admin_space_page.dart \
+            lib/pages/consult_offers_page.dart \
+            lib/pages/home_page.dart \
+            lib/pages/messages/conversations_list_page.dart \
+            lib/pages/offers/offer_details_page.dart \
+            lib/pages/publish_offer_page.dart \
+            lib/pages/toolbox_je_me_lance_page.dart \
+            lib/pages/user_offers_section.dart \
+            lib/services/admin_access_resolver.dart \
+            lib/services/marketplace_publish_service.dart \
+            lib/services/notification_service.dart \
+            test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart \
+            test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart
+
+      - name: Prove stage 3 is exactly the known 18 diagnostics
+        shell: bash
+        run: |
+          set +e
+          flutter analyze --fatal-infos 2>&1 | tee /tmp/lot3-stage3-probe.txt
+          status=${PIPESTATUS[0]}
+          set -e
+          test "$status" -ne 0
+          python - <<'PY'
+          from collections import Counter
+          from pathlib import Path
+          import re
+
+          text = Path('/tmp/lot3-stage3-probe.txt').read_text()
+          codes = [m.group(1) for line in text.splitlines() if (m := re.search(r'•\s+([a-z][a-z0-9_]*)\s*$', line))]
+          expected_counts = Counter({'unused_element': 7, 'unused_import': 6, 'unused_field': 5})
+          actual_counts = Counter(codes)
+          if len(codes) != 18 or actual_counts != expected_counts:
+              raise SystemExit(f'fail-fast: stage-3 cascade drift expected={expected_counts} actual={actual_counts} total={len(codes)}')
+
+          expected_fragments = [
+              "Unused import: 'package:presto_app/widgets/deleted_user_profile.dart' • lib/pages/consult_offers_page.dart",
+              "Unused import: '../services/app_route_parser.dart' • lib/pages/home_page.dart",
+              "field '_notificationsFuture' isn't used",
+              "field '_notificationsLastFetchAt' isn't used",
+              "field '_notificationsCachedUserId' isn't used",
+              "Unused import: 'package:presto_app/widgets/deleted_user_profile.dart' • lib/pages/messages/conversations_list_page.dart",
+              "declaration '_conversationValue' isn't referenced",
+              "Unused import: 'package:presto_app/widgets/deleted_user_profile.dart' • lib/pages/offers/offer_details_page.dart",
+              "Unused import: 'package:presto_app/features/subscriptions/subscription_action_placeholders.dart' • lib/pages/toolbox_je_me_lance_page.dart",
+              "Unused import: 'package:url_launcher/url_launcher.dart' • lib/pages/toolbox_je_me_lance_page.dart",
+              "field '_saving' isn't used",
+              "field '_isFromCache' isn't used",
+              "declaration '_HeroMetricPill' isn't referenced",
+              "declaration '_JourneyStatusChip' isn't referenced",
+              "declaration '_PriorityChip' isn't referenced",
+              "declaration '_JourneyInfoBullet' isn't referenced",
+              "declaration '_CostRow' isn't referenced",
+              "declaration '_TaskContactLinkChip' isn't referenced",
+          ]
+          missing = [fragment for fragment in expected_fragments if text.count(fragment) != 1]
+          if missing:
+              raise SystemExit(f'fail-fast: expected stage-3 diagnostics are not exact: {missing}')
+          PY
+
+      - name: Reinstall compatible AST parser ephemerally for stage 3
+        run: flutter pub add --dev 'analyzer:^7.7.1'
+
+      - name: Generate exact stage 3 AST cleanup
+        shell: bash
+        run: |
+          mkdir -p tool
+          cat > tool/lot3_unused_element_stage3.dart <<'DART'
+          import 'dart:io';
+
+          import 'package:analyzer/dart/analysis/utilities.dart';
+          import 'package:analyzer/dart/ast/ast.dart';
+          import 'package:analyzer/dart/ast/visitor.dart';
+
+          const importsToRemove = <String, Set<String>>{
+            'lib/pages/consult_offers_page.dart': {
+              'package:presto_app/widgets/deleted_user_profile.dart',
+            },
+            'lib/pages/home_page.dart': {
+              '../services/app_route_parser.dart',
+            },
+            'lib/pages/messages/conversations_list_page.dart': {
+              'package:presto_app/widgets/deleted_user_profile.dart',
+            },
+            'lib/pages/offers/offer_details_page.dart': {
+              'package:presto_app/widgets/deleted_user_profile.dart',
+            },
+            'lib/pages/toolbox_je_me_lance_page.dart': {
+              'package:presto_app/features/subscriptions/subscription_action_placeholders.dart',
+              'package:url_launcher/url_launcher.dart',
+            },
+          };
+
+          const declarationsToRemove = <String, Set<String>>{
+            'lib/pages/messages/conversations_list_page.dart': {
+              '_conversationValue',
+            },
+            'lib/pages/toolbox_je_me_lance_page.dart': {
+              '_HeroMetricPill',
+              '_JourneyStatusChip',
+              '_PriorityChip',
+              '_JourneyInfoBullet',
+              '_CostRow',
+              '_TaskContactLinkChip',
+            },
+          };
+
+          const fieldsToRemove = <String, Set<String>>{
+            'lib/pages/home_page.dart': {
+              '_notificationsFuture',
+              '_notificationsLastFetchAt',
+              '_notificationsCachedUserId',
+            },
+            'lib/pages/toolbox_je_me_lance_page.dart': {
+              '_saving',
+              '_isFromCache',
+            },
+          };
+
+          final class _DeclarationCollector extends GeneralizingAstVisitor<void> {
+            _DeclarationCollector(this.names);
+            final Set<String> names;
+            final Map<String, AstNode> found = <String, AstNode>{};
+
+            void add(String name, AstNode node) {
+              if (!names.contains(name)) return;
+              if (found.containsKey(name)) {
+                throw StateError('Duplicate declaration for $name');
+              }
+              found[name] = node;
+            }
+
+            @override
+            void visitMethodDeclaration(MethodDeclaration node) {
+              add(node.name.lexeme, node);
+              super.visitMethodDeclaration(node);
+            }
+
+            @override
+            void visitFunctionDeclaration(FunctionDeclaration node) {
+              add(node.name.lexeme, node);
+              super.visitFunctionDeclaration(node);
+            }
+
+            @override
+            void visitClassDeclaration(ClassDeclaration node) {
+              add(node.name.lexeme, node);
+              super.visitClassDeclaration(node);
+            }
+          }
+
+          final class _FieldAndAssignmentCollector extends GeneralizingAstVisitor<void> {
+            _FieldAndAssignmentCollector(this.names);
+            final Set<String> names;
+            final Map<String, FieldDeclaration> fields = <String, FieldDeclaration>{};
+            final Map<String, List<AssignmentExpression>> assignments = <String, List<AssignmentExpression>>{};
+
+            @override
+            void visitFieldDeclaration(FieldDeclaration node) {
+              for (final variable in node.fields.variables) {
+                final name = variable.name.lexeme;
+                if (!names.contains(name)) continue;
+                if (node.fields.variables.length != 1) {
+                  throw StateError('Refusing multi-variable field declaration containing $name');
+                }
+                if (fields.containsKey(name)) throw StateError('Duplicate field declaration for $name');
+                fields[name] = node;
+              }
+              super.visitFieldDeclaration(node);
+            }
+
+            @override
+            void visitAssignmentExpression(AssignmentExpression node) {
+              final lhs = node.leftHandSide;
+              if (lhs is SimpleIdentifier && names.contains(lhs.name)) {
+                if (node.rightHandSide is! BooleanLiteral) {
+                  throw StateError('Refusing non-boolean write to ${lhs.name}: ${node.rightHandSide.runtimeType}');
+                }
+                assignments.putIfAbsent(lhs.name, () => <AssignmentExpression>[]).add(node);
+              }
+              super.visitAssignmentExpression(node);
+            }
+          }
+
+          (int, int) lineRange(String content, int start, int end) {
+            final previous = start == 0 ? -1 : content.lastIndexOf('\n', start - 1);
+            final lineStart = previous + 1;
+            if (content.substring(lineStart, start).trim().isEmpty) start = lineStart;
+            while (end < content.length && (content.codeUnitAt(end) == 32 || content.codeUnitAt(end) == 9)) end++;
+            if (end < content.length && content.codeUnitAt(end) == 13) end++;
+            if (end < content.length && content.codeUnitAt(end) == 10) end++;
+            return (start, end);
+          }
+
+          AstNode removableWriteNode(AssignmentExpression assignment) {
+            AstNode? current = assignment;
+            while (current != null && current is! ExpressionStatement) {
+              current = current.parent;
+            }
+            if (current is! ExpressionStatement) {
+              throw StateError('No removable expression statement for assignment at ${assignment.offset}');
+            }
+            final parent = current.parent;
+            if (parent is IfStatement && identical(parent.thenStatement, current)) {
+              if (parent.elseStatement != null) {
+                throw StateError('Refusing assignment wrapped by if/else at ${assignment.offset}');
+              }
+              return parent;
+            }
+            return current;
+          }
+
+          void main() {
+            final allFiles = <String>{
+              ...importsToRemove.keys,
+              ...declarationsToRemove.keys,
+              ...fieldsToRemove.keys,
+            };
+            var importCount = 0;
+            var declarationCount = 0;
+            var fieldCount = 0;
+
+            for (final path in allFiles) {
+              final file = File(path);
+              final content = file.readAsStringSync();
+              final parsed = parseString(content: content, path: path, throwIfDiagnostics: false);
+              if (parsed.errors.isNotEmpty) {
+                throw StateError('$path parser diagnostics: ${parsed.errors.join(' | ')}');
+              }
+
+              final edits = <({int start, int end, String label})>[];
+
+              for (final uri in importsToRemove[path] ?? const <String>{}) {
+                final matches = parsed.unit.directives.whereType<ImportDirective>().where((d) => d.uri.stringValue == uri).toList();
+                if (matches.length != 1) throw StateError('$path expected one import $uri, got ${matches.length}');
+                final range = lineRange(content, matches.single.offset, matches.single.end);
+                edits.add((start: range.$1, end: range.$2, label: 'import:$uri'));
+                importCount++;
+              }
+
+              final declarationNames = declarationsToRemove[path] ?? const <String>{};
+              if (declarationNames.isNotEmpty) {
+                final collector = _DeclarationCollector(declarationNames);
+                parsed.unit.accept(collector);
+                if (collector.found.keys.toSet().length != declarationNames.length ||
+                    !collector.found.keys.toSet().containsAll(declarationNames)) {
+                  throw StateError('$path declaration mismatch expected=$declarationNames actual=${collector.found.keys.toSet()}');
+                }
+                for (final name in declarationNames) {
+                  final node = collector.found[name]!;
+                  final range = lineRange(content, node.offset, node.end);
+                  edits.add((start: range.$1, end: range.$2, label: 'declaration:$name'));
+                  declarationCount++;
+                }
+              }
+
+              final fieldNames = fieldsToRemove[path] ?? const <String>{};
+              if (fieldNames.isNotEmpty) {
+                final collector = _FieldAndAssignmentCollector(fieldNames);
+                parsed.unit.accept(collector);
+                if (collector.fields.keys.toSet().length != fieldNames.length ||
+                    !collector.fields.keys.toSet().containsAll(fieldNames)) {
+                  throw StateError('$path field mismatch expected=$fieldNames actual=${collector.fields.keys.toSet()}');
+                }
+                for (final name in fieldNames) {
+                  final field = collector.fields[name]!;
+                  final fieldRange = lineRange(content, field.offset, field.end);
+                  edits.add((start: fieldRange.$1, end: fieldRange.$2, label: 'field:$name'));
+                  for (final assignment in collector.assignments[name] ?? const <AssignmentExpression>[]) {
+                    final node = removableWriteNode(assignment);
+                    final range = lineRange(content, node.offset, node.end);
+                    edits.add((start: range.$1, end: range.$2, label: 'write:$name'));
+                  }
+                  fieldCount++;
+                }
+              }
+
+              edits.sort((a, b) => a.start.compareTo(b.start));
+              final deduped = <({int start, int end, String label})>[];
+              for (final edit in edits) {
+                final contained = edits.any((other) =>
+                    !identical(other, edit) &&
+                    other.start <= edit.start && edit.end <= other.end &&
+                    (other.start < edit.start || edit.end < other.end));
+                if (!contained) deduped.add(edit);
+              }
+              for (var i = 1; i < deduped.length; i++) {
+                if (deduped[i].start < deduped[i - 1].end) {
+                  throw StateError('$path overlapping stage-3 edits ${deduped[i - 1].label} / ${deduped[i].label}');
+                }
+              }
+
+              var updated = content;
+              for (final edit in deduped.reversed) {
+                updated = updated.replaceRange(edit.start, edit.end, '');
+                stdout.writeln('stage3 removed $path:${edit.label}');
+              }
+              for (final name in fieldNames) {
+                if (updated.contains(name)) {
+                  throw StateError('$path residual reference to removed write-only field $name');
+                }
+              }
+              file.writeAsStringSync(updated);
+            }
+
+            if (importCount != 6 || declarationCount != 7 || fieldCount != 5) {
+              throw StateError('Stage-3 count mismatch imports=$importCount declarations=$declarationCount fields=$fieldCount');
+            }
+            stdout.writeln('Stage 3 removed exactly 6 imports, 7 declarations and 5 write-only fields.');
+          }
+          DART
+          dart run tool/lot3_unused_element_stage3.dart
+
+      - name: Restore dependencies and format final source candidate
+        run: |
+          rm tool/lot3_unused_element_stage3.dart
+          rmdir tool 2>/dev/null || true
+          cp /tmp/pubspec.yaml.before-lot3 pubspec.yaml
+          cp /tmp/pubspec.lock.before-lot3 pubspec.lock
+          flutter pub get
+          git diff --exit-code -- pubspec.yaml pubspec.lock
+          dart format \
+            lib/pages/account_page.dart \
+            lib/pages/admin_space_page.dart \
+            lib/pages/consult_offers_page.dart \
+            lib/pages/home_page.dart \
+            lib/pages/messages/conversations_list_page.dart \
+            lib/pages/offers/offer_details_page.dart \
+            lib/pages/publish_offer_page.dart \
+            lib/pages/toolbox_je_me_lance_page.dart \
+            lib/pages/user_offers_section.dart \
+            lib/services/admin_access_resolver.dart \
+            lib/services/marketplace_publish_service.dart \
+            lib/services/notification_service.dart \
+            test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart \
+            test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart
+
+      - name: Verify exact source scope remains the same 14 diagnosed files
+        shell: python
+        run: |
+          import subprocess
+          expected = {
+              'lib/pages/account_page.dart',
+              'lib/pages/admin_space_page.dart',
+              'lib/pages/consult_offers_page.dart',
+              'lib/pages/home_page.dart',
+              'lib/pages/messages/conversations_list_page.dart',
+              'lib/pages/offers/offer_details_page.dart',
+              'lib/pages/publish_offer_page.dart',
+              'lib/pages/toolbox_je_me_lance_page.dart',
+              'lib/pages/user_offers_section.dart',
+              'lib/services/admin_access_resolver.dart',
+              'lib/services/marketplace_publish_service.dart',
+              'lib/services/notification_service.dart',
+              'test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart',
+              'test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart',
+          }
+          changed = {p for p in subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines() if p and not p.startswith('.github/workflows/')}
+          if changed != expected:
+              raise SystemExit(f'fail-fast source scope mismatch unexpected={sorted(changed-expected)} missing={sorted(expected-changed)}')
+
+      - name: Final analyzer must be globally clean
+        run: flutter analyze --fatal-infos
+
+      - name: Remove all temporary Lot 3 workflows and commit only globally clean source
+        run: |
+          set -euo pipefail
+          rm -f \
+            .github/workflows/lot3-unused-element-autofix.yml \
+            .github/workflows/lot3-unused-element-ast-v7.yml \
+            .github/workflows/lot3-unused-element-cascade.yml \
+            .github/workflows/lot3-fix-cascade-city-import.yml \
+            .github/workflows/lot3-capture-final-analyzer.yml \
+            .github/workflows/lot3-unused-element-final-cascade.yml
+          git diff --check
+          git diff --exit-code -- pubspec.yaml pubspec.lock
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet && { echo 'No cleanup produced'; exit 1; }
+          git commit -m "refactor(lot3): supprimer le code mort global unused_element"
+          git push origin HEAD:refactor/lot3-enable-unused-element-final-20260808
