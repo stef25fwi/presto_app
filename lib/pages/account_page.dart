@@ -154,7 +154,6 @@ class _AccountPageState extends State<AccountPage> {
   Set<String> _selectedFavoriteDepartements = <String>{};
   Set<String> _draftFavoriteSelections = <String>{};
   bool _profileLoaded = false;
-  bool _profileLoadRequested = false;
   bool _isSavingProfile = false;
   bool _isUploadingProfilePhoto = false;
   bool _isSigningOut = false;
@@ -811,7 +810,6 @@ class _AccountPageState extends State<AccountPage> {
   void _resetProfileState({bool clearControllers = true}) {
     _activeProfileUid = null;
     _profileLoaded = false;
-    _profileLoadRequested = false;
     _profileLoadError = false;
     _profileLoadRetries = 0;
     _lastMissingRequiredCount = -1;
@@ -1302,7 +1300,6 @@ class _AccountPageState extends State<AccountPage> {
     setState(() {
       _resetProfileState();
       _activeProfileUid = uid;
-      _profileLoadRequested = true;
       _profileLoaded = true;
       _profileSyncInProgress = true;
       _applyImmediateAuthProfile(user);
@@ -1397,7 +1394,6 @@ class _AccountPageState extends State<AccountPage> {
           }
           _profileLoadError = false;
           _profileLoaded = true;
-          _profileLoadRequested = true;
           _profileSyncInProgress = false;
           _lastMissingRequiredCount = _missingRequiredProfileFields().length;
         });
@@ -1416,7 +1412,6 @@ class _AccountPageState extends State<AccountPage> {
         setState(() {
           _profileLoadError = true;
           _profileLoaded = true;
-          _profileLoadRequested = true;
           _profileSyncInProgress = false;
         });
       },
