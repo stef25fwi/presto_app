@@ -1,0 +1,150 @@
+name: Lot 3 unused_element targeted fix v2
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  fix-unused-elements:
+    if: github.head_ref == 'refactor/lot3-enable-unused-element-20260808'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/lot3-enable-unused-element-20260808
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Remove analyzer-confirmed unused private declarations
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          targets = {
+            'lib/pages/account_page.dart': [(3438,'_getAvailableSubcategories'),(3433,'_getSubcategoriesForCategory'),(892,'_fetchCachedUserProfileDocument'),(851,'_fetchUserProfileDocument'),(347,'_suppressProfileSyncSnackBarWhenAdminConfirmed')],
+            'lib/pages/admin_space_page.dart': [(215,'shortLabel')],
+            'lib/pages/consult_offers_page.dart': [(4067,'_deletedAwareAvatar'),(4057,'_deletedAwareDisplayName'),(3442,'_StandardResponseBadge'),(2895,'_confirmDeleteOffer'),(2824,'_showEditOfferDialog'),(2800,'_isQuickResponse'),(827,'_getCachedOrFreshResults'),(368,'_buildConsultNotificationBell'),(333,'_normalizeForCategoryMatch'),(213,'_openExternalUrl'),(205,'_copyToClipboard'),(182,'_makeCityCategoryKey')],
+            'lib/pages/home_page.dart': [(2205,'_HowItWorksStepWithProgress'),(1406,'_buildInfoIcon'),(1141,'_buildNotificationBell'),(589,'_recentOffersQuery')],
+            'lib/pages/messages/conversations_list_page.dart': [(2777,'_deletedAwareAvatar'),(2767,'_deletedAwareDisplayName'),(504,'_notificationConversationId'),(492,'_conversationSortDate'),(472,'_searchableConversationText')],
+            'lib/pages/offers/offer_details_page.dart': [(4508,'_deletedAwareAvatar'),(4498,'_deletedAwareDisplayName'),(4428,'_AvatarFallback'),(2884,'_PhotoThumbnailStrip'),(2819,'_HeroInfoChip'),(2332,'_TopHeader'),(1568,'_buildFavoriteOfferPayload'),(500,'_extractImageUrl'),(60,'_firstOfferDetailPhotoField')],
+            'lib/pages/publish_offer_page.dart': [(4379,'_buildPublishAiAnalyzingBanner'),(3805,'_onPostalCodeChanged'),(3778,'_onCityChanged'),(706,'_publishAdminRuntimeDetail')],
+            'lib/pages/toolbox_je_me_lance_page.dart': [(5619,'_JourneySummaryPage'),(4488,'_StarterRecapChip'),(3981,'_StepperBar'),(3898,'_buildRegionGuichets'),(3645,'_buildMyPath'),(2989,'_buildStepProject'),(2558,'_buildStarterCard'),(2183,'_currentStepIcon'),(2113,'_buildHeaderStatusPanel'),(80,'_openExternalUrl')],
+            'lib/pages/user_offers_section.dart': [(3432,'_QuerySnapshotAdapter')],
+            'lib/services/admin_access_resolver.dart': [(642,'_verifyServerAccessRetry')],
+            'lib/services/marketplace_publish_service.dart': [(415,'_resolveCanonicalCity'),(163,'_resolveOwnerDisplayName')],
+            'lib/services/notification_service.dart': [(489,'_backgroundHandler')],
+            'test/toolbox_je_me_lance_salarie_agriculteur_journey_test.dart': [(69,'_scrollUntilFound')],
+            'test/toolbox_je_me_lance_statuts_agriculteur_journey_test.dart': [(68,'_scrollUntilFound')],
+          }
+
+          def starts(text):
+            out=[0]
+            out += [i+1 for i,c in enumerate(text) if c=='\n']
+            return out
+
+          def skip_string(t,i):
+            q=t[i]; triple=t.startswith(q*3,i); d=q*(3 if triple else 1); j=i+len(d)
+            while j<len(t):
+              if t.startswith(d,j): return j+len(d)
+              j += 2 if t[j]=='\\' and not triple else 1
+            raise RuntimeError('unterminated string')
+
+          def skip_comment(t,i):
+            if t.startswith('//',i):
+              j=t.find('\n',i+2); return len(t) if j<0 else j+1
+            if t.startswith('/*',i):
+              j=t.find('*/',i+2)
+              if j<0: raise RuntimeError('unterminated comment')
+              return j+2
+            return i
+
+          def declaration_end(t,pos):
+            i=pos+1; p=b=0
+            while i<len(t):
+              if t.startswith('//',i) or t.startswith('/*',i): i=skip_comment(t,i); continue
+              c=t[i]
+              if c in "'\"": i=skip_string(t,i); continue
+              if c=='(': p+=1
+              elif c==')': p-=1
+              elif c=='[': b+=1
+              elif c==']': b-=1
+              elif p==0 and b==0 and t.startswith('=>',i):
+                i+=2; pp=bb=br=0
+                while i<len(t):
+                  if t.startswith('//',i) or t.startswith('/*',i): i=skip_comment(t,i); continue
+                  c=t[i]
+                  if c in "'\"": i=skip_string(t,i); continue
+                  if c=='(': pp+=1
+                  elif c==')': pp-=1
+                  elif c=='[': bb+=1
+                  elif c==']': bb-=1
+                  elif c=='{': br+=1
+                  elif c=='}': br-=1
+                  elif c==';' and pp==bb==br==0: return i+1
+                  i+=1
+                raise RuntimeError('arrow end missing')
+              elif c=='{' and p==0 and b==0:
+                depth=1; i+=1
+                while i<len(t) and depth:
+                  if t.startswith('//',i) or t.startswith('/*',i): i=skip_comment(t,i); continue
+                  c=t[i]
+                  if c in "'\"": i=skip_string(t,i); continue
+                  if c=='{': depth+=1
+                  elif c=='}': depth-=1
+                  i+=1
+                if depth: raise RuntimeError('unbalanced body')
+                return i
+              elif c==';' and p==0 and b==0: return i+1
+              i+=1
+            raise RuntimeError('declaration end missing')
+
+          removed=0
+          for filename, entries in targets.items():
+            path=Path(filename); text=path.read_text(); ls=starts(text)
+            for line_no,name in sorted(entries, reverse=True):
+              line_start=ls[line_no-1]; line_end=text.find('\n',line_start)
+              if line_end<0: line_end=len(text)
+              pos=text.find(name,line_start,line_end)
+              if pos<0: raise RuntimeError(f'{filename}:{line_no}:{name} not found')
+              start=line_start
+              # Analyzer points at the method name on the second line for this wrapped return type.
+              if filename=='lib/pages/account_page.dart' and name=='_fetchCachedUserProfileDocument':
+                prev_end=start-1; start=text.rfind('\n',0,prev_end)+1
+              while start>0:
+                prev_end=start-1; prev_start=text.rfind('\n',0,prev_end)+1
+                if text[prev_start:prev_end].strip().startswith('@'): start=prev_start
+                else: break
+              end=declaration_end(text,pos)
+              while end<len(text) and text[end] in ' \t': end+=1
+              if end<len(text) and text[end]=='\n': end+=1
+              text=text[:start]+text[end:]; ls=starts(text); removed+=1
+            path.write_text(text)
+          if removed!=57: raise RuntimeError(f'expected 57 removals, got {removed}')
+          print('Removed 57 analyzer-confirmed declarations')
+          PY
+      - name: Remove imports made unused
+        run: dart fix --apply --code=unused_import
+      - name: Format changed Dart files
+        shell: bash
+        run: git diff --name-only -- '*.dart' | xargs -r dart format
+      - name: Verify analyzer is fully green
+        run: flutter analyze
+      - name: Commit targeted cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$(git diff --name-only -- '*.dart')"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- '*.dart'
+          git commit -m 'refactor(lot3): remove unused private elements'
+          git push origin HEAD:refactor/lot3-enable-unused-element-20260808
