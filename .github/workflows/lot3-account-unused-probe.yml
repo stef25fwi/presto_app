@@ -1,0 +1,57 @@
+name: Lot 3 account unused probe
+
+on:
+  push:
+    branches:
+      - refactor/lot3-account-unused-probe-20260807
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lot3-account-unused-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Probe account unused diagnostics without changing repository
+        shell: bash
+        run: |
+          set -uo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('lib/pages/account_page.dart')
+          text = path.read_text()
+          expected = '// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter\n'
+          if not text.startswith(expected):
+              raise SystemExit('Unexpected account_page.dart ignore header')
+          path.write_text(text[len(expected):])
+          PY
+
+          set +e
+          flutter analyze --fatal-infos lib/pages/account_page.dart 2>&1 | tee /tmp/account-analyze.log
+          analyze_status=${PIPESTATUS[0]}
+          set -e
+
+          echo '--- LOT3_UNUSED_DIAGNOSTICS_BEGIN ---'
+          grep -E 'unused_(element|field|local_variable|element_parameter)' /tmp/account-analyze.log || true
+          echo '--- LOT3_UNUSED_DIAGNOSTICS_END ---'
+          echo "Analyzer exit status: ${analyze_status}"
+
+          git checkout -- lib/pages/account_page.dart
+          git diff --exit-code
