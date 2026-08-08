@@ -1,27 +1,52 @@
-name: Lot 3 account unused cascade probe
+name: Lot 3 account unused atomic cleanup
 
 on:
-  pull_request:
-    branches: [main]
+  push:
+    branches:
+      - refactor/lot3-account-unused-probe-20260807
     paths:
       - .github/workflows/lot3-account-unused-probe.yml
-      - lib/pages/account_page.dart
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: lot3-account-unused-cascade-pr-${{ github.event.pull_request.number }}
+  group: lot3-account-unused-atomic-cleanup
   cancel-in-progress: true
 
 jobs:
-  probe:
+  cleanup:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.head_ref }}
+          ref: refactor/lot3-account-unused-probe-20260807
+
+      - name: Apply proven dead-code cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('lib/pages/account_page.dart')
+          text = path.read_text()
+          header = '// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter\n\n'
+          if not text.startswith(header):
+              raise SystemExit('Unexpected account_page.dart unused ignore header')
+          text = text[len(header):]
+
+          dead = """    final visibleEmail = _profileEmail.trim().isNotEmpty
+        ? _profileEmail.trim()
+        : (user.email ?? '');
+"""
+          count = text.count(dead)
+          if count != 1:
+              raise SystemExit(f'visibleEmail block: expected exactly one occurrence, found {count}')
+          text = text.replace(dead, '', 1)
+          path.write_text(text)
+          PY
 
       - name: Setup Flutter 3.44.6
         uses: subosito/flutter-action@v2
@@ -33,38 +58,94 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
 
-      - name: Probe cascade after removing visibleEmail
+      - name: Validate targeted cleanup
+        id: validate_cleanup
         shell: bash
         run: |
           set -uo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('lib/pages/account_page.dart')
-          text = path.read_text()
-          header = '// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter\n\n'
-          if not text.startswith(header):
-              raise SystemExit('Unexpected account_page.dart ignore header')
-          text = text[len(header):]
-          dead = """    final visibleEmail = _profileEmail.trim().isNotEmpty
-        ? _profileEmail.trim()
-        : (user.email ?? '');
-"""
-          count = text.count(dead)
-          if count != 1:
-              raise SystemExit(f'visibleEmail block: expected 1 occurrence, found {count}')
-          text = text.replace(dead, '', 1)
-          path.write_text(text)
-          PY
 
           set +e
-          flutter analyze --fatal-infos lib/pages/account_page.dart 2>&1 | tee /tmp/account-cascade-analyze.log
+          flutter analyze --fatal-infos lib/pages/account_page.dart 2>&1 | tee /tmp/account-analyze.log
           analyze_status=${PIPESTATUS[0]}
+
+          flutter test \
+            test/pages/account_page_auth_shell_test.dart \
+            test/pages/account_page_signed_in_shell_test.dart \
+            2>&1 | tee /tmp/account-tests.log
+          test_status=${PIPESTATUS[0]}
+
+          git diff --check 2>&1 | tee /tmp/account-diffcheck.log
+          diff_status=${PIPESTATUS[0]}
           set -e
 
-          echo '--- LOT3_UNUSED_CASCADE_BEGIN ---'
-          grep -E 'unused_(element|field|local_variable|element_parameter)' /tmp/account-cascade-analyze.log || true
-          echo '--- LOT3_UNUSED_CASCADE_END ---'
-          echo "Analyzer exit status: ${analyze_status}"
+          ignore_status=0
+          if grep -q '^// ignore_for_file: .*unused_' lib/pages/account_page.dart; then
+            echo 'unused_* file-level suppression still present in account_page.dart' | tee /tmp/account-ignore.log
+            ignore_status=1
+          else
+            echo 'No file-level unused_* suppression remains.' | tee /tmp/account-ignore.log
+          fi
 
-          git checkout -- lib/pages/account_page.dart
-          git diff --exit-code
+          echo "analyze_status=${analyze_status}" >> "$GITHUB_OUTPUT"
+          echo "test_status=${test_status}" >> "$GITHUB_OUTPUT"
+          echo "diff_status=${diff_status}" >> "$GITHUB_OUTPUT"
+          echo "ignore_status=${ignore_status}" >> "$GITHUB_OUTPUT"
+
+      - name: Persist validated result or failure evidence
+        shell: bash
+        env:
+          ANALYZE_STATUS: ${{ steps.validate_cleanup.outputs.analyze_status }}
+          TEST_STATUS: ${{ steps.validate_cleanup.outputs.test_status }}
+          DIFF_STATUS: ${{ steps.validate_cleanup.outputs.diff_status }}
+          IGNORE_STATUS: ${{ steps.validate_cleanup.outputs.ignore_status }}
+        run: |
+          set -euo pipefail
+          mkdir -p docs/quality
+
+          success=true
+          for status in "$ANALYZE_STATUS" "$TEST_STATUS" "$DIFF_STATUS" "$IGNORE_STATUS"; do
+            if [ "$status" != "0" ]; then
+              success=false
+            fi
+          done
+
+          if [ "$success" = true ]; then
+            rm -f docs/quality/lot3-account-unused-probe.md
+            rm -f docs/quality/lot3-account-unused-cascade-probe.md
+            rm -f docs/quality/lot3-account-cleanup-validation.md
+            python3 - <<'PY'
+          from pathlib import Path
+          Path('docs/quality/lot3-dead-code-tranche7-account-unused.md').write_text('''# Lot 3 — Code mort, tranche 7 — compte\n\nBase : `f873b0845f9ca691e9e7bba1ac23e5a938af9221`.\n\n## Cible\n\n`lib/pages/account_page.dart`\n\n## Preuve de code mort\n\nUne sonde Flutter 3.44.6 a retiré le masque global `unused_element, unused_field, unused_local_variable, unused_element_parameter` uniquement dans le workspace CI. L’analyseur a remonté un seul diagnostic `unused_*` : la variable locale `visibleEmail` dans `_buildProfile`.\n\n`_profileEmail` reste réellement lu lors de l’hydratation du profil (`fallbackValues`), donc la suppression de `visibleEmail` ne supprime ni ne neutralise la gestion de l’adresse e-mail du profil.\n\nLe correctif supprime uniquement `visibleEmail` et retire le masque global `unused_*` de ce fichier.\n\n## Validation ciblée\n\n- `flutter analyze --fatal-infos lib/pages/account_page.dart` : succès ;\n- `flutter test test/pages/account_page_auth_shell_test.dart test/pages/account_page_signed_in_shell_test.dart` : succès ;\n- `git diff --check` : succès ;\n- absence de `ignore_for_file` contenant `unused_*` dans `account_page.dart` : confirmée.\n\n## Garde-fous\n\n- aucune route, Auth, App Check, Firebase, Firestore, Functions ou deep link modifiée ;\n- aucun seuil qualité abaissé ;\n- aucun skip/exclusion ajouté ;\n- aucune mission LCOV créée ou relancée.\n''')
+          PY
+            commit_message='refactor(lot3): retirer le masque unused du compte'
+          else
+            git checkout -- lib/pages/account_page.dart
+            rm -f docs/quality/lot3-dead-code-tranche7-account-unused.md
+            python3 - <<'PY'
+          import os
+          from pathlib import Path
+          parts = [
+              '# Lot 3 — échec validation nettoyage compte',
+              '',
+              'Base : `f873b0845f9ca691e9e7bba1ac23e5a938af9221`.',
+              '',
+              f"Analyzer status: {os.environ['ANALYZE_STATUS']}",
+              f"Tests status: {os.environ['TEST_STATUS']}",
+              f"Diff check status: {os.environ['DIFF_STATUS']}",
+              f"Ignore status: {os.environ['IGNORE_STATUS']}",
+              '',
+              'Le fichier métier a été restauré ; aucun nettoyage non validé n’est conservé.',
+          ]
+          Path('docs/quality/lot3-account-cleanup-validation.md').write_text('\n'.join(parts) + '\n')
+          PY
+            commit_message='chore(lot3): archiver échec validation nettoyage compte'
+          fi
+
+          rm -f .github/workflows/lot3-account-unused-probe.yml
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m "$commit_message"
+          git push origin HEAD:refactor/lot3-account-unused-probe-20260807
