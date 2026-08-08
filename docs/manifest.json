@@ -5,7 +5,7 @@
   "display": "standalone",
   "background_color": "#FF8A1D",
   "theme_color": "#FF8A1D",
-  "description": "Trouvez rapidement un particulier, un indépendant ou un professionnel partout en France. Publiez une annonce assistée par IA et échangez directement, avec 0 % de commission.",
+  "description": "Petites annonces de services : publiez votre besoin, indiquez votre prix et trouvez instantanément un particulier ou professionnel disponible près de chez vous.",
   "orientation": "portrait-primary",
   "prefer_related_applications": false,
   "icons": [
