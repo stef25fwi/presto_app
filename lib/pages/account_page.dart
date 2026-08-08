@@ -1,5 +1,3 @@
-// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter
-
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -2622,9 +2620,6 @@ class _AccountPageState extends State<AccountPage> {
     final pseudo = _profilePseudoController.text.trim();
     final displayName =
         pseudo.isNotEmpty ? pseudo : _deriveImmediatePseudo(user);
-    final visibleEmail = _profileEmail.trim().isNotEmpty
-        ? _profileEmail.trim()
-        : (user.email ?? '');
     final visiblePhotoUrl = customProfilePhotoUrl(_profilePhotoUrl) ?? '';
     final draftCategoryLabels = _draftFavoriteSelections
         .where((entry) => !entry.contains('—'))

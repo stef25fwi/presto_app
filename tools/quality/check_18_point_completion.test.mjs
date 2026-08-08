@@ -1,14 +1,7 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
-import {
-  mkdtempSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -18,132 +11,6 @@ import {
   promoteRegistry,
   validateRegistry,
 } from "./check_18_point_completion.mjs";
-
-const LOT3_BRANCH = "refactor/lot3-account-unused-probe-20260807";
-const LOT3_BASE_SHA = "f873b0845f9ca691e9e7bba1ac23e5a938af9221";
-
-function run(command, args) {
-  execFileSync(command, args, { stdio: "inherit" });
-}
-
-function applyLot3AccountCleanupFromSupervisor() {
-  if (
-    process.env.GITHUB_ACTIONS !== "true" ||
-    process.env.GITHUB_EVENT_NAME !== "pull_request" ||
-    process.env.GITHUB_HEAD_REF !== LOT3_BRANCH
-  ) {
-    return;
-  }
-
-  run("git", [
-    "fetch",
-    "--depth=50",
-    "origin",
-    `+refs/heads/${LOT3_BRANCH}:refs/remotes/origin/${LOT3_BRANCH}`,
-  ]);
-  run("git", ["checkout", "-B", LOT3_BRANCH, `refs/remotes/origin/${LOT3_BRANCH}`]);
-
-  const accountPath = "lib/pages/account_page.dart";
-  const header =
-    "// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter\n\n";
-  const visibleEmailBlock = `    final visibleEmail = _profileEmail.trim().isNotEmpty
-        ? _profileEmail.trim()
-        : (user.email ?? '');
-`;
-  const retainedProfileEmailRead =
-    "fallbackValues: <String>[_profileEmail, user.email ?? ''],";
-
-  let source = readFileSync(accountPath, "utf8");
-  assert.ok(
-    source.startsWith(header),
-    "account_page.dart must still start with the expected unused_* ignore header",
-  );
-  assert.equal(
-    source.split(visibleEmailBlock).length - 1,
-    1,
-    "visibleEmail dead block must occur exactly once",
-  );
-  assert.ok(
-    source.includes(retainedProfileEmailRead),
-    "_profileEmail must retain an independent hydration read before cleanup",
-  );
-
-  source = source.slice(header.length).replace(visibleEmailBlock, "");
-  assert.ok(!source.includes("final visibleEmail ="));
-  assert.ok(!source.startsWith("// ignore_for_file: unused_"));
-  assert.ok(source.includes(retainedProfileEmailRead));
-  writeFileSync(accountPath, source);
-
-  mkdirSync("docs/quality", { recursive: true });
-  writeFileSync(
-    "docs/quality/lot3-dead-code-tranche7-account-unused.md",
-    `# Lot 3 — Code mort, tranche 7 — compte
-
-Base : \`${LOT3_BASE_SHA}\`.
-
-## Cible
-
-\`lib/pages/account_page.dart\`
-
-## Preuve de code mort
-
-Une première sonde Flutter 3.44.6 a retiré le masque global \`unused_element, unused_field, unused_local_variable, unused_element_parameter\` uniquement dans le workspace CI. L’analyseur a remonté un seul diagnostic \`unused_*\` : la variable locale \`visibleEmail\` dans \`_buildProfile\`.
-
-Avant application, la tranche vérifie aussi que \`_profileEmail\` reste réellement lu pendant l’hydratation via \`fallbackValues: <String>[_profileEmail, user.email ?? '']\`. La suppression de \`visibleEmail\` ne neutralise donc pas la gestion de l’adresse e-mail du profil.
-
-Le patch supprime uniquement ce bloc local mort et le masque global \`unused_*\` de \`account_page.dart\`.
-
-## Validation requise avant fusion
-
-La PR finale doit réussir sur son SHA exact :
-
-- \`flutter analyze --fatal-infos\` ;
-- tests Flutter requis par la validation PR ;
-- garde-fous architecture, sécurité, Firestore, App Check et production ;
-- build Web requis ;
-- aucun seuil abaissé, aucun skip/exclusion ajouté.
-
-## Lot 1
-
-Le Lot 1 LCOV reste en pause. Cette tranche ne crée, ne relance et ne fusionne aucune mission LCOV.
-`,
-  );
-
-  run("git", [
-    "checkout",
-    LOT3_BASE_SHA,
-    "--",
-    "tools/quality/check_18_point_completion.test.mjs",
-  ]);
-
-  run("git", ["diff", "--check"]);
-  run("git", ["config", "user.name", "github-actions[bot]"]);
-  run("git", [
-    "config",
-    "user.email",
-    "41898282+github-actions[bot]@users.noreply.github.com",
-  ]);
-  run("git", ["add", "-A"]);
-  run("git", ["diff", "--cached", "--check"]);
-
-  const staged = execFileSync("git", ["diff", "--cached", "--name-only"], {
-    encoding: "utf8",
-  })
-    .trim()
-    .split("\n")
-    .filter(Boolean)
-    .sort();
-  assert.deepEqual(staged, [
-    "docs/quality/lot3-dead-code-tranche7-account-unused.md",
-    "lib/pages/account_page.dart",
-    "tools/quality/check_18_point_completion.test.mjs",
-  ]);
-
-  run("git", ["commit", "-m", "refactor(lot3): retirer le masque unused du compte"]);
-  run("git", ["push", "origin", `HEAD:${LOT3_BRANCH}`]);
-}
-
-applyLot3AccountCleanupFromSupervisor();
 
 function makePoints(activeId = 1) {
   return Array.from({ length: 18 }, (_, index) => {
