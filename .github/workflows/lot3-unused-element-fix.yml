@@ -1,0 +1,47 @@
+name: Lot 3 unused_element targeted fix
+
+on:
+  push:
+    branches:
+      - refactor/lot3-enable-unused-element-20260808
+    paths:
+      - .github/workflows/lot3-unused-element-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix-unused-elements:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/lot3-enable-unused-element-20260808
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+      - name: Flutter dependencies
+        run: flutter pub get
+      - name: Preview targeted fixes
+        run: dart fix --dry-run --code=unused_element | tee /tmp/dart-fix-preview.txt
+      - name: Apply only unused_element fixes
+        run: dart fix --apply --code=unused_element
+      - name: Verify analyzer
+        run: flutter analyze
+      - name: Commit targeted cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo 'No changes produced by dart fix.'
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- '*.dart'
+          git commit -m 'refactor(lot3): remove unused private elements'
+          git push origin HEAD:refactor/lot3-enable-unused-element-20260808
