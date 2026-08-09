@@ -56,6 +56,8 @@ class _PhoneVerificationPageState extends State<PhoneVerificationPage> {
   bool _loading = false;
   bool _hydratingPhone = false;
   String? _errorMessage;
+  Timer? _hydrationTimeoutTimer;
+  void Function()? _cancelHydrationWait;
 
   @override
   void initState() {
@@ -75,6 +77,10 @@ class _PhoneVerificationPageState extends State<PhoneVerificationPage> {
 
   @override
   void dispose() {
+    _cancelHydrationWait?.call();
+    _cancelHydrationWait = null;
+    _hydrationTimeoutTimer?.cancel();
+    _hydrationTimeoutTimer = null;
     _phoneController.dispose();
     _codeController.dispose();
     super.dispose();
@@ -99,17 +105,56 @@ class _PhoneVerificationPageState extends State<PhoneVerificationPage> {
     return '';
   }
 
+  Future<T> _withHydrationTimeout<T>(Future<T> future) async {
+    final completer = Completer<T>();
+    late final Timer timer;
+
+    void completeValue(T value) {
+      if (!completer.isCompleted) completer.complete(value);
+    }
+
+    void completeError(Object error, StackTrace stackTrace) {
+      if (!completer.isCompleted) completer.completeError(error, stackTrace);
+    }
+
+    timer = Timer(const Duration(seconds: 8), () {
+      completeError(
+        TimeoutException('Hydratation du profil téléphone expirée.'),
+        StackTrace.current,
+      );
+    });
+    _hydrationTimeoutTimer = timer;
+    _cancelHydrationWait = () {
+      timer.cancel();
+      completeError(
+        StateError('Hydratation du profil téléphone annulée.'),
+        StackTrace.current,
+      );
+    };
+
+    future.then(completeValue, onError: completeError);
+
+    try {
+      return await completer.future;
+    } finally {
+      timer.cancel();
+      if (identical(_hydrationTimeoutTimer, timer)) {
+        _hydrationTimeoutTimer = null;
+      }
+      _cancelHydrationWait = null;
+    }
+  }
+
   Future<void> _hydratePhoneDefaults() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
     if (mounted) setState(() => _hydratingPhone = true);
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get()
-          .timeout(const Duration(seconds: 8));
+      final snapshot = await _withHydrationTimeout(
+        FirebaseFirestore.instance.collection('users').doc(user.uid).get(),
+      );
+      if (!mounted) return;
       final data = snapshot.data() ?? const <String, dynamic>{};
 
       final storedPhone = _firstProfileValue(
@@ -158,7 +203,7 @@ class _PhoneVerificationPageState extends State<PhoneVerificationPage> {
         if (ownsGeoService) geoService.close();
       }
 
-      final geoCountryCode = departmentCode == null || departmentCode!.isEmpty
+      final geoCountryCode = departmentCode == null || departmentCode.isEmpty
           ? null
           : phoneCountryCodeForDepartment(departmentCode);
       final fallbackCountryCode =
