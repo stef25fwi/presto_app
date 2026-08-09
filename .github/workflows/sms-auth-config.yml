@@ -8,6 +8,7 @@ on:
       - 'lib/services/phone_verification_service.dart'
       - 'lib/services/auth_error_mapper.dart'
       - 'test/services/phone_verification_service_test.dart'
+      - 'test/services/phone_verification_callback_sequence_test.dart'
       - 'test/services/auth_error_mapper_test.dart'
   push:
     branches:
@@ -98,13 +99,6 @@ jobs:
           echo "ANDROID_RELEASE_SHA1=$sha1" >> "$GITHUB_ENV"
           echo "ANDROID_RELEASE_SHA256=$sha256" >> "$GITHUB_ENV"
           echo "✅ Empreintes de la clé release résolues sans exposer le keystore."
-
-      - name: Enable required Google APIs
-        run: |
-          gcloud services enable \
-            identitytoolkit.googleapis.com \
-            firebase.googleapis.com \
-            --project=presto-app-74abe
 
       - name: Repair and certify Firebase Phone Auth
         run: bash tools/firebase/ensure_phone_auth_config.sh --apply
