@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,11 +19,15 @@ Future<void> _pumpPage(
   );
 }
 
+PhoneAttemptReserver get _allowAttempt => (phoneNumber) async =>
+    <String, dynamic>{'allowed': true, 'limited': true, 'dailyLimit': 1};
+
 void main() {
   testWidgets('envoie le code puis confirme et referme la page', (tester) async {
     var sendCodeCalls = 0;
     var confirmCodeCalls = 0;
     final service = PhoneVerificationService(
+      attemptReserver: _allowAttempt,
       verifyStarter: ({
         required phoneNumber,
         required timeout,
@@ -66,13 +71,14 @@ void main() {
 
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Numéro de téléphone'),
-      '+33612345678',
+      '0612345678',
     );
     await tester.tap(find.text('Envoyer le code'));
     await tester.pumpAndSettle();
 
     expect(sendCodeCalls, 1);
     expect(find.text('Vérifier'), findsOneWidget);
+    expect(find.textContaining('+33612345678'), findsOneWidget);
 
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Code reçu par SMS'),
@@ -89,6 +95,7 @@ void main() {
     tester,
   ) async {
     final service = PhoneVerificationService(
+      attemptReserver: _allowAttempt,
       verifyStarter: ({
         required phoneNumber,
         required timeout,
@@ -106,7 +113,7 @@ void main() {
     await _pumpPage(tester, service: service);
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Numéro de téléphone'),
-      '+33612345678',
+      '0612345678',
     );
     await tester.tap(find.text('Envoyer le code'));
     await tester.pumpAndSettle();
@@ -115,14 +122,20 @@ void main() {
       find.textContaining('Numéro de téléphone invalide'),
       findsOneWidget,
     );
-    // On reste sur l'étape de saisie du numéro.
+    expect(find.textContaining('comptabilisée'), findsOneWidget);
     expect(find.text('Envoyer le code'), findsOneWidget);
   });
 
-  testWidgets('rejette un numéro qui ne respecte pas le format E.164', (
+  testWidgets('normalise un numéro national avant de réserver et envoyer', (
     tester,
   ) async {
+    String? reservedPhone;
+    String? sentPhone;
     final service = PhoneVerificationService(
+      attemptReserver: (phoneNumber) async {
+        reservedPhone = phoneNumber;
+        return <String, dynamic>{'allowed': true, 'dailyLimit': 1};
+      },
       verifyStarter: ({
         required phoneNumber,
         required timeout,
@@ -131,7 +144,46 @@ void main() {
         required codeSent,
         required codeAutoRetrievalTimeout,
       }) async {
-        fail('verifyStarter ne doit pas être appelé pour un numéro invalide');
+        sentPhone = phoneNumber;
+        codeSent('verification-id-1', null);
+      },
+    );
+
+    await _pumpPage(tester, service: service);
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Numéro de téléphone'),
+      '06 12 34 56 78',
+    );
+    await tester.tap(find.text('Envoyer le code'));
+    await tester.pumpAndSettle();
+
+    expect(reservedPhone, '+33612345678');
+    expect(sentPhone, '+33612345678');
+  });
+
+  testWidgets('bloque le second essai quand le quota serveur est épuisé', (
+    tester,
+  ) async {
+    var verifyStarterCalled = false;
+    final service = PhoneVerificationService(
+      attemptReserver: (_) async {
+        throw FirebaseFunctionsException(
+          code: 'resource-exhausted',
+          message: 'Quota SMS atteint',
+          details: <String, dynamic>{
+            'nextAllowedAt': '2026-08-10T12:00:00.000Z',
+          },
+        );
+      },
+      verifyStarter: ({
+        required phoneNumber,
+        required timeout,
+        required verificationCompleted,
+        required verificationFailed,
+        required codeSent,
+        required codeAutoRetrievalTimeout,
+      }) async {
+        verifyStarterCalled = true;
       },
     );
 
@@ -143,13 +195,16 @@ void main() {
     await tester.tap(find.text('Envoyer le code'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Format attendu'), findsOneWidget);
+    expect(verifyStarterCalled, isFalse);
+    expect(find.textContaining('Quota atteint'), findsOneWidget);
+    expect(find.textContaining('1 tentative SMS'), findsOneWidget);
   });
 
-  testWidgets('le bouton renvoyer un code revient à la saisie du numéro', (
+  testWidgets('le bouton changer de numéro revient à la saisie', (
     tester,
   ) async {
     final service = PhoneVerificationService(
+      attemptReserver: _allowAttempt,
       verifyStarter: ({
         required phoneNumber,
         required timeout,
@@ -165,14 +220,14 @@ void main() {
     await _pumpPage(tester, service: service);
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Numéro de téléphone'),
-      '+33612345678',
+      '0612345678',
     );
     await tester.tap(find.text('Envoyer le code'));
     await tester.pumpAndSettle();
 
     expect(find.text('Vérifier'), findsOneWidget);
 
-    await tester.tap(find.text('Changer de numéro / renvoyer un code'));
+    await tester.tap(find.text('Changer de numéro'));
     await tester.pumpAndSettle();
 
     expect(find.text('Envoyer le code'), findsOneWidget);
