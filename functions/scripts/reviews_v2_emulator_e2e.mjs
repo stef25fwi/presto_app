@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import admin from "firebase-admin";
+import { getApps, initializeApp } from "firebase-admin/app";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
 
 const projectId = process.env.GCLOUD_PROJECT || process.env.GCLOUD_PROJECT_ID || "presto-app-74abe";
 const authHost = process.env.FIREBASE_AUTH_EMULATOR_HOST || "127.0.0.1:9099";
@@ -11,10 +12,10 @@ if (!process.env.FIRESTORE_EMULATOR_HOST || !process.env.FIREBASE_AUTH_EMULATOR_
   throw new Error("reviews_v2_emulator_e2e.mjs must run inside Firebase emulators:exec");
 }
 
-if (admin.apps.length === 0) {
-  admin.initializeApp({ projectId });
+if (getApps().length === 0) {
+  initializeApp({ projectId });
 }
-const db = admin.firestore();
+const db = getFirestore();
 
 const unique = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const password = "ReviewsV2-Test-2026!";
@@ -102,14 +103,14 @@ async function main() {
       email: requester.email,
       pseudo: "Annonceur E2E",
       city: "Pointe-à-Pitre",
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     }),
     db.collection("users").doc(provider.uid).set({
       uid: provider.uid,
       email: provider.email,
       pseudo: "Prestataire E2E",
       city: "Les Abymes",
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     }),
   ]);
 
@@ -121,8 +122,8 @@ async function main() {
     visibility: "public",
     reviewRequested: true,
     reviewSubmitted: false,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   });
   await db.collection("conversations").doc(conversationId).set({
     offerId,
@@ -133,8 +134,8 @@ async function main() {
       [requester.uid]: "Annonceur E2E",
       [provider.uid]: "Prestataire E2E",
     },
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   });
 
   // 1. « Noter plus tard » is a real queue item and can be dismissed explicitly.
