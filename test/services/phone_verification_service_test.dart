@@ -6,6 +6,28 @@ import 'package:presto_app/services/phone_verification_service.dart';
 
 void main() {
   group('PhoneVerificationService', () {
+    test('reserveDailyAttempt transmet le numéro au contrôle serveur', () async {
+      String? capturedPhoneNumber;
+      final service = PhoneVerificationService(
+        attemptReserver: (phoneNumber) async {
+          capturedPhoneNumber = phoneNumber;
+          return <String, dynamic>{
+            'allowed': true,
+            'limited': true,
+            'dailyLimit': 1,
+          };
+        },
+      );
+
+      final result = await service.reserveDailyAttempt(
+        phoneNumber: '+590690123456',
+      );
+
+      expect(capturedPhoneNumber, '+590690123456');
+      expect(result['allowed'], isTrue);
+      expect(result['dailyLimit'], 1);
+    });
+
     test('sendCode transmet le numéro et relaie codeSent', () async {
       String? capturedPhoneNumber;
       String? codeSentId;
