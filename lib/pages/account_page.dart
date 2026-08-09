@@ -422,7 +422,7 @@ class _AccountPageState extends State<AccountPage> {
         case 'unavailable':
           return 'Le service admin est indisponible ou le réseau ne répond pas.';
         case 'deadline-exceeded':
-          return 'La vérification admin a expiré.';
+          return 'La vérification admin a dépassé le délai autorisé.';
         case 'internal':
           return 'La fonction admin a renvoyé une erreur interne.';
       }
@@ -2672,7 +2672,7 @@ class _AccountPageState extends State<AccountPage> {
                                 setState(() {
                                   _draftFavoriteSelections.remove(category);
                                   _draftFavoriteSelections.removeWhere(
-                                    (e) => e.startsWith('$category — '),
+                                    (e) => e.startsWith('\$category — '),
                                   );
                                 });
                                 unawaited(_applyDraftFavorites(user));
