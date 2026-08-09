@@ -147,6 +147,8 @@ class PhoneVerificationService {
 
   Future<void> _commitPendingAttempt() async {
     final reservationId = _pendingReservationId;
+    // Ces mutations locales sont synchrones et empêchent tout callback tardif
+    // de libérer une tentative après que Firebase a confirmé l'envoi.
     _smsDispatchConfirmed = true;
     _pendingReservationId = null;
     if (reservationId == null || reservationId.isEmpty) return;
@@ -195,61 +197,52 @@ class PhoneVerificationService {
     required Future<void> Function() onAutoVerified,
   }) async {
     final starter = _verifyStarter ?? _defaultVerifyStarter;
-    final terminal = Completer<void>();
     var codeSentObserved = false;
 
-    Future<void> handleFailure(FirebaseAuthException error) async {
-      if (!codeSentObserved) {
-        await _releasePendingAttempt('firebase_${error.code}');
-      }
-      onFailed(error);
-      if (!terminal.isCompleted) terminal.complete();
-    }
-
-    Future<void> handleCodeSent(String verificationId) async {
-      codeSentObserved = true;
-      await _commitPendingAttempt();
-      onCodeSent(verificationId);
-      if (!terminal.isCompleted) terminal.complete();
-    }
-
-    Future<void> handleAutoVerified(PhoneAuthCredential credential) async {
-      codeSentObserved = true;
-      await _commitPendingAttempt();
-      try {
-        await _linkOrUpdate(credential);
-        await onAutoVerified();
-      } on FirebaseAuthException catch (error) {
+    void handleFailure(FirebaseAuthException error) {
+      if (codeSentObserved || _pendingReservationId == null) {
         onFailed(error);
-      } finally {
-        if (!terminal.isCompleted) terminal.complete();
+        return;
       }
+      unawaited(() async {
+        await _releasePendingAttempt('firebase_${error.code}');
+        onFailed(error);
+      }());
+    }
+
+    void handleCodeSent(String verificationId) {
+      codeSentObserved = true;
+      unawaited(_commitPendingAttempt());
+      onCodeSent(verificationId);
+    }
+
+    void handleAutoVerified(PhoneAuthCredential credential) {
+      codeSentObserved = true;
+      unawaited(_commitPendingAttempt());
+      unawaited(() async {
+        try {
+          await _linkOrUpdate(credential);
+          await onAutoVerified();
+        } on FirebaseAuthException catch (error) {
+          onFailed(error);
+        }
+      }());
     }
 
     try {
       await starter(
         phoneNumber: phoneNumber,
         timeout: const Duration(seconds: 60),
-        verificationCompleted: (credential) {
-          unawaited(handleAutoVerified(credential));
-        },
-        verificationFailed: (error) {
-          unawaited(handleFailure(error));
-        },
-        codeSent: (verificationId, _) {
-          unawaited(handleCodeSent(verificationId));
-        },
-        codeAutoRetrievalTimeout: (_) {
-          if (!terminal.isCompleted) terminal.complete();
-        },
+        verificationCompleted: handleAutoVerified,
+        verificationFailed: handleFailure,
+        codeSent: (verificationId, _) => handleCodeSent(verificationId),
+        codeAutoRetrievalTimeout: (_) {},
       );
     } on FirebaseAuthException catch (error) {
-      await handleFailure(error);
-      return;
-    }
-
-    if (!terminal.isCompleted) {
-      await terminal.future;
+      if (!codeSentObserved) {
+        await _releasePendingAttempt('firebase_${error.code}');
+      }
+      onFailed(error);
     }
   }
 
