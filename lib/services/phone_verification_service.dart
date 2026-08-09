@@ -205,30 +205,30 @@ class PhoneVerificationService {
   }) async {
     final starter = _verifyStarter ?? _defaultVerifyStarter;
     var codeSentObserved = false;
-    var terminalCallbackDelivered = false;
+    var failureDelivered = false;
+    var autoVerificationDelivered = false;
     Timer? watchdog;
 
     Future<void> failBeforeCodeSent(
       FirebaseAuthException error,
       String releaseReason,
     ) async {
-      if (terminalCallbackDelivered || codeSentObserved) return;
-      terminalCallbackDelivered = true;
+      if (failureDelivered || codeSentObserved) return;
+      failureDelivered = true;
       watchdog?.cancel();
       await _releasePendingAttempt(releaseReason);
       onFailed(error);
     }
 
     void handleFailure(FirebaseAuthException error) {
-      if (terminalCallbackDelivered || codeSentObserved) return;
+      if (failureDelivered || codeSentObserved) return;
       unawaited(
         failBeforeCodeSent(error, 'firebase_${error.code}'),
       );
     }
 
     void handleCodeSent(String verificationId) {
-      if (terminalCallbackDelivered) return;
-      terminalCallbackDelivered = true;
+      if (failureDelivered || codeSentObserved) return;
       codeSentObserved = true;
       watchdog?.cancel();
       unawaited(_commitPendingAttempt());
@@ -236,8 +236,8 @@ class PhoneVerificationService {
     }
 
     void handleAutoVerified(PhoneAuthCredential credential) {
-      if (terminalCallbackDelivered) return;
-      terminalCallbackDelivered = true;
+      if (failureDelivered || autoVerificationDelivered) return;
+      autoVerificationDelivered = true;
       codeSentObserved = true;
       watchdog?.cancel();
       unawaited(_commitPendingAttempt());
@@ -252,7 +252,7 @@ class PhoneVerificationService {
     }
 
     void handleAutoRetrievalTimeout(String _) {
-      if (terminalCallbackDelivered || codeSentObserved) return;
+      if (failureDelivered || codeSentObserved) return;
       unawaited(
         failBeforeCodeSent(
           FirebaseAuthException(
@@ -266,7 +266,7 @@ class PhoneVerificationService {
     }
 
     watchdog = Timer(_smsCallbackWatchdogTimeout, () {
-      if (terminalCallbackDelivered || codeSentObserved) return;
+      if (failureDelivered || codeSentObserved) return;
       unawaited(
         failBeforeCodeSent(
           FirebaseAuthException(
