@@ -36,7 +36,11 @@ function timestampMs(value) {
 
 const projectId = argValue('--project=', process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || '');
 const outputPath = argValue('--output=', defaultOutput);
-const safeFallback = !hasFlag('--strict');
+// Le collecteur de production est strict par défaut : une panne Firestore doit
+// faire échouer le pipeline. Le fallback noindex n'est autorisé que lorsqu'il
+// est demandé explicitement pour un diagnostic/local avec --allow-fallback.
+// --strict reste accepté et prend priorité pour compatibilité.
+const allowFallback = hasFlag('--allow-fallback') && !hasFlag('--strict');
 const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
 const recentCutoff = Date.now() - Number(registry.activationGate.recentWindowDays || 90) * 24 * 60 * 60 * 1000;
 
@@ -145,7 +149,7 @@ try {
   });
   console.log(`SEO local signals: ${snapshot.size} annonces publiques actives analysées; sortie ${outputPath}.`);
 } catch (error) {
-  if (!safeFallback) throw error;
+  if (!allowFallback) throw error;
   writeReport({
     version: 1,
     generatedAt: null,
