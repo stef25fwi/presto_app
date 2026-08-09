@@ -1,9 +1,10 @@
 name: Reviews V2 legacy config scan
 
 on:
-  push:
-    branches:
-      - agent/reviews-v2-complete-mutual-flow
+  pull_request:
+    paths:
+      - 'functions/**'
+      - '.github/workflows/reviews-v2-legacy-config-scan.yml'
 
 permissions:
   contents: read
