@@ -14,7 +14,10 @@ export { syncMyEmailVerification } from "./modules/auth/email_verification_sync"
 // Doit rester après syncMyEmailVerification : tools/apply_auth_client_hardening.mjs
 // vérifie l'adjacence de ces deux exports pour rester idempotent, et réinsère un
 // doublon si une ligne s'intercale.
-export { confirmPhoneVerified } from "./modules/auth/phone_verification";
+export {
+  confirmPhoneVerified,
+  reservePhoneVerificationAttempt,
+} from "./modules/auth/phone_verification";
 export {
   placesAutocomplete,
   placesDetails,
