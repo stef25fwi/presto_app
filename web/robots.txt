@@ -3,3 +3,4 @@ Allow: /
 
 Sitemap: https://ilipresto.fr/sitemap.xml
 Sitemap: https://ilipresto.fr/sitemap-local.xml
+Sitemap: https://ilipresto.fr/sitemap-annonces.xml

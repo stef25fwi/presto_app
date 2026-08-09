@@ -23,6 +23,8 @@ jobs:
         run: node tools/quality/check_programmatic_local_seo.mjs
       - name: Validate production signal collector
         run: node tools/quality/check_programmatic_signal_collector.mjs
+      - name: Validate public marketplace SEO
+        run: node tools/quality/check_public_marketplace_seo.mjs
       - name: Validate every public page
         run: node tools/quality/check_public_page_seo.mjs
       - name: Validate continuous SEO monitoring
