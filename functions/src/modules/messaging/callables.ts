@@ -524,7 +524,7 @@ export function buildAttachmentMessageFallbackText(
 
 const ADMIN_MESSAGING_CALLABLE_OPTIONS = {
   ...MESSAGING_CALLABLE_OPTIONS,
-  enforceAppCheck: false,
+  enforceAppCheck: ENFORCE_APP_CHECK,
 };
 
 function sanitizeAttachmentText(value: unknown, maxLength: number): string {
@@ -1090,6 +1090,7 @@ export const ensureOfferConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async 
         offerTitle,
         status: "open",
         archivedBy: {},
+        deletedBy: {},
         blockedBy: {},
         lastReadAt: {},
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
