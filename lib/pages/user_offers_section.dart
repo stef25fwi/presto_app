@@ -3259,8 +3259,6 @@ class _UserOffersSectionState extends State<UserOffersSection> {
 
       final shouldKeepVisibleWithJobDone = isOfferJobDoneDeletionReason(reason);
 
-      debugPrint('Suppression offre ${item.offerId} avec motif: $reason');
-
       final callable = prestoFirebaseFunctions.httpsCallable(
         'deleteListing',
         options: HttpsCallableOptions(
@@ -3286,8 +3284,6 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       }
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
-      debugPrint(
-          'Erreur callable suppression offre ${item.offerId}: ${e.code} ${e.message}');
       final message = e.code == 'permission-denied'
           ? 'Suppression refusée. Cette annonce n’est pas reconnue comme vous appartenant.'
           : e.code == 'not-found'
@@ -3296,7 +3292,6 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       showErrorSnackBar(context, message);
     } catch (e) {
       if (!mounted) return;
-      debugPrint('Erreur suppression offre ${item.offerId}: $e');
       final message = e is FirebaseException && e.code == 'permission-denied'
           ? 'Suppression refusée par les règles Firestore.'
           : 'Erreur lors de la suppression';
@@ -3407,16 +3402,12 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       showSuccessSnackBar(context, successMessage);
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
-      debugPrint(
-        'Erreur clôture offre ${item.offerId}: ${e.code} ${e.message}',
-      );
       showErrorSnackBar(
         context,
         'Impossible de clôturer cette annonce pour le moment.',
       );
     } catch (e) {
       if (!mounted) return;
-      debugPrint('Erreur clôture offre ${item.offerId}: $e');
       showErrorSnackBar(
         context,
         'Impossible de clôturer cette annonce pour le moment.',
