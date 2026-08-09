@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs';
-import admin from 'firebase-admin';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
 const registryPath = 'web/programmatic-seo-registry.json';
 const defaultOutput = 'quality/seo-programmatic-local-signals.json';
@@ -62,11 +63,10 @@ function writeReport(report) {
 }
 
 try {
-  if (!admin.apps.length) {
-    admin.initializeApp(projectId ? {projectId} : undefined);
-  }
-
-  const db = admin.firestore();
+  const app = getApps().length > 0
+    ? getApps()[0]
+    : initializeApp(projectId ? {projectId} : undefined);
+  const db = getFirestore(app);
   const query = db.collection('listings')
     .where('status', '==', 'active')
     .where('visibility', '==', 'public')
