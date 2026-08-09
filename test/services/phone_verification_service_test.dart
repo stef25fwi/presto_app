@@ -30,6 +30,7 @@ void main() {
 
     test('verificationFailed libère la réservation avant de relayer l’erreur', () async {
       final events = <String>[];
+      final failureDelivered = Completer<void>();
       final service = PhoneVerificationService(
         attemptReserver: (_) async => <String, dynamic>{
           'allowed': true,
@@ -62,9 +63,13 @@ void main() {
       await service.sendCode(
         phoneNumber: '+590690123456',
         onCodeSent: (_) => fail('codeSent ne doit pas être appelé'),
-        onFailed: (error) => events.add('failed:${error.code}'),
+        onFailed: (error) {
+          events.add('failed:${error.code}');
+          if (!failureDelivered.isCompleted) failureDelivered.complete();
+        },
         onAutoVerified: () async => fail('auto verification inattendue'),
       );
+      await failureDelivered.future.timeout(const Duration(seconds: 1));
 
       expect(
         events,
@@ -78,6 +83,7 @@ void main() {
     test('codeSent commit la réservation et ne la libère pas', () async {
       String? committedReservationId;
       var released = false;
+      final commitDone = Completer<void>();
       final service = PhoneVerificationService(
         attemptReserver: (_) async => <String, dynamic>{
           'allowed': true,
@@ -87,6 +93,7 @@ void main() {
         },
         attemptCommitter: (reservationId) async {
           committedReservationId = reservationId;
+          if (!commitDone.isCompleted) commitDone.complete();
           return <String, dynamic>{'committed': true};
         },
         attemptReleaser: (_, __) async {
@@ -112,6 +119,7 @@ void main() {
         onFailed: (_) => fail('onFailed ne doit pas être appelé'),
         onAutoVerified: () async => fail('auto verification inattendue'),
       );
+      await commitDone.future.timeout(const Duration(seconds: 1));
 
       expect(committedReservationId, 'reservation_67890');
       expect(released, isFalse);
@@ -324,6 +332,7 @@ void main() {
             await service.confirmServerSide();
           },
         );
+        await Future<void>.delayed(Duration.zero);
 
         expect(linkedCredentialCount, 1);
         expect(autoVerifiedCalled, isTrue);
