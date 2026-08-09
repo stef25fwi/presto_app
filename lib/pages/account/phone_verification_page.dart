@@ -235,7 +235,7 @@ class _PhoneVerificationPageState extends State<PhoneVerificationPage> {
           setState(() {
             _loading = false;
             _errorMessage =
-                '${AuthErrorMapper.message(error)} La tentative SMS du jour a été comptabilisée.';
+                '${AuthErrorMapper.message(error)} Si Firebase échoue avant l’envoi du code, la tentative SMS n’est pas décomptée.';
           });
         },
         onAutoVerified: () async {
