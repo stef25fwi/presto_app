@@ -74,8 +74,16 @@ function validateOrganization(node, route) {
     `${route}: positionnement petites annonces absent de la description Organization`,
   );
   assert.ok(
-    node.description?.toLowerCase().includes('solution instantanée'),
-    `${route}: notion de solution instantanée absente de la description Organization`,
+    node.description?.toLowerCase().includes('annonces assistées par ia'),
+    `${route}: annonces assistées par IA absentes de la description Organization`,
+  );
+  assert.ok(
+    node.description?.includes('0 % de commission'),
+    `${route}: 0 % de commission absent de la description Organization`,
+  );
+  assert.ok(
+    node.description?.toLowerCase().includes('aucun paiement géré'),
+    `${route}: rôle de non-intermédiaire de paiement absent de la description Organization`,
   );
   const logo = node.logo;
   assert.equal(logo?.['@type'], 'ImageObject', `${route}: logo doit être ImageObject`);

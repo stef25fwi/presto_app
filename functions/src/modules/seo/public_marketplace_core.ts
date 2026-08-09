@@ -198,7 +198,7 @@ export function renderPublicListingHtml(
       <section class="public-grid" aria-label="Informations sur l’annonce">
         <article><h2>Catégorie</h2><p>${escapeHtml(listing.category)}</p></article>
         <article><h2>Localisation</h2><p>${escapeHtml(listing.city)}${listing.postalCode ? ` (${escapeHtml(listing.postalCode)})` : ""}</p></article>
-        <article><h2>Échange direct</h2><p>iliprestō facilite la mise en relation et ne gère pas le paiement entre utilisateurs.</p></article>
+        <article><h2>0 % de commission</h2><p>iliprestō ne prélève aucune commission sur vos prestations et ne collecte ni ne gère les paiements entre utilisateurs. Vous échangez et convenez directement des conditions de la mission.</p></article>
       </section>
       <nav class="public-links" aria-label="Actions et navigation"><a href="/listings/${encodeURIComponent(listing.id)}">Ouvrir cette annonce dans iliprestō</a><a href="/annonces-services/">Voir les annonces de services</a><a href="/services-et-microservices/">Explorer les services</a><a href="/jobs-et-missions/">Jobs et missions de service</a></nav>
     </main>

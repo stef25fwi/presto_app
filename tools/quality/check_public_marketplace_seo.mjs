@@ -41,5 +41,14 @@ assert.ok(!rendererSource.includes('JobPosting'), 'JobPosting interdit dans le r
 assert.ok(!rendererSource.includes('phone:'), 'Téléphone interdit dans la projection SEO publique');
 assert.ok(!rendererSource.includes('email:'), 'Email interdit dans la projection SEO publique');
 assert.ok(!rendererSource.includes('ownerId:'), 'ownerId interdit dans la projection SEO publique');
+assert.ok(rendererSource.includes('0 % de commission'), 'Promesse 0 % de commission absente du rendu public');
+assert.ok(
+  rendererSource.includes('ne collecte ni ne gère les paiements entre utilisateurs'),
+  'Rôle de non-intermédiaire de paiement absent du rendu public',
+);
+assert.ok(
+  rendererSource.includes('convenez directement des conditions de la mission'),
+  'Échange direct absent du rendu public',
+);
 
 console.log('SEO annonces publiques: routage, confidentialité et sitemap validés.');

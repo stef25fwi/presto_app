@@ -5,7 +5,7 @@
   "display": "standalone",
   "background_color": "#FF8A1D",
   "theme_color": "#FF8A1D",
-  "description": "Petites annonces de services : publiez votre besoin, indiquez votre prix et trouvez instantanément un particulier ou professionnel disponible près de chez vous.",
+  "description": "La solution à tout moment pour vos besoins du quotidien : publiez une annonce assistée par IA, échangez directement et profitez de 0 % de commission.",
   "orientation": "portrait-primary",
   "prefer_related_applications": false,
   "icons": [

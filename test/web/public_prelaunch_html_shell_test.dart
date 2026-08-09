@@ -45,16 +45,23 @@ void main() {
       expect(html, contains('id="prelaunch-seo-shell"'));
       expect(
         html,
-        contains('La solution instantanée pour vos services du quotidien'),
+        contains(
+          'La solution à tout moment pour tous vos besoins du quotidien',
+        ),
       );
       expect(
         html,
         contains('site de petites annonces de services et micro-services'),
       );
-      expect(html, contains('Prix ou budget indiqué par l’utilisateur'));
-      expect(html, contains('Réponses immédiates'));
+      expect(html, contains('Publication par texte ou par voix'));
+      expect(html, contains('Échanges directs entre utilisateurs'));
       expect(html, contains('Annonces assistées par IA'));
       expect(html, contains('0 % de commission'));
+      expect(
+        html,
+        contains('ne collecte ni ne gère les paiements entre utilisateurs'),
+      );
+      expect(html, isNot(contains('Réponses immédiates')));
       expect(
         html,
         contains(
@@ -77,15 +84,15 @@ void main() {
       expect(
         html,
         contains(
-          '<title>iliprestō – Petites annonces de services instantanées</title>',
+          '<title>iliprestō – Annonces assistées par IA, 0 % de commission</title>',
         ),
       );
       expect(
         html,
         contains(
-          '<meta name="description" content="Petites annonces de services : '
-          'publiez votre besoin, indiquez votre prix et trouvez instantanément '
-          'un particulier ou professionnel disponible près de chez vous.">',
+          '<meta name="description" content="La solution à tout moment pour '
+          'vos besoins du quotidien : publiez une annonce assistée par IA, '
+          'échangez directement et profitez de 0 % de commission.">',
         ),
       );
       expect(
@@ -121,8 +128,10 @@ void main() {
       );
       expect(
         organization['description'],
-        contains('solution instantanée'),
+        contains('annonces assistées par IA'),
       );
+      expect(organization['description'], contains('0 % de commission'));
+      expect(organization['description'], contains('aucun paiement géré'));
 
       final website = structuredNodes.firstWhere(
         (node) => node['@type'] == 'WebSite',
@@ -152,7 +161,9 @@ void main() {
         service['serviceType'],
         'Site de petites annonces pour services et micro-services',
       );
-      expect(service['description'], contains('Solution instantanée'));
+      expect(service['description'], contains('Solution à tout moment'));
+      expect(service['description'], contains('annonce assistée par IA'));
+      expect(service['description'], contains('0 % de commission'));
     });
 
     test('ne charge pas Flutter avant le déverrouillage de la racine publique',

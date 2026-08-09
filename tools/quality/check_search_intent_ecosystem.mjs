@@ -35,6 +35,9 @@ const forbiddenClaims = [
   /trouvez instantanément/i,
   /répondre immédiatement/i,
   /contact(?:er|é|és)? immédiatement/i,
+  /solution instantanée/i,
+  /à l’instant/i,
+  /réponses immédiates/i,
 ];
 
 const extract = (html, pattern, label) => {
@@ -88,12 +91,15 @@ assert.ok(!normalizedDemandPage.includes('trouvez instantanément'), 'Page deman
 assert.ok(!normalizedDemandPage.includes('contacter immédiatement'), 'Page demandeur: promesse de contact immédiat interdite');
 
 const servicesPage = read('web/services-et-microservices/index.html').toLowerCase();
-for (const concept of ['services', 'micro-services', 'plateforme nationale', '0 % de commission']) {
+for (const concept of ['services', 'micro-services', 'plateforme nationale', 'annonce assistée par ia', '0 % de commission']) {
   assert.ok(servicesPage.includes(concept), `Page services: concept ${concept} absent`);
 }
 
 const listingsPage = read('web/annonces-services/index.html').toLowerCase();
 assert.ok(listingsPage.includes('annonces de services'), 'Page annonces: intention principale absente');
+assert.ok(listingsPage.includes('annonce assistée par ia'), 'Page annonces: assistance IA absente');
+assert.ok(listingsPage.includes('0 % de commission'), 'Page annonces: 0 % de commission absent');
+assert.ok(listingsPage.includes('ne collecte ni ne gère les paiements'), 'Page annonces: rôle paiement absent');
 assert.ok(listingsPage.includes('pages géographiques vides'), 'Page annonces: garde-fou doorway pages absent');
 
 const individualsPage = read('web/services-entre-particuliers/index.html').toLowerCase();
@@ -110,6 +116,22 @@ for (const concept of ['petits jobs', 'missions de service', 'site d’offres d�
   assert.ok(normalizedJobsPage.includes(concept), `Page jobs: concept ${concept} absent`);
 }
 assert.ok(!jobsPage.includes('JobPosting'), 'Page jobs: JobPosting interdit pour les annonces de services');
+
+const homePage = read('web/index.html').replace(/\s+/g, ' ').toLowerCase();
+for (const concept of [
+  'la solution à tout moment pour tous vos besoins du quotidien',
+  'annonces assistées par ia',
+  '0 % de commission',
+  'ne collecte ni ne gère les paiements entre utilisateurs',
+  'convenez directement des conditions de la mission',
+]) {
+  assert.ok(homePage.includes(concept), `Accueil: concept ${concept} absent`);
+}
+
+const usageGuide = read('web/guides/comment-fonctionne-ilipresto.html').toLowerCase();
+for (const concept of ['annonce assistée par ia', '0 % de commission', 'échangez et convenez directement']) {
+  assert.ok(usageGuide.includes(concept), `Guide d’utilisation: concept ${concept} absent`);
+}
 
 const overseasPage = read('web/services-outre-mer/index.html');
 for (const territory of registry.territories) {

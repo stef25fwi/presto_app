@@ -24,7 +24,7 @@ class PublicPrelaunchFeatureGrid extends StatelessWidget {
     (
       icon: Icons.percent_rounded,
       title: '0 % de commission',
-      description: 'Échangez directement, sans frais.',
+      description: 'Aucun paiement géré par iliprestō.',
       color: Color(0xFF1A73E8),
     ),
   ];
