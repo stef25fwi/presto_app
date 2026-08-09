@@ -3,15 +3,26 @@ import fs from 'node:fs';
 
 const read = (path) => fs.readFileSync(path, 'utf8');
 const registry = JSON.parse(read('web/search-intent-registry.json'));
+const structuredDataRegistry = JSON.parse(read('web/structured-data-registry.json'));
 const sitemap = read('web/sitemap.xml');
 const base = registry.baseUrl;
 
 assert.equal(registry.guardrails.nationalPlatform, true, 'Positionnement national absent');
 assert.equal(registry.guardrails.notAJobBoard, true, 'Distinction avec un site d’emploi absente');
+assert.equal(registry.guardrails.notAnEmployer, true, 'Distinction employeur absente');
 assert.equal(registry.guardrails.noDoorwayPages, true, 'Garde-fou contre les pages satellites absent');
+assert.equal(
+  registry.guardrails.jobPostingStructuredDataForbiddenForServiceListings,
+  true,
+  'Garde-fou JobPosting absent',
+);
+assert.ok(
+  structuredDataRegistry.forbiddenTypes.includes('JobPosting'),
+  'JobPosting doit être interdit pour les pages de services',
+);
 
 const implemented = registry.pillarPages.filter((page) => page.status === 'implemented');
-assert.ok(implemented.length >= 3, 'Au moins trois pages piliers doivent être implémentées');
+assert.ok(implemented.length >= 8, 'Au moins huit pages piliers doivent être implémentées');
 
 const titles = new Set();
 const descriptions = new Set();
@@ -21,6 +32,9 @@ const forbiddenClaims = [
   /première place garantie/i,
   /des dizaines de (?:particuliers|professionnels|prestataires)/i,
   /réponse instantanée garantie/i,
+  /trouvez instantanément/i,
+  /répondre immédiatement/i,
+  /contact(?:er|é|és)? immédiatement/i,
 ];
 
 const extract = (html, pattern, label) => {
@@ -69,8 +83,33 @@ for (const concept of ['personne', 'compétente', 'disponible', 'service']) {
   assert.ok(normalizedDemandPage.includes(concept), `Page demandeur: concept ${concept} absent`);
 }
 assert.ok(normalizedDemandPage.includes('petites annonces'), 'Page demandeur: positionnement petites annonces absent');
-assert.ok(normalizedDemandPage.includes('solution instantanée'), 'Page demandeur: notion de solution instantanée absente');
 assert.ok(normalizedDemandPage.includes('ne garantit pas'), 'Page demandeur: réserve sur le délai de réponse absente');
+assert.ok(!normalizedDemandPage.includes('trouvez instantanément'), 'Page demandeur: promesse instantanée interdite');
+assert.ok(!normalizedDemandPage.includes('contacter immédiatement'), 'Page demandeur: promesse de contact immédiat interdite');
+
+const servicesPage = read('web/services-et-microservices/index.html').toLowerCase();
+for (const concept of ['services', 'micro-services', 'plateforme nationale', '0 % de commission']) {
+  assert.ok(servicesPage.includes(concept), `Page services: concept ${concept} absent`);
+}
+
+const listingsPage = read('web/annonces-services/index.html').toLowerCase();
+assert.ok(listingsPage.includes('annonces de services'), 'Page annonces: intention principale absente');
+assert.ok(listingsPage.includes('pages géographiques vides'), 'Page annonces: garde-fou doorway pages absent');
+
+const individualsPage = read('web/services-entre-particuliers/index.html').toLowerCase();
+assert.ok(individualsPage.includes('services entre particuliers'), 'Page particuliers: intention principale absente');
+assert.ok(individualsPage.includes('n’est pas l’employeur'), 'Page particuliers: réserve employeur absente');
+
+const providerPage = read('web/proposer-ses-services/index.html').toLowerCase();
+assert.ok(providerPage.includes('proposez vos services'), 'Page prestataire: intention principale absente');
+assert.ok(providerPage.includes('ne garantit pas l’obtention d’une mission'), 'Page prestataire: réserve mission absente');
+
+const jobsPage = read('web/jobs-et-missions/index.html');
+const normalizedJobsPage = jobsPage.toLowerCase();
+for (const concept of ['petits jobs', 'missions de service', 'site d’offres d’emploi']) {
+  assert.ok(normalizedJobsPage.includes(concept), `Page jobs: concept ${concept} absent`);
+}
+assert.ok(!jobsPage.includes('JobPosting'), 'Page jobs: JobPosting interdit pour les annonces de services');
 
 const overseasPage = read('web/services-outre-mer/index.html');
 for (const territory of registry.territories) {
@@ -84,4 +123,4 @@ assert.ok(creationGuide.includes('https://procedures.inpi.fr/'), 'Guide créatio
 assert.ok(creationGuide.includes('https://entreprendre.service-public.fr/'), 'Guide création: source Service-Public absente');
 assert.ok(creationGuide.includes('Les règles fiscales, sociales et professionnelles peuvent évoluer'), 'Guide création: avertissement de vérification absent');
 
-console.log(`Écosystème SEO: ${implemented.length} pages piliers implémentées et validées.`);
+console.log(`Écosystème SEO acquisition: ${implemented.length} pages piliers implémentées et validées.`);
