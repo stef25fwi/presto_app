@@ -42,6 +42,10 @@ abstract final class AuthErrorMapper {
           return 'La vérification de sécurité Firebase a été annulée avant l’envoi du SMS.';
         case 'web-context-already-present':
           return 'Une vérification Firebase est déjà en cours. Termine-la ou ferme-la avant de recommencer.';
+        case 'phone-verification-timeout':
+          return 'Firebase n’a pas confirmé l’envoi du SMS dans le délai prévu. Réessaie après vérification de la configuration Phone Auth et de la connexion réseau.';
+        case 'phone-verification-start-failed':
+          return 'Firebase Phone Auth n’a pas pu démarrer. Réessaie après vérification de la configuration de l’application.';
         case 'invalid-verification-code':
           return 'Code incorrect. Vérifie les chiffres reçus par SMS.';
         case 'invalid-verification-id':

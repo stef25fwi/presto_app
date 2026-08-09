@@ -193,9 +193,10 @@ void main() {
     });
 
     test(
-      'sendCode fixe le timeout et ignore la fin de récupération auto',
+      'sendCode fixe le timeout et échoue si la récupération auto expire avant codeSent',
       () async {
         Duration? capturedTimeout;
+        FirebaseAuthException? capturedError;
 
         final service = PhoneVerificationService(
           verifyStarter: ({
@@ -214,14 +215,62 @@ void main() {
         await service.sendCode(
           phoneNumber: '+33600000000',
           onCodeSent: (_) => fail('onCodeSent ne doit pas être appelé'),
-          onFailed: (_) => fail('onFailed ne doit pas être appelé'),
+          onFailed: (error) => capturedError = error,
           onAutoVerified: () async =>
               fail('onAutoVerified ne doit pas être appelé'),
         );
+        await Future<void>.delayed(Duration.zero);
 
         expect(capturedTimeout, const Duration(seconds: 60));
+        expect(capturedError?.code, 'phone-verification-timeout');
       },
     );
+
+    test('le watchdog libère la réservation si Firebase ne rappelle jamais', () async {
+      final events = <String>[];
+      final failureDelivered = Completer<void>();
+      final service = PhoneVerificationService(
+        smsCallbackWatchdogTimeout: const Duration(milliseconds: 20),
+        attemptReserver: (_) async => <String, dynamic>{
+          'allowed': true,
+          'limited': true,
+          'dailyLimit': 1,
+          'reservationId': 'reservation_watchdog',
+        },
+        attemptReleaser: (reservationId, reason) async {
+          events.add('release:$reservationId:$reason');
+          return <String, dynamic>{'released': true};
+        },
+        verifyStarter: ({
+          required phoneNumber,
+          required timeout,
+          required verificationCompleted,
+          required verificationFailed,
+          required codeSent,
+          required codeAutoRetrievalTimeout,
+        }) async {},
+      );
+
+      await service.reserveDailyAttempt(phoneNumber: '+590690123456');
+      await service.sendCode(
+        phoneNumber: '+590690123456',
+        onCodeSent: (_) => fail('onCodeSent ne doit pas être appelé'),
+        onFailed: (error) {
+          events.add('failed:${error.code}');
+          if (!failureDelivered.isCompleted) failureDelivered.complete();
+        },
+        onAutoVerified: () async => fail('auto verification inattendue'),
+      );
+
+      await failureDelivered.future.timeout(const Duration(seconds: 1));
+      expect(
+        events,
+        <String>[
+          'release:reservation_watchdog:firebase_callback_timeout',
+          'failed:phone-verification-timeout',
+        ],
+      );
+    });
 
     test('sendCode relaie verificationFailed', () async {
       FirebaseAuthException? capturedError;
@@ -248,6 +297,7 @@ void main() {
         onAutoVerified: () async => fail('onAutoVerified ne doit pas être appelé'),
       );
 
+      await Future<void>.delayed(Duration.zero);
       expect(capturedError?.code, 'invalid-phone-number');
     });
 
