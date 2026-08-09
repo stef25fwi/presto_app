@@ -422,7 +422,7 @@ class _AccountPageState extends State<AccountPage> {
         case 'unavailable':
           return 'Le service admin est indisponible ou le réseau ne répond pas.';
         case 'deadline-exceeded':
-          return 'La vérification admin a dépassé le délai autorisé.';
+          return 'La vérification admin a expiré.';
         case 'internal':
           return 'La fonction admin a renvoyé une erreur interne.';
       }
@@ -2672,7 +2672,7 @@ class _AccountPageState extends State<AccountPage> {
                                 setState(() {
                                   _draftFavoriteSelections.remove(category);
                                   _draftFavoriteSelections.removeWhere(
-                                    (e) => e.startsWith('\$category — '),
+                                    (e) => e.startsWith('$category — '),
                                   );
                                 });
                                 unawaited(_applyDraftFavorites(user));
@@ -2759,6 +2759,25 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                     const SizedBox(height: 8),
                     _buildAdminSpaceEntry(user),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const LegalInfoPage(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.gavel_rounded),
+                        label: const Text(
+                          'Mentions légales / CGU',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
@@ -3938,7 +3957,7 @@ class _AccountPageState extends State<AccountPage> {
         const Divider(height: 1, thickness: 1, indent: 72),
         AccountMenuItem(
           icon: Icons.gavel_rounded,
-          label: 'Mentions légales',
+          label: 'Mentions légales / CGU',
           onTap: () => Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (_) => const LegalInfoPage())),
