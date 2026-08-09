@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "baseUrl": "https://ilipresto.fr",
   "organizationId": "https://ilipresto.fr/#organization",
   "websiteId": "https://ilipresto.fr/#website",
@@ -10,7 +10,8 @@
     "AggregateOffer",
     "LocalBusiness",
     "AggregateRating",
-    "Review"
+    "Review",
+    "JobPosting"
   ],
   "staticRoutes": {
     "/": {
@@ -19,6 +20,26 @@
     },
     "/trouver-une-personne-disponible/": {
       "file": "web/trouver-une-personne-disponible/index.html",
+      "requiredTypes": ["WebPage", "Service", "BreadcrumbList"]
+    },
+    "/services-et-microservices/": {
+      "file": "web/services-et-microservices/index.html",
+      "requiredTypes": ["WebPage", "Service", "BreadcrumbList"]
+    },
+    "/annonces-services/": {
+      "file": "web/annonces-services/index.html",
+      "requiredTypes": ["WebPage", "Service", "BreadcrumbList"]
+    },
+    "/services-entre-particuliers/": {
+      "file": "web/services-entre-particuliers/index.html",
+      "requiredTypes": ["WebPage", "Service", "BreadcrumbList"]
+    },
+    "/proposer-ses-services/": {
+      "file": "web/proposer-ses-services/index.html",
+      "requiredTypes": ["WebPage", "Service", "BreadcrumbList"]
+    },
+    "/jobs-et-missions/": {
+      "file": "web/jobs-et-missions/index.html",
       "requiredTypes": ["WebPage", "Service", "BreadcrumbList"]
     },
     "/services-outre-mer/": {
