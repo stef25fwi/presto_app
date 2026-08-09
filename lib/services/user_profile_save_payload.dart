@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../utils/phone_number_utils.dart';
+
 class UserProfileSavePayload {
   const UserProfileSavePayload._();
 
@@ -44,6 +46,7 @@ class UserProfileSavePayload {
     final normalizedAccountType =
         accountType.trim().isEmpty ? 'Particulier' : accountType.trim();
     final normalizedPhone = phone.trim();
+    final phoneCountryCode = phoneCountryCodeFromE164(normalizedPhone);
     final cityResolution = _resolveCityAndPostalCode(city);
     final normalizedCity = cityResolution.city;
     final normalizedPostalCode = cityResolution.postalCode;
@@ -68,6 +71,7 @@ class UserProfileSavePayload {
       if (normalizedPostalCode.isNotEmpty) 'zipCode': normalizedPostalCode,
       if (normalizedPostalCode.isNotEmpty) 'cp': normalizedPostalCode,
       'phone': normalizedPhone,
+      if (phoneCountryCode != null) 'phoneCountryCode': phoneCountryCode,
       'selectedFavoriteCategories': selectedFavoriteCategories,
       'selectedFavoriteSubcategories': selectedFavoriteSubcategories,
       'selectedFavoriteDepartements': selectedFavoriteDepartements,
