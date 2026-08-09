@@ -15,6 +15,7 @@ typedef PhoneCredentialLinker = Future<void> Function(
   PhoneAuthCredential credential,
 );
 typedef PhoneConfirmCaller = Future<Object?> Function();
+typedef PhoneAttemptReserver = Future<Object?> Function(String phoneNumber);
 
 /// Vérification du numéro de téléphone par SMS via Firebase Phone Auth.
 ///
@@ -30,17 +31,20 @@ class PhoneVerificationService {
     PhoneVerifyStarter? verifyStarter,
     PhoneCredentialLinker? linker,
     PhoneConfirmCaller? confirmCaller,
+    PhoneAttemptReserver? attemptReserver,
   })  : _authOverride = auth,
         _functionsOverride = functions,
         _verifyStarter = verifyStarter,
         _linker = linker,
-        _confirmCaller = confirmCaller;
+        _confirmCaller = confirmCaller,
+        _attemptReserver = attemptReserver;
 
   final FirebaseAuth? _authOverride;
   final FirebaseFunctions? _functionsOverride;
   final PhoneVerifyStarter? _verifyStarter;
   final PhoneCredentialLinker? _linker;
   final PhoneConfirmCaller? _confirmCaller;
+  final PhoneAttemptReserver? _attemptReserver;
 
   // Évalués paresseusement : ne touchent Firebase que si aucune dépendance
   // de test n'a été injectée (utile pour les tests unitaires sans app
@@ -48,6 +52,31 @@ class PhoneVerificationService {
   FirebaseAuth get _auth => _authOverride ?? FirebaseAuth.instance;
   FirebaseFunctions get _functions =>
       _functionsOverride ?? prestoFirebaseFunctions;
+
+  /// Réserve la tentative SMS côté serveur avant l'appel Firebase Phone Auth.
+  /// Les comptes free sont limités à une tentative par fenêtre de 24 h ; les
+  /// plans supérieurs et comptes privilégiés sont exemptés côté backend.
+  Future<Map<String, dynamic>> reserveDailyAttempt({
+    required String phoneNumber,
+  }) async {
+    final reserver = _attemptReserver;
+    final rawData = reserver != null
+        ? await reserver(phoneNumber)
+        : (await callPrestoFunction<dynamic>(
+            functions: _functions,
+            name: 'reservePhoneVerificationAttempt',
+            timeout: const Duration(seconds: 20),
+            parameters: <String, dynamic>{'phoneNumber': phoneNumber},
+          ))
+            .data;
+    final data = Map<String, dynamic>.from(
+      (rawData as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{},
+    );
+    if (data['allowed'] != true) {
+      throw StateError('La tentative SMS n’a pas été autorisée.');
+    }
+    return data;
+  }
 
   /// Déclenche l'envoi du SMS. `onAutoVerified` est appelé si la plateforme
   /// (Android, la plupart du temps) confirme automatiquement le code sans
