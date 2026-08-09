@@ -299,6 +299,11 @@ void main() {
       destinationOf(observer, tester.element(find.byType(AccountSecurityPage))),
       isA<PhoneVerificationPage>(),
     );
+
+    // Cette vérification de navigation ne mocke pas Firestore. La page lancée
+    // attend donc son timeout d'hydratation de 8 s ; l'horloge virtuelle le fait
+    // expirer ici afin de ne laisser aucun Timer en attente à la fin du test.
+    await tester.pump(const Duration(seconds: 8));
   });
 
   testWidgets('ouvre la suppression du compte après contrôle', (tester) async {
