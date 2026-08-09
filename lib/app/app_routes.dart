@@ -9,6 +9,7 @@ import '../pages/account/account_security_page.dart';
 import '../pages/account/change_email_page.dart';
 import '../pages/account/change_password_page.dart';
 import '../pages/account/delete_account_page.dart';
+import '../pages/account/mes_avis_page.dart';
 import '../pages/admin_space_page.dart';
 import '../pages/auth/forgot_password_page.dart';
 import '../pages/auth/login_page.dart';
@@ -100,6 +101,15 @@ class AppRoutes {
       ];
     }
 
+    if (normalizedPath == MesAvisPage.routeName) {
+      return <Route<dynamic>>[
+        MaterialPageRoute(
+          settings: const RouteSettings(name: MesAvisPage.routeName),
+          builder: (_) => const MesAvisPage(),
+        ),
+      ];
+    }
+
     if (normalizedPath == '/account') {
       pendingPostAuthRoute = null;
       return <Route<dynamic>>[
@@ -183,6 +193,7 @@ class AppRoutes {
         ChangeEmailPage.routeName: (_) => const ChangeEmailPage(),
         ChangePasswordPage.routeName: (_) => const ChangePasswordPage(),
         DeleteAccountPage.routeName: (_) => const DeleteAccountPage(),
+        MesAvisPage.routeName: (_) => const MesAvisPage(),
         LegalInfoPage.legalNoticesRouteName: (_) => const LegalInfoPage(),
         LegalInfoPage.privacyRouteName: (_) =>
             const LegalInfoPage(initialTab: 1),
