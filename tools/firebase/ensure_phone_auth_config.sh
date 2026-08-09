@@ -69,8 +69,8 @@ http_json() {
       "$url")"
   fi
 
-  if [[ "$status" -lt 200 || "$status" -ge 300 ]]; then
-    echo "::error::API Google $method $url → HTTP $status" >&2
+  if [[ ! "$status" =~ ^[0-9]{3}$ || "$status" -lt 200 || "$status" -ge 300 ]]; then
+    echo "::error::API Google $method $url → HTTP ${status:-inconnu}" >&2
     jq -c '{error: .error // .}' "$output_file" 2>/dev/null >&2 || cat "$output_file" >&2
     rm -f "$output_file"
     return 1
@@ -80,20 +80,20 @@ http_json() {
   rm -f "$output_file"
 }
 
-normalize_sha() {
-  tr '[:lower:]' '[:upper:]' | tr -d ':[:space:]'
+normalize_sha_value() {
+  printf '%s' "$1" | tr '[:lower:]' '[:upper:]' | tr -d '[:space:]:'
 }
 
 contains_normalized_sha() {
   local certs_json="$1"
-  local candidate="$2"
-  local normalized_candidate
-  normalized_candidate="$(printf '%s' "$candidate" | normalize_sha)"
+  local candidate
+  candidate="$(normalize_sha_value "$2")"
 
-  jq -r '.certificates[]?.shaHash // empty' <<<"$certs_json" \
-    | while IFS= read -r existing; do
-        [[ "$(printf '%s' "$existing" | normalize_sha)" == "$normalized_candidate" ]] && exit 0
-      done
+  jq -e --arg candidate "$candidate" '
+    any(.certificates[]?;
+      (((.shaHash // "") | ascii_upcase | gsub(":"; "")) == $candidate)
+    )
+  ' <<<"$certs_json" >/dev/null
 }
 
 list_sha_certificates() {
@@ -103,10 +103,13 @@ list_sha_certificates() {
 
 register_sha_if_missing() {
   local certs_json="$1"
-  local sha_hash="$2"
+  local raw_sha_hash="$2"
   local cert_type="$3"
 
-  [[ -z "$sha_hash" ]] && return 0
+  [[ -z "$raw_sha_hash" ]] && return 0
+
+  local sha_hash
+  sha_hash="$(normalize_sha_value "$raw_sha_hash")"
 
   if contains_normalized_sha "$certs_json" "$sha_hash"; then
     echo "✅ ${cert_type} déjà enregistrée pour fr.ilipresto.app."
@@ -201,7 +204,33 @@ if [[ "$MODE" == "--apply" && "$PHONE_CONFIG_DRIFT" -ne 0 ]]; then
     "${IDENTITY_CONFIG_URL}?updateMask=sign_in.phone_number.enabled,sms_region_config" \
     "$patch_payload" >/dev/null
   echo "✅ Provider Téléphone et politique régions SMS appliqués (${policy_kind})."
-  PHONE_CONFIG_DRIFT=0
+
+  # Certifier immédiatement l'état persistant plutôt que de faire confiance au
+  # seul code HTTP de la requête PATCH.
+  config_json="$(http_json GET "$IDENTITY_CONFIG_URL")"
+  if [[ "$(jq -r '.signIn.phoneNumber.enabled // false' <<<"$config_json")" != "true" ]]; then
+    echo "::error::Le provider Téléphone reste désactivé après PATCH." >&2
+    PHONE_CONFIG_DRIFT=1
+  else
+    PHONE_CONFIG_DRIFT=0
+  fi
+
+  for region in "${REQUIRED_SMS_REGIONS[@]}"; do
+    if jq -e --arg region "$region" '
+      if .smsRegionConfig.allowlistOnly != null then
+        (.smsRegionConfig.allowlistOnly.allowedRegions // []) | index($region) != null
+      elif .smsRegionConfig.allowByDefault != null then
+        ((.smsRegionConfig.allowByDefault.disallowedRegions // []) | index($region)) == null
+      else
+        false
+      end
+    ' <<<"$config_json" >/dev/null; then
+      :
+    else
+      echo "::error::La région SMS ${region} reste bloquée après PATCH." >&2
+      PHONE_CONFIG_DRIFT=1
+    fi
+  done
 fi
 
 echo "═══ Empreintes Android Firebase ═══"
@@ -216,8 +245,17 @@ while IFS=$'\t' read -r hash cert_type; do
   register_sha_if_missing "$current_certs" "$hash" "$cert_type"
 done < <(jq -r '.certificates[]? | [.shaHash, .certType] | @tsv' <<<"$legacy_certs")
 
+# Relire avant d'ajouter la clé release : elle peut être identique à une
+# empreinte que l'on vient de migrer depuis l'ancienne app Firebase.
+if [[ "$MODE" == "--apply" ]]; then
+  current_certs="$(list_sha_certificates "$CURRENT_ANDROID_APP_ID")"
+fi
+
 # Empreintes de la clé release réellement utilisée par la CI actuelle.
 register_sha_if_missing "$current_certs" "${ANDROID_RELEASE_SHA1:-}" SHA_1
+if [[ "$MODE" == "--apply" ]]; then
+  current_certs="$(list_sha_certificates "$CURRENT_ANDROID_APP_ID")"
+fi
 register_sha_if_missing "$current_certs" "${ANDROID_RELEASE_SHA256:-}" SHA_256
 
 if [[ "$MODE" == "--apply" ]]; then
