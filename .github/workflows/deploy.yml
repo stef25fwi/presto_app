@@ -97,6 +97,9 @@ jobs:
       - name: Validate programmatic local SEO
         run: node tools/quality/check_programmatic_local_seo.mjs
 
+      - name: Validate public marketplace SEO
+        run: node tools/quality/check_public_marketplace_seo.mjs
+
       - name: Validate every public page
         run: node tools/quality/check_public_page_seo.mjs
 
@@ -305,6 +308,34 @@ jobs:
             https://ilipresto.fr/sitemap-local.xml)"
           echo "$local_sitemap" | grep -q '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
 
+          listings_sitemap="$(curl --fail --silent --show-error \
+            --retry 6 --retry-delay 5 --retry-all-errors \
+            https://ilipresto.fr/sitemap-annonces.xml)"
+          echo "$listings_sitemap" | grep -q '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+
+          missing_listing_status="$(curl --silent --show-error \
+            --retry 3 --retry-delay 2 --retry-all-errors \
+            --output /tmp/ilipresto-missing-listing.html \
+            --write-out '%{http_code}' \
+            https://ilipresto.fr/annonces/seo-missing-000000/)"
+          test "$missing_listing_status" = "404"
+          grep -q 'noindex,follow' /tmp/ilipresto-missing-listing.html
+
+          first_listing_url="$(echo "$listings_sitemap" \
+            | grep -o 'https://ilipresto.fr/annonces/[^<]*' \
+            | head -n 1 || true)"
+          if [ -n "$first_listing_url" ]; then
+            listing_page="$(curl --fail --silent --show-error \
+              --retry 6 --retry-delay 5 --retry-all-errors \
+              "$first_listing_url")"
+            echo "$listing_page" | grep -q "<link rel=\"canonical\" href=\"$first_listing_url\">"
+            echo "$listing_page" | grep -q '<meta name="robots" content="index,follow'
+            if echo "$listing_page" | grep -q 'JobPosting'; then
+              echo '❌ JobPosting détecté sur une annonce publique.'
+              exit 1
+            fi
+          fi
+
       - name: Publish deployment summary
         if: always()
         run: |
@@ -317,6 +348,7 @@ jobs:
             echo '- URL contrôlée : `https://ilipresto.fr`'
             echo '- Pages publiques de base contrôlées : `8`'
             echo '- SEO programmatique local : signaux production agrégés, pages générées et contrôlées avant build'
+            echo '- SEO annonces publiques : sitemap SSR et routage annonces contrôlés en production'
             echo "- Functions modifiées : \`${{ steps.functions_changes.outputs.changed || 'unknown' }}\`"
             echo '- Artefact de restauration : `production-release-${{ github.sha }}`'
           } >> "$GITHUB_STEP_SUMMARY"

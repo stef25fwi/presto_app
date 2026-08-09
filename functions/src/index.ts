@@ -199,3 +199,4 @@ export { purgeOldEmailWebhooks, purgeOldEmailLogs, syncEmailAnalytics } from "./
 
 export { verifySiret } from "./modules/pro/verifySiret";
 export { preVerifySiret } from "./modules/pro/preVerifySiret";
+export { publicMarketplaceSeo } from "./modules/seo/public_marketplace";

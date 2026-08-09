@@ -305,6 +305,20 @@
           "destination": "/guyane.html"
         },
         {
+          "source": "/sitemap-annonces.xml",
+          "function": {
+            "functionId": "publicMarketplaceSeo",
+            "region": "europe-west1"
+          }
+        },
+        {
+          "source": "/annonces/**",
+          "function": {
+            "functionId": "publicMarketplaceSeo",
+            "region": "europe-west1"
+          }
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
@@ -641,6 +655,20 @@
         {
           "source": "/guyane",
           "destination": "/guyane.html"
+        },
+        {
+          "source": "/sitemap-annonces.xml",
+          "function": {
+            "functionId": "publicMarketplaceSeo",
+            "region": "europe-west1"
+          }
+        },
+        {
+          "source": "/annonces/**",
+          "function": {
+            "functionId": "publicMarketplaceSeo",
+            "region": "europe-west1"
+          }
         },
         {
           "source": "**",
