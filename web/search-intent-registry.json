@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "updatedAt": "2026-08-04",
+  "version": 2,
+  "updatedAt": "2026-08-08",
   "baseUrl": "https://ilipresto.fr",
   "positioning": "Trouver rapidement une personne compétente et disponible pour réaliser un service ou micro-service du quotidien.",
   "guardrails": {
@@ -9,7 +9,8 @@
     "notAnEmployer": true,
     "noUnverifiedInstantResponseClaim": true,
     "noUnverifiedProviderVolumeClaim": true,
-    "noDoorwayPages": true
+    "noDoorwayPages": true,
+    "jobPostingStructuredDataForbiddenForServiceListings": true
   },
   "pillarPages": [
     {
@@ -21,18 +22,45 @@
       "sitemap": true
     },
     {
+      "route": "/services-et-microservices/",
+      "intent": "Trouver un service ou micro-service près de chez soi",
+      "audience": "demandeur",
+      "priority": 1,
+      "status": "implemented",
+      "sitemap": true
+    },
+    {
+      "route": "/annonces-services/",
+      "intent": "Consulter ou publier des annonces de services",
+      "audience": "demandeur-prestataire",
+      "priority": 1,
+      "status": "implemented",
+      "sitemap": true
+    },
+    {
+      "route": "/services-entre-particuliers/",
+      "intent": "Trouver ou proposer un service entre particuliers",
+      "audience": "particulier",
+      "priority": 1,
+      "status": "implemented",
+      "sitemap": true
+    },
+    {
       "route": "/proposer-ses-services/",
       "intent": "Proposer ses compétences et répondre à des besoins",
       "audience": "prestataire",
       "priority": 2,
-      "status": "planned"
+      "status": "implemented",
+      "sitemap": true
     },
     {
-      "route": "/services-et-microservices/",
-      "intent": "Découvrir les catégories de services du quotidien",
-      "audience": "demandeur",
-      "priority": 3,
-      "status": "planned"
+      "route": "/jobs-et-missions/",
+      "intent": "Trouver des petits jobs et missions correspondant à des besoins ponctuels de services",
+      "audience": "prestataire",
+      "priority": 2,
+      "status": "implemented",
+      "sitemap": true,
+      "scope": "service-intent-not-employment"
     },
     {
       "route": "/guides/creer-micro-entreprise-services/",
