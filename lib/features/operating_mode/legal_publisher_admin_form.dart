@@ -49,6 +49,39 @@ class _LegalPublisherAdminFormState extends State<LegalPublisherAdminForm> {
   }
 
   @override
+  void didUpdateWidget(covariant LegalPublisherAdminForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_saving) return;
+
+    final previous = oldWidget.initial.toMap();
+    final incoming = widget.initial.toMap();
+    if (previous.length == incoming.length &&
+        previous.entries.every((entry) => incoming[entry.key] == entry.value)) {
+      return;
+    }
+
+    for (final entry in incoming.entries) {
+      final controller = _controllers[entry.key];
+      if (controller == null) continue;
+
+      final previousValue = (previous[entry.key] ?? '').toString().trim();
+      final currentValue = controller.text.trim();
+      final incomingValue = (entry.value ?? '').toString().trim();
+
+      // Ne remplace qu'un champ que l'administrateur n'a pas modifié depuis
+      // la dernière valeur distante. Ainsi le premier snapshot Firestore peut
+      // réhydrater le formulaire sans écraser une saisie locale en cours.
+      if (currentValue == previousValue && currentValue != incomingValue) {
+        controller.value = controller.value.copyWith(
+          text: incomingValue,
+          selection: TextSelection.collapsed(offset: incomingValue.length),
+          composing: TextRange.empty,
+        );
+      }
+    }
+  }
+
+  @override
   void dispose() {
     for (final controller in _controllers.values) {
       controller.dispose();
