@@ -32,6 +32,7 @@ void main() {
         'displayName',
         'pseudo',
         'phone',
+        'phoneCountryCode',
         'city',
         'ville',
         'commune',
@@ -56,6 +57,7 @@ void main() {
       expect(payload['pseudo'], 'Stephane S');
       expect(payload['accountType'], 'Particulier');
       expect(payload['phone'], '+590690000000');
+      expect(payload['phoneCountryCode'], '+590');
       expect(payload['city'], 'Baie-Mahault');
       expect(payload['ville'], 'Baie-Mahault');
       expect(payload['commune'], 'Baie-Mahault');
