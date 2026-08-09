@@ -1,9 +1,17 @@
 name: Reviews V2 mutual flow E2E
 
 on:
-  push:
-    branches:
-      - agent/reviews-v2-complete-mutual-flow
+  pull_request:
+    paths:
+      - 'functions/src/modules/marketplace/callables/reviews*.ts'
+      - 'functions/scripts/reviews_v2_emulator_e2e.mjs'
+      - 'functions/src/index.ts'
+      - 'firestore.rules'
+      - 'lib/features/trust_score/**'
+      - 'lib/pages/account/mes_avis_page.dart'
+      - 'lib/pages/messages/conversation_thread_page.dart'
+      - 'lib/pages/user_offers_section.dart'
+      - '.github/workflows/reviews-v2-e2e.yml'
   workflow_dispatch:
 
 permissions:
