@@ -83,25 +83,52 @@ jobs:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID || vars.IOS_TEAM_ID }}
           IOS_PROVISIONING_PROFILE_B64: ${{ secrets.IOS_PROVISIONING_PROFILE_B64 }}
         run: |
           set -euo pipefail
 
           for name in KEYSTORE_B64 KEYSTORE_PASSWORD KEY_ALIAS; do
             if [[ -z "${!name:-}" ]]; then
+              node tools/seo/campaign_attribution_lot17_blocker_report.mjs \
+                android_signing_secret_missing \
+                "Secret Android requis indisponible : $name."
               echo "::error::Secret lot 17 manquant : $name"
               exit 1
             fi
           done
 
-          RESOLVED_IOS_TEAM_ID="${IOS_TEAM_ID:-}"
+          KEYSTORE_PATH="$RUNNER_TEMP/lot17-upload-keystore"
           PROFILE_PATH=''
           PROFILE_PLIST=''
+          printf '%s' "$KEYSTORE_B64" \
+            | tr -d '\r\n[:space:]' \
+            | base64 -d > "$KEYSTORE_PATH"
 
+          FINGERPRINT=$(keytool -list -v \
+            -keystore "$KEYSTORE_PATH" \
+            -storepass "$KEYSTORE_PASSWORD" \
+            -alias "$KEY_ALIAS" \
+            | sed -n -E 's/^[[:space:]]*SHA256:[[:space:]]*//p' \
+            | head -n1)
+
+          if [[ -z "$FINGERPRINT" ]]; then
+            node tools/seo/campaign_attribution_lot17_blocker_report.mjs \
+              android_fingerprint_missing \
+              'Empreinte SHA-256 Android introuvable dans le keystore de publication.'
+            echo '::error::Empreinte SHA-256 Android introuvable.'
+            rm -f "$KEYSTORE_PATH"
+            exit 1
+          fi
+
+          RESOLVED_IOS_TEAM_ID="${IOS_TEAM_ID:-}"
           if [[ -z "$RESOLVED_IOS_TEAM_ID" ]]; then
             if [[ -z "${IOS_PROVISIONING_PROFILE_B64:-}" ]]; then
+              node tools/seo/campaign_attribution_lot17_blocker_report.mjs \
+                ios_team_id_missing \
+                'Configurer IOS_TEAM_ID comme secret ou variable GitHub, ou fournir IOS_PROVISIONING_PROFILE_B64.'
               echo '::error::IOS_TEAM_ID absent et IOS_PROVISIONING_PROFILE_B64 indisponible.'
+              rm -f "$KEYSTORE_PATH"
               exit 1
             fi
 
@@ -132,24 +159,11 @@ jobs:
           fi
 
           if [[ ! "$RESOLVED_IOS_TEAM_ID" =~ ^[A-Z0-9]{10}$ ]]; then
+            node tools/seo/campaign_attribution_lot17_blocker_report.mjs \
+              ios_team_id_invalid \
+              'Le Team ID Apple résolu doit contenir exactement 10 caractères A-Z/0-9.'
             echo '::error::Team ID iOS invalide après résolution.'
-            exit 1
-          fi
-
-          KEYSTORE_PATH="$RUNNER_TEMP/lot17-upload-keystore"
-          printf '%s' "$KEYSTORE_B64" \
-            | tr -d '\r\n[:space:]' \
-            | base64 -d > "$KEYSTORE_PATH"
-
-          FINGERPRINT=$(keytool -list -v \
-            -keystore "$KEYSTORE_PATH" \
-            -storepass "$KEYSTORE_PASSWORD" \
-            -alias "$KEY_ALIAS" \
-            | sed -n -E 's/^[[:space:]]*SHA256:[[:space:]]*//p' \
-            | head -n1)
-
-          if [[ -z "$FINGERPRINT" ]]; then
-            echo '::error::Empreinte SHA-256 Android introuvable.'
+            rm -f "$KEYSTORE_PATH" "$PROFILE_PATH" "$PROFILE_PLIST"
             exit 1
           fi
 
@@ -206,16 +220,25 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
-          STATUS_STATE: ${{ steps.verify.outputs.state }}
-          STATUS_DESCRIPTION: ${{ steps.verify.outputs.description }}
           TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           REPOSITORY: ${{ github.repository }}
         run: |
           node <<'NODE' > /tmp/lot17-status.json
+          const fs = require('fs');
+          const reportPath = 'build/seo/campaign-attribution-lot17-report.json';
+          const report = fs.existsSync(reportPath)
+            ? JSON.parse(fs.readFileSync(reportPath, 'utf8'))
+            : null;
+          const available = report?.status === 'available';
+          const blocker = report?.blocker ? ` : ${report.blocker}` : '';
           const payload = {
-            state: process.env.STATUS_STATE || 'error',
+            state: available ? 'success' : 'error',
             target_url: process.env.TARGET_URL,
-            description: String(process.env.STATUS_DESCRIPTION || 'Lot 17 indisponible').slice(0, 140),
+            description: String(
+              available
+                ? 'Lot 17 Web, Android et iOS certifiés'
+                : `Lot 17 bloqué${blocker}`,
+            ).slice(0, 140),
             context: 'quality/campaign-attribution-lot17',
           };
           process.stdout.write(JSON.stringify(payload));
