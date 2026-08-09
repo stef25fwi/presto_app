@@ -9,8 +9,10 @@ import { COLLECTIONS } from "../../shared/constants";
 const FREE_PHONE_VERIFICATION_ATTEMPTS_PER_DAY = 1;
 const PHONE_VERIFICATION_WINDOW_MS = 24 * 60 * 60 * 1000;
 const E164_PHONE_PATTERN = /^\+[0-9]{10,15}$/;
+const RESERVATION_ID_PATTERN = /^[A-Za-z0-9_-]{8,128}$/;
 
 type SubscriptionPlan = "free" | "ilipresto_plus" | "ilipro";
+type PhoneVerificationAttemptAction = "reserve" | "commit" | "release";
 
 function requireAuthUid(request: { auth?: { uid?: string } }): string {
   const uid = String(request.auth?.uid || "").trim();
@@ -39,18 +41,114 @@ function hasPrivilegedPhoneQuotaBypass(token: Record<string, unknown>): boolean 
   return roles.includes("admin") || roles.includes("superadmin");
 }
 
+function parseAttemptAction(value: unknown): PhoneVerificationAttemptAction {
+  const action = String(value ?? "reserve").trim().toLowerCase();
+  if (action === "reserve" || action === "commit" || action === "release") {
+    return action;
+  }
+  throw new HttpsError("invalid-argument", "Action de tentative SMS invalide.");
+}
+
+function requireReservationId(value: unknown): string {
+  const reservationId = String(value ?? "").trim();
+  if (!RESERVATION_ID_PATTERN.test(reservationId)) {
+    throw new HttpsError("invalid-argument", "Identifiant de réservation SMS invalide.");
+  }
+  return reservationId;
+}
+
+function sanitizeReleaseReason(value: unknown): string {
+  const raw = String(value ?? "firebase_pre_send_failure").trim().slice(0, 64);
+  return (raw || "firebase_pre_send_failure").replace(/[^A-Za-z0-9_.-]/g, "_");
+}
+
 /**
- * Réserve une tentative d'envoi SMS avant l'appel Firebase Phone Auth.
+ * Gère la tentative d'envoi SMS de l'application officielle.
+ *
+ * - reserve : réserve le quota avant Firebase Phone Auth ;
+ * - commit : marque la réservation comme consommée dès que `codeSent` est reçu ;
+ * - release : recrédite la réservation si Firebase échoue avant `codeSent`.
  *
  * Les comptes au plan free disposent d'une tentative sur une fenêtre glissante
  * de 24 h. Les plans ilipresto_plus / ilipro et les comptes administrateurs
- * sont exemptés. Le contrôle est transactionnel afin que deux clics concurrents
- * ne puissent pas réserver deux tentatives dans l'application officielle.
+ * sont exemptés. Les mutations sont transactionnelles afin de rester idempotentes
+ * et de ne jamais libérer une réservation différente ou déjà envoyée.
  */
 export const reservePhoneVerificationAttempt = onCall(
   { region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK },
   async (request) => {
     const uid = requireAuthUid(request);
+    const action = parseAttemptAction(request.data?.action);
+    const userRef = db.collection(COLLECTIONS.users).doc(uid);
+    const quotaRef = userRef.collection("rateLimits").doc("phoneVerification");
+
+    if (action === "commit") {
+      const reservationId = requireReservationId(request.data?.reservationId);
+      const committed = await db.runTransaction(async (transaction) => {
+        const quotaSnap = await transaction.get(quotaRef);
+        const quotaData = quotaSnap.data() ?? {};
+        const currentReservationId = String(quotaData.reservationId ?? "");
+        const state = String(quotaData.reservationState ?? "").toLowerCase();
+
+        if (currentReservationId !== reservationId) return false;
+        if (state === "sent") return true;
+        if (state !== "reserved") return false;
+
+        transaction.set(
+          quotaRef,
+          {
+            reservationState: "sent",
+            sentAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
+        return true;
+      });
+
+      logger.info("account_phone_verification_attempt_committed", {
+        uid,
+        committed,
+      });
+      return { committed };
+    }
+
+    if (action === "release") {
+      const reservationId = requireReservationId(request.data?.reservationId);
+      const releaseReason = sanitizeReleaseReason(request.data?.reason);
+      const released = await db.runTransaction(async (transaction) => {
+        const quotaSnap = await transaction.get(quotaRef);
+        const quotaData = quotaSnap.data() ?? {};
+        const currentReservationId = String(quotaData.reservationId ?? "");
+        const state = String(quotaData.reservationState ?? "").toLowerCase();
+
+        if (currentReservationId !== reservationId || state !== "reserved") {
+          return false;
+        }
+
+        transaction.set(
+          quotaRef,
+          {
+            reservationState: "released",
+            nextAllowedAt: admin.firestore.FieldValue.delete(),
+            releasedAt: admin.firestore.FieldValue.serverTimestamp(),
+            releaseReason,
+            totalReleased: admin.firestore.FieldValue.increment(1),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
+        return true;
+      });
+
+      logger.info("account_phone_verification_attempt_released", {
+        uid,
+        released,
+        releaseReason,
+      });
+      return { released };
+    }
+
     const phoneNumber = String(request.data?.phoneNumber ?? "").trim();
     if (!E164_PHONE_PATTERN.test(phoneNumber)) {
       throw new HttpsError(
@@ -59,7 +157,6 @@ export const reservePhoneVerificationAttempt = onCall(
       );
     }
 
-    const userRef = db.collection(COLLECTIONS.users).doc(uid);
     const userSnap = await userRef.get();
     const userData = userSnap.data() ?? {};
     const plan = normalizeSubscriptionPlan(
@@ -75,12 +172,13 @@ export const reservePhoneVerificationAttempt = onCall(
         plan,
         dailyLimit: null,
         nextAllowedAt: null,
+        reservationId: null,
       };
     }
 
-    const quotaRef = userRef.collection("rateLimits").doc("phoneVerification");
     const now = admin.firestore.Timestamp.now();
     const nowMs = now.toMillis();
+    const reservationId = quotaRef.parent.doc().id;
 
     const reservation = await db.runTransaction(async (transaction) => {
       const quotaSnap = await transaction.get(quotaRef);
@@ -88,8 +186,10 @@ export const reservePhoneVerificationAttempt = onCall(
       const lastAttemptAt = quotaData.lastAttemptAt instanceof admin.firestore.Timestamp
         ? quotaData.lastAttemptAt as admin.firestore.Timestamp
         : null;
+      const previousState = String(quotaData.reservationState ?? "").toLowerCase();
+      const consumesQuota = lastAttemptAt != null && previousState !== "released";
 
-      if (lastAttemptAt != null) {
+      if (consumesQuota && lastAttemptAt != null) {
         const nextAllowedAtMs = lastAttemptAt.toMillis() + PHONE_VERIFICATION_WINDOW_MS;
         if (nowMs < nextAllowedAtMs) {
           const nextAllowedAt = new Date(nextAllowedAtMs).toISOString();
@@ -116,6 +216,12 @@ export const reservePhoneVerificationAttempt = onCall(
           dailyLimit: FREE_PHONE_VERIFICATION_ATTEMPTS_PER_DAY,
           rollingWindowHours: 24,
           phoneSuffix: phoneNumber.slice(-4),
+          reservationId,
+          reservationState: "reserved",
+          reservedAt: now,
+          releaseReason: admin.firestore.FieldValue.delete(),
+          releasedAt: admin.firestore.FieldValue.delete(),
+          sentAt: admin.firestore.FieldValue.delete(),
           totalAttempts: admin.firestore.FieldValue.increment(1),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
@@ -137,6 +243,7 @@ export const reservePhoneVerificationAttempt = onCall(
       plan,
       dailyLimit: FREE_PHONE_VERIFICATION_ATTEMPTS_PER_DAY,
       nextAllowedAt: reservation.nextAllowedAt,
+      reservationId,
     };
   },
 );

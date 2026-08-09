@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -16,6 +18,11 @@ typedef PhoneCredentialLinker = Future<void> Function(
 );
 typedef PhoneConfirmCaller = Future<Object?> Function();
 typedef PhoneAttemptReserver = Future<Object?> Function(String phoneNumber);
+typedef PhoneAttemptCommitter = Future<Object?> Function(String reservationId);
+typedef PhoneAttemptReleaser = Future<Object?> Function(
+  String reservationId,
+  String reason,
+);
 
 /// Vérification du numéro de téléphone par SMS via Firebase Phone Auth.
 ///
@@ -32,12 +39,16 @@ class PhoneVerificationService {
     PhoneCredentialLinker? linker,
     PhoneConfirmCaller? confirmCaller,
     PhoneAttemptReserver? attemptReserver,
+    PhoneAttemptCommitter? attemptCommitter,
+    PhoneAttemptReleaser? attemptReleaser,
   })  : _authOverride = auth,
         _functionsOverride = functions,
         _verifyStarter = verifyStarter,
         _linker = linker,
         _confirmCaller = confirmCaller,
-        _attemptReserver = attemptReserver;
+        _attemptReserver = attemptReserver,
+        _attemptCommitter = attemptCommitter,
+        _attemptReleaser = attemptReleaser;
 
   final FirebaseAuth? _authOverride;
   final FirebaseFunctions? _functionsOverride;
@@ -45,6 +56,11 @@ class PhoneVerificationService {
   final PhoneCredentialLinker? _linker;
   final PhoneConfirmCaller? _confirmCaller;
   final PhoneAttemptReserver? _attemptReserver;
+  final PhoneAttemptCommitter? _attemptCommitter;
+  final PhoneAttemptReleaser? _attemptReleaser;
+
+  String? _pendingReservationId;
+  bool _smsDispatchConfirmed = false;
 
   // Évalués paresseusement : ne touchent Firebase que si aucune dépendance
   // de test n'a été injectée (utile pour les tests unitaires sans app
@@ -66,7 +82,10 @@ class PhoneVerificationService {
             functions: _functions,
             name: 'reservePhoneVerificationAttempt',
             timeout: const Duration(seconds: 20),
-            parameters: <String, dynamic>{'phoneNumber': phoneNumber},
+            parameters: <String, dynamic>{
+              'action': 'reserve',
+              'phoneNumber': phoneNumber,
+            },
           ))
             .data;
     final data = Map<String, dynamic>.from(
@@ -75,12 +94,102 @@ class PhoneVerificationService {
     if (data['allowed'] != true) {
       throw StateError('La tentative SMS n’a pas été autorisée.');
     }
+
+    final reservationId = data['reservationId']?.toString().trim() ?? '';
+    _pendingReservationId = reservationId.isEmpty ? null : reservationId;
+    _smsDispatchConfirmed = false;
     return data;
+  }
+
+  Future<bool> commitDailyAttempt({required String reservationId}) async {
+    final committer = _attemptCommitter;
+    final rawData = committer != null
+        ? await committer(reservationId)
+        : (await callPrestoFunction<dynamic>(
+            functions: _functions,
+            name: 'reservePhoneVerificationAttempt',
+            timeout: const Duration(seconds: 20),
+            parameters: <String, dynamic>{
+              'action': 'commit',
+              'reservationId': reservationId,
+            },
+          ))
+            .data;
+    final data = Map<String, dynamic>.from(
+      (rawData as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{},
+    );
+    return data['committed'] == true;
+  }
+
+  Future<bool> releaseDailyAttempt({
+    required String reservationId,
+    required String reason,
+  }) async {
+    final releaser = _attemptReleaser;
+    final rawData = releaser != null
+        ? await releaser(reservationId, reason)
+        : (await callPrestoFunction<dynamic>(
+            functions: _functions,
+            name: 'reservePhoneVerificationAttempt',
+            timeout: const Duration(seconds: 20),
+            parameters: <String, dynamic>{
+              'action': 'release',
+              'reservationId': reservationId,
+              'reason': reason,
+            },
+          ))
+            .data;
+    final data = Map<String, dynamic>.from(
+      (rawData as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{},
+    );
+    return data['released'] == true;
+  }
+
+  Future<void> _commitPendingAttempt() async {
+    final reservationId = _pendingReservationId;
+    // Ces mutations locales sont synchrones et empêchent tout callback tardif
+    // de libérer une tentative après que Firebase a confirmé l'envoi.
+    _smsDispatchConfirmed = true;
+    _pendingReservationId = null;
+    if (reservationId == null || reservationId.isEmpty) return;
+
+    // Même si le marquage `sent` échoue temporairement, la réservation initiale
+    // continue de consommer le quota : on ne risque donc pas un double envoi.
+    try {
+      await commitDailyAttempt(reservationId: reservationId);
+    } catch (_) {
+      // Le quota reste conservateur côté serveur grâce à `lastAttemptAt`.
+    }
+  }
+
+  Future<void> _releasePendingAttempt(String reason) async {
+    final reservationId = _pendingReservationId;
+    if (_smsDispatchConfirmed || reservationId == null || reservationId.isEmpty) {
+      return;
+    }
+
+    try {
+      final released = await releaseDailyAttempt(
+        reservationId: reservationId,
+        reason: reason,
+      );
+      if (released) {
+        _pendingReservationId = null;
+      }
+    } catch (_) {
+      // Conserver l'identifiant permet à un nouvel essai dans la même page de
+      // tenter à nouveau le nettoyage avant d'écraser la réservation locale.
+    }
   }
 
   /// Déclenche l'envoi du SMS. `onAutoVerified` est appelé si la plateforme
   /// (Android, la plupart du temps) confirme automatiquement le code sans
   /// saisie utilisateur.
+  ///
+  /// Une réservation free n'est définitivement consommée qu'à partir du
+  /// callback Firebase `codeSent` (ou d'une vérification automatique). Si
+  /// Firebase échoue avant ce callback, la réservation est libérée côté
+  /// serveur avant de transmettre l'erreur à l'interface.
   Future<void> sendCode({
     required String phoneNumber,
     required void Function(String verificationId) onCodeSent,
@@ -88,21 +197,53 @@ class PhoneVerificationService {
     required Future<void> Function() onAutoVerified,
   }) async {
     final starter = _verifyStarter ?? _defaultVerifyStarter;
-    await starter(
-      phoneNumber: phoneNumber,
-      timeout: const Duration(seconds: 60),
-      verificationCompleted: (credential) async {
+    var codeSentObserved = false;
+
+    void handleFailure(FirebaseAuthException error) {
+      if (codeSentObserved || _pendingReservationId == null) {
+        onFailed(error);
+        return;
+      }
+      unawaited(() async {
+        await _releasePendingAttempt('firebase_${error.code}');
+        onFailed(error);
+      }());
+    }
+
+    void handleCodeSent(String verificationId) {
+      codeSentObserved = true;
+      unawaited(_commitPendingAttempt());
+      onCodeSent(verificationId);
+    }
+
+    void handleAutoVerified(PhoneAuthCredential credential) {
+      codeSentObserved = true;
+      unawaited(_commitPendingAttempt());
+      unawaited(() async {
         try {
           await _linkOrUpdate(credential);
           await onAutoVerified();
         } on FirebaseAuthException catch (error) {
           onFailed(error);
         }
-      },
-      verificationFailed: onFailed,
-      codeSent: (verificationId, _) => onCodeSent(verificationId),
-      codeAutoRetrievalTimeout: (_) {},
-    );
+      }());
+    }
+
+    try {
+      await starter(
+        phoneNumber: phoneNumber,
+        timeout: const Duration(seconds: 60),
+        verificationCompleted: handleAutoVerified,
+        verificationFailed: handleFailure,
+        codeSent: (verificationId, _) => handleCodeSent(verificationId),
+        codeAutoRetrievalTimeout: (_) {},
+      );
+    } on FirebaseAuthException catch (error) {
+      if (!codeSentObserved) {
+        await _releasePendingAttempt('firebase_${error.code}');
+      }
+      onFailed(error);
+    }
   }
 
   /// Confirme le code saisi par l'utilisateur, lie le numéro au compte, puis

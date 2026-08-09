@@ -122,7 +122,7 @@ void main() {
       find.textContaining('Numéro de téléphone invalide'),
       findsOneWidget,
     );
-    expect(find.textContaining('comptabilisée'), findsOneWidget);
+    expect(find.textContaining('n’est pas décomptée'), findsOneWidget);
     expect(find.text('Envoyer le code'), findsOneWidget);
   });
 
