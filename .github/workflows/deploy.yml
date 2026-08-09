@@ -62,11 +62,6 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
-          # Workload Identity Federation : plus aucune clé de service account
-          # longue durée n'est stockée ni décodée. Le runner échange son jeton
-          # OIDC GitHub (permission id-token: write) contre un jeton d'accès GCP
-          # de courte durée. Les credentials sont écrits dans un fichier ADC et
-          # GOOGLE_APPLICATION_CREDENTIALS est exporté pour firebase et gcloud.
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
@@ -96,11 +91,28 @@ jobs:
             --git-ref '${{ github.sha }}' \
             --enforce
 
+      - name: Generate programmatic local SEO pages
+        run: node tools/seo/generate_programmatic_local_pages.mjs
+
+      - name: Validate programmatic local SEO
+        run: node tools/quality/check_programmatic_local_seo.mjs
+
       - name: Validate every public page
         run: node tools/quality/check_public_page_seo.mjs
 
       - name: Install Functions dependencies
         run: npm --prefix functions ci
+
+      - name: Aggregate production SEO signals
+        run: |
+          node functions/scripts/generate_programmatic_seo_signals.mjs \
+            --project=presto-app-74abe \
+            --output=quality/seo-programmatic-local-signals.json
+
+      - name: Regenerate local SEO from production signals
+        run: |
+          node tools/seo/generate_programmatic_local_pages.mjs
+          node tools/quality/check_programmatic_local_seo.mjs
 
       - name: Build Functions
         run: npm --prefix functions run build
@@ -135,6 +147,7 @@ jobs:
             firestore.rules
             storage.rules
             quality_reports/production
+            quality/seo-programmatic-local-signals.json
             coverage/lcov.info
           if-no-files-found: error
           retention-days: 90
@@ -263,6 +276,16 @@ jobs:
             echo "$page" | grep -q 'aria-label="Fil d’Ariane"'
           done
 
+          local_page="$(curl --fail --silent --show-error \
+            --retry 6 --retry-delay 5 --retry-all-errors \
+            https://ilipresto.fr/services/jardinage/les-abymes/)"
+          echo "$local_page" | grep -q '<link rel="canonical" href="https://ilipresto.fr/services/jardinage/les-abymes/">'
+          echo "$local_page" | grep -q '<meta name="robots" content="'
+          if echo "$local_page" | grep -q 'JobPosting'; then
+            echo '❌ JobPosting détecté sur une page locale de service.'
+            exit 1
+          fi
+
           legal_registry="$(curl --fail --silent --show-error \
             --retry 6 --retry-delay 5 --retry-all-errors \
             https://ilipresto.fr/public-route-seo.js)"
@@ -277,6 +300,11 @@ jobs:
             echo "$sitemap" | grep -q "<loc>https://ilipresto.fr$route</loc>"
           done
 
+          local_sitemap="$(curl --fail --silent --show-error \
+            --retry 6 --retry-delay 5 --retry-all-errors \
+            https://ilipresto.fr/sitemap-local.xml)"
+          echo "$local_sitemap" | grep -q '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+
       - name: Publish deployment summary
         if: always()
         run: |
@@ -287,7 +315,8 @@ jobs:
             echo "- Workflow : \`${{ github.run_id }}\`"
             echo '- Cible : `presto-app-74abe`'
             echo '- URL contrôlée : `https://ilipresto.fr`'
-            echo '- Pages publiques contrôlées : `8`'
+            echo '- Pages publiques de base contrôlées : `8`'
+            echo '- SEO programmatique local : signaux production agrégés, pages générées et contrôlées avant build'
             echo "- Functions modifiées : \`${{ steps.functions_changes.outputs.changed || 'unknown' }}\`"
             echo '- Artefact de restauration : `production-release-${{ github.sha }}`'
           } >> "$GITHUB_STEP_SUMMARY"

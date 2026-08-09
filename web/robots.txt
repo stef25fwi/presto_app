@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://ilipresto.fr/sitemap.xml
+Sitemap: https://ilipresto.fr/sitemap-local.xml

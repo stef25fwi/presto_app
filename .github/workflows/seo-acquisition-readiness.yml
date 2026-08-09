@@ -17,6 +17,10 @@ jobs:
           node-version: '22'
       - name: Validate national positioning
         run: node tools/quality/check_national_positioning.mjs
+      - name: Generate programmatic local SEO pages
+        run: node tools/seo/generate_programmatic_local_pages.mjs
+      - name: Validate programmatic local SEO
+        run: node tools/quality/check_programmatic_local_seo.mjs
       - name: Validate every public page
         run: node tools/quality/check_public_page_seo.mjs
       - name: Validate continuous SEO monitoring
