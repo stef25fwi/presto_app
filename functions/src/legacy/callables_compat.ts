@@ -1,3 +1,5 @@
+import { IS_EMULATOR } from "../config/env";
+
 type LegacyCallableExportMap = {
   placesAutocomplete: unknown;
   placesDetails: unknown;
@@ -15,7 +17,16 @@ type LegacyCallableExportMap = {
 };
 
 // Compatibility bridge: these callables still live in the legacy root entrypoint.
-const legacy = require("../../index.js") as LegacyCallableExportMap;
+//
+// The legacy root also registers v1 functions during module evaluation. With
+// firebase-functions v7, loading that entire root inside every Functions
+// Emulator worker can fail before unrelated v2 callables are invoked. Production
+// keeps the historical bridge unchanged; emulator-only workers skip the legacy
+// root so isolated v2 integration tests can execute without importing unrelated
+// v1 registration code.
+const legacy = IS_EMULATOR
+  ? ({} as LegacyCallableExportMap)
+  : require("../../index.js") as LegacyCallableExportMap;
 
 export const placesAutocomplete = legacy.placesAutocomplete;
 export const placesDetails = legacy.placesDetails;
