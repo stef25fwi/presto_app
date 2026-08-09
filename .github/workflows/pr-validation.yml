@@ -133,7 +133,7 @@ jobs:
             --enforce 2>&1 | tee pr_validation_logs/critical_coverage.log
 
       - name: Functions dependencies
-        if: steps.scope.outputs.functions == 'true'
+        if: steps.scope.outputs.functions == 'true' || steps.scope.outputs.firestore == 'true'
         id: functions_deps
         continue-on-error: true
         run: |
