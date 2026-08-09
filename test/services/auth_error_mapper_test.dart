@@ -15,23 +15,38 @@ void main() {
       'user-not-found': 'Email ou mot de passe incorrect.',
       'user-disabled': 'Ce compte a été désactivé.',
       'too-many-requests':
-          'Trop de tentatives. Réessaie dans quelques minutes.',
+          'Trop de tentatives Firebase ont été détectées. Réessaie dans quelques minutes.',
       'network-request-failed':
-          'Problème réseau. Vérifie ta connexion internet.',
+          'Problème réseau. Vérifie ta connexion internet puis réessaie.',
       'requires-recent-login':
           'Pour cette action sensible, reconnecte-toi puis réessaie.',
       'credential-already-in-use':
           'Ce moyen de connexion est déjà utilisé par un autre compte.',
       'operation-not-allowed':
-          'Cette méthode de connexion n’est pas encore activée.',
+          'La vérification par téléphone n’est pas autorisée par la configuration Firebase. Vérifie le provider Téléphone et la règle des régions SMS.',
       'invalid-phone-number':
-          'Numéro de téléphone invalide. Vérifie le format (ex : +33612345678).',
+          'Numéro de téléphone invalide. Vérifie l’indicatif et le format international.',
+      'app-not-authorized':
+          'Cette application n’est pas autorisée à utiliser Firebase Phone Auth. Vérifie la configuration Android/iOS et les empreintes de l’application.',
+      'captcha-check-failed':
+          'La vérification anti-abus Firebase a échoué. Relance la vérification et termine le contrôle de sécurité si Firebase le demande.',
+      'missing-app-credential':
+          'Firebase n’a pas pu valider l’authenticité de l’application pour l’envoi du SMS. Vérifie App Check, Play Integrity/APNs et la configuration Phone Auth.',
+      'invalid-app-credential':
+          'Firebase n’a pas pu valider l’authenticité de l’application pour l’envoi du SMS. Vérifie App Check, Play Integrity/APNs et la configuration Phone Auth.',
+      'missing-client-identifier':
+          'Firebase n’a pas pu identifier correctement cet appareil pour la vérification par SMS.',
+      'web-context-cancelled':
+          'La vérification de sécurité Firebase a été annulée avant l’envoi du SMS.',
+      'web-context-already-present':
+          'Une vérification Firebase est déjà en cours. Termine-la ou ferme-la avant de recommencer.',
       'invalid-verification-code':
           'Code incorrect. Vérifie les chiffres reçus par SMS.',
       'invalid-verification-id': 'La demande a expiré. Renvoie un nouveau code.',
       'session-expired': 'La demande a expiré. Renvoie un nouveau code.',
       'missing-verification-code': 'Saisis le code reçu par SMS.',
-      'quota-exceeded': 'Trop de SMS envoyés. Réessaie plus tard.',
+      'quota-exceeded':
+          'Le quota d’envoi SMS Firebase est atteint. Réessaie plus tard.',
     };
 
     for (final entry in expectedMessages.entries) {
@@ -47,7 +62,7 @@ void main() {
 
       expect(
         AuthErrorMapper.message(error),
-        'Erreur d’authentification : custom-auth-error',
+        'Erreur d’authentification Firebase : custom-auth-error',
       );
     });
 
