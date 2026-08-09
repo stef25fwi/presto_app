@@ -41,6 +41,7 @@ class PhoneVerificationService {
     PhoneAttemptReserver? attemptReserver,
     PhoneAttemptCommitter? attemptCommitter,
     PhoneAttemptReleaser? attemptReleaser,
+    Duration smsCallbackWatchdogTimeout = const Duration(seconds: 90),
   })  : _authOverride = auth,
         _functionsOverride = functions,
         _verifyStarter = verifyStarter,
@@ -48,7 +49,8 @@ class PhoneVerificationService {
         _confirmCaller = confirmCaller,
         _attemptReserver = attemptReserver,
         _attemptCommitter = attemptCommitter,
-        _attemptReleaser = attemptReleaser;
+        _attemptReleaser = attemptReleaser,
+        _smsCallbackWatchdogTimeout = smsCallbackWatchdogTimeout;
 
   final FirebaseAuth? _authOverride;
   final FirebaseFunctions? _functionsOverride;
@@ -58,6 +60,7 @@ class PhoneVerificationService {
   final PhoneAttemptReserver? _attemptReserver;
   final PhoneAttemptCommitter? _attemptCommitter;
   final PhoneAttemptReleaser? _attemptReleaser;
+  final Duration _smsCallbackWatchdogTimeout;
 
   String? _pendingReservationId;
   bool _smsDispatchConfirmed = false;
@@ -190,6 +193,10 @@ class PhoneVerificationService {
   /// callback Firebase `codeSent` (ou d'une vérification automatique). Si
   /// Firebase échoue avant ce callback, la réservation est libérée côté
   /// serveur avant de transmettre l'erreur à l'interface.
+  ///
+  /// Certains échecs d'attestation Android peuvent exceptionnellement ne faire
+  /// remonter aucun callback Firebase. Un watchdog ferme alors le spinner et
+  /// libère la réservation afin que l'utilisateur ne reste jamais bloqué.
   Future<void> sendCode({
     required String phoneNumber,
     required void Function(String verificationId) onCodeSent,
@@ -198,26 +205,41 @@ class PhoneVerificationService {
   }) async {
     final starter = _verifyStarter ?? _defaultVerifyStarter;
     var codeSentObserved = false;
+    var terminalCallbackDelivered = false;
+    Timer? watchdog;
+
+    Future<void> failBeforeCodeSent(
+      FirebaseAuthException error,
+      String releaseReason,
+    ) async {
+      if (terminalCallbackDelivered || codeSentObserved) return;
+      terminalCallbackDelivered = true;
+      watchdog?.cancel();
+      await _releasePendingAttempt(releaseReason);
+      onFailed(error);
+    }
 
     void handleFailure(FirebaseAuthException error) {
-      if (codeSentObserved || _pendingReservationId == null) {
-        onFailed(error);
-        return;
-      }
-      unawaited(() async {
-        await _releasePendingAttempt('firebase_${error.code}');
-        onFailed(error);
-      }());
+      if (terminalCallbackDelivered || codeSentObserved) return;
+      unawaited(
+        failBeforeCodeSent(error, 'firebase_${error.code}'),
+      );
     }
 
     void handleCodeSent(String verificationId) {
+      if (terminalCallbackDelivered) return;
+      terminalCallbackDelivered = true;
       codeSentObserved = true;
+      watchdog?.cancel();
       unawaited(_commitPendingAttempt());
       onCodeSent(verificationId);
     }
 
     void handleAutoVerified(PhoneAuthCredential credential) {
+      if (terminalCallbackDelivered) return;
+      terminalCallbackDelivered = true;
       codeSentObserved = true;
+      watchdog?.cancel();
       unawaited(_commitPendingAttempt());
       unawaited(() async {
         try {
@@ -229,6 +251,34 @@ class PhoneVerificationService {
       }());
     }
 
+    void handleAutoRetrievalTimeout(String _) {
+      if (terminalCallbackDelivered || codeSentObserved) return;
+      unawaited(
+        failBeforeCodeSent(
+          FirebaseAuthException(
+            code: 'phone-verification-timeout',
+            message:
+                'Firebase Phone Auth n’a pas confirmé le démarrage de l’envoi SMS.',
+          ),
+          'firebase_auto_retrieval_timeout',
+        ),
+      );
+    }
+
+    watchdog = Timer(_smsCallbackWatchdogTimeout, () {
+      if (terminalCallbackDelivered || codeSentObserved) return;
+      unawaited(
+        failBeforeCodeSent(
+          FirebaseAuthException(
+            code: 'phone-verification-timeout',
+            message:
+                'Firebase Phone Auth n’a renvoyé aucun callback dans le délai attendu.',
+          ),
+          'firebase_callback_timeout',
+        ),
+      );
+    });
+
     try {
       await starter(
         phoneNumber: phoneNumber,
@@ -236,13 +286,18 @@ class PhoneVerificationService {
         verificationCompleted: handleAutoVerified,
         verificationFailed: handleFailure,
         codeSent: (verificationId, _) => handleCodeSent(verificationId),
-        codeAutoRetrievalTimeout: (_) {},
+        codeAutoRetrievalTimeout: handleAutoRetrievalTimeout,
       );
     } on FirebaseAuthException catch (error) {
-      if (!codeSentObserved) {
-        await _releasePendingAttempt('firebase_${error.code}');
-      }
-      onFailed(error);
+      await failBeforeCodeSent(error, 'firebase_${error.code}');
+    } catch (_) {
+      await failBeforeCodeSent(
+        FirebaseAuthException(
+          code: 'phone-verification-start-failed',
+          message: 'Impossible de démarrer Firebase Phone Auth.',
+        ),
+        'firebase_start_failed',
+      );
     }
   }
 
