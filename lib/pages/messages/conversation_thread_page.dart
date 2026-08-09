@@ -24,6 +24,7 @@ import '../../features/micro_ia/web_audio_recorder_stub.dart'
 import '../../features/subscriptions/subscription_action_placeholders.dart';
 import '../../features/subscriptions/subscription_config_service.dart';
 import '../../features/subscriptions/subscription_models.dart';
+import '../../features/trust_score/conversation_review_v2_cta.dart';
 import '../../services/conversation_service.dart';
 import '../../services/conversation_state.dart';
 import '../../services/admin_access_resolver.dart';
@@ -3606,6 +3607,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               _buildOfferContextBanner(),
               buildStateBanner(),
               buildSafetyReminderBanner(),
+              ConversationReviewV2Cta(
+                conversationId: widget.conversationId,
+              ),
               buildTypingIndicator(),
               Expanded(
                 child: preparingMessageStream || _messageStream == null

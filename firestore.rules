@@ -253,6 +253,7 @@ service cloud.firestore {
         'isSuperadmin',
         'superAdmin',
         'trustScore',
+        'trustScoreV2',
         'uid',
         'email',
         'accountStatus',
@@ -878,6 +879,11 @@ service cloud.firestore {
     match /public_config/payment_info_audio {
       allow read: if true;
       allow write: if false;
+    }
+
+    // 🔒 Score Confiance V2 canonique — Cloud Functions Admin SDK uniquement.
+    match /user_trust_scores_v2/{userId} {
+      allow read, write: if false;
     }
 
     // ⛔ [REFUSÉ] Catch-all — tout accès non déclaré est refusé

@@ -3354,6 +3354,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
           reason: reason,
           successMessage:
               'Annonce "$title" marquée comme réalisée. Vous pourrez noter plus tard.',
+          keepReviewTask: true,
         );
         return;
       }
@@ -3377,6 +3378,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       title: title,
       reason: reason,
       successMessage: message,
+      keepReviewTask: action == FoundSomeoneOnIliPrestoAction.rateLater,
     );
   }
 
@@ -3385,6 +3387,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     required String title,
     required String reason,
     required String successMessage,
+    bool keepReviewTask = false,
   }) async {
     setState(() => _busyOfferId = item.offerId);
     try {
@@ -3393,6 +3396,11 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         reason: reason,
         jobDone: true,
       );
+      if (!keepReviewTask) {
+        await _trustScoreService.dismissPendingReviewTask(
+          offerId: item.offerId,
+        );
+      }
       if (!mounted) return;
       await _loadOffers();
       if (!mounted) return;
