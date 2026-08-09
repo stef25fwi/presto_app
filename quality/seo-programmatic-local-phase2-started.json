@@ -1,0 +1,9 @@
+{
+  "phase": "SEO-P2",
+  "startedAt": "2026-08-09",
+  "branch": "agent/seo-programmatique-local-phase2",
+  "pilotPages": 36,
+  "defaultIndexablePages": 0,
+  "activationSource": "production public listings aggregates",
+  "status": "started"
+}

@@ -1,0 +1,17 @@
+{
+  "phase": "SEO-P2",
+  "name": "SEO Programmatique Local — Services × Missions × Annonces × Profils × Villes",
+  "status": "in_progress",
+  "controls": [
+    {"id":"registry","status":"complete","evidence":"3 services, 6 villes et 2 intentions configurés"},
+    {"id":"generator","status":"complete","evidence":"36 pages locales générables automatiquement"},
+    {"id":"activation_gate","status":"complete","evidence":"noindex par défaut; indexation seulement après seuil de données réelles et récentes"},
+    {"id":"listing_aggregates","status":"complete","evidence":"agrégation anonyme des annonces publiques actives par catégorie et ville"},
+    {"id":"firebase_pipeline","status":"complete","evidence":"génération et validation branchées avant le build Hosting avec smoke test"},
+    {"id":"local_sitemap","status":"complete","evidence":"sitemap-local.xml ne contient que les pages éligibles"},
+    {"id":"profile_signals","status":"pending","evidence":"à activer uniquement après audit des champs publics et du consentement profil"},
+    {"id":"public_listing_pages","status":"pending","evidence":"URLs SEO individuelles d'annonces publiques à concevoir"},
+    {"id":"public_profile_pages","status":"pending","evidence":"ProfilePage et URLs publiques à concevoir"},
+    {"id":"search_console_validation","status":"pending","evidence":"à mesurer après fusion et déploiement du même SHA"}
+  ]
+}
