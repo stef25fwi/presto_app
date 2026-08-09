@@ -57,7 +57,7 @@ test("ENFORCE_APP_CHECK stays disabled in emulator", () => {
   assert.equal(env.ENFORCE_APP_CHECK, false);
 });
 
-test("APPCHECK_SAFE_MODE disables enforcement in production", () => {
+test("APPCHECK_SAFE_MODE cannot disable enforcement in production", () => {
   const env = loadEnvModule({
     GCLOUD_PROJECT: "presto-app-74abe",
     GCP_PROJECT: undefined,
@@ -69,5 +69,5 @@ test("APPCHECK_SAFE_MODE disables enforcement in production", () => {
 
   assert.equal(env.IS_PROD, true);
   assert.equal(env.IS_EMULATOR, false);
-  assert.equal(env.ENFORCE_APP_CHECK, false);
+  assert.equal(env.ENFORCE_APP_CHECK, true);
 });

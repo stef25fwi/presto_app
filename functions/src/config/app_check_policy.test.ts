@@ -32,14 +32,14 @@ test("active App Check par défaut en production", () => {
   );
 });
 
-test("autorise uniquement une désactivation explicite en production", () => {
+test("refuse toute désactivation explicite en production", () => {
   assert.equal(
     resolveAppCheckEnforcement({
       isEmulator: false,
       isProduction: true,
       enforceValue: " false ",
     }),
-    false,
+    true,
   );
 });
 
@@ -61,11 +61,23 @@ test("exige une activation explicite hors production", () => {
   );
 });
 
-test("safe mode désactive toujours App Check", () => {
+test("safe mode ne peut pas désactiver App Check en production", () => {
   assert.equal(
     resolveAppCheckEnforcement({
       isEmulator: false,
       isProduction: true,
+      enforceValue: "true",
+      safeModeValue: "true",
+    }),
+    true,
+  );
+});
+
+test("safe mode reste disponible hors production", () => {
+  assert.equal(
+    resolveAppCheckEnforcement({
+      isEmulator: false,
+      isProduction: false,
       enforceValue: "true",
       safeModeValue: "true",
     }),
