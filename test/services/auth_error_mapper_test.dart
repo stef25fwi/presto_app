@@ -40,6 +40,10 @@ void main() {
           'La vérification de sécurité Firebase a été annulée avant l’envoi du SMS.',
       'web-context-already-present':
           'Une vérification Firebase est déjà en cours. Termine-la ou ferme-la avant de recommencer.',
+      'phone-verification-timeout':
+          'Firebase n’a pas confirmé l’envoi du SMS dans le délai prévu. Réessaie après vérification de la configuration Phone Auth et de la connexion réseau.',
+      'phone-verification-start-failed':
+          'Firebase Phone Auth n’a pas pu démarrer. Réessaie après vérification de la configuration de l’application.',
       'invalid-verification-code':
           'Code incorrect. Vérifie les chiffres reçus par SMS.',
       'invalid-verification-id': 'La demande a expiré. Renvoie un nouveau code.',
