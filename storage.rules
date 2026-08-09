@@ -35,7 +35,8 @@ service firebase.storage {
       let adminData = firestore.get(adminPath).data;
       return isSignedIn()
         && firestore.exists(adminPath)
-        && adminData.enabled != false;
+        && adminData.enabled != false
+        && (!('expiresAt' in adminData) || adminData.expiresAt > request.time);
     }
 
     function isMarketplaceModerator() {
