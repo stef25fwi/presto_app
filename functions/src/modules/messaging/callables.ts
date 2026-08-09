@@ -1016,7 +1016,6 @@ export const ensureOfferConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async 
         offerTitle,
         status: "open",
         archivedBy: {},
-        deletedBy: {},
         blockedBy: {},
         lastReadAt: {},
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
