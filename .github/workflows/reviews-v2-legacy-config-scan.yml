@@ -1,0 +1,22 @@
+name: Reviews V2 legacy config scan
+
+on:
+  push:
+    branches:
+      - agent/reviews-v2-complete-mutual-flow
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Locate removed firebase-functions runtime config usage
+        shell: bash
+        run: |
+          echo '=== functionsV1 references ==='
+          grep -Rn --exclude-dir=node_modules --exclude-dir=lib 'functionsV1' functions || true
+          echo '=== functions.config references ==='
+          grep -Rn --exclude-dir=node_modules --exclude-dir=lib -E 'functions(\.config|V1\.config)|\.config\(\)' functions || true
