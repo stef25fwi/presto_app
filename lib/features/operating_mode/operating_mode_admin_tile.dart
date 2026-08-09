@@ -31,6 +31,18 @@ class _OperatingModeAdminTileState extends State<OperatingModeAdminTile> {
     unawaited(_service.ensureDefaults(updatedBy: _adminId));
   }
 
+  bool _samePublisher(
+    LegalPublisherProfile expected,
+    LegalPublisherProfile actual,
+  ) {
+    final expectedMap = expected.toMap();
+    final actualMap = actual.toMap();
+    return expectedMap.length == actualMap.length &&
+        expectedMap.entries.every(
+          (entry) => actualMap[entry.key] == entry.value,
+        );
+  }
+
   Future<void> _setCommercial(
     bool enabled,
     AppOperatingModeState state,
@@ -64,21 +76,49 @@ class _OperatingModeAdminTileState extends State<OperatingModeAdminTile> {
   }
 
   Future<void> _savePublisher(LegalPublisherProfile profile) async {
+    var persisted = false;
     try {
       await _service.updatePublisherProfile(
         profile,
         updatedBy: _adminId,
       );
+      persisted = true;
+
+      final storedState = await _service.getState();
+      if (!_samePublisher(profile, storedState.publisher)) {
+        throw StateError(
+          'La fiche juridique relue depuis Firestore ne correspond pas aux informations saisies.',
+        );
+      }
+
+      final publicState = await _service.getPublicState();
+      if (!_samePublisher(profile, publicState.publisher)) {
+        throw StateError(
+          'Les informations sont enregistrées dans Firestore mais la configuration juridique publique n’est pas encore synchronisée.',
+        );
+      }
+
       if (!mounted) return;
       showSuccessSnackBar(
         context,
-        'Informations juridiques enregistrées et publiées.',
+        'Informations juridiques enregistrées et vérifiées en production.',
       );
-    } catch (_) {
-      if (!mounted) return;
+    } on StateError catch (error) {
+      if (!mounted) rethrow;
       showErrorSnackBar(
         context,
-        'Impossible d’enregistrer les informations juridiques.',
+        persisted
+            ? error.message.toString()
+            : 'Impossible d’enregistrer les informations juridiques.',
+      );
+      rethrow;
+    } catch (_) {
+      if (!mounted) rethrow;
+      showErrorSnackBar(
+        context,
+        persisted
+            ? 'Les informations ont été écrites, mais leur publication n’a pas pu être vérifiée. Réessayez pour confirmer la synchronisation.'
+            : 'Impossible d’enregistrer les informations juridiques.',
       );
       rethrow;
     }
