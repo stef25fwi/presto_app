@@ -264,7 +264,7 @@ class _SeoIntroSlide extends StatelessWidget {
         return Semantics(
           container: true,
           header: true,
-          label: 'La solution instantanée pour vos services du quotidien',
+          label: 'La solution à tout moment pour tous vos besoins du quotidien',
           child: Container(
             color: const Color(0xFFFF6600),
             padding: EdgeInsets.symmetric(
@@ -281,7 +281,7 @@ class _SeoIntroSlide extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'La solution instantanée pour vos services du quotidien',
+                      'La solution à tout moment pour tous vos besoins du quotidien',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: titleSize,
@@ -298,7 +298,7 @@ class _SeoIntroSlide extends StatelessWidget {
                     ),
                     SizedBox(height: compact ? 8 : 12),
                     Text(
-                      'iliprestō est un site de petites annonces de services et micro-services du quotidien pour trouver un particulier, un indépendant ou un professionnel disponible à l’instant près de chez vous.',
+                      'Publiez une annonce assistée par IA à partir d’un texte ou de votre voix pour trouver une réponse adaptée à vos besoins du quotidien.',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: bodySize,
@@ -308,7 +308,7 @@ class _SeoIntroSlide extends StatelessWidget {
                     ),
                     SizedBox(height: compact ? 6 : 9),
                     Text(
-                      'Publiez votre besoin, indiquez votre prix ou votre budget : les personnes disponibles peuvent vous contacter immédiatement, avec 0 % de commission.',
+                      'iliprestō ne prélève aucune commission sur vos prestations et ne collecte ni ne gère les paiements entre utilisateurs.',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.92),
                         fontSize: bodySize,
@@ -330,7 +330,7 @@ class _SeoIntroSlide extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        'Petites annonces, disponibilité immédiate et échange direct : une solution simple pour tous vos besoins du quotidien.',
+                        'Annonces assistées par IA, échange direct et 0 % de commission : une solution simple à tout moment.',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: footerSize,

@@ -1,15 +1,16 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const seoTitle = 'iliprestō – Petites annonces de services instantanées';
+const seoTitle = 'iliprestō – Annonces assistées par IA, 0 % de commission';
 const seoDescription =
-  'Petites annonces de services : publiez votre besoin, indiquez votre prix et trouvez instantanément un particulier ou professionnel disponible près de chez vous.';
+  'La solution à tout moment pour vos besoins du quotidien : publiez une annonce assistée par IA, échangez directement et profitez de 0 % de commission.';
 const nationalLaunchMessage =
   'Site national en cours de déploiement. Première ouverture en Guadeloupe, Martinique et Guyane.';
 const legacyRegionalOnlyMessage =
   'Ouverture prochaine en Guadeloupe, Martinique et Guyane.';
 
 const index = fs.readFileSync('web/index.html', 'utf8');
+const normalizedIndex = index.replace(/\s+/g, ' ');
 const service = fs.readFileSync(
   'lib/services/public_landing_config_service.dart',
   'utf8',
@@ -44,8 +45,20 @@ assert.ok(
   'positionnement petites annonces absent du HTML public',
 );
 assert.ok(
-  index.includes('solution instantanée'),
-  'notion de solution instantanée absente du HTML public',
+  normalizedIndex.includes('La solution à tout moment pour tous vos besoins du quotidien'),
+  'positionnement à tout moment absent du HTML public',
+);
+assert.ok(
+  normalizedIndex.includes('Annonces assistées par IA'),
+  'annonces assistées par IA absentes du HTML public',
+);
+assert.ok(
+  normalizedIndex.includes('ne collecte ni ne gère les paiements entre utilisateurs'),
+  'rôle de non-intermédiaire de paiement absent du HTML public',
+);
+assert.ok(
+  normalizedIndex.includes('Vous échangez et convenez directement des conditions de la mission'),
+  'échange direct absent du HTML public',
 );
 assert.ok(
   !index.toLowerCase().includes('plateforme nationale de mise en relation'),
@@ -55,6 +68,15 @@ assert.ok(
   !index.includes(legacyRegionalOnlyMessage),
   'ancien message régional encore visible dans le HTML public',
 );
+for (const claim of [
+  /solution instantanée/i,
+  /trouvez instantanément/i,
+  /à l’instant/i,
+  /réponses immédiates/i,
+  /contact(?:er|é|és)? immédiatement/i,
+]) {
+  assert.ok(!claim.test(index), `promesse non vérifiée encore présente: ${claim}`);
+}
 
 const jsonLdMatch = index.match(
   /<script\s+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i,
@@ -81,8 +103,16 @@ assert.equal(
   'Site de petites annonces pour services et micro-services',
 );
 assert.ok(
-  String(serviceNode.description || '').includes('Solution instantanée'),
-  'solution instantanée absente du Service JSON-LD',
+  String(serviceNode.description || '').includes('annonce assistée par IA'),
+  'annonce assistée par IA absente du Service JSON-LD',
+);
+assert.ok(
+  String(serviceNode.description || '').includes('0 % de commission'),
+  '0 % de commission absent du Service JSON-LD',
+);
+assert.ok(
+  String(serviceNode.description || '').includes('sans paiement géré par iliprestō'),
+  'rôle de non-intermédiaire de paiement absent du Service JSON-LD',
 );
 
 assert.equal(webManifest.description, seoDescription);
@@ -105,4 +135,4 @@ assert.ok(
   'migration des titres Remote Config historiques absente',
 );
 
-console.log('Positionnement national petites annonces instantanées iliprestō validé.');
+console.log('Positionnement national IA, échange direct et 0 % de commission validé.');

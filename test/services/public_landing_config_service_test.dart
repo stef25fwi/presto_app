@@ -58,14 +58,14 @@ class _FakePublicLandingRemoteConfigAdapter
 
 void main() {
   group('PublicLandingConfigService', () {
-    test('publie le positionnement petites annonces instantané par défaut', () {
+    test('publie le positionnement IA et 0 % de commission par défaut', () {
       expect(
         PublicLandingConfigService.defaultTitle,
-        'La solution instantanée pour trouver un service près de chez vous',
+        'La solution à tout moment pour tous vos besoins du quotidien',
       );
       expect(
         PublicLandingConfigService.defaultDescription,
-        'iliprestō est un site de petites annonces de services et micro-services du quotidien. Publiez votre besoin, indiquez votre prix ou votre budget et trouvez un particulier, un indépendant ou un professionnel disponible à l’instant près de chez vous. Les personnes disponibles peuvent vous contacter immédiatement, avec 0 % de commission.',
+        'Publiez une annonce assistée par IA à partir d’un texte ou de votre voix pour vos besoins du quotidien. iliprestō ne prélève aucune commission sur vos prestations et ne collecte ni ne gère les paiements entre utilisateurs. Vous échangez et convenez directement des conditions de la mission.',
       );
       expect(
         PublicLandingConfigService.defaultLaunchMessage,
@@ -206,14 +206,14 @@ void main() {
       expect(service.launchMessage, 'Les inscriptions sont ouvertes.');
     });
 
-    test('migre les anciennes valeurs Remote Config vers le nouveau positionnement',
+    test('migre l’ancien positionnement instantané vers le nouveau texte',
         () async {
       final service = PublicLandingConfigService(
         adapter: _FakePublicLandingRemoteConfigAdapter(
           title:
-              'Trouvez rapidement un particulier, un indépendant ou un professionnel près de chez vous',
+              'La solution instantanée pour trouver un service près de chez vous',
           description:
-              'Publiez votre besoin en quelques secondes, par texte ou à la voix. Votre annonce est assistée par IA et vous échangez directement avec des particuliers, indépendants et professionnels, sans commission.',
+              'iliprestō est un site de petites annonces de services et micro-services du quotidien. Publiez votre besoin, indiquez votre prix ou votre budget et trouvez un particulier, un indépendant ou un professionnel disponible à l’instant près de chez vous. Les personnes disponibles peuvent vous contacter immédiatement, avec 0 % de commission.',
           launchMessage:
               'Plateforme nationale en cours de déploiement. Première ouverture en Guadeloupe, Martinique et Guyane.',
         ),

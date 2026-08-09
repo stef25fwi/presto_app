@@ -67,23 +67,28 @@ class PublicLandingConfigService extends ChangeNotifier {
   static const bool defaultEnabled = true;
   static const String defaultBadge = 'Bientôt disponible';
   static const String defaultTitle =
-      'La solution instantanée pour trouver un service près de chez vous';
+      'La solution à tout moment pour tous vos besoins du quotidien';
   static const String defaultDescription =
-      'iliprestō est un site de petites annonces de services et micro-services '
-      'du quotidien. Publiez votre besoin, indiquez votre prix ou votre budget '
-      'et trouvez un particulier, un indépendant ou un professionnel disponible '
-      'à l’instant près de chez vous. Les personnes disponibles peuvent vous '
-      'contacter immédiatement, avec 0 % de commission.';
+      'Publiez une annonce assistée par IA à partir d’un texte ou de votre voix '
+      'pour vos besoins du quotidien. iliprestō ne prélève aucune commission sur '
+      'vos prestations et ne collecte ni ne gère les paiements entre utilisateurs. '
+      'Vous échangez et convenez directement des conditions de la mission.';
   static const String defaultLaunchMessage =
       'Site national en cours de déploiement. Première ouverture en Guadeloupe, '
       'Martinique et Guyane.';
 
   static const Set<String> _legacyDefaultTitles = <String>{
+    'La solution instantanée pour trouver un service près de chez vous',
     'Trouvez rapidement un particulier ou un professionnel près de chez vous',
     'Trouvez rapidement un particulier, un indépendant ou un professionnel '
         'près de chez vous',
   };
   static const Set<String> _legacyDefaultDescriptions = <String>{
+    'iliprestō est un site de petites annonces de services et micro-services '
+        'du quotidien. Publiez votre besoin, indiquez votre prix ou votre budget '
+        'et trouvez un particulier, un indépendant ou un professionnel disponible '
+        'à l’instant près de chez vous. Les personnes disponibles peuvent vous '
+        'contacter immédiatement, avec 0 % de commission.',
     'iliprestō met en relation particuliers, indépendants et professionnels '
         'pour répondre rapidement à vos besoins en services et microservices du '
         'quotidien, avec des annonces assistées par IA et 0 % de commission.',

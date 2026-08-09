@@ -42,6 +42,9 @@ test("public listing renderer emits canonical SEO HTML without private data or J
   assert.match(html, /<link rel="canonical" href="https:\/\/ilipresto\.fr\/annonces\/listing_123456\/">/);
   assert.match(html, /Aide pour monter un meuble/);
   assert.match(html, /Les Abymes/);
+  assert.match(html, /0 % de commission/);
+  assert.match(html, /ne collecte ni ne gère les paiements entre utilisateurs/);
+  assert.match(html, /convenez directement des conditions de la mission/);
   assert.doesNotMatch(html, /JobPosting/);
   assert.doesNotMatch(html, /private@example\.test/);
   assert.doesNotMatch(html, /690000000/);
