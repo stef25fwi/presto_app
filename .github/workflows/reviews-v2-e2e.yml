@@ -1,0 +1,63 @@
+name: Reviews V2 mutual flow E2E
+
+on:
+  push:
+    branches:
+      - agent/reviews-v2-complete-mutual-flow
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reviews-v2-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Setup Java for Firebase emulators
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install Functions dependencies
+        run: npm --prefix functions ci
+
+      - name: Provide emulator-only secret values
+        shell: bash
+        run: |
+          cat > functions/.secret.local <<'EOF'
+          OPENAI_API_KEY=emulator-only
+          EMAIL_PROVIDER_API_KEY=emulator-only
+          EMAIL_PROVIDER_WEBHOOK_SECRET=emulator-only
+          BREVO_API_KEY=emulator-only
+          BREVO_WEBHOOK_SECRET=emulator-only
+          STRIPE_SECRET_KEY=emulator-only
+          STRIPE_WEBHOOK_SECRET=emulator-only
+          STRIPE_PRICE_ILIPRESTO_PLUS=price_emulator_plus
+          STRIPE_PRICE_ILIPRO=price_emulator_pro
+          EOF
+
+      - name: Build Functions
+        run: npm --prefix functions run build
+
+      - name: Run two-user review flow on Firebase emulators
+        env:
+          FUNCTION_REGION: europe-west1
+          ENFORCE_APP_CHECK: 'false'
+        run: >-
+          npx --yes firebase-tools@13 emulators:exec
+          --project presto-app-74abe
+          --config firebase.json
+          --only auth,firestore,functions
+          "node functions/scripts/reviews_v2_emulator_e2e.mjs"
