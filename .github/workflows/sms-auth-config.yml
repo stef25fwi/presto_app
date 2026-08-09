@@ -1,3 +1,4 @@
+# Déclenchement explicite du déploiement SMS après fusion de la PR #1339.
 name: Firebase Phone Auth SMS Config
 
 on:
