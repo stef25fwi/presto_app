@@ -7,6 +7,7 @@ on:
       - 'functions/scripts/reviews_v2_emulator_e2e.mjs'
       - 'functions/src/index.ts'
       - 'firestore.rules'
+      - 'firebase.reviews-v2.json'
       - 'lib/features/trust_score/**'
       - 'lib/pages/account/mes_avis_page.dart'
       - 'lib/pages/messages/conversation_thread_page.dart'
@@ -66,6 +67,6 @@ jobs:
         run: >-
           npx --yes firebase-tools@13 emulators:exec
           --project presto-app-74abe
-          --config firebase.json
+          --config firebase.reviews-v2.json
           --only auth,firestore,functions
           "node functions/scripts/reviews_v2_emulator_e2e.mjs"
