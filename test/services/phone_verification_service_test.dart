@@ -28,6 +28,133 @@ void main() {
       expect(result['dailyLimit'], 1);
     });
 
+    test('verificationFailed libère la réservation avant de relayer l’erreur', () async {
+      final events = <String>[];
+      final service = PhoneVerificationService(
+        attemptReserver: (_) async => <String, dynamic>{
+          'allowed': true,
+          'limited': true,
+          'dailyLimit': 1,
+          'reservationId': 'reservation_12345',
+        },
+        attemptReleaser: (reservationId, reason) async {
+          events.add('release:$reservationId:$reason');
+          return <String, dynamic>{'released': true};
+        },
+        attemptCommitter: (_) async {
+          fail('La réservation ne doit pas être commit avant codeSent.');
+        },
+        verifyStarter: ({
+          required phoneNumber,
+          required timeout,
+          required verificationCompleted,
+          required verificationFailed,
+          required codeSent,
+          required codeAutoRetrievalTimeout,
+        }) async {
+          verificationFailed(
+            FirebaseAuthException(code: 'captcha-check-failed'),
+          );
+        },
+      );
+
+      await service.reserveDailyAttempt(phoneNumber: '+590690123456');
+      await service.sendCode(
+        phoneNumber: '+590690123456',
+        onCodeSent: (_) => fail('codeSent ne doit pas être appelé'),
+        onFailed: (error) => events.add('failed:${error.code}'),
+        onAutoVerified: () async => fail('auto verification inattendue'),
+      );
+
+      expect(
+        events,
+        <String>[
+          'release:reservation_12345:firebase_captcha-check-failed',
+          'failed:captcha-check-failed',
+        ],
+      );
+    });
+
+    test('codeSent commit la réservation et ne la libère pas', () async {
+      String? committedReservationId;
+      var released = false;
+      final service = PhoneVerificationService(
+        attemptReserver: (_) async => <String, dynamic>{
+          'allowed': true,
+          'limited': true,
+          'dailyLimit': 1,
+          'reservationId': 'reservation_67890',
+        },
+        attemptCommitter: (reservationId) async {
+          committedReservationId = reservationId;
+          return <String, dynamic>{'committed': true};
+        },
+        attemptReleaser: (_, __) async {
+          released = true;
+          return <String, dynamic>{'released': true};
+        },
+        verifyStarter: ({
+          required phoneNumber,
+          required timeout,
+          required verificationCompleted,
+          required verificationFailed,
+          required codeSent,
+          required codeAutoRetrievalTimeout,
+        }) async {
+          codeSent('verification-id-sent', null);
+        },
+      );
+
+      await service.reserveDailyAttempt(phoneNumber: '+590690123456');
+      await service.sendCode(
+        phoneNumber: '+590690123456',
+        onCodeSent: (_) {},
+        onFailed: (_) => fail('onFailed ne doit pas être appelé'),
+        onAutoVerified: () async => fail('auto verification inattendue'),
+      );
+
+      expect(committedReservationId, 'reservation_67890');
+      expect(released, isFalse);
+    });
+
+    test('une exception Firebase immédiate libère aussi la réservation', () async {
+      String? releasedReservationId;
+      String? failureCode;
+      final service = PhoneVerificationService(
+        attemptReserver: (_) async => <String, dynamic>{
+          'allowed': true,
+          'limited': true,
+          'dailyLimit': 1,
+          'reservationId': 'reservation_54321',
+        },
+        attemptReleaser: (reservationId, _) async {
+          releasedReservationId = reservationId;
+          return <String, dynamic>{'released': true};
+        },
+        verifyStarter: ({
+          required phoneNumber,
+          required timeout,
+          required verificationCompleted,
+          required verificationFailed,
+          required codeSent,
+          required codeAutoRetrievalTimeout,
+        }) async {
+          throw FirebaseAuthException(code: 'app-not-authorized');
+        },
+      );
+
+      await service.reserveDailyAttempt(phoneNumber: '+590690123456');
+      await service.sendCode(
+        phoneNumber: '+590690123456',
+        onCodeSent: (_) => fail('codeSent ne doit pas être appelé'),
+        onFailed: (error) => failureCode = error.code,
+        onAutoVerified: () async => fail('auto verification inattendue'),
+      );
+
+      expect(releasedReservationId, 'reservation_54321');
+      expect(failureCode, 'app-not-authorized');
+    });
+
     test('sendCode transmet le numéro et relaie codeSent', () async {
       String? capturedPhoneNumber;
       String? codeSentId;
