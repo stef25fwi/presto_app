@@ -102,6 +102,35 @@ jobs:
               "              ? \"/account/mes-avis\"\n"
               "              : `/profile/${encodeURIComponent(userId)}` ,",
           )
+
+          # TrustScoreService grew three actionable V2 methods. Any Dart test
+          # double using `implements TrustScoreService` must implement them too.
+          fake_methods = '''  @override
+          Future<List<Map<String, dynamic>>> getPendingReviewTasks() async =>
+              const <Map<String, dynamic>>[];
+
+          @override
+          Future<void> dismissPendingReviewTask({required String offerId}) async {}
+
+          @override
+          Future<String> reviseReview({
+            required String reviewId,
+            required String comment,
+          }) async =>
+              'pending_peer_review';
+
+          '''.replace('          ', '')
+
+          for path in Path('test').rglob('*.dart'):
+              text = path.read_text()
+              if 'implements TrustScoreService' not in text:
+                  continue
+              if 'getPendingReviewTasks()' in text:
+                  continue
+              anchor = '  @override\n  Future<TrustScoreProfile> getUserTrustScore'
+              if anchor not in text:
+                  raise SystemExit(f'Cannot patch TrustScoreService test double in {path}')
+              path.write_text(text.replace(anchor, fake_methods + anchor, 1))
           PY
 
       - name: Verify patch integrity
@@ -111,6 +140,13 @@ jobs:
           grep -q "match /user_trust_scores_v2" firestore.rules
           grep -q "ConversationReviewV2Cta" lib/pages/messages/conversation_thread_page.dart
           grep -q "keepReviewTask" lib/pages/user_offers_section.dart
+          python3 - <<'PY'
+          from pathlib import Path
+          for path in Path('test').rglob('*.dart'):
+              text = path.read_text()
+              if 'implements TrustScoreService' in text and 'getPendingReviewTasks()' not in text:
+                  raise SystemExit(f'incomplete TrustScoreService test double: {path}')
+          PY
 
       - name: Commit generated patch
         shell: bash
@@ -121,9 +157,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add firestore.rules \
-            lib/pages/user_offers_section.dart \
-            lib/pages/messages/conversation_thread_page.dart \
-            functions/src/modules/marketplace/callables/reviews_admin_v2.ts
+          git add -u
           git commit -m "fix(reviews): complete review flow hardening [reviews-v2-autopatch]"
           git push origin HEAD:agent/reviews-v2-complete-mutual-flow
