@@ -6,35 +6,10 @@ const ON_CALL_PATTERN = /\bonCall\s*\(/g;
 const SAFE_OPTION_PATTERN =
   /enforceAppCheck\s*:\s*(?:ENFORCE_APP_CHECK|true)\b/;
 const FORBIDDEN_FALSE_PATTERN = /enforceAppCheck\s*:\s*false\b/;
-const EXPLICIT_FALSE_OPTION_PATTERN = /enforceAppCheck\s*:\s*false\b/;
 const OPTION_CONST_PATTERN =
   /const\s+([A-Z][A-Z0-9_]*)\s*=\s*\{([\s\S]*?)\}\s*(?:as const\s*)?;/g;
 
-const LEGACY_EXCEPTIONS = new Map([
-  [
-    'functions/src/modules/messaging/callables.ts',
-    {
-      id: 'messaging-app-check-web-availability',
-      reason:
-        'Legacy messaging exception pending verified web reCAPTCHA/App Check rollout. Auth, participant checks, validation and rate limits remain mandatory.',
-      reviewBy: '2026-08-31',
-    },
-  ],
-]);
-
-function normalizedPath(value) {
-  return String(value ?? '').replaceAll('\\', '/');
-}
-
-function resolveLegacyException(filePath) {
-  const normalized = normalizedPath(filePath);
-  for (const [suffix, exception] of LEGACY_EXCEPTIONS) {
-    if (normalized.endsWith(suffix)) return exception;
-  }
-  return null;
-}
-
-function collectSafeOptionConstants(source, allowExplicitFalse) {
+function collectSafeOptionConstants(source) {
   const definitions = new Map();
   for (const match of source.matchAll(OPTION_CONST_PATTERN)) {
     definitions.set(match[1], match[2]);
@@ -46,10 +21,7 @@ function collectSafeOptionConstants(source, allowExplicitFalse) {
     changed = false;
     for (const [name, body] of definitions) {
       if (safe.has(name)) continue;
-      if (
-        SAFE_OPTION_PATTERN.test(body) ||
-        (allowExplicitFalse && EXPLICIT_FALSE_OPTION_PATTERN.test(body))
-      ) {
+      if (SAFE_OPTION_PATTERN.test(body)) {
         safe.add(name);
         changed = true;
         continue;
@@ -90,30 +62,17 @@ function readFirstArgument(source, position) {
 
 export function auditAppCheckSource(source, filePath = '<memory>') {
   const violations = [];
-  const exceptions = [];
   const callablePositions = [...source.matchAll(ON_CALL_PATTERN)].map(
     (match) => match.index ?? 0,
   );
-  const legacyException = resolveLegacyException(filePath);
-  const safeOptionConstants = collectSafeOptionConstants(
-    source,
-    legacyException != null,
-  );
+  const safeOptionConstants = collectSafeOptionConstants(source);
 
   if (FORBIDDEN_FALSE_PATTERN.test(source)) {
-    if (legacyException) {
-      exceptions.push({
-        file: filePath,
-        type: 'legacy-explicit-disable',
-        ...legacyException,
-      });
-    } else {
-      violations.push({
-        file: filePath,
-        type: 'explicit-disable',
-        message: 'enforceAppCheck: false is forbidden in callable Functions.',
-      });
-    }
+    violations.push({
+      file: filePath,
+      type: 'explicit-disable',
+      message: 'enforceAppCheck: false is forbidden in callable Functions.',
+    });
   }
 
   for (const position of callablePositions) {
@@ -121,9 +80,7 @@ export function auditAppCheckSource(source, filePath = '<memory>') {
     const isSafeObject =
       firstArgument.type === 'object' &&
       (SAFE_OPTION_PATTERN.test(firstArgument.value) ||
-        hasSafeSpreadOption(firstArgument.value, safeOptionConstants) ||
-        (legacyException &&
-          EXPLICIT_FALSE_OPTION_PATTERN.test(firstArgument.value)));
+        hasSafeSpreadOption(firstArgument.value, safeOptionConstants));
     const isSafeIdentifier =
       firstArgument.type === 'identifier' &&
       safeOptionConstants.has(firstArgument.value);
@@ -140,7 +97,7 @@ export function auditAppCheckSource(source, filePath = '<memory>') {
   return {
     callableCount: callablePositions.length,
     violations,
-    exceptions,
+    exceptions: [],
   };
 }
 
@@ -168,7 +125,6 @@ async function listTypeScriptFiles(root) {
 export async function auditFunctionsAppCheck(root = 'functions/src') {
   const files = await listTypeScriptFiles(root);
   const violations = [];
-  const exceptions = [];
   let callableCount = 0;
 
   for (const file of files) {
@@ -176,14 +132,13 @@ export async function auditFunctionsAppCheck(root = 'functions/src') {
     const result = auditAppCheckSource(source, file);
     callableCount += result.callableCount;
     violations.push(...result.violations);
-    exceptions.push(...result.exceptions);
   }
 
   return {
     scannedFileCount: files.length,
     callableCount,
     violations,
-    exceptions,
+    exceptions: [],
   };
 }
 

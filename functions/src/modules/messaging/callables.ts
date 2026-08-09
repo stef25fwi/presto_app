@@ -524,7 +524,7 @@ export function buildAttachmentMessageFallbackText(
 
 const ADMIN_MESSAGING_CALLABLE_OPTIONS = {
   ...MESSAGING_CALLABLE_OPTIONS,
-  enforceAppCheck: false,
+  enforceAppCheck: ENFORCE_APP_CHECK,
 };
 
 function sanitizeAttachmentText(value: unknown, maxLength: number): string {

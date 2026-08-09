@@ -51,7 +51,7 @@ test('accepte des constantes d options sûres et leurs extensions', () => {
   assert.deepEqual(result.exceptions, []);
 });
 
-test('borne l exception legacy de la messagerie à un seul fichier', () => {
+test('refuse aussi une désactivation explicite dans la messagerie', () => {
   const source = `
     const MESSAGING_CALLABLE_OPTIONS = {
       region: PROJECT_REGION,
@@ -79,23 +79,11 @@ test('borne l exception legacy de la messagerie à un seul fichier', () => {
     'functions/src/modules/messaging/callables.ts',
   );
   assert.equal(result.callableCount, 3);
-  assert.deepEqual(result.violations, []);
-  assert.equal(result.exceptions.length, 1);
-  assert.equal(
-    result.exceptions[0].id,
-    'messaging-app-check-web-availability',
-  );
-  assert.equal(result.exceptions[0].reviewBy, '2026-08-31');
-
-  const otherFile = auditAppCheckSource(
-    source,
-    'functions/src/modules/other/callables.ts',
-  );
   assert.deepEqual(
-    otherFile.violations.map((violation) => violation.type).sort(),
+    result.violations.map((violation) => violation.type).sort(),
     ['explicit-disable', 'missing-enforcement', 'missing-enforcement', 'missing-enforcement'],
   );
-  assert.deepEqual(otherFile.exceptions, []);
+  assert.deepEqual(result.exceptions, []);
 });
 
 test('refuse un callable sans option App Check', () => {
@@ -119,7 +107,7 @@ test('refuse une constante d options qui ne propage pas la policy', () => {
   assert.equal(result.violations[0].type, 'missing-enforcement');
 });
 
-test('refuse une désactivation explicite hors exception', () => {
+test('refuse une désactivation explicite', () => {
   const result = auditAppCheckSource(`
     export const disabled = onCall(
       { enforceAppCheck: false },
