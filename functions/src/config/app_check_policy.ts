@@ -16,14 +16,10 @@ export function resolveAppCheckEnforcement({
   safeModeValue,
 }: AppCheckDecisionInput): boolean {
   if (isEmulator) return false;
+
+  // Production is fail-closed: environment flags may not disable App Check.
+  if (isProduction) return true;
+
   if (normalizeBoolean(safeModeValue)) return false;
-
-  const normalizedEnforce = String(enforceValue ?? "")
-    .trim()
-    .toLowerCase();
-
-  if (isProduction) {
-    return normalizedEnforce !== "false";
-  }
-  return normalizedEnforce === "true";
+  return normalizeBoolean(enforceValue);
 }
