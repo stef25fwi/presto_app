@@ -16,7 +16,7 @@ if [ -z "$BREVO_API_KEY" ] || [ -z "$BREVO_WEBHOOK_SECRET" ]; then
 fi
 
 export URL BREVO_WEBHOOK_SECRET
-read -r CREATE_PAYLOAD UPDATE_PAYLOAD < <(python3 - <<'PY'
+mapfile -t PAYLOADS < <(python3 - <<'PY'
 import json, os
 common = {
     "url": os.environ["URL"],
@@ -34,9 +34,16 @@ common = {
 }
 create = {**common, "type": "transactional"}
 # Brevo's update schema does not accept the immutable webhook `type` field.
-print(json.dumps(create, separators=(",", ":")), json.dumps(common, separators=(",", ":")))
+print(json.dumps(create, separators=(",", ":")))
+print(json.dumps(common, separators=(",", ":")))
 PY
 )
+CREATE_PAYLOAD="${PAYLOADS[0]:-}"
+UPDATE_PAYLOAD="${PAYLOADS[1]:-}"
+if [ -z "$CREATE_PAYLOAD" ] || [ -z "$UPDATE_PAYLOAD" ]; then
+  echo "Impossible de construire les payloads webhook Brevo." >&2
+  exit 2
+fi
 
 WEBHOOKS="$(curl --fail-with-body --silent --show-error \
   -H "accept: application/json" \
