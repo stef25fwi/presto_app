@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { createHmac } from "node:crypto";
 
 function usage() {
   console.log("Usage: node scripts/brevo_webhook_smoke_test.mjs --url <webhook_url> --secret <brevo_webhook_secret>");
@@ -12,37 +11,20 @@ function readArg(flag) {
   return process.argv[idx + 1];
 }
 
-function signPayload(rawBody, secret, mode) {
-  const hex = createHmac("sha256", secret).update(rawBody).digest("hex");
-  if (mode === "prefixed") return `sha256=${hex}`;
-  return hex;
-}
-
-async function postEvent(url, secret, payload, signatureMode) {
-  const rawBody = JSON.stringify(payload);
-  const signature = signPayload(rawBody, secret, signatureMode);
-
+async function postEvent(url, token, payload) {
   const res = await fetch(url, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-mailin-signature": signature,
+      authorization: `Bearer ${token}`,
     },
-    body: rawBody,
+    body: JSON.stringify(payload),
   });
-
-  let body = "";
-  try {
-    body = await res.text();
-  } catch {
-    body = "";
-  }
 
   return {
     ok: res.ok,
     status: res.status,
-    body,
-    signatureMode,
+    body: await res.text().catch(() => ""),
     event: payload.event,
   };
 }
@@ -64,27 +46,38 @@ async function main() {
     {
       event: "delivered",
       email: recipient,
+      id: 26224,
       "message-id": `smoke-delivered-${nowSec}`,
-      timestamp: String(nowSec),
+      ts_event: nowSec,
+      ts_epoch: Date.now(),
     },
     {
       event: "opened",
       email: recipient,
+      id: 26224,
       "message-id": `smoke-opened-${nowSec}`,
-      timestamp: String(nowSec),
+      ts_event: nowSec,
     },
     {
-      event: "clicked",
+      event: "click",
       email: recipient,
+      id: 26224,
       "message-id": `smoke-clicked-${nowSec}`,
-      timestamp: String(nowSec),
+      ts_event: nowSec,
+    },
+    {
+      event: "soft_bounce",
+      email: recipient,
+      id: 26224,
+      "message-id": `smoke-soft-bounce-${nowSec}`,
+      ts_event: nowSec,
+      reason: "temporary smoke-test failure",
     },
   ];
 
   const runs = [];
   for (const payload of payloads) {
-    runs.push(await postEvent(url, secret, payload, "hex"));
-    runs.push(await postEvent(url, secret, payload, "prefixed"));
+    runs.push(await postEvent(url, secret, payload));
   }
 
   let failed = 0;
@@ -92,18 +85,33 @@ async function main() {
   for (const run of runs) {
     const marker = run.ok ? "OK" : "KO";
     if (!run.ok) failed += 1;
-    console.log(`[${marker}] event=${run.event} sig=${run.signatureMode} status=${run.status}`);
-    if (!run.ok) {
-      console.log(`  body=${run.body}`);
-    }
+    console.log(`[${marker}] event=${run.event} auth=bearer status=${run.status}`);
+    if (!run.ok) console.log(`  body=${run.body}`);
+  }
+
+  // Authentication must fail closed.
+  const invalid = await postEvent(url, `${secret}-invalid`, payloads[0]);
+  if (invalid.status !== 401) {
+    failed += 1;
+    console.error(`[KO] invalid bearer token expected=401 actual=${invalid.status} body=${invalid.body}`);
+  } else {
+    console.log("[OK] invalid bearer token rejected with 401");
+  }
+
+  const methodProbe = await fetch(url, { method: "GET" });
+  if (methodProbe.status !== 405) {
+    failed += 1;
+    console.error(`[KO] GET expected=405 actual=${methodProbe.status}`);
+  } else {
+    console.log("[OK] non-POST method rejected with 405");
   }
 
   if (failed > 0) {
-    console.error(`Smoke test failed: ${failed}/${runs.length} requests failed.`);
+    console.error(`Smoke test failed: ${failed} check(s) failed.`);
     process.exit(2);
   }
 
-  console.log(`Smoke test passed: ${runs.length}/${runs.length} requests accepted.`);
+  console.log(`Smoke test passed: ${runs.length} valid events accepted and security probes rejected.`);
 }
 
 main().catch((err) => {

@@ -31,6 +31,8 @@ export interface NormalizedWebhookEvent {
     | "clicked"
     | "unsubscribed"
     | "dropped";
+  /** Provider-specific bounce severity when type === "bounced". */
+  bounceKind?: "soft" | "hard";
   recipient?: string;
   occurredAt: number;
   raw: unknown;
