@@ -85,21 +85,64 @@ jobs:
           npm --prefix functions run build
           npm --prefix functions test
 
-      - name: Load Brevo secrets from Secret Manager
+      - name: Resolve and validate Brevo credentials from Secret Manager
         shell: bash
         run: |
           set -euo pipefail
-          api_key="$(gcloud secrets versions access latest --secret=BREVO_API_KEY --project=presto-app-74abe)"
+
+          primary_api_key="$(gcloud secrets versions access latest --secret=BREVO_API_KEY --project=presto-app-74abe 2>/dev/null || true)"
+          legacy_api_key="$(gcloud secrets versions access latest --secret=EMAIL_PROVIDER_API_KEY --project=presto-app-74abe 2>/dev/null || true)"
           webhook_secret="$(gcloud secrets versions access latest --secret=BREVO_WEBHOOK_SECRET --project=presto-app-74abe)"
-          test -n "$api_key"
+
           test -n "$webhook_secret"
-          echo "::add-mask::$api_key"
           echo "::add-mask::$webhook_secret"
-          echo "BREVO_API_KEY=$api_key" >> "$GITHUB_ENV"
+          [ -z "$primary_api_key" ] || echo "::add-mask::$primary_api_key"
+          [ -z "$legacy_api_key" ] || echo "::add-mask::$legacy_api_key"
+
+          valid_api_key=""
+          valid_source=""
+          for source in BREVO_API_KEY EMAIL_PROVIDER_API_KEY; do
+            if [ "$source" = "BREVO_API_KEY" ]; then
+              candidate="$primary_api_key"
+            else
+              candidate="$legacy_api_key"
+            fi
+            [ -n "$candidate" ] || continue
+
+            http_code="$(curl --silent --show-error \
+              --output /tmp/brevo-account-response.json \
+              --write-out '%{http_code}' \
+              -H 'accept: application/json' \
+              -H "api-key: $candidate" \
+              'https://api.brevo.com/v3/account' || true)"
+            rm -f /tmp/brevo-account-response.json
+
+            if [ "$http_code" = "200" ]; then
+              valid_api_key="$candidate"
+              valid_source="$source"
+              break
+            fi
+            echo "Credential $source rejetée par Brevo (HTTP $http_code)."
+          done
+
+          if [ -z "$valid_api_key" ]; then
+            echo "::error::Aucune clé API Brevo valide n'est disponible dans BREVO_API_KEY ou EMAIL_PROVIDER_API_KEY. Une nouvelle clé Brevo doit être générée puis enregistrée dans Secret Manager." >&2
+            exit 3
+          fi
+
+          if [ "$valid_source" != "BREVO_API_KEY" ]; then
+            echo "Une ancienne credential valide a été trouvée dans $valid_source ; migration vers BREVO_API_KEY."
+            printf '%s' "$valid_api_key" | gcloud secrets versions add BREVO_API_KEY \
+              --project=presto-app-74abe \
+              --data-file=- >/dev/null
+          fi
+
+          echo "BREVO_API_KEY=$valid_api_key" >> "$GITHUB_ENV"
           echo "BREVO_WEBHOOK_SECRET=$webhook_secret" >> "$GITHUB_ENV"
           echo "WEBHOOK_URL=https://europe-west1-presto-app-74abe.cloudfunctions.net/handleEmailProviderWebhook" >> "$GITHUB_ENV"
           echo "EMAIL_FROM=iliprestō <noreply@ilipresto.fr>" >> "$GITHUB_ENV"
           echo "EMAIL_REPLY_TO=contact@ilipresto.fr" >> "$GITHUB_ENV"
+          echo "Credential Brevo validée via /v3/account : $valid_source."
 
       - name: Ensure Brevo webhook configuration
         run: bash scripts/create_brevo_webhook.sh
