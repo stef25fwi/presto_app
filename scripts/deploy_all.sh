@@ -63,12 +63,13 @@ node functions/scripts/brevo_webhook_smoke_test.mjs \
   --secret "$BREVO_WEBHOOK_SECRET"
 ok "Webhook production accepte Bearer et refuse les accès invalides"
 
-step "7/7 · Audit Brevo production"
+step "7/7 · Réparation et audit Brevo production"
 AUDIT_ARGS=(
   --domain ilipresto.fr
   --sender noreply@ilipresto.fr
   --reply-to contact@ilipresto.fr
   --webhook-url "$WEBHOOK_URL"
+  --repair
   --output quality/brevo-production-certification.json
 )
 if [ "${RUN_BREVO_E2E:-false}" = "true" ]; then
