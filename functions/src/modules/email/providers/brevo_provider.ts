@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHash, createHmac, timingSafeEqual } from "crypto";
 import { EmailProvider, NormalizedWebhookEvent, ProviderSendInput, ProviderSendResult } from "./email_provider.interface";
 
 export class BrevoProvider implements EmailProvider {
@@ -22,20 +22,28 @@ export class BrevoProvider implements EmailProvider {
     }
 
     try {
+      const replyTo = String(process.env.EMAIL_REPLY_TO || "contact@ilipresto.fr").trim();
       const body: Record<string, unknown> = {
         sender: this.parseSender(input.from),
         to: [{ email: input.to }],
+        replyTo: replyTo ? { email: replyTo } : undefined,
         subject: input.subject,
         htmlContent: input.html,
         textContent: input.text,
         tags: input.tags,
-        headers: input.idempotencyKey ? { "X-Idempotency-Key": input.idempotencyKey } : undefined,
+        // Brevo supports an idempotency key in transactional email headers.
+        // Convert the internal deterministic hash to a UUID-shaped key so
+        // provider retries remain idempotent and accepted by Brevo.
+        headers: input.idempotencyKey
+          ? { "Idempotency-Key": this.toProviderIdempotencyKey(input.idempotencyKey) }
+          : undefined,
         params: input.metadata,
       };
 
       const response = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
         headers: {
+          accept: "application/json",
           "api-key": this.apiKey,
           "Content-Type": "application/json",
         },
@@ -71,6 +79,26 @@ export class BrevoProvider implements EmailProvider {
 
   verifyWebhookSignature(headers: Record<string, string>, rawBody: string): boolean {
     if (!this.webhookSecret) return false;
+
+    // Brevo's current secured-webhook mechanism supports Bearer auth and
+    // custom headers. Prefer those mechanisms in production.
+    const authorization = headers.authorization || headers.Authorization || "";
+    const bearerMatch = authorization.match(/^Bearer\s+(.+)$/i);
+    if (bearerMatch?.[1] && this.constantTimeEqual(bearerMatch[1].trim(), this.webhookSecret)) {
+      return true;
+    }
+
+    const customSecret = headers["x-ilipresto-webhook-secret"]
+      || headers["X-Ilipresto-Webhook-Secret"]
+      || headers["x-brevo-webhook-secret"]
+      || headers["X-Brevo-Webhook-Secret"];
+    if (customSecret && this.constantTimeEqual(customSecret.trim(), this.webhookSecret)) {
+      return true;
+    }
+
+    // Transitional compatibility with the previously implemented HMAC
+    // scheme. Existing manually configured hooks keep working while the
+    // production webhook is migrated to Bearer authentication.
     const signature = headers["x-mailin-signature"] || headers["X-Mailin-Signature"];
     if (!signature) return false;
 
@@ -96,6 +124,7 @@ export class BrevoProvider implements EmailProvider {
 
       const typeMap: Record<string, NormalizedWebhookEvent["type"]> = {
         sent: "sent",
+        request: "sent",
         delivered: "delivered",
         deferred: "deferred",
         soft_bounce: "bounced",
@@ -110,6 +139,7 @@ export class BrevoProvider implements EmailProvider {
         complaint: "complained",
         opened: "opened",
         unique_opened: "opened",
+        uniqueopened: "opened",
         click: "clicked",
         clicked: "clicked",
         unique_clicked: "clicked",
@@ -117,13 +147,30 @@ export class BrevoProvider implements EmailProvider {
       };
 
       const occurredAt = this.resolveEventTimestamp(payload);
-      const messageId = payload["message-id"] ? String(payload["message-id"]) : payload.messageId ? String(payload.messageId) : undefined;
+      const messageId = payload["message-id"]
+        ? String(payload["message-id"])
+        : payload.messageId
+          ? String(payload.messageId)
+          : undefined;
+      const recipient = payload.email ? String(payload.email).trim().toLowerCase() : undefined;
+      const bounceKind = event === "hard_bounce" || event === "hardbounce"
+        ? "hard" as const
+        : event === "soft_bounce" || event === "softbounce"
+          ? "soft" as const
+          : undefined;
+
+      // Brevo's payload `id` identifies the webhook configuration, not a
+      // unique delivery event. Build a stable event key from message/event/time.
+      const providerEventId = payload.event_id
+        ? String(payload.event_id)
+        : [messageId || `webhook-${String(payload.id ?? "unknown")}`, event, recipient || "", String(occurredAt), String(idx)].join(":");
 
       out.push({
-        providerEventId: String(payload.id ?? payload.event_id ?? messageId ?? `evt_${occurredAt}_${idx}`),
+        providerEventId,
         providerMessageId: messageId,
         type: typeMap[event] ?? "sent",
-        recipient: payload.email ? String(payload.email) : undefined,
+        bounceKind,
+        recipient,
         occurredAt,
         raw: payload,
       });
@@ -147,11 +194,26 @@ export class BrevoProvider implements EmailProvider {
     return timingSafeEqual(aBuf, bBuf);
   }
 
+  private toProviderIdempotencyKey(value: string): string {
+    const normalized = String(value || "").trim();
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalized)) {
+      return normalized;
+    }
+
+    const chars = createHash("sha256").update(normalized).digest("hex").slice(0, 32).split("");
+    chars[12] = "5";
+    chars[16] = ((parseInt(chars[16] || "0", 16) & 0x3) | 0x8).toString(16);
+    const hex = chars.join("");
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+  }
+
   private resolveEventTimestamp(payload: Record<string, unknown>): number {
     const timestampCandidates = [
-      payload.date,
+      payload.ts_epoch,
+      payload.ts_event,
       payload.ts,
       payload.timestamp,
+      payload.date,
       payload.time,
       payload.created_at,
     ];
