@@ -16,25 +16,27 @@ if [ -z "$BREVO_API_KEY" ] || [ -z "$BREVO_WEBHOOK_SECRET" ]; then
 fi
 
 export URL BREVO_WEBHOOK_SECRET
-PAYLOAD="$(python3 - <<'PY'
+read -r CREATE_PAYLOAD UPDATE_PAYLOAD < <(python3 - <<'PY'
 import json, os
-print(json.dumps({
+common = {
     "url": os.environ["URL"],
     "events": [
         "sent", "delivered", "hardBounce", "softBounce", "blocked",
         "spam", "invalid", "deferred", "click", "opened",
         "uniqueOpened", "unsubscribed",
     ],
-    "type": "transactional",
     "description": "iliprestō transactional email tracking",
     "batched": False,
     "auth": {
         "type": "bearer",
         "token": os.environ["BREVO_WEBHOOK_SECRET"],
     },
-}, separators=(",", ":")))
+}
+create = {**common, "type": "transactional"}
+# Brevo's update schema does not accept the immutable webhook `type` field.
+print(json.dumps(create, separators=(",", ":")), json.dumps(common, separators=(",", ":")))
 PY
-)"
+)
 
 WEBHOOKS="$(curl --fail-with-body --silent --show-error \
   -H "accept: application/json" \
@@ -66,7 +68,7 @@ if [ -n "$WEBHOOK_ID" ]; then
     -H "accept: application/json" \
     -H "api-key: $BREVO_API_KEY" \
     -H "Content-Type: application/json" \
-    --data "$PAYLOAD" >/dev/null
+    --data "$UPDATE_PAYLOAD" >/dev/null
 else
   echo "Création du webhook Brevo transactionnel"
   CREATED="$(curl --fail-with-body --silent --show-error \
@@ -74,7 +76,7 @@ else
     -H "accept: application/json" \
     -H "api-key: $BREVO_API_KEY" \
     -H "Content-Type: application/json" \
-    --data "$PAYLOAD")"
+    --data "$CREATE_PAYLOAD")"
   export CREATED
   WEBHOOK_ID="$(python3 - <<'PY'
 import json, os
