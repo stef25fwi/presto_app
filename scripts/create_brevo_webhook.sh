@@ -42,16 +42,22 @@ WEBHOOKS="$(curl --fail-with-body --silent --show-error \
   "https://api.brevo.com/v3/webhooks?type=transactional")"
 
 export WEBHOOKS
-WEBHOOK_ID="$(python3 - <<'PY'
+MATCHING_IDS="$(python3 - <<'PY'
 import json, os
 url = os.environ["URL"]
 data = json.loads(os.environ["WEBHOOKS"])
-for hook in data.get("webhooks", []):
-    if hook.get("url") == url and hook.get("type") == "transactional":
-        print(hook.get("id", ""))
-        break
+ids = [str(h.get("id")) for h in data.get("webhooks", [])
+       if h.get("url") == url and h.get("type") == "transactional" and h.get("id") is not None]
+print(" ".join(ids))
 PY
 )"
+
+WEBHOOK_ID="${MATCHING_IDS%% *}"
+if [ "$MATCHING_IDS" = "$WEBHOOK_ID" ]; then
+  EXTRA_IDS=""
+else
+  EXTRA_IDS="${MATCHING_IDS#* }"
+fi
 
 if [ -n "$WEBHOOK_ID" ]; then
   echo "Mise à jour du webhook Brevo existant id=$WEBHOOK_ID"
@@ -82,6 +88,18 @@ if [ -z "$WEBHOOK_ID" ]; then
   exit 3
 fi
 
+# Older deployment scripts created a new unauthenticated webhook on each run.
+# Keep one canonical hook and remove duplicate hooks targeting the same URL.
+if [ -n "$EXTRA_IDS" ]; then
+  for duplicate_id in $EXTRA_IDS; do
+    echo "Suppression du webhook Brevo dupliqué id=$duplicate_id"
+    curl --fail-with-body --silent --show-error \
+      -X DELETE "https://api.brevo.com/v3/webhooks/$duplicate_id" \
+      -H "accept: application/json" \
+      -H "api-key: $BREVO_API_KEY" >/dev/null
+  done
+fi
+
 DETAIL="$(curl --fail-with-body --silent --show-error \
   -H "accept: application/json" \
   -H "api-key: $BREVO_API_KEY" \
@@ -91,7 +109,7 @@ python3 - <<'PY'
 import json, os, sys
 hook = json.loads(os.environ["DETAIL"])
 required = {
-    "sent", "delivered", "hardBounce", "softBounce", "blocked", "spam",
+    "delivered", "hardBounce", "softBounce", "blocked", "spam",
     "invalid", "deferred", "click", "opened", "uniqueOpened", "unsubscribed",
 }
 actual = set(hook.get("events") or [])
@@ -100,6 +118,8 @@ if hook.get("url") != os.environ["URL"]:
     errors.append("URL incorrecte")
 if hook.get("type") != "transactional":
     errors.append("type non transactionnel")
+if not ({"sent", "request"} & actual):
+    errors.append("événement sent/request manquant")
 if not required.issubset(actual):
     errors.append("événements manquants: " + ",".join(sorted(required - actual)))
 auth = hook.get("auth") or {}
