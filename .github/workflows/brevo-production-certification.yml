@@ -1,0 +1,124 @@
+name: Certify Brevo Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      canary_recipient:
+        description: 'Adresse canari de livraison E2E'
+        required: false
+        default: 'contact@ilipresto.fr'
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: brevo-production-certification
+  cancel-in-progress: false
+
+jobs:
+  certify:
+    name: Brevo production 100%
+    environment: recaptcha
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout deployed main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: presto-app-74abe
+
+      - name: Install Functions dependencies
+        run: npm --prefix functions ci
+
+      - name: Build and test email backend
+        run: |
+          npm --prefix functions run build
+          npm --prefix functions test
+
+      - name: Load Brevo secrets from Secret Manager
+        shell: bash
+        run: |
+          set -euo pipefail
+          api_key="$(gcloud secrets versions access latest --secret=BREVO_API_KEY --project=presto-app-74abe)"
+          webhook_secret="$(gcloud secrets versions access latest --secret=BREVO_WEBHOOK_SECRET --project=presto-app-74abe)"
+          test -n "$api_key"
+          test -n "$webhook_secret"
+          echo "::add-mask::$api_key"
+          echo "::add-mask::$webhook_secret"
+          echo "BREVO_API_KEY=$api_key" >> "$GITHUB_ENV"
+          echo "BREVO_WEBHOOK_SECRET=$webhook_secret" >> "$GITHUB_ENV"
+          echo "WEBHOOK_URL=https://europe-west1-presto-app-74abe.cloudfunctions.net/handleEmailProviderWebhook" >> "$GITHUB_ENV"
+          echo "EMAIL_FROM=iliprestō <noreply@ilipresto.fr>" >> "$GITHUB_ENV"
+          echo "EMAIL_REPLY_TO=contact@ilipresto.fr" >> "$GITHUB_ENV"
+
+      - name: Ensure Brevo webhook configuration
+        run: bash scripts/create_brevo_webhook.sh
+
+      - name: Verify secured production webhook
+        run: |
+          node functions/scripts/brevo_webhook_smoke_test.mjs \
+            --url "$WEBHOOK_URL" \
+            --secret "$BREVO_WEBHOOK_SECRET"
+
+      - name: Certify Brevo domain, sender, webhook and real delivery
+        env:
+          GOOGLE_CLOUD_PROJECT: presto-app-74abe
+          GCLOUD_PROJECT: presto-app-74abe
+        run: |
+          node functions/scripts/brevo_production_audit.mjs \
+            --domain ilipresto.fr \
+            --sender noreply@ilipresto.fr \
+            --reply-to contact@ilipresto.fr \
+            --webhook-url "$WEBHOOK_URL" \
+            --canary '${{ inputs.canary_recipient }}' \
+            --e2e \
+            --timeout-ms 180000 \
+            --output quality/brevo-production-certification.json
+
+      - name: Archive certification evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: brevo-production-certification-${{ github.sha }}-${{ github.run_id }}
+          path: quality/brevo-production-certification.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Publish certification summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## Brevo production certification'
+            echo
+            echo "- Commit main contrôlé : \`${{ github.sha }}\`"
+            echo '- Domaine : `ilipresto.fr`'
+            echo '- Expéditeur : `noreply@ilipresto.fr`'
+            echo '- Reply-To : `contact@ilipresto.fr`'
+            echo '- Webhook : Bearer + événements transactionnels complets'
+            echo '- Canary E2E : `${{ inputs.canary_recipient }}`'
+            if [ -f quality/brevo-production-certification.json ]; then
+              node -e 'const r=require("./quality/brevo-production-certification.json"); console.log(`- Certifié : **${r.certified ? "OUI" : "NON"}**`); for (const c of r.checks) console.log(`- ${c.ok ? "✅" : "❌"} ${c.name}`);' 
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
