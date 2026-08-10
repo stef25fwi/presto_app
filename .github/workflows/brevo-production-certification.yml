@@ -81,7 +81,7 @@ jobs:
             --url "$WEBHOOK_URL" \
             --secret "$BREVO_WEBHOOK_SECRET"
 
-      - name: Certify Brevo domain, sender, webhook and real delivery
+      - name: Repair and certify Brevo domain, sender, webhook and real delivery
         env:
           GOOGLE_CLOUD_PROJECT: presto-app-74abe
           GCLOUD_PROJECT: presto-app-74abe
@@ -92,6 +92,7 @@ jobs:
             --reply-to contact@ilipresto.fr \
             --webhook-url "$WEBHOOK_URL" \
             --canary '${{ inputs.canary_recipient }}' \
+            --repair \
             --e2e \
             --timeout-ms 180000 \
             --output quality/brevo-production-certification.json
@@ -119,6 +120,6 @@ jobs:
             echo '- Webhook : Bearer + événements transactionnels complets'
             echo '- Canary E2E : `${{ inputs.canary_recipient }}`'
             if [ -f quality/brevo-production-certification.json ]; then
-              node -e 'const r=require("./quality/brevo-production-certification.json"); console.log(`- Certifié : **${r.certified ? "OUI" : "NON"}**`); for (const c of r.checks) console.log(`- ${c.ok ? "✅" : "❌"} ${c.name}`);' 
+              node -e 'const r=require("./quality/brevo-production-certification.json"); console.log(`- Certifié : **${r.certified ? "OUI" : "NON"}**`); for (const a of r.repairActions || []) console.log(`- 🔧 réparation: ${a}`); for (const c of r.checks) console.log(`- ${c.ok ? "✅" : "❌"} ${c.name}`);' 
             fi
           } >> "$GITHUB_STEP_SUMMARY"
