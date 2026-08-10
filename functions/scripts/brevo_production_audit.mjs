@@ -61,6 +61,58 @@ function check(name, ok, details = {}) {
   return { name, ok: Boolean(ok), details };
 }
 
+function allDnsRecordsReady(domainConfig) {
+  const records = domainConfig?.dns_records || {};
+  const values = Object.values(records);
+  return values.length >= 2 && values.every((record) => record?.status === true);
+}
+
+async function ensureDomain(domain, apiKey, repairActions) {
+  let config;
+  try {
+    config = await brevoRequest(`/senders/domains/${encodeURIComponent(domain)}`, apiKey);
+  } catch (error) {
+    if (error?.status !== 404) throw error;
+    await brevoRequest("/senders/domains", apiKey, {
+      method: "POST",
+      body: JSON.stringify({ name: domain }),
+    });
+    repairActions.push("domain_created");
+    config = await brevoRequest(`/senders/domains/${encodeURIComponent(domain)}`, apiKey);
+  }
+
+  if (config.authenticated !== true && allDnsRecordsReady(config)) {
+    await brevoRequest(`/senders/domains/${encodeURIComponent(domain)}/authenticate`, apiKey, {
+      method: "PUT",
+    });
+    repairActions.push("domain_authentication_requested");
+    config = await brevoRequest(`/senders/domains/${encodeURIComponent(domain)}`, apiKey);
+  }
+
+  return config;
+}
+
+async function ensureSender(sender, domain, apiKey, repairActions) {
+  let senders = await brevoRequest(`/senders?domain=${encodeURIComponent(domain)}`, apiKey);
+  let entry = (senders.senders || []).find(
+    (item) => String(item.email || "").trim().toLowerCase() === sender,
+  );
+
+  if (!entry) {
+    await brevoRequest("/senders", apiKey, {
+      method: "POST",
+      body: JSON.stringify({ name: "iliprestō", email: sender }),
+    });
+    repairActions.push("sender_created");
+    senders = await brevoRequest(`/senders?domain=${encodeURIComponent(domain)}`, apiKey);
+    entry = (senders.senders || []).find(
+      (item) => String(item.email || "").trim().toLowerCase() === sender,
+    );
+  }
+
+  return entry;
+}
+
 async function waitForDeliveryLog(messageId, timeoutMs) {
   if (getApps().length === 0) initializeApp();
   const db = getFirestore();
@@ -106,6 +158,7 @@ async function main() {
   const output = readArg("--output", "quality/brevo-production-certification.json");
   const timeoutMs = Number(readArg("--timeout-ms", process.env.BREVO_E2E_TIMEOUT_MS || "180000"));
   const runE2E = hasFlag("--e2e");
+  const repair = hasFlag("--repair");
 
   if (!apiKey) throw new Error("BREVO_API_KEY is required");
   if (!webhookSecret) throw new Error("BREVO_WEBHOOK_SECRET is required");
@@ -115,8 +168,15 @@ async function main() {
     "invalid", "deferred", "click", "opened", "uniqueOpened", "unsubscribed",
   ]);
   const checks = [];
+  const repairActions = [];
 
-  const domainConfig = await brevoRequest(`/senders/domains/${encodeURIComponent(domain)}`, apiKey);
+  let domainConfig;
+  if (repair) {
+    domainConfig = await ensureDomain(domain, apiKey, repairActions);
+  } else {
+    domainConfig = await brevoRequest(`/senders/domains/${encodeURIComponent(domain)}`, apiKey);
+  }
+
   const dnsRecords = domainConfig.dns_records || {};
   const dnsStatuses = Object.fromEntries(
     Object.entries(dnsRecords).map(([key, value]) => [key, Boolean(value?.status)]),
@@ -134,20 +194,31 @@ async function main() {
     { present: Boolean(dnsRecords.dmarc_record), status: Boolean(dnsRecords.dmarc_record?.status) },
   ));
 
-  const senders = await brevoRequest(`/senders?domain=${encodeURIComponent(domain)}`, apiKey);
-  const senderEntry = (senders.senders || []).find(
-    (item) => String(item.email || "").trim().toLowerCase() === sender,
-  );
+  let senderEntry;
+  if (repair) {
+    senderEntry = await ensureSender(sender, domain, apiKey, repairActions);
+  } else {
+    const senders = await brevoRequest(`/senders?domain=${encodeURIComponent(domain)}`, apiKey);
+    senderEntry = (senders.senders || []).find(
+      (item) => String(item.email || "").trim().toLowerCase() === sender,
+    );
+  }
   checks.push(check("sender.exists", Boolean(senderEntry), { sender }));
   checks.push(check("sender.active", senderEntry?.active === true, { sender }));
 
   const webhooks = await brevoRequest("/webhooks?type=transactional", apiKey);
-  const hook = (webhooks.webhooks || []).find(
+  const matchingHooks = (webhooks.webhooks || []).filter(
     (item) => item.url === webhookUrl && item.type === "transactional",
   );
+  const hook = matchingHooks[0];
   const actualEvents = new Set(hook?.events || []);
-  const missingEvents = [...requiredEvents].filter((event) => !actualEvents.has(event));
+  const hasSentEvent = actualEvents.has("sent") || actualEvents.has("request");
+  const missingEvents = [...requiredEvents]
+    .filter((event) => event !== "sent" && !actualEvents.has(event));
+  if (!hasSentEvent) missingEvents.unshift("sent|request");
+
   checks.push(check("webhook.exists", Boolean(hook), { webhookUrl }));
+  checks.push(check("webhook.single", matchingHooks.length === 1, { count: matchingHooks.length }));
   checks.push(check("webhook.auth_bearer", String(hook?.auth?.type || "").toLowerCase() === "bearer", {
     webhookId: hook?.id || null,
   }));
@@ -171,7 +242,7 @@ async function main() {
         textContent: `Certification technique Brevo iliprestō. ID: ${certificationId}`,
         htmlContent: `<p>Certification technique Brevo iliprestō.</p><p>ID: <strong>${certificationId}</strong></p>`,
         tags: ["production-certification", "brevo"],
-        headers: { "Idempotency-Key": certificationId },
+        headers: { idempotencyKey: certificationId },
       }),
     });
 
@@ -200,6 +271,8 @@ async function main() {
     sender,
     replyTo,
     webhookUrl,
+    repairRequested: repair,
+    repairActions,
     e2eRequested: runE2E,
     certified: failed.length === 0,
     checks,
@@ -210,9 +283,8 @@ async function main() {
   await mkdir(dirname(output), { recursive: true });
   await writeFile(output, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 
-  for (const item of checks) {
-    console.log(`${item.ok ? "PASS" : "FAIL"} ${item.name}`);
-  }
+  for (const action of repairActions) console.log(`REPAIR ${action}`);
+  for (const item of checks) console.log(`${item.ok ? "PASS" : "FAIL"} ${item.name}`);
   console.log(`Brevo production certification: ${report.certified ? "PASS" : "FAIL"}`);
   console.log(`Report: ${output}`);
 
