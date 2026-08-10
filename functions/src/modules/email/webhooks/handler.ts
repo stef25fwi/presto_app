@@ -2,10 +2,13 @@ import { onRequest } from "firebase-functions/v2/https";
 import { createEmailProvider } from "../providers/provider_factory";
 import { normalizeHeaders } from "./signature";
 import { db } from "../../../core/firestore";
+import { logger } from "../../../core/logger";
 import { COLLECTIONS } from "../../../shared/constants";
 import { mapProviderStatusToInternal } from "./mapper";
 import { PROJECT_REGION } from "../../../config/env";
 import { sha256 } from "../../../utils/hash";
+
+const MAX_WEBHOOK_PAYLOAD_BYTES = 256 * 1024;
 
 function mapWebhookStatusToJobStatus(
   status: string,
@@ -37,23 +40,31 @@ export const handleEmailProviderWebhook = onRequest({ region: PROJECT_REGION }, 
 
   const provider = createEmailProvider();
   const rawBody = typeof req.rawBody === "string" ? req.rawBody : req.rawBody?.toString("utf8") || "";
+  const payloadBytes = Buffer.byteLength(rawBody, "utf8");
+  if (payloadBytes > MAX_WEBHOOK_PAYLOAD_BYTES) {
+    logger.warn("email_webhook_payload_too_large", { provider: provider.name(), payloadBytes });
+    res.status(413).json({ ok: false, error: "payload too large" });
+    return;
+  }
+
   const headers = normalizeHeaders(req.headers);
-
   const signatureValid = provider.verifyWebhookSignature(headers, rawBody);
-  await db.collection(COLLECTIONS.emailProviderWebhooks).add({
-    provider: provider.name(),
-    // Do not persist attacker-controlled payloads when authentication failed.
-    raw_payload: signatureValid ? req.body : null,
-    payload_bytes: Buffer.byteLength(rawBody, "utf8"),
-    signature_valid: signatureValid,
-    received_at: Date.now(),
-    processing_status: signatureValid ? "accepted" : "rejected",
-  });
-
   if (!signatureValid) {
+    // Keep unauthenticated traffic out of Firestore to avoid a write-amplification
+    // vector on this public endpoint. Cloud Logging retains the security signal.
+    logger.warn("email_webhook_auth_rejected", { provider: provider.name(), payloadBytes });
     res.status(401).json({ ok: false, error: "invalid webhook authentication" });
     return;
   }
+
+  await db.collection(COLLECTIONS.emailProviderWebhooks).add({
+    provider: provider.name(),
+    raw_payload: req.body,
+    payload_bytes: payloadBytes,
+    signature_valid: true,
+    received_at: Date.now(),
+    processing_status: "accepted",
+  });
 
   const events = provider.parseWebhook(req.body);
   for (const evt of events) {
