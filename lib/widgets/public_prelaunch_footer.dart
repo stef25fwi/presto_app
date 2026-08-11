@@ -26,7 +26,7 @@ class PublicPrelaunchFooter extends StatelessWidget {
           container: true,
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final columns = compact ? 2 : 2;
+              const columns = 2;
               const gap = 6.0;
               final itemWidth =
                   (constraints.maxWidth - (gap * (columns - 1))) / columns;
