@@ -22,7 +22,7 @@ class _NoopRemoteConfigAdapter implements PublicLandingRemoteConfigAdapter {
 }
 
 void main() {
-  testWidgets('affiche les six liens publics et légaux demandés',
+  testWidgets('affiche uniquement les mentions légales et les CGU',
       (tester) async {
     tester.view
       ..physicalSize = const Size(320, 640)
@@ -48,21 +48,21 @@ void main() {
       find.byKey(const Key('public-prelaunch-footer-links')),
       findsOneWidget,
     );
+    expect(find.text('Mentions légales'), findsOneWidget);
+    expect(find.text('CGU'), findsOneWidget);
 
     for (final label in <String>[
       'À propos',
       'Guide d’utilisation',
-      'Mentions légales',
       'Confidentialité',
-      'CGU',
       'Suppression du compte',
+      'Guadeloupe',
+      'Martinique',
+      'Guyane',
     ]) {
-      expect(find.text(label), findsOneWidget);
+      expect(find.text(label), findsNothing);
     }
 
-    expect(find.text('Guadeloupe'), findsNothing);
-    expect(find.text('Martinique'), findsNothing);
-    expect(find.text('Guyane'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
