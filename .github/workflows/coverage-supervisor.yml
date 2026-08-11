@@ -55,7 +55,7 @@ jobs:
             --output quality_reports/coverage-supervisor/plan.json \
             --global-percent "$percent" \
             --target-percent "${{ vars.COVERAGE_GLOBAL_TARGET || '80' }}" \
-            --max-workers "${{ vars.COVERAGE_MAX_WORKERS || '4' }}" \
+            --max-workers "${{ vars.COVERAGE_MAX_WORKERS || '2' }}" \
             --stale-hours "${{ vars.COVERAGE_WORKER_STALE_HOURS || '8' }}"
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json
@@ -68,10 +68,14 @@ jobs:
           print(f"healthy={len(p['healthy_workers'])}")
           PY
 
-      - name: Mark stale or orphaned worker missions
+      - name: Quarantine stale and close orphaned worker missions
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
+          gh label create coverage-stalled --repo "$GITHUB_REPOSITORY" \
+            --color B60205 --description "Coverage worker stale or orphaned" --force
+
           python3 - <<'PY' > /tmp/stale.tsv
           import json
           from pathlib import Path
@@ -81,11 +85,19 @@ jobs:
                   if w.get('issue_number'):
                       print(f"{w['issue_number']}\t{kind}\t{w.get('path', '')}")
           PY
+
           while IFS=$'\t' read -r issue kind path; do
             [ -n "$issue" ] || continue
-            gh issue edit "$issue" --repo "$GITHUB_REPOSITORY" --add-label coverage-stalled || true
-            gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" --body \
-              "LCOV Supervisor: mission classée **${kind}**. Elle ne bloque plus une lane active. Reprendre avec une branche/PR récente ou fermer la mission. Cible: \`${path}\`." || true
+            gh issue edit "$issue" --repo "$GITHUB_REPOSITORY" \
+              --add-label coverage-stalled || true
+
+            if [ "$kind" = "orphaned_workers" ]; then
+              gh issue close "$issue" --repo "$GITHUB_REPOSITORY" --comment \
+                "LCOV Supervisor: mission orpheline fermée automatiquement afin de libérer la lane. La prochaine mesure recréera une mission fraîche depuis le main courant. Cible: \`${path}\`." || true
+            else
+              gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" --body \
+                "LCOV Supervisor: worker avec PR classé **stale_workers**. La mission reste ouverte mais ne doit pas bloquer le remplissage utile. Cible: \`${path}\`." || true
+            fi
           done < /tmp/stale.tsv
 
       - name: Refill available lanes
@@ -110,11 +122,11 @@ jobs:
           - Couverture connue : **${percent}%**
           - Workers actifs utiles : **${HEALTHY}**
           - Workers stagnants : **${STALE}**
-          - Missions orphelines : **${ORPHANED}**
+          - Missions orphelines fermées : **${ORPHANED}**
           - Lanes à remplir : **${AVAILABLE}**
           - Objectif 80 % atteint : **${REACHED}**
 
-          Le superviseur ignore désormais les missions orphelines pour éviter le verrouillage permanent et relance la Coverage Factory dès qu’une capacité utile est disponible."
+          Les missions orphelines sont désormais fermées automatiquement afin qu'elles ne puissent plus bloquer la Coverage Factory."
 
       - name: Upload supervision evidence
         uses: actions/upload-artifact@v7
