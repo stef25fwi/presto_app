@@ -150,12 +150,14 @@ void main() {
       expect(publicRouteSeo, contains('<a href="/cgu">CGU</a>'));
       expect(
         publicRouteSeo,
-        isNot(contains("'/confidentialite': {")),
+        isNot(contains('<a href="/confidentialite">Confidentialité</a>')),
       );
       expect(
         publicRouteSeo,
-        isNot(contains("'/suppression-compte': {")),
+        isNot(contains('<a href="/suppression-compte">Suppression du compte</a>')),
       );
+      expect(publicRouteSeo, contains("'/confidentialite': {"));
+      expect(publicRouteSeo, contains("'/suppression-compte': {"));
     });
   });
 }
