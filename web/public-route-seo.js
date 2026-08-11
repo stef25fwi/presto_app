@@ -56,6 +56,7 @@
       '.prelaunch-features li{color:#33485e!important;background:#f8fafc!important;border-color:#e3e8ef!important}',
       '.prelaunch-message{color:#6f370f!important;background:#fff!important;border:1px solid rgba(255,102,0,.4)!important;border-left:4px solid #ff6600!important;border-radius:16px!important}',
       '.prelaunch-public-links a{color:#1a73e8!important}',
+      '.prelaunch-public-links a:not([href="/"]):not([href="/mentions-legales"]):not([href="/cgu"]){display:none!important}',
       '.prelaunch-public-links a:focus-visible{outline:3px solid rgba(26,115,232,.35)!important;outline-offset:4px!important;border-radius:6px!important}',
       '.prelaunch-domain{color:#6a7785!important}',
       '.audience-measurement{margin:24px 0;padding:18px;text-align:left;border:1px solid #dbe5f0;border-radius:16px;background:#f8fbff}',
@@ -174,17 +175,10 @@
       '<h1>' + page.h1 + '</h1>',
       '<p>' + page.lead + '</p>',
       audienceMeasurement,
-      '<nav class="prelaunch-public-links" aria-label="Pages publiques iliprestō">',
+      '<nav class="prelaunch-public-links" aria-label="Informations légales iliprestō">',
       '<a href="/">Accueil</a>',
-      '<a href="/a-propos">À propos</a>',
-      '<a href="/guides/comment-fonctionne-ilipresto">Guide d’utilisation</a>',
-      '<a href="/guadeloupe">Guadeloupe</a>',
-      '<a href="/martinique">Martinique</a>',
-      '<a href="/guyane">Guyane</a>',
       '<a href="/mentions-legales">Mentions légales</a>',
-      '<a href="/confidentialite">Confidentialité</a>',
       '<a href="/cgu">CGU</a>',
-      '<a href="/suppression-compte">Suppression du compte</a>',
       '</nav>'
     ].join('');
 

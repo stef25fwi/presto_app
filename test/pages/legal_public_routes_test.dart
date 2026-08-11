@@ -38,7 +38,7 @@ AppOperatingModeService _service({String email = 'contact@ilipresto.fr'}) {
 
 void main() {
   group('routes légales publiques', () {
-    test('chaque route publique cible le bon onglet', () {
+    test('chaque route juridique cible le bon onglet', () {
       expect(
         LegalInfoPage.tabForRoute(LegalInfoPage.legalNoticesRouteName),
         0,
@@ -52,8 +52,7 @@ void main() {
       expect(LegalInfoPage.tabForRoute('/'), isNull);
     });
 
-    test('les chemins publics correspondent aux URL attendues par les stores',
-        () {
+    test('les chemins juridiques correspondent aux URL attendues', () {
       expect(LegalInfoPage.privacyRouteName, '/confidentialite');
       expect(LegalInfoPage.termsRouteName, '/cgu');
       expect(LegalInfoPage.legalNoticesRouteName, '/mentions-legales');
@@ -97,8 +96,6 @@ void main() {
 
     testWidgets('retombe sur le contact par défaut si aucun n’est enregistré',
         (tester) async {
-      // `LegalPublisherProfile.fromMap` remplace une adresse vide par la
-      // valeur de compilation : la page garde donc toujours un contact.
       await tester.pumpWidget(
         MaterialApp(
           home: AccountDeletionInfoPage(
@@ -114,16 +111,14 @@ void main() {
   });
 
   group('pré-lancement', () {
-    test('les routes légales ne sont jamais masquées par la préouverture', () {
+    test('seuls les mentions légales et les CGU contournent la préouverture', () {
       final config = PublicLandingConfigService(
         adapter: _NoopRemoteConfigAdapter(),
       );
 
       for (final path in <String>[
         LegalInfoPage.legalNoticesRouteName,
-        LegalInfoPage.privacyRouteName,
         LegalInfoPage.termsRouteName,
-        AccountDeletionInfoPage.routeName,
       ]) {
         expect(
           PublicLandingConfigService.bypassPaths.contains(path),
@@ -139,6 +134,43 @@ void main() {
           reason: '$path ne doit pas afficher la page de préouverture',
         );
       }
+
+      for (final path in <String>[
+        LegalInfoPage.privacyRouteName,
+        AccountDeletionInfoPage.routeName,
+        '/login',
+        '/register',
+        '/admin',
+        '/account',
+        '/publish',
+      ]) {
+        expect(PublicLandingConfigService.bypassPaths.contains(path), isFalse);
+        expect(
+          config.shouldShowFor(
+            Uri.parse('https://ilipresto.fr$path'),
+            isWeb: true,
+          ),
+          isTrue,
+          reason: '$path doit rester derrière la page de préouverture',
+        );
+      }
+    });
+
+    testWidgets('masque l’onglet confidentialité sur les pages autorisées',
+        (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LegalInfoPage(
+            operatingModeService: _service(),
+            restrictToPrelaunchLegalTabs: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mentions légales'), findsOneWidget);
+      expect(find.text('CGU'), findsOneWidget);
+      expect(find.text('Confidentialité'), findsNothing);
     });
 
     test('la racine publique reste couverte par la préouverture', () {

@@ -101,10 +101,21 @@ void main() {
       );
     });
 
-    test('laisse accessibles les routes admin et authentification', () {
+    test('n’exempte que les mentions légales et les CGU', () {
       final service = PublicLandingConfigService(
         adapter: _FakePublicLandingRemoteConfigAdapter(),
       );
+
+      for (final path in <String>['/mentions-legales', '/cgu']) {
+        expect(
+          service.shouldShowFor(
+            Uri.parse('https://ilipresto.fr$path'),
+            isWeb: true,
+          ),
+          isFalse,
+          reason: '$path doit rester accessible',
+        );
+      }
 
       for (final path in <String>[
         '/admin',
@@ -116,43 +127,50 @@ void main() {
         '/verify-email',
         '/reset-password-success',
         '/__/auth/handler',
+        '/confidentialite',
+        '/suppression-compte',
+        '/offers/123',
       ]) {
         expect(
           service.shouldShowFor(
             Uri.parse('https://ilipresto.fr$path'),
             isWeb: true,
           ),
-          isFalse,
-          reason: '$path doit rester accessible',
+          isTrue,
+          reason: '$path doit rester bloqué par la préouverture',
         );
       }
     });
 
-    test('reconnaît aussi les routes exemptées dans le fragment URL', () {
+    test('applique aussi le verrou aux routes dans le fragment URL', () {
       final service = PublicLandingConfigService(
         adapter: _FakePublicLandingRemoteConfigAdapter(),
       );
+
+      for (final uri in <String>[
+        'https://ilipresto.fr/#/mentions-legales',
+        'https://ilipresto.fr/#/cgu',
+      ]) {
+        expect(
+          service.shouldShowFor(Uri.parse(uri), isWeb: true),
+          isFalse,
+          reason: '$uri doit rester accessible',
+        );
+      }
 
       for (final uri in <String>[
         'https://ilipresto.fr/#/admin',
         'https://ilipresto.fr/#/admin/users?tab=active',
         'https://ilipresto.fr/#/login',
         'https://ilipresto.fr/#register',
+        'https://ilipresto.fr/#/offers/123',
       ]) {
         expect(
           service.shouldShowFor(Uri.parse(uri), isWeb: true),
-          isFalse,
-          reason: '$uri doit contourner la page publique',
+          isTrue,
+          reason: '$uri doit afficher la page publique',
         );
       }
-
-      expect(
-        service.shouldShowFor(
-          Uri.parse('https://ilipresto.fr/#/offers/123'),
-          isWeb: true,
-        ),
-        isTrue,
-      );
     });
 
     test('charge le toggle et les textes depuis Remote Config', () async {

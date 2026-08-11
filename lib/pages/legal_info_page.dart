@@ -1,20 +1,24 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../constants.dart';
 import '../features/operating_mode/app_operating_mode.dart';
 import '../features/operating_mode/legal_documents.dart';
+import '../platform/public_prelaunch_shell.dart';
+import '../services/public_landing_config_service.dart';
 
 class LegalInfoPage extends StatefulWidget {
   const LegalInfoPage({
     super.key,
     this.initialTab = 0,
     this.operatingModeService,
+    this.restrictToPrelaunchLegalTabs,
   });
 
-  /// Routes publiques exigées par les stores et par le RGPD : elles doivent
-  /// rester atteignables par URL directe, sans compte et sans passer par la
-  /// page de pré-lancement (cf. `PublicLandingConfigService.bypassPaths`).
+  /// Routes juridiques de l'application.
   static const String legalNoticesRouteName = '/mentions-legales';
   static const String privacyRouteName = '/confidentialite';
   static const String termsRouteName = '/cgu';
@@ -37,6 +41,10 @@ class LegalInfoPage extends StatefulWidget {
   final int initialTab;
   final AppOperatingModeService? operatingModeService;
 
+  /// Surcharge réservée aux tests. En production, la page détecte elle-même
+  /// le mode « bientôt disponible » sur les domaines publics.
+  final bool? restrictToPrelaunchLegalTabs;
+
   @override
   State<LegalInfoPage> createState() => _LegalInfoPageState();
 }
@@ -48,12 +56,46 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
   static const Color _muted = Color(0xFF6B7280);
   static const Color _border = Color(0xFFE5E7EB);
 
+  static const Set<String> _publicPrelaunchHosts = <String>{
+    'ilipresto.fr',
+    'www.ilipresto.fr',
+    'ilipresto.web.app',
+    'ilipresto.firebaseapp.com',
+    'presto-app-74abe.web.app',
+    'presto-app-74abe.firebaseapp.com',
+  };
+
   late int _tab;
+  late final PublicLandingConfigService _publicLanding;
 
   @override
   void initState() {
     super.initState();
     _tab = widget.initialTab.clamp(0, 2).toInt();
+    _publicLanding = PublicLandingConfigService.instance;
+    _publicLanding.addListener(_handlePublicLandingChanged);
+    unawaited(_publicLanding.initialize());
+  }
+
+  @override
+  void dispose() {
+    _publicLanding.removeListener(_handlePublicLandingChanged);
+    super.dispose();
+  }
+
+  void _handlePublicLandingChanged() {
+    if (mounted) setState(() {});
+  }
+
+  bool get _restrictToPrelaunchLegalTabs {
+    final override = widget.restrictToPrelaunchLegalTabs;
+    if (override != null) return override;
+    if (!kIsWeb || hasPublicPrelaunchAccess() || !_publicLanding.enabled) {
+      return false;
+    }
+
+    final host = Uri.base.host.trim().toLowerCase();
+    return _publicPrelaunchHosts.contains(host);
   }
 
   Stream<AppOperatingModeState> _stateStream() {
@@ -67,8 +109,8 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
     }
   }
 
-  List<LegalDocumentSection> _sections(AppOperatingModeState state) {
-    switch (_tab) {
+  List<LegalDocumentSection> _sections(AppOperatingModeState state, int tab) {
+    switch (tab) {
       case 1:
         return LegalDocumentCatalog.privacy(state);
       case 2:
@@ -80,6 +122,10 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final restricted = _restrictToPrelaunchLegalTabs;
+    final visibleTabs = restricted ? const <int>[0, 2] : const <int>[0, 1, 2];
+    final effectiveTab = restricted && _tab == 1 ? 0 : _tab;
+
     return Scaffold(
       backgroundColor: _background,
       appBar: AppBar(
@@ -93,14 +139,15 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
         stream: _stateStream(),
         builder: (context, snapshot) {
           final state = snapshot.data ?? AppOperatingModeState.defaults();
-          final sections = _sections(state);
+          final sections = _sections(state, effectiveTab);
           return SafeArea(
             top: false,
             child: Column(
               children: [
                 _ModeBanner(state: state),
                 _Tabs(
-                  index: _tab,
+                  index: effectiveTab,
+                  visibleTabs: visibleTabs,
                   onChanged: (value) => setState(() => _tab = value),
                 ),
                 Expanded(
@@ -212,13 +259,22 @@ class _ModeBanner extends StatelessWidget {
 
 class _Tabs extends StatelessWidget {
   final int index;
+  final List<int> visibleTabs;
   final ValueChanged<int> onChanged;
 
-  const _Tabs({required this.index, required this.onChanged});
+  const _Tabs({
+    required this.index,
+    required this.visibleTabs,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    const labels = <String>['Mentions légales', 'Confidentialité', 'CGU'];
+    const labels = <int, String>{
+      0: 'Mentions légales',
+      1: 'Confidentialité',
+      2: 'CGU',
+    };
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12),
       padding: const EdgeInsets.all(4),
@@ -228,12 +284,12 @@ class _Tabs extends StatelessWidget {
         border: Border.all(color: _LegalInfoPageState._border),
       ),
       child: Row(
-        children: List<Widget>.generate(labels.length, (i) {
-          final active = i == index;
+        children: visibleTabs.map((tabIndex) {
+          final active = tabIndex == index;
           return Expanded(
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
-              onTap: () => onChanged(i),
+              onTap: () => onChanged(tabIndex),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -244,7 +300,7 @@ class _Tabs extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  labels[i],
+                  labels[tabIndex]!,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: active ? Colors.white : _LegalInfoPageState._text,
@@ -255,7 +311,7 @@ class _Tabs extends StatelessWidget {
               ),
             ),
           );
-        }),
+        }).toList(growable: false),
       ),
     );
   }

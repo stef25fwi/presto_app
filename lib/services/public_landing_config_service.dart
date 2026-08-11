@@ -114,26 +114,13 @@ class PublicLandingConfigService extends ChangeNotifier {
     'presto-app-74abe.firebaseapp.com',
   };
 
-  /// Chemins qui restent servis normalement même quand la page de
-  /// pré-lancement est active.
-  ///
-  /// Les routes légales en font partie : les consoles Play Store et App Store
-  /// exigent des URL de confidentialité et de suppression de compte
-  /// consultables publiquement, y compris pendant la période de préparation.
-  /// Les masquer derrière la page de pré-lancement ferait échouer la revue.
+  /// Seules les deux pages juridiques explicitement autorisées restent
+  /// consultables pendant la préouverture. Toutes les autres routes, y compris
+  /// authentification, administration, confidentialité et suppression de compte,
+  /// restent couvertes par la page « bientôt disponible ».
   static const Set<String> bypassPaths = <String>{
-    '/admin',
-    '/auth',
-    '/login',
-    '/register',
-    '/forgot-password',
-    '/verify-email',
-    '/reset-password-success',
-    '/__/auth',
     '/mentions-legales',
-    '/confidentialite',
     '/cgu',
-    '/suppression-compte',
   };
 
   final PublicLandingRemoteConfigAdapter? _adapter;
