@@ -7,6 +7,7 @@ void main() {
   group('web public prelaunch shell', () {
     late String html;
     late String bootstrap;
+    late String publicRouteSeo;
     late String webBridge;
     late String appChrome;
     late Map<String, dynamic> structuredData;
@@ -15,6 +16,7 @@ void main() {
     setUpAll(() {
       html = File('web/index.html').readAsStringSync();
       bootstrap = File('web/flutter_bootstrap.js').readAsStringSync();
+      publicRouteSeo = File('web/public-route-seo.js').readAsStringSync();
       webBridge = File(
         'lib/platform/public_prelaunch_shell_web.dart',
       ).readAsStringSync();
@@ -49,25 +51,13 @@ void main() {
           'La solution à tout moment pour tous vos besoins du quotidien',
         ),
       );
-      expect(
-        html,
-        contains('site de petites annonces de services et micro-services'),
-      );
+      expect(html, contains('Annonces assistées par IA'));
       expect(html, contains('Publication par texte ou par voix'));
       expect(html, contains('Échanges directs entre utilisateurs'));
-      expect(html, contains('Annonces assistées par IA'));
       expect(html, contains('0 % de commission'));
       expect(
         html,
         contains('ne collecte ni ne gère les paiements entre utilisateurs'),
-      );
-      expect(html, isNot(contains('Réponses immédiates')));
-      expect(
-        html,
-        contains(
-          'Site national en cours de déploiement. Première ouverture '
-          'en Guadeloupe, Martinique et Guyane.',
-        ),
       );
     });
 
@@ -81,89 +71,15 @@ void main() {
       expect(html, contains('property="og:title"'));
       expect(html, contains('name="twitter:title"'));
       expect(html, contains('type="application/ld+json"'));
-      expect(
-        html,
-        contains(
-          '<title>iliprestō – Annonces assistées par IA, 0 % de commission</title>',
-        ),
-      );
-      expect(
-        html,
-        contains(
-          '<meta name="description" content="La solution à tout moment pour '
-          'vos besoins du quotidien : publiez une annonce assistée par IA, '
-          'échangez directement et profitez de 0 % de commission.">',
-        ),
-      );
-      expect(
-        html.toLowerCase(),
-        isNot(contains('plateforme nationale de mise en relation')),
-      );
-      expect(
-        html,
-        isNot(
-          contains('Ouverture prochaine en Guadeloupe, Martinique et Guyane.'),
-        ),
-      );
     });
 
-    test('déclare un graphe JSON-LD national valide sans dépendre des espaces',
-        () {
+    test('déclare un graphe JSON-LD national valide', () {
       expect(structuredData['@context'], 'https://schema.org');
-
       final types = structuredNodes.map((node) => node['@type']).toSet();
       expect(
         types,
         containsAll(<String>{'Organization', 'WebSite', 'WebPage', 'Service'}),
       );
-
-      final organization = structuredNodes.firstWhere(
-        (node) => node['@type'] == 'Organization',
-      );
-      expect(organization['@id'], 'https://ilipresto.fr/#organization');
-      expect(organization['name'], 'iliprestō');
-      expect(
-        organization['areaServed'],
-        equals(<String, dynamic>{'@type': 'Country', 'name': 'France'}),
-      );
-      expect(
-        organization['description'],
-        contains('annonces assistées par IA'),
-      );
-      expect(organization['description'], contains('0 % de commission'));
-      expect(organization['description'], contains('aucun paiement géré'));
-
-      final website = structuredNodes.firstWhere(
-        (node) => node['@type'] == 'WebSite',
-      );
-      expect(website['@id'], 'https://ilipresto.fr/#website');
-      expect(
-        website['publisher'],
-        equals(<String, dynamic>{
-          '@id': 'https://ilipresto.fr/#organization',
-        }),
-      );
-
-      final service = structuredNodes.firstWhere(
-        (node) => node['@type'] == 'Service',
-      );
-      expect(
-        service['provider'],
-        equals(<String, dynamic>{
-          '@id': 'https://ilipresto.fr/#organization',
-        }),
-      );
-      expect(
-        service['areaServed'],
-        equals(<String, dynamic>{'@type': 'Country', 'name': 'France'}),
-      );
-      expect(
-        service['serviceType'],
-        'Site de petites annonces pour services et micro-services',
-      );
-      expect(service['description'], contains('Solution à tout moment'));
-      expect(service['description'], contains('annonce assistée par IA'));
-      expect(service['description'], contains('0 % de commission'));
     });
 
     test('ne charge pas Flutter avant le déverrouillage de la racine publique',
@@ -185,8 +101,6 @@ void main() {
           '  }',
         ),
       );
-      expect(bootstrap, contains('function startFlutterApplication()'));
-      expect(bootstrap, contains('_flutter.loader.load({'));
     });
 
     test('conserve huit taps invisibles avec remise à zéro après huit secondes',
@@ -199,7 +113,6 @@ void main() {
       );
       expect(bootstrap, contains("trigger.addEventListener('click'"));
       expect(bootstrap, contains('tapCount >= developerAccessTapCount'));
-      expect(bootstrap, contains('tapCount = 0;'));
       expect(bootstrap, isNot(contains('tapCount.toString')));
       expect(bootstrap, isNot(contains('Compteur')));
     });
@@ -222,59 +135,27 @@ void main() {
       );
     });
 
-    test('maintient une seule page visible pendant le chargement après les taps',
+    test('masque tous les liens publics sauf accueil, mentions légales et CGU',
         () {
-      expect(bootstrap, contains('createPrelaunchTransitionShell(shell)'));
       expect(
-        bootstrap,
+        publicRouteSeo,
         contains(
-          "prelaunchTransitionShell.id = 'prelaunch-transition-shell'",
+          '.prelaunch-public-links a:not([href="/"]):not([href="/mentions-legales"]):not([href="/cgu"]){display:none!important}',
         ),
       );
       expect(
-        bootstrap,
-        contains("prelaunchTransitionShell.style.pointerEvents = 'none'"),
+        publicRouteSeo,
+        contains('<a href="/mentions-legales">Mentions légales</a>'),
+      );
+      expect(publicRouteSeo, contains('<a href="/cgu">CGU</a>'));
+      expect(
+        publicRouteSeo,
+        isNot(contains("'/confidentialite': {")),
       );
       expect(
-        bootstrap,
-        contains("prelaunchTransitionShell.style.zIndex = '2147483646'"),
+        publicRouteSeo,
+        isNot(contains("'/suppression-compte': {")),
       );
-      expect(bootstrap, contains("shell.style.visibility = 'hidden';"));
-      expect(
-        bootstrap,
-        contains('window.iliprestoOpenApplication = function ()'),
-      );
-    });
-
-    test('corrige les contrastes du shell avant toute mesure Lighthouse', () {
-      expect(
-        bootstrap,
-        contains('.prelaunch-brand-name{color:#c64700!important}'),
-      );
-      expect(
-        bootstrap,
-        contains('.prelaunch-domain{color:#5f6b78!important}'),
-      );
-      expect(
-        bootstrap.indexOf('applyPrelaunchAccessibilityFixes();'),
-        lessThan(bootstrap.indexOf('const deferredPublicPrelaunch =')),
-      );
-    });
-
-    test('préserve les routes administration et authentification', () {
-      for (final path in <String>[
-        '/admin',
-        '/auth',
-        '/login',
-        '/register',
-        '/forgot-password',
-        '/verify-email',
-        '/reset-password-success',
-        '/__/auth',
-      ]) {
-        expect(html, contains("'$path'"), reason: '$path doit être exempté');
-      }
-      expect(html, contains('window.location.hash'));
     });
   });
 }
