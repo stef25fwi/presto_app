@@ -9,15 +9,8 @@ class PublicPrelaunchFooter extends StatelessWidget {
   });
 
   static const _links = <({String label, String path})>[
-    (label: 'À propos', path: '/a-propos'),
-    (
-      label: 'Guide d’utilisation',
-      path: '/guides/comment-fonctionne-ilipresto',
-    ),
     (label: 'Mentions légales', path: '/mentions-legales'),
-    (label: 'Confidentialité', path: '/confidentialite'),
     (label: 'CGU', path: '/cgu'),
-    (label: 'Suppression du compte', path: '/suppression-compte'),
   ];
 
   final bool compact;
@@ -29,11 +22,11 @@ class PublicPrelaunchFooter extends StatelessWidget {
     return Column(
       children: <Widget>[
         Semantics(
-          label: 'Liens publics et informations légales',
+          label: 'Informations légales',
           container: true,
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final columns = compact ? 2 : 3;
+              final columns = compact ? 2 : 2;
               const gap = 6.0;
               final itemWidth =
                   (constraints.maxWidth - (gap * (columns - 1))) / columns;
