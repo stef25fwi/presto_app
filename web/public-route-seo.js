@@ -13,24 +13,11 @@
       h1: 'Mentions légales d’iliprestō',
       lead: 'Retrouvez l’identité de l’éditeur, le directeur de publication, l’hébergement et les informations qui encadrent la plateforme.'
     },
-    '/confidentialite': {
-      title: 'Politique de confidentialité | iliprestō',
-      description: 'Découvrez comment iliprestō collecte, protège, utilise et conserve les données personnelles de ses utilisateurs partout en France.',
-      h1: 'Politique de confidentialité d’iliprestō',
-      lead: 'Cette page présente les traitements de données, leurs finalités, les durées de conservation et les droits des utilisateurs.',
-      audienceMeasurement: true
-    },
     '/cgu': {
       title: 'Conditions générales d’utilisation | iliprestō',
       description: 'Consultez les conditions générales d’utilisation qui encadrent l’accès et l’usage de la plateforme nationale iliprestō.',
       h1: 'Conditions générales d’utilisation',
       lead: 'Ces conditions définissent les règles d’accès, de publication, d’échange et de responsabilité applicables à iliprestō.'
-    },
-    '/suppression-compte': {
-      title: 'Supprimer votre compte iliprestō',
-      description: 'Consultez les procédures pour supprimer votre compte iliprestō et connaître les données supprimées ou légalement conservées.',
-      h1: 'Supprimer votre compte iliprestō',
-      lead: 'Découvrez les démarches disponibles depuis l’application ou par contact direct, ainsi que les catégories de données concernées.'
     }
   };
 
@@ -56,6 +43,7 @@
       '.prelaunch-features li{color:#33485e!important;background:#f8fafc!important;border-color:#e3e8ef!important}',
       '.prelaunch-message{color:#6f370f!important;background:#fff!important;border:1px solid rgba(255,102,0,.4)!important;border-left:4px solid #ff6600!important;border-radius:16px!important}',
       '.prelaunch-public-links a{color:#1a73e8!important}',
+      '.prelaunch-public-links a:not([href="/"]):not([href="/mentions-legales"]):not([href="/cgu"]){display:none!important}',
       '.prelaunch-public-links a:focus-visible{outline:3px solid rgba(26,115,232,.35)!important;outline-offset:4px!important;border-radius:6px!important}',
       '.prelaunch-domain{color:#6a7785!important}',
       '.audience-measurement{margin:24px 0;padding:18px;text-align:left;border:1px solid #dbe5f0;border-radius:16px;background:#f8fbff}',
@@ -155,17 +143,6 @@
     const main = document.querySelector('#prelaunch-seo-shell .prelaunch-card');
     if (!main) return;
 
-    const audienceMeasurement = page.audienceMeasurement
-      ? [
-          '<section class="audience-measurement" aria-labelledby="audience-measurement-title">',
-          '<h2 id="audience-measurement-title">Mesure d’audience technique</h2>',
-          '<p>iliprestō mesure uniquement LCP, INP et CLS pour améliorer la rapidité et la stabilité des pages. Aucun nom, email, compte, cookie publicitaire ni adresse IP n’est conservé. Les routes contenant un identifiant sont anonymisées et les échantillons sont supprimés après 35 jours.</p>',
-          '<button id="disable-cwv" type="button">Refuser la mesure d’audience technique</button>',
-          '<p id="audience-measurement-status" class="audience-measurement-status" role="status" aria-live="polite"></p>',
-          '</section>'
-        ].join('')
-      : '';
-
     main.innerHTML = [
       '<nav class="public-breadcrumb" aria-label="Fil d’Ariane">',
       '<ol><li><a href="/">Accueil</a></li><li aria-current="page">' + page.h1 + '</li></ol>',
@@ -173,43 +150,11 @@
       '<div class="prelaunch-badge">Information publique</div>',
       '<h1>' + page.h1 + '</h1>',
       '<p>' + page.lead + '</p>',
-      audienceMeasurement,
-      '<nav class="prelaunch-public-links" aria-label="Pages publiques iliprestō">',
+      '<nav class="prelaunch-public-links" aria-label="Informations légales iliprestō">',
       '<a href="/">Accueil</a>',
-      '<a href="/a-propos">À propos</a>',
-      '<a href="/guides/comment-fonctionne-ilipresto">Guide d’utilisation</a>',
-      '<a href="/guadeloupe">Guadeloupe</a>',
-      '<a href="/martinique">Martinique</a>',
-      '<a href="/guyane">Guyane</a>',
       '<a href="/mentions-legales">Mentions légales</a>',
-      '<a href="/confidentialite">Confidentialité</a>',
       '<a href="/cgu">CGU</a>',
-      '<a href="/suppression-compte">Suppression du compte</a>',
       '</nav>'
     ].join('');
-
-    const disableButton = document.getElementById('disable-cwv');
-    const status = document.getElementById('audience-measurement-status');
-    if (disableButton && status) {
-      let alreadyDisabled = false;
-      try {
-        alreadyDisabled = window.localStorage.getItem('ilipresto-cwv-optout') === '1';
-      } catch (_) {}
-      if (alreadyDisabled) {
-        disableButton.disabled = true;
-        status.textContent = 'La mesure d’audience technique est déjà désactivée sur ce navigateur.';
-      }
-      disableButton.addEventListener('click', function () {
-        if (typeof window.iliprestoDisableWebVitals === 'function') {
-          window.iliprestoDisableWebVitals();
-        } else {
-          try {
-            window.localStorage.setItem('ilipresto-cwv-optout', '1');
-          } catch (_) {}
-        }
-        disableButton.disabled = true;
-        status.textContent = 'La mesure d’audience technique est désactivée sur ce navigateur.';
-      });
-    }
   });
 })();
