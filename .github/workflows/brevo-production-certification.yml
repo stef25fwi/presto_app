@@ -85,10 +85,32 @@ jobs:
           npm --prefix functions run build
           npm --prefix functions test
 
+      - name: Test Brevo through deployed Firebase runtime
+        id: runtime_canary
+        continue-on-error: true
+        env:
+          GOOGLE_CLOUD_PROJECT: presto-app-74abe
+          GCLOUD_PROJECT: presto-app-74abe
+          RUNTIME_CANARY_TIMEOUT_MS: '90000'
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p quality
+          node functions/scripts/brevo_runtime_canary.mjs 2>&1 | tee quality/brevo-runtime-canary.log
+
       - name: Resolve and validate Brevo credentials from Secret Manager
         shell: bash
         run: |
           set -euo pipefail
+
+          runtime_ok=false
+          if grep -q 'BREVO_RUNTIME_CANARY_RESULT={"ok":true' quality/brevo-runtime-canary.log 2>/dev/null; then
+            runtime_ok=true
+            echo 'Le runtime Firebase a fait accepter le canari par Brevo.'
+          else
+            echo 'Le runtime Firebase n a pas obtenu un envoi accepté ; diagnostic direct des credentials.'
+            grep 'BREVO_RUNTIME_CANARY_RESULT=' quality/brevo-runtime-canary.log 2>/dev/null || true
+          fi
 
           primary_api_key="$(gcloud secrets versions access latest --secret=BREVO_API_KEY --project=presto-app-74abe 2>/dev/null || true)"
           legacy_api_key="$(gcloud secrets versions access latest --secret=EMAIL_PROVIDER_API_KEY --project=presto-app-74abe 2>/dev/null || true)"
@@ -122,11 +144,15 @@ jobs:
               valid_source="$source"
               break
             fi
-            echo "Credential $source rejetée par Brevo (HTTP $http_code)."
+            echo "Credential $source rejetée par Brevo depuis GitHub (HTTP $http_code)."
           done
 
           if [ -z "$valid_api_key" ]; then
-            echo "::error::Aucune clé API Brevo valide n'est disponible dans BREVO_API_KEY ou EMAIL_PROVIDER_API_KEY. Une nouvelle clé Brevo doit être générée puis enregistrée dans Secret Manager." >&2
+            if [ "$runtime_ok" = true ]; then
+              echo "::error::La clé Brevo fonctionne depuis Firebase mais l API Brevo rejette le runner GitHub. Une restriction IP Brevo est la cause probable ; la certification API doit être déplacée vers un runtime à egress contrôlé." >&2
+              exit 4
+            fi
+            echo "::error::Brevo rejette la clé depuis GitHub et le runtime Firebase n obtient pas non plus d envoi accepté. La credential de production doit être remplacée." >&2
             exit 3
           fi
 
@@ -174,7 +200,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: brevo-production-certification-${{ env.DEPLOYED_SHA }}-${{ github.run_id }}
-          path: quality/brevo-production-certification.json
+          path: |
+            quality/brevo-production-certification.json
+            quality/brevo-runtime-canary.log
           if-no-files-found: warn
           retention-days: 90
 
@@ -191,6 +219,9 @@ jobs:
             echo '- Reply-To : `contact@ilipresto.fr`'
             echo '- Webhook : Bearer + événements transactionnels complets'
             echo "- Canary E2E : \`$CANARY_RECIPIENT\`"
+            if [ -f quality/brevo-runtime-canary.log ]; then
+              grep 'BREVO_RUNTIME_CANARY_RESULT=' quality/brevo-runtime-canary.log | tail -1 | sed 's/^/- Runtime Firebase : `/' | sed 's/$/`/' || true
+            fi
             if [ -f quality/brevo-production-certification.json ]; then
               node -e 'const r=require("./quality/brevo-production-certification.json"); console.log(`- Certifié : **${r.certified ? "OUI" : "NON"}**`); for (const a of r.repairActions || []) console.log(`- 🔧 réparation: ${a}`); for (const c of r.checks) console.log(`- ${c.ok ? "✅" : "❌"} ${c.name}`);'
             fi
