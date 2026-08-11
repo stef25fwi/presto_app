@@ -205,22 +205,54 @@ jobs:
           echo "::add-mask::$key"
           echo "OPENAI_API_KEY=$key" >> "$GITHUB_ENV"
 
-      - name: Run live OpenAI evaluations
+      - name: Prepare live evaluation report directory
+        run: mkdir -p quality_reports/ai
+
+      - name: Run live listing evaluation
+        id: listing_eval
+        continue-on-error: true
+        env:
+          AI_EVAL_ENFORCE: 'true'
+          OPENAI_INPUT_EUR_PER_MILLION_TOKENS: ${{ vars.OPENAI_INPUT_EUR_PER_MILLION_TOKENS }}
+          OPENAI_OUTPUT_EUR_PER_MILLION_TOKENS: ${{ vars.OPENAI_OUTPUT_EUR_PER_MILLION_TOKENS }}
+        run: npm --prefix functions run ai:eval:listing -- evals/listing_cases.jsonl ../quality_reports/ai/listing.json
+
+      - name: Run live transcription evaluation
+        id: transcription_eval
+        continue-on-error: true
         env:
           AI_EVAL_ENFORCE: 'true'
           OPENAI_TRANSCRIPTION_EUR_PER_MINUTE: ${{ vars.OPENAI_TRANSCRIPTION_EUR_PER_MINUTE }}
+        run: npm --prefix functions run ai:eval:transcription -- --output ../quality_reports/ai/transcription.json
+
+      - name: Run live vision evaluation
+        id: vision_eval
+        continue-on-error: true
+        env:
+          AI_EVAL_ENFORCE: 'true'
           OPENAI_INPUT_EUR_PER_MILLION_TOKENS: ${{ vars.OPENAI_INPUT_EUR_PER_MILLION_TOKENS }}
           OPENAI_OUTPUT_EUR_PER_MILLION_TOKENS: ${{ vars.OPENAI_OUTPUT_EUR_PER_MILLION_TOKENS }}
-        run: |
-          mkdir -p quality_reports/ai
-          npm --prefix functions run ai:eval:listing -- evals/listing_cases.jsonl ../quality_reports/ai/listing.json
-          npm --prefix functions run ai:eval:transcription -- --output ../quality_reports/ai/transcription.json
-          npm --prefix functions run ai:eval:vision -- --output ../quality_reports/ai/vision.json
+        run: npm --prefix functions run ai:eval:vision -- --output ../quality_reports/ai/vision.json
 
       - name: Archive live evaluation reports
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: ai-evaluation-reports-${{ env.EVIDENCE_SHA }}
           path: quality_reports/ai
           if-no-files-found: error
           retention-days: 90
+
+      - name: Enforce all live evaluations
+        if: always()
+        shell: bash
+        env:
+          LISTING_OUTCOME: ${{ steps.listing_eval.outcome }}
+          TRANSCRIPTION_OUTCOME: ${{ steps.transcription_eval.outcome }}
+          VISION_OUTCOME: ${{ steps.vision_eval.outcome }}
+        run: |
+          set -euo pipefail
+          printf 'listing=%s transcription=%s vision=%s\n' "$LISTING_OUTCOME" "$TRANSCRIPTION_OUTCOME" "$VISION_OUTCOME"
+          test "$LISTING_OUTCOME" = success
+          test "$TRANSCRIPTION_OUTCOME" = success
+          test "$VISION_OUTCOME" = success
