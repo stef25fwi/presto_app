@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import admin from 'firebase-admin';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
 const projectId = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || 'presto-app-74abe';
 const recipient = String(process.env.CANARY_RECIPIENT || 'contact@ilipresto.fr').trim().toLowerCase();
@@ -13,10 +14,10 @@ if (!recipient || !recipient.includes('@')) {
   throw new Error('CANARY_RECIPIENT invalide');
 }
 
-if (!admin.apps.length) {
-  admin.initializeApp({ projectId });
+if (getApps().length === 0) {
+  initializeApp({ projectId });
 }
-const db = admin.firestore();
+const db = getFirestore();
 
 const now = Date.now();
 const eventId = `evt_brevo_runtime_canary_${now}_${Math.random().toString(16).slice(2, 10)}`;
@@ -60,7 +61,7 @@ while (Date.now() < deadline) {
   lastLogs = logsSnap.docs.map((doc) => doc.data() || {});
 
   const sentLog = lastLogs.find((log) => ['sent', 'delivered'].includes(String(log.status || '')));
-  if (sentLog || ['sent'].includes(String(lastJob?.status || ''))) {
+  if (sentLog || String(lastJob?.status || '') === 'sent') {
     const result = {
       ok: true,
       eventId,
