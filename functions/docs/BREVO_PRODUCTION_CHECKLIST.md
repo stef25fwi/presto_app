@@ -52,3 +52,12 @@ node scripts/brevo_webhook_smoke_test.mjs \
 - No provider factory fallback ambiguity in production config.
 - At least one real transactional email sent and tracked end-to-end.
 - Alerting in place for webhook signature failure spikes.
+
+## 6) ChatGPT ↔ Brevo MCP
+
+- Use the official Brevo MCP endpoint rather than introducing a custom Firebase proxy solely for ChatGPT administration.
+- Generate a dedicated Brevo MCP token; never commit it or expose it to Flutter/web clients.
+- Follow `docs/production/CHATGPT_BREVO_MCP.md` for endpoint, security controls, ChatGPT prerequisites and validation tests.
+- Validate read-only audits first (senders/domains, transactional events, templates, webhooks).
+- Test write access only after the read path is validated, starting with one low-risk action requiring explicit confirmation.
+- Keep the production application path `Firebase Functions → Brevo API` separate from the administration path `ChatGPT → Brevo MCP`.
