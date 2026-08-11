@@ -60,9 +60,11 @@ jobs:
           active_prs="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --limit 100 \
             --json headRefName --jq '[.[] | select(.headRefName | startswith("coverage/w"))] | length')"
           active_issues="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
-            --label coverage-worker --limit 100 --json number --jq 'length')"
-          # A worker normally has both an issue and a PR. Count the larger set,
-          # not their sum, otherwise one worker incorrectly consumes two slots.
+            --label coverage-worker --limit 100 --json number,assignees \
+            --jq '[.[] | select((.assignees | length) > 0)] | length')"
+          # Une issue non assignée n'est pas une preuve qu'un worker produit du
+          # code. On ne réserve une lane que pour une mission réellement prise
+          # en charge ou une PR coverage/w déjà ouverte.
           occupied="$active_prs"
           [ "$active_issues" -gt "$occupied" ] && occupied="$active_issues"
           [ "$occupied" -gt 2 ] && occupied=2
@@ -143,7 +145,7 @@ jobs:
         if: steps.dedupe.outputs.run == 'true' && steps.factory.outputs.count != '0'
         env:
           GH_TOKEN: ${{ github.token }}
-          AGENT_ASSIGNEE: ${{ vars.COVERAGE_AGENT_ASSIGNEE }}
+          AGENT_ASSIGNEE: ${{ vars.COVERAGE_AGENT_ASSIGNEE || github.repository_owner }}
         run: |
           set -euo pipefail
           python3 - <<'PY' > /tmp/workers.tsv
@@ -165,9 +167,23 @@ jobs:
 
           while IFS=$'\t' read -r worker category label path percent uncovered ranges prefix; do
             [ -n "$worker" ] || continue
+
+            # Fermer les anciennes missions identiques qui n'ont jamais été
+            # prises en charge. Elles ne doivent ni bloquer une lane ni empêcher
+            # la création d'une mission fraîche sur le main courant.
+            stale_numbers="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+              --label coverage-worker --search "worker-$worker $path" \
+              --json number,assignees --jq '.[] | select((.assignees | length) == 0) | .number')"
+            for stale_issue in $stale_numbers; do
+              gh issue close "$stale_issue" --repo "$GITHUB_REPOSITORY" --comment \
+                "Coverage Factory: mission non assignée remplacée par une mission fraîche depuis le main courant." || true
+            done
+
             existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
-              --label coverage-worker --search "worker-$worker $path" --json number --jq 'length')"
+              --label coverage-worker --search "worker-$worker $path" \
+              --json number,assignees --jq '[.[] | select((.assignees | length) > 0)] | length')"
             [ "$existing" != "0" ] && continue
+
             branch="${prefix}-$(date -u +%Y%m%d-%H%M%S)"
             body="$(cat <<EOF
           ## Worker $worker — Coverage Factory 5×2
@@ -207,11 +223,10 @@ jobs:
           <!-- coverage-worker:$worker -->
           EOF
           )"
-            args=()
-            [ -n "${AGENT_ASSIGNEE:-}" ] && args=(--assignee "$AGENT_ASSIGNEE")
             gh issue create --repo "$GITHUB_REPOSITORY" \
               --title "[Coverage worker-$worker] $category — $path vers 100 %" \
-              --body "$body" --label coverage-agent --label coverage-worker "${args[@]}"
+              --body "$body" --label coverage-agent --label coverage-worker \
+              --assignee "$AGENT_ASSIGNEE"
           done < /tmp/workers.tsv
 
       - name: Update central dashboard
