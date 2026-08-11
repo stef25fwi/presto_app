@@ -5,7 +5,8 @@
   const organizationId = baseUrl + '/#organization';
   const websiteId = baseUrl + '/#website';
   const logoId = baseUrl + '/#logo';
-  const pageLastModified = '2026-08-05T23:00:00Z';
+  const pageLastModified = '2026-08-11T18:03:00Z';
+  const brandedFaviconHref = '/icons/Icon-192.png?v=20260811';
   const pages = {
     '/mentions-legales': {
       title: 'Mentions légales | iliprestō',
@@ -41,6 +42,26 @@
     return path;
   }
 
+  function enforceBrandFavicons() {
+    document.querySelectorAll('link[rel~="icon"]').forEach((element) => element.remove());
+
+    const favicon = document.createElement('link');
+    favicon.rel = 'icon';
+    favicon.type = 'image/png';
+    favicon.sizes = '192x192';
+    favicon.href = brandedFaviconHref;
+    favicon.dataset.iliprestoBrandFavicon = 'true';
+    document.head.appendChild(favicon);
+
+    let appleTouchIcon = document.querySelector('link[rel="apple-touch-icon"]');
+    if (!appleTouchIcon) {
+      appleTouchIcon = document.createElement('link');
+      appleTouchIcon.rel = 'apple-touch-icon';
+      document.head.appendChild(appleTouchIcon);
+    }
+    appleTouchIcon.href = brandedFaviconHref;
+  }
+
   function injectBrandTheme() {
     if (document.querySelector('style[data-ilipresto-brand-theme]')) return;
 
@@ -71,6 +92,12 @@
 
   const path = normalizePath(window.location.pathname);
   injectBrandTheme();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', enforceBrandFavicons, {once: true});
+  } else {
+    enforceBrandFavicons();
+  }
 
   const publicHosts = new Set([
     'ilipresto.fr',

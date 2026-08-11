@@ -157,7 +157,8 @@ function renderPage(intent, service, city) {
   <meta name="theme-color" content="#FF6600">
   <link rel="canonical" href="${escapeHtml(canonical)}">
   <link rel="alternate" hreflang="fr-FR" href="${escapeHtml(canonical)}">
-  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/Icon-192.png?v=20260811">
+  <link rel="apple-touch-icon" href="/icons/Icon-192.png?v=20260811">
   <link rel="stylesheet" href="/public-pages.css">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="fr_FR">
