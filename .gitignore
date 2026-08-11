@@ -115,3 +115,10 @@ android/app/build/
 
 # Corpus IA synthétique régénéré par npm --prefix functions run ai:eval:media
 functions/evals/media/
+
+# MCP credentials and local connector configuration — never commit secrets
+.mcp/
+*.mcp.local.json
+.vscode/mcp.local.json
+**/mcp-credentials.json
+**/brevo-mcp-token*
