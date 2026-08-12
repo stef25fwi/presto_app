@@ -66,6 +66,30 @@ function firstNameMatches(declared: string, official: string): boolean {
   return official.startsWith(`${declared} `);
 }
 
+function containsWholePhrase(value: string, phrase: string): boolean {
+  if (!value || !phrase) return false;
+  return ` ${value} `.includes(` ${phrase} `);
+}
+
+function matchIndividualEntrepreneur(
+  company: AnyMap,
+  normalizedFirstName: string,
+  normalizedLastName: string,
+): boolean {
+  if (company?.complements?.est_entrepreneur_individuel !== true) {
+    return false;
+  }
+
+  // Pour une entreprise individuelle, l'API construit nom_complet à partir
+  // des données de personne physique INSEE. Ce fallback est volontairement
+  // limité aux EI et n'est jamais utilisé pour une société/personne morale.
+  const fullName = normalizePersonName(company?.nom_complet);
+  return (
+    containsWholePhrase(fullName, normalizedFirstName) &&
+    containsWholePhrase(fullName, normalizedLastName)
+  );
+}
+
 export function matchDeclaredLeader(
   company: AnyMap,
   declaredFirstName: string,
@@ -96,6 +120,21 @@ export function matchDeclaredLeader(
       declaredFirstName: declaredFirstName.trim(),
       declaredLastName: declaredLastName.trim(),
       role: String(leader?.qualite ?? leader?.fonction ?? "").trim(),
+    };
+  }
+
+  if (
+    matchIndividualEntrepreneur(
+      company,
+      normalizedFirstName,
+      normalizedLastName,
+    )
+  ) {
+    return {
+      matched: true,
+      declaredFirstName: declaredFirstName.trim(),
+      declaredLastName: declaredLastName.trim(),
+      role: "Entrepreneur individuel",
     };
   }
 
