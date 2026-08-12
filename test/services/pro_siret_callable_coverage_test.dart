@@ -39,6 +39,7 @@ void main() {
       expect(result.ok, isTrue);
       expect(result.companyName, 'Entreprise Test');
       expect(result.city, 'Baie-Mahault');
+      expect(result.leaderDeclaredMatch, isFalse);
     });
 
     test('preVerifySiret rejette une réponse non Map', () async {
@@ -58,7 +59,7 @@ void main() {
       );
     });
 
-    test('verifySiret convertit une réponse Map', () async {
+    test('verifySiret transmet le dirigeant déclaré et convertit la réponse', () async {
       String? calledName;
       Map<String, dynamic>? calledParameters;
       final service = ProSiretService(
@@ -69,16 +70,52 @@ void main() {
             'ok': true,
             'siret': '73282932000074',
             'companyName': 'Société vérifiée',
+            'leaderDeclaredMatch': true,
+            'declaredLeaderFirstName': 'Marie',
+            'declaredLeaderLastName': 'Dupont',
+            'declaredLeaderRole': 'Présidente',
+            'verificationLevel': 'siret_declared_leader_match',
+            'proStatus': 'verified_siret_leader_match',
           };
         },
       );
 
-      final result = await service.verifySiret('73282932000074');
+      final result = await service.verifySiret(
+        '73282932000074',
+        leaderFirstName: ' Marie ',
+        leaderLastName: ' Dupont ',
+      );
 
       expect(calledName, 'verifySiret');
-      expect(calledParameters, <String, dynamic>{'siret': '73282932000074'});
+      expect(calledParameters, <String, dynamic>{
+        'siret': '73282932000074',
+        'leaderFirstName': 'Marie',
+        'leaderLastName': 'Dupont',
+      });
       expect(result.ok, isTrue);
       expect(result.companyName, 'Société vérifiée');
+      expect(result.leaderDeclaredMatch, isTrue);
+      expect(result.declaredLeaderRole, 'Présidente');
+      expect(result.proStatus, 'verified_siret_leader_match');
+    });
+
+    test('verifySiret exige le nom et prénom du dirigeant', () async {
+      final service = ProSiretService(caller: (_, __) async => const {});
+
+      await expectLater(
+        service.verifySiret(
+          '73282932000074',
+          leaderFirstName: '',
+          leaderLastName: 'Dupont',
+        ),
+        throwsA(
+          isA<ProSiretException>().having(
+            (error) => error.message,
+            'message',
+            contains('nom et le prénom'),
+          ),
+        ),
+      );
     });
 
     test('verifySiret traduit une erreur Firebase Functions', () async {
@@ -90,7 +127,11 @@ void main() {
       );
 
       await expectLater(
-        service.verifySiret('73282932000074'),
+        service.verifySiret(
+          '73282932000074',
+          leaderFirstName: 'Marie',
+          leaderLastName: 'Dupont',
+        ),
         throwsA(
           isA<ProSiretException>().having(
             (error) => error.message,
