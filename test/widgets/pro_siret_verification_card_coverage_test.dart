@@ -22,22 +22,39 @@ const _verified = ProSiretVerificationResult(
   postalCode: '97122',
   city: 'Baie-Mahault',
   nafCode: '6201Z',
-  proStatus: 'verified',
+  proStatus: 'verified_siret_leader_match',
+  leaderDeclaredMatch: true,
+  declaredLeaderFirstName: 'Marie',
+  declaredLeaderLastName: 'Dupont',
+  declaredLeaderRole: 'Gérante',
+  verificationLevel: 'siret_declared_leader_match',
 );
 
+Future<void> _fillVerificationFields(WidgetTester tester) async {
+  final fields = find.byType(TextFormField);
+  expect(fields, findsNWidgets(3));
+  await tester.enterText(fields.at(0), '73282932000074');
+  await tester.enterText(fields.at(1), 'Marie');
+  await tester.enterText(fields.at(2), 'Dupont');
+}
+
 void main() {
-  testWidgets('affiche le chargement puis le résultat et appelle le callback', (
+  testWidgets('transmet SIRET et dirigeant puis affiche la concordance', (
     tester,
   ) async {
     final pending = Completer<ProSiretVerificationResult>();
     ProSiretVerificationResult? callbackResult;
-    String? received;
+    String? receivedSiret;
+    String? receivedFirstName;
+    String? receivedLastName;
 
     await tester.pumpWidget(
       _host(
         ProSiretVerificationCard(
-          verifier: (value) {
-            received = value;
+          verifier: (siret, firstName, lastName) {
+            receivedSiret = siret;
+            receivedFirstName = firstName;
+            receivedLastName = lastName;
             return pending.future;
           },
           onVerified: (result) => callbackResult = result,
@@ -45,60 +62,35 @@ void main() {
       ),
     );
 
-    await tester.enterText(find.byType(TextField), '73282932000074');
-    await tester.tap(find.text('Vérifier mon SIRET'));
+    await _fillVerificationFields(tester);
+    await tester.tap(find.text('Vérifier SIRET + dirigeant'));
     await tester.pump();
 
     expect(find.text('Vérification...'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(received, '73282932000074');
+    expect(receivedSiret, '73282932000074');
+    expect(receivedFirstName, 'Marie');
+    expect(receivedLastName, 'Dupont');
 
     pending.complete(_verified);
     await tester.pumpAndSettle();
 
     expect(callbackResult, same(_verified));
-    expect(find.text('Entreprise trouvée'), findsOneWidget);
+    expect(find.text('SIRET + dirigeant concordants'), findsOneWidget);
     expect(find.textContaining('Entreprise Démo'), findsOneWidget);
+    expect(find.textContaining('Dirigeant déclaré : Marie Dupont'), findsOneWidget);
+    expect(find.textContaining('Qualité : Gérante'), findsOneWidget);
     expect(find.textContaining('97122 Baie-Mahault'), findsOneWidget);
-    expect(find.textContaining('Activité : 6201Z'), findsOneWidget);
   });
 
-  testWidgets('affiche une erreur puis efface le champ et le message', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _host(
-        ProSiretVerificationCard(
-          verifier: (_) async => throw Exception('SIRET indisponible'),
-        ),
-      ),
-    );
-
-    await tester.enterText(find.byType(TextField), '73282932000074');
-    await tester.tap(find.text('Vérifier mon SIRET'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('SIRET non validé'), findsOneWidget);
-    expect(find.text('SIRET indisponible'), findsOneWidget);
-
-    await tester.tap(find.byIcon(Icons.close_rounded));
-    await tester.pump();
-
-    expect(find.text('SIRET non validé'), findsNothing);
-    expect(
-      tester.widget<TextField>(find.byType(TextField)).controller?.text,
-      isEmpty,
-    );
-  });
-
-  testWidgets('soumission clavier utilise le vérificateur injecté', (
+  testWidgets('refuse la vérification si le dirigeant est incomplet', (
     tester,
   ) async {
     var calls = 0;
     await tester.pumpWidget(
       _host(
         ProSiretVerificationCard(
-          verifier: (_) async {
+          verifier: (_, __, ___) async {
             calls++;
             return _verified;
           },
@@ -106,11 +98,31 @@ void main() {
       ),
     );
 
-    await tester.enterText(find.byType(TextField), '73282932000074');
-    await tester.testTextInput.receiveAction(TextInputAction.done);
+    final fields = find.byType(TextFormField);
+    await tester.enterText(fields.at(0), '73282932000074');
+    await tester.enterText(fields.at(1), 'Marie');
+    await tester.tap(find.text('Vérifier SIRET + dirigeant'));
+    await tester.pump();
+
+    expect(calls, 0);
+    expect(find.text('Nom obligatoire.'), findsOneWidget);
+  });
+
+  testWidgets('affiche une erreur de concordance', (tester) async {
+    await tester.pumpWidget(
+      _host(
+        ProSiretVerificationCard(
+          verifier: (_, __, ___) async =>
+              throw Exception('Le dirigeant déclaré ne concorde pas'),
+        ),
+      ),
+    );
+
+    await _fillVerificationFields(tester);
+    await tester.tap(find.text('Vérifier SIRET + dirigeant'));
     await tester.pumpAndSettle();
 
-    expect(calls, 1);
-    expect(find.text('Entreprise trouvée'), findsOneWidget);
+    expect(find.text('Vérification non validée'), findsOneWidget);
+    expect(find.text('Le dirigeant déclaré ne concorde pas'), findsOneWidget);
   });
 }
