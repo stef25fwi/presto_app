@@ -15,7 +15,7 @@ import {
 function parseArgs(argv) {
   const options = {
     fixture: "evals/vision_cases.jsonl",
-    model: process.env.OPENAI_VISION_MODEL || "gpt-4o-mini-2024-07-18",
+    model: process.env.OPENAI_VISION_MODEL || "gpt-4o-mini",
     concurrency: 1,
     dryRun: false,
     jsonOutput: false,
