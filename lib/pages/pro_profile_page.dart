@@ -9,7 +9,7 @@ import '../services/user_profile_bootstrap_service.dart';
 import '../utils/friendly_snackbar.dart';
 import '../widgets/phone_input_field.dart';
 import '../widgets/pro_declared_leader_dialog.dart';
-import '../widgets/verification_status_tooltip.dart';
+import '../widgets/pro_verification_status_banner.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBeige = Color(0xFFFCEEE2);
@@ -202,14 +202,14 @@ class _ProProfilePageState extends State<ProProfilePage> {
 
       final accepted = data['termsAccepted'];
       final verified = data['siretVerified'];
-      final leaderMatch = data['leaderDeclaredMatch'];
+      final proStatus = _s(data['proStatus']);
 
       if (mounted) {
         setState(() {
           _acceptTerms = accepted is bool ? accepted : _acceptTerms;
           _siretVerified =
               verified == true || _s(data?['verifiedAt']).isNotEmpty;
-          _leaderDeclaredMatch = leaderMatch == true;
+          _leaderDeclaredMatch = proStatus == 'verified_siret_leader_match';
         });
       }
     } catch (_) {
@@ -379,55 +379,6 @@ class _ProProfilePageState extends State<ProProfilePage> {
     );
   }
 
-  Widget _verifiedBadge() {
-    final fullyMatched = _siretVerified && _leaderDeclaredMatch;
-    final color = fullyMatched ? const Color(0xFF16A34A) : Colors.orange;
-    final text = fullyMatched
-        ? 'SIRET + dirigeant déclaré concordants.'
-        : _siretVerified
-            ? 'SIRET validé — dirigeant déclaré à confirmer.'
-            : 'Vérifiez le SIRET + dirigeant pour valider le profil professionnel.';
-
-    final content = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.28)),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            fullyMatched ? Icons.verified_rounded : Icons.warning_amber_rounded,
-            color: color,
-            size: 20,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-            ),
-          ),
-          if (fullyMatched) ...[
-            const SizedBox(width: 6),
-            Icon(Icons.info_outline_rounded, color: color, size: 18),
-          ],
-        ],
-      ),
-    );
-
-    if (!fullyMatched) return content;
-    return VerificationStatusTooltip(
-      message: kSiretLeaderMatchDisclaimer,
-      child: content,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final officialFieldsReadOnly = _siretVerified || _isVerifyingSiret;
@@ -452,7 +403,10 @@ class _ProProfilePageState extends State<ProProfilePage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                   children: [
-                    _verifiedBadge(),
+                    ProVerificationStatusBanner(
+                      siretVerified: _siretVerified,
+                      leaderDeclaredMatch: _leaderDeclaredMatch,
+                    ),
                     const SizedBox(height: 18),
                     _sectionTitle("Vérification entreprise"),
                     TextFormField(
