@@ -81,11 +81,11 @@ void main() {
   testWidgets('enabled utilise les valeurs placeholder par défaut', (
     tester,
   ) async {
-    String? folder;
-    BorderRadius? radius;
-    Duration? interval;
-    int? antiRepeatWindow;
-    bool? enabled;
+    String? capturedFolder;
+    BorderRadius? capturedRadius;
+    Duration? capturedInterval;
+    int? capturedAntiRepeatWindow;
+    bool? capturedEnabled;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -99,11 +99,11 @@ void main() {
               required int antiRepeatWindow,
               required bool enabled,
             }) {
-              folder = fallbackFolderPrefix;
-              radius = borderRadius;
-              interval = interval;
-              antiRepeatWindow = antiRepeatWindow;
-              enabled = enabled;
+              capturedFolder = fallbackFolderPrefix;
+              capturedRadius = borderRadius;
+              capturedInterval = interval;
+              capturedAntiRepeatWindow = antiRepeatWindow;
+              capturedEnabled = enabled;
               return const SizedBox(
                 key: ValueKey<String>('default-placeholder'),
               );
@@ -114,12 +114,15 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byKey(const ValueKey<String>('default-placeholder')), findsOneWidget);
-    expect(folder, 'assets/carousel_home/');
-    expect(radius, BorderRadius.circular(6));
-    expect(interval, const Duration(seconds: 4));
-    expect(antiRepeatWindow, 3);
-    expect(enabled, isTrue);
+    expect(
+      find.byKey(const ValueKey<String>('default-placeholder')),
+      findsOneWidget,
+    );
+    expect(capturedFolder, 'assets/carousel_home/');
+    expect(capturedRadius, BorderRadius.circular(6));
+    expect(capturedInterval, const Duration(seconds: 4));
+    expect(capturedAntiRepeatWindow, 3);
+    expect(capturedEnabled, isTrue);
     expect(tester.takeException(), isNull);
   });
 }
