@@ -76,7 +76,6 @@ class PageCaptureCatalogPage extends StatelessWidget {
   const PageCaptureCatalogPage({super.key});
 
   static final List<PageCaptureEntry> entries = <PageCaptureEntry>[
-    // ── Navigation principale ────────────────────────────────────────────────
     PageCaptureEntry(
       number: 1,
       id: '01_splash_screen',
@@ -141,7 +140,6 @@ class PageCaptureCatalogPage extends StatelessWidget {
       status: PageStatus.active,
       builder: (_) => const AccountPage(),
     ),
-    // ── Authentification ─────────────────────────────────────────────────────
     PageCaptureEntry(
       number: 8,
       id: '08_login_page',
@@ -188,7 +186,6 @@ class PageCaptureCatalogPage extends StatelessWidget {
       status: PageStatus.active,
       builder: (_) => const VerifyEmailPage(),
     ),
-    // ── Sous-pages Compte ────────────────────────────────────────────────────
     PageCaptureEntry(
       number: 13,
       id: '13_account_security_page',
@@ -225,7 +222,6 @@ class PageCaptureCatalogPage extends StatelessWidget {
       status: PageStatus.active,
       builder: (_) => const DeleteAccountPage(),
     ),
-    // ── Offres & Annonces ────────────────────────────────────────────────────
     PageCaptureEntry(
       number: 17,
       id: '17_offer_details_page',
@@ -250,7 +246,6 @@ class PageCaptureCatalogPage extends StatelessWidget {
         preferMarketplace: true,
       ),
     ),
-    // ── Messagerie ───────────────────────────────────────────────────────────
     PageCaptureEntry(
       number: 19,
       id: '19_conversations_list_page',
@@ -274,7 +269,6 @@ class PageCaptureCatalogPage extends StatelessWidget {
         initialDraftText: 'Bonjour, je vous contacte pour cette annonce.',
       ),
     ),
-    // ── Profil public ────────────────────────────────────────────────────────
     PageCaptureEntry(
       number: 21,
       id: '21_user_public_profile_page',
@@ -285,7 +279,7 @@ class PageCaptureCatalogPage extends StatelessWidget {
       status: PageStatus.active,
       builder: (_) => const UserPublicProfilePage(
         userId: 'demo-public-user',
-        initialPseudo: 'Stephane Demo',
+        initialPseudo: 'Utilisateur Démo',
       ),
     ),
     PageCaptureEntry(
@@ -297,7 +291,6 @@ class PageCaptureCatalogPage extends StatelessWidget {
       status: PageStatus.active,
       builder: (_) => const ProProfilePage(),
     ),
-    // ── Boîte à outils ──────────────────────────────────────────────────────
     PageCaptureEntry(
       number: 23,
       id: '23_toolbox_hub_page',
@@ -353,7 +346,6 @@ class PageCaptureCatalogPage extends StatelessWidget {
       status: PageStatus.deprecated,
       builder: (_) => const EntrepreneurToolboxPage(),
     ),
-    // ── Légal ────────────────────────────────────────────────────────────────
     PageCaptureEntry(
       number: 29,
       id: '29_legal_info_page',
@@ -363,7 +355,6 @@ class PageCaptureCatalogPage extends StatelessWidget {
       status: PageStatus.active,
       builder: (_) => const LegalInfoPage(),
     ),
-    // ── Admin ────────────────────────────────────────────────────────────────
     PageCaptureEntry(
       number: 30,
       id: '30_admin_space_page',
@@ -457,8 +448,6 @@ class PageCaptureCatalogPage extends StatelessWidget {
   }
 }
 
-// ─── Summary card ────────────────────────────────────────────────────────────
-
 class _SummaryCard extends StatelessWidget {
   final int total;
   final int active;
@@ -499,8 +488,6 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-// ─── Group header ─────────────────────────────────────────────────────────────
-
 class _GroupHeader extends StatelessWidget {
   final _GroupMeta meta;
   const _GroupHeader({required this.meta});
@@ -527,8 +514,6 @@ class _GroupHeader extends StatelessWidget {
     );
   }
 }
-
-// ─── Entry tile ───────────────────────────────────────────────────────────────
 
 class _EntryTile extends StatelessWidget {
   final PageCaptureEntry item;
@@ -576,8 +561,6 @@ class _EntryTile extends StatelessWidget {
     );
   }
 }
-
-// ─── Status badge ─────────────────────────────────────────────────────────────
 
 class _StatusBadge extends StatelessWidget {
   final PageStatus status;
@@ -642,8 +625,6 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-// ─── Page viewer ─────────────────────────────────────────────────────────────
-
 class _PageCaptureViewer extends StatelessWidget {
   final PageCaptureEntry entry;
 
@@ -701,8 +682,6 @@ class _PageCaptureViewer extends StatelessWidget {
   }
 }
 
-// ─── Sample data ─────────────────────────────────────────────────────────────
-
 Map<String, dynamic> _sampleOfferData() {
   return <String, dynamic>{
     'id': 'demo-offer',
@@ -717,8 +696,8 @@ Map<String, dynamic> _sampleOfferData() {
     'location': 'Les Abymes',
     'category': 'Transport / Livraison',
     'advertiserId': 'seller-demo',
-    'advertiserName': 'Stephane Demo',
-    'displayName': 'Stephane Demo',
+    'advertiserName': 'Utilisateur Démo',
+    'displayName': 'Utilisateur Démo',
     'userId': 'seller-demo',
     'ownerId': 'seller-demo',
     'uid': 'seller-demo',
