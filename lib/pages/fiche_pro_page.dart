@@ -16,6 +16,7 @@ import '../services/user_profile_bootstrap_service.dart';
 import '../utils/friendly_snackbar.dart';
 import '../utils/offer_helpers.dart';
 import '../utils/profile_avatar_resolver.dart';
+import '../widgets/verification_status_tooltip.dart';
 import 'offers/offer_details_page.dart';
 
 const Color _kOrange = Color(0xFFFF6600);
@@ -838,6 +839,7 @@ class _FicheProPageState extends State<FicheProPage> {
                           label: 'SIRET vérifié',
                           color: _kBlue,
                           bg: const Color(0xFFEBF5FB),
+                          tooltipMessage: kSiretVerificationDisclaimer,
                         ),
                         const SizedBox(width: 10),
                       ],
@@ -896,8 +898,9 @@ class _FicheProPageState extends State<FicheProPage> {
     required String label,
     required Color color,
     required Color bg,
+    String? tooltipMessage,
   }) {
-    return Container(
+    final badge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: bg,
@@ -916,8 +919,20 @@ class _FicheProPageState extends State<FicheProPage> {
               color: color,
             ),
           ),
+          if (tooltipMessage != null) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.info_outline_rounded, size: 13, color: color),
+          ],
         ],
       ),
+    );
+
+    final tooltip = tooltipMessage;
+    if (tooltip == null) return badge;
+
+    return VerificationStatusTooltip(
+      message: tooltip,
+      child: badge,
     );
   }
 
