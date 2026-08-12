@@ -46,6 +46,33 @@ test("matchDeclaredLeader ignore les dirigeants personnes morales", () => {
   assert.equal(matchDeclaredLeader(company, "Marie", "Dupont").matched, false);
 });
 
+test("matchDeclaredLeader couvre un entrepreneur individuel via nom_complet", () => {
+  const company = {
+    nom_complet: "JEAN-PIERRE D'ÉTÉ",
+    dirigeants: [],
+    complements: {
+      est_entrepreneur_individuel: true,
+    },
+  };
+
+  const result = matchDeclaredLeader(company, "Jean-Pierre", "D’Eté");
+
+  assert.equal(result.matched, true);
+  assert.equal(result.role, "Entrepreneur individuel");
+});
+
+test("le fallback nom_complet reste interdit pour une société", () => {
+  const company = {
+    nom_complet: "MARIE DUPONT",
+    dirigeants: [],
+    complements: {
+      est_entrepreneur_individuel: false,
+    },
+  };
+
+  assert.equal(matchDeclaredLeader(company, "Marie", "Dupont").matched, false);
+});
+
 test("matchDeclaredLeader refuse un nom ou prénom différent", () => {
   const company = {
     dirigeants: [
