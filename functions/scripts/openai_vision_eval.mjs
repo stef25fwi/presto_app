@@ -143,8 +143,7 @@ async function runCase(client, options, fixture) {
   };
 }
 
-function enforce(summary) {
-  if (String(process.env.AI_EVAL_ENFORCE || "false").toLowerCase() !== "true") return;
+function gateFailures(summary) {
   const minAccuracy = Number(process.env.AI_EVAL_MIN_VISION_ACCURACY || 0.66);
   const maxHallucinationRate = Number(process.env.AI_EVAL_MAX_VISION_HALLUCINATION_RATE || 0.1);
   const minSchemaRate = Number(process.env.AI_EVAL_MIN_SCHEMA_VALID_RATE || 1);
@@ -161,13 +160,17 @@ function enforce(summary) {
   if (summary.coverage?.missingFormats?.length) {
     failures.push(`formats image manquants: ${summary.coverage.missingFormats.join(", ")}`);
   }
-  // Une moyenne globale correcte ne doit pas masquer un conteneur qui échoue :
-  // chaque format est mesuré séparément sur la validité de schéma.
   for (const [format, group] of Object.entries(summary.byFormat || {})) {
     if (group.schemaValidRate < minSchemaRate) {
       failures.push(`format ${format}: schéma ${group.schemaValidRate} < ${minSchemaRate}`);
     }
   }
+  return failures;
+}
+
+function enforce(summary) {
+  if (String(process.env.AI_EVAL_ENFORCE || "false").toLowerCase() !== "true") return;
+  const failures = gateFailures(summary);
   if (failures.length) throw new Error(`Vision evaluation gate failed: ${failures.join("; ")}`);
 }
 
@@ -245,10 +248,11 @@ async function main() {
     estimatedCostEur: estimatedVisionCostEur(inputTokens, outputTokens),
     results,
   };
-  enforce(summary);
+  summary.gateFailures = gateFailures(summary);
   const output = JSON.stringify(summary, null, options.jsonOutput ? 0 : 2);
   if (options.output) await fs.writeFile(path.resolve(options.output), `${output}\n`);
   console.log(output);
+  enforce(summary);
 }
 
 main().catch((error) => {
