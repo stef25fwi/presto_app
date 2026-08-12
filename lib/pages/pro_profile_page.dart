@@ -8,6 +8,8 @@ import '../services/pro_siret_service.dart';
 import '../services/user_profile_bootstrap_service.dart';
 import '../utils/friendly_snackbar.dart';
 import '../widgets/phone_input_field.dart';
+import '../widgets/pro_declared_leader_dialog.dart';
+import '../widgets/verification_status_tooltip.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBeige = Color(0xFFFCEEE2);
@@ -52,6 +54,7 @@ class _ProProfilePageState extends State<ProProfilePage> {
   bool _isLoadingProfile = true;
   bool _isVerifyingSiret = false;
   bool _siretVerified = false;
+  bool _leaderDeclaredMatch = false;
 
   @override
   void initState() {
@@ -199,12 +202,14 @@ class _ProProfilePageState extends State<ProProfilePage> {
 
       final accepted = data['termsAccepted'];
       final verified = data['siretVerified'];
+      final leaderMatch = data['leaderDeclaredMatch'];
 
       if (mounted) {
         setState(() {
           _acceptTerms = accepted is bool ? accepted : _acceptTerms;
           _siretVerified =
               verified == true || _s(data?['verifiedAt']).isNotEmpty;
+          _leaderDeclaredMatch = leaderMatch == true;
         });
       }
     } catch (_) {
@@ -229,6 +234,9 @@ class _ProProfilePageState extends State<ProProfilePage> {
       return;
     }
 
+    final leader = await showProDeclaredLeaderDialog(context);
+    if (leader == null || !mounted) return;
+
     setState(() => _isVerifyingSiret = true);
 
     try {
@@ -239,13 +247,19 @@ class _ProProfilePageState extends State<ProProfilePage> {
       );
 
       // Vérification officielle :
-      // écrit côté backend dans pro_profiles/{uid} + users/{uid}
-      final result = await _siretService.verifySiret(rawSiret);
+      // écrit côté backend dans pro_profiles/{uid} + users/{uid}.
+      // La concordance du dirigeant est calculée côté serveur.
+      final result = await _siretService.verifySiret(
+        rawSiret,
+        leaderFirstName: leader.firstName,
+        leaderLastName: leader.lastName,
+      );
 
       if (!mounted) return;
 
       setState(() {
         _siretVerified = true;
+        _leaderDeclaredMatch = result.leaderDeclaredMatch;
         _siretCtrl.text = result.siret;
         _sirenCtrl.text = result.siren;
         _companyCtrl.text = result.companyName;
@@ -258,8 +272,8 @@ class _ProProfilePageState extends State<ProProfilePage> {
       showSuccessSnackBar(
         context,
         result.companyName.isNotEmpty
-            ? 'SIRET vérifié : ${result.companyName}'
-            : 'SIRET vérifié',
+            ? 'SIRET + dirigeant concordants : ${result.companyName}'
+            : 'SIRET + dirigeant concordants',
       );
     } catch (error) {
       if (!mounted) return;
@@ -275,10 +289,10 @@ class _ProProfilePageState extends State<ProProfilePage> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (!_siretVerified) {
+    if (!_siretVerified || !_leaderDeclaredMatch) {
       showErrorSnackBar(
         context,
-        'Vérifiez votre SIRET avant d’enregistrer le profil professionnel.',
+        'Vérifiez le SIRET et le dirigeant déclaré avant d’enregistrer le profil professionnel.',
       );
       return;
     }
@@ -309,11 +323,10 @@ class _ProProfilePageState extends State<ProProfilePage> {
       final now = FieldValue.serverTimestamp();
 
       // IMPORTANT :
-      // Les champs officiels SIRET sont écrits uniquement par verifySiret
-      // via Cloud Function Admin SDK :
-      // siret, siren, companyName, address, postalCode, city, nafCode,
-      // establishmentActive, siretVerified, proStatus, verifiedAt.
-      //
+      // Les champs de vérification sont écrits uniquement par verifySiret
+      // via Cloud Function Admin SDK : SIRET/SIREN, données établissement,
+      // siretVerified, leaderDeclaredMatch, identité déclarée du dirigeant,
+      // niveau/source/statut et horodatage de vérification.
       // Ici on écrit seulement les champs éditables par l'utilisateur.
       final editableProfileData = <String, dynamic>{
         'uid': user.uid,
@@ -367,9 +380,15 @@ class _ProProfilePageState extends State<ProProfilePage> {
   }
 
   Widget _verifiedBadge() {
-    final color = _siretVerified ? const Color(0xFF16A34A) : Colors.orange;
+    final fullyMatched = _siretVerified && _leaderDeclaredMatch;
+    final color = fullyMatched ? const Color(0xFF16A34A) : Colors.orange;
+    final text = fullyMatched
+        ? 'SIRET + dirigeant déclaré concordants.'
+        : _siretVerified
+            ? 'SIRET validé — dirigeant déclaré à confirmer.'
+            : 'Vérifiez le SIRET + dirigeant pour valider le profil professionnel.';
 
-    return Container(
+    final content = Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
@@ -379,18 +398,14 @@ class _ProProfilePageState extends State<ProProfilePage> {
       child: Row(
         children: [
           Icon(
-            _siretVerified
-                ? Icons.verified_rounded
-                : Icons.warning_amber_rounded,
+            fullyMatched ? Icons.verified_rounded : Icons.warning_amber_rounded,
             color: color,
             size: 20,
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              _siretVerified
-                  ? 'Compte professionnel vérifié par SIRET.'
-                  : 'Vérifiez votre SIRET pour valider le compte professionnel.',
+              text,
               style: TextStyle(
                 color: color,
                 fontWeight: FontWeight.w700,
@@ -398,8 +413,18 @@ class _ProProfilePageState extends State<ProProfilePage> {
               ),
             ),
           ),
+          if (fullyMatched) ...[
+            const SizedBox(width: 6),
+            Icon(Icons.info_outline_rounded, color: color, size: 18),
+          ],
         ],
       ),
+    );
+
+    if (!fullyMatched) return content;
+    return VerificationStatusTooltip(
+      message: kSiretLeaderMatchDisclaimer,
+      child: content,
     );
   }
 
@@ -467,10 +492,10 @@ class _ProProfilePageState extends State<ProProfilePage> {
                             : const Icon(Icons.verified_outlined),
                         label: Text(
                           _isVerifyingSiret
-                              ? 'Vérification du SIRET...'
-                              : _siretVerified
-                                  ? 'SIRET vérifié'
-                                  : 'Vérifier mon SIRET',
+                              ? 'Vérification SIRET + dirigeant...'
+                              : _leaderDeclaredMatch
+                                  ? 'SIRET + dirigeant concordants'
+                                  : 'Vérifier SIRET + dirigeant',
                         ),
                       ),
                     ),
