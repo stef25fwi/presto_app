@@ -7,7 +7,6 @@ import 'package:presto_app/widgets/verification_status_tooltip.dart';
 typedef ProSiretVerifier = Future<ProSiretVerificationResult> Function(
   String value,
 );
-
 class ProSiretVerificationCard extends StatefulWidget {
   const ProSiretVerificationCard({
     super.key,
@@ -25,7 +24,6 @@ class ProSiretVerificationCard extends StatefulWidget {
 
 class _ProSiretVerificationCardState extends State<ProSiretVerificationCard> {
   final _controller = TextEditingController();
-
   bool _loading = false;
   String? _error;
   ProSiretVerificationResult? _result;
@@ -38,7 +36,6 @@ class _ProSiretVerificationCardState extends State<ProSiretVerificationCard> {
 
   Future<void> _verify() async {
     FocusScope.of(context).unfocus();
-
     setState(() {
       _loading = true;
       _error = null;
@@ -48,33 +45,20 @@ class _ProSiretVerificationCardState extends State<ProSiretVerificationCard> {
     try {
       final verifier = widget.verifier ?? ProSiretService().verifySiret;
       final result = await verifier(_controller.text);
-
       if (!mounted) return;
-
-      setState(() {
-        _result = result;
-      });
-
+      setState(() => _result = result);
       widget.onVerified?.call(result);
     } catch (e) {
       if (!mounted) return;
-
-      setState(() {
-        _error = e.toString().replaceFirst('Exception: ', '');
-      });
+      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
-      if (mounted) {
-        setState(() {
-          _loading = false;
-        });
-      }
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final result = _result;
-
     return Card(
       elevation: 0,
       margin: const EdgeInsets.all(16),
