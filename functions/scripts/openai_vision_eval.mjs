@@ -12,10 +12,101 @@ import {
   latencySummary,
 } from "./ai_eval_metrics.mjs";
 
+const VALID_TRADE_KEYS = [
+  "serveur",
+  "barman",
+  "plongeur",
+  "commis_cuisine",
+  "cuisinier",
+  "snack",
+  "food_truck",
+  "traiteur",
+  "banquet",
+  "plombier",
+  "electricien",
+  "montage_meubles",
+  "luminaire",
+  "etagere",
+  "electromenager",
+  "carreleur",
+  "plaquiste",
+  "portail",
+  "installation_tv",
+  "menage",
+  "nettoyage_grand",
+  "repassage",
+  "courses",
+  "cuisine_domicile",
+  "aide_personne_agee",
+  "aide_administrative",
+  "gardiennage",
+  "nettoyage_demenagement",
+  "rangement",
+  "baby_sitter",
+  "sortie_ecole",
+  "garde_periscolaire",
+  "garde_weekend",
+  "garde_vacances",
+  "garde_domicile",
+  "dj",
+  "dj_mariage",
+  "sono",
+  "animateur",
+  "photographe",
+  "videaste",
+  "decoration_salle",
+  "organisation_evenement",
+  "soutien_primaire",
+  "soutien_college",
+  "soutien_lycee",
+  "maths_physique",
+  "francais_langues",
+  "anglais",
+  "espagnol",
+  "informatique_cours",
+  "musique",
+  "coaching_sport",
+  "concours",
+  "tonte",
+  "taille_haies",
+  "debroussaillage",
+  "desherbage",
+  "elagage",
+  "plantation",
+  "potager",
+  "peintre",
+  "peinture_facade",
+  "peinture_portail",
+  "enduit",
+  "renovation_locative",
+  "demenageur",
+  "manutention",
+  "vigile",
+  "distribution_flyers",
+  "inventaire",
+  "debarras",
+  "stand",
+  "informatique_depannage",
+  "reseaux_sociaux",
+  "nettoyage_vehicule",
+  "coaching_perso",
+  "traduction",
+  "pet_sitting",
+  "couture",
+  "shooting_photo",
+];
+const VALID_TRADE_KEY_SET = new Set(VALID_TRADE_KEYS);
+
+const SYSTEM_PROMPT = `Tu es un classificateur de services pour iliprestō.
+Analyse l'image et identifie uniquement le métier ou service principal visible.
+Utilise exclusivement la clé autorisée par le schéma.
+Si aucun métier n'est suffisamment reconnaissable, renvoie metier=null et confidence=0.
+N'invente pas de contexte absent de l'image.`;
+
 function parseArgs(argv) {
   const options = {
     fixture: "evals/vision_cases.jsonl",
-    model: process.env.OPENAI_VISION_MODEL || "gpt-4o-mini",
+    model: process.env.OPENAI_VISION_MODEL || "gpt-4o-mini-2024-07-18",
     concurrency: 1,
     dryRun: false,
     jsonOutput: false,
@@ -54,10 +145,6 @@ function fixtureFormat(fixture) {
   return format === "jpeg" ? "jpg" : format;
 }
 
-/**
- * La classification photo accepte jpeg, png et webp : la preuve de qualité
- * doit couvrir les trois conteneurs, pas seulement celui du corpus initial.
- */
 function corpusCoverage(fixtures) {
   const formats = [...new Set(fixtures.map(fixtureFormat).filter(Boolean))].sort();
   return {
@@ -69,13 +156,18 @@ function corpusCoverage(fixtures) {
 const RESPONSE_FORMAT = {
   type: "json_schema",
   json_schema: {
-    name: "ilipresto_vision_eval",
+    name: "ilipresto_trade_photo_result",
     strict: true,
     schema: {
       type: "object",
       additionalProperties: false,
       properties: {
-        metier: { type: ["string", "null"] },
+        metier: {
+          anyOf: [
+            { type: "string", enum: VALID_TRADE_KEYS },
+            { type: "null" },
+          ],
+        },
         confidence: { type: "number", minimum: 0, maximum: 1 },
       },
       required: ["metier", "confidence"],
@@ -88,7 +180,7 @@ function parseStructuredOutput(content) {
     const parsed = JSON.parse(content || "{}");
     const keys = Object.keys(parsed).sort();
     const validKeys = keys.length === 2 && keys[0] === "confidence" && keys[1] === "metier";
-    const validMetier = parsed.metier === null || typeof parsed.metier === "string";
+    const validMetier = parsed.metier === null || VALID_TRADE_KEY_SET.has(parsed.metier);
     const confidence = Number(parsed.confidence);
     const validConfidence = Number.isFinite(confidence) && confidence >= 0 && confidence <= 1;
     return {
@@ -111,10 +203,7 @@ async function runCase(client, options, fixture) {
     max_tokens: 64,
     response_format: RESPONSE_FORMAT,
     messages: [
-      {
-        role: "system",
-        content: "Classe l'image pour iliprestō. Retourne le métier principal visible ou null. N'invente aucun contexte.",
-      },
+      { role: "system", content: SYSTEM_PROMPT },
       {
         role: "user",
         content: [{ type: "image_url", image_url: { url: dataUrl, detail: "low" } }],
@@ -150,20 +239,12 @@ function gateFailures(summary) {
   const maxP95Ms = Number(process.env.AI_EVAL_MAX_P95_MS || 30_000);
   const failures = [];
   if (summary.exactAccuracy < minAccuracy) failures.push(`accuracy ${summary.exactAccuracy} < ${minAccuracy}`);
-  if (summary.hallucinationRate > maxHallucinationRate) {
-    failures.push(`hallucination ${summary.hallucinationRate} > ${maxHallucinationRate}`);
-  }
-  if (summary.schemaValidRate < minSchemaRate) {
-    failures.push(`schema ${summary.schemaValidRate} < ${minSchemaRate}`);
-  }
+  if (summary.hallucinationRate > maxHallucinationRate) failures.push(`hallucination ${summary.hallucinationRate} > ${maxHallucinationRate}`);
+  if (summary.schemaValidRate < minSchemaRate) failures.push(`schema ${summary.schemaValidRate} < ${minSchemaRate}`);
   if ((summary.latencyMs.p95 || 0) > maxP95Ms) failures.push(`P95 ${summary.latencyMs.p95} > ${maxP95Ms}`);
-  if (summary.coverage?.missingFormats?.length) {
-    failures.push(`formats image manquants: ${summary.coverage.missingFormats.join(", ")}`);
-  }
+  if (summary.coverage?.missingFormats?.length) failures.push(`formats image manquants: ${summary.coverage.missingFormats.join(", ")}`);
   for (const [format, group] of Object.entries(summary.byFormat || {})) {
-    if (group.schemaValidRate < minSchemaRate) {
-      failures.push(`format ${format}: schéma ${group.schemaValidRate} < ${minSchemaRate}`);
-    }
+    if (group.schemaValidRate < minSchemaRate) failures.push(`format ${format}: schéma ${group.schemaValidRate} < ${minSchemaRate}`);
   }
   return failures;
 }
@@ -182,24 +263,27 @@ async function main() {
 
   const coverage = corpusCoverage(fixtures);
 
-  if (options.dryRun) {
-    for (const fixture of fixtures) {
-      if (!fixture.id || !fixture.image || !("expectedMetier" in fixture)) {
-        throw new Error(`Invalid fixture: ${JSON.stringify(fixture)}`);
-      }
+  for (const fixture of fixtures) {
+    if (!fixture.id || !fixture.image || !("expectedMetier" in fixture)) {
+      throw new Error(`Invalid fixture: ${JSON.stringify(fixture)}`);
     }
+    if (fixture.expectedMetier !== null && !VALID_TRADE_KEY_SET.has(fixture.expectedMetier)) {
+      throw new Error(`Métier attendu hors taxonomie pour ${fixture.id}: ${fixture.expectedMetier}`);
+    }
+  }
+
+  if (options.dryRun) {
     if (coverage.missingFormats.length) {
       throw new Error(`Formats image manquants: ${coverage.missingFormats.join(", ")}`);
     }
-    console.log(
-      JSON.stringify({
-        ok: true,
-        dryRun: true,
-        cases: fixtures.length,
-        model: options.model,
-        formats: coverage.formats,
-      }),
-    );
+    console.log(JSON.stringify({
+      ok: true,
+      dryRun: true,
+      cases: fixtures.length,
+      model: options.model,
+      formats: coverage.formats,
+      taxonomySize: VALID_TRADE_KEYS.length,
+    }));
     return;
   }
 
@@ -223,21 +307,15 @@ async function main() {
     privacyDataset: results.every((result) => result.sourceType === "synthetic"),
     coverage,
     exactAccuracy: Number((correct / results.length).toFixed(4)),
-    hallucinationRate: Number(
-      (ambiguousCases.length ? hallucinated / ambiguousCases.length : 0).toFixed(4),
-    ),
+    hallucinationRate: Number((ambiguousCases.length ? hallucinated / ambiguousCases.length : 0).toFixed(4)),
     schemaValidRate: Number((schemaValid / results.length).toFixed(4)),
     byFormat: Object.fromEntries(
       Object.entries(groupBy(results, (result) => result.format)).map(([format, items]) => [
         format,
         {
           cases: items.length,
-          exactAccuracy: Number(
-            (items.filter((item) => item.correct).length / items.length).toFixed(4),
-          ),
-          schemaValidRate: Number(
-            (items.filter((item) => item.schemaValid).length / items.length).toFixed(4),
-          ),
+          exactAccuracy: Number((items.filter((item) => item.correct).length / items.length).toFixed(4)),
+          schemaValidRate: Number((items.filter((item) => item.schemaValid).length / items.length).toFixed(4)),
           latencyMs: latencySummary(items.map((item) => item.latencyMs)),
         },
       ]),
