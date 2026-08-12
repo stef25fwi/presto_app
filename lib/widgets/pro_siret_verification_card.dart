@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:presto_app/services/pro_siret_service.dart';
+import 'package:presto_app/widgets/verification_status_tooltip.dart';
 
 typedef ProSiretVerifier = Future<ProSiretVerificationResult> Function(
   String value,
@@ -163,7 +164,8 @@ class _ProSiretVerificationCardState extends State<ProSiretVerificationCard> {
               const SizedBox(height: 12),
               _InfoBox(
                 icon: Icons.check_circle_rounded,
-                title: 'Entreprise trouvée',
+                title: 'SIRET vérifié',
+                tooltipMessage: kSiretVerificationDisclaimer,
                 message: [
                   if (result.companyName.isNotEmpty) result.companyName,
                   if (result.address.isNotEmpty) result.address,
@@ -172,7 +174,7 @@ class _ProSiretVerificationCardState extends State<ProSiretVerificationCard> {
                     result.city,
                   ].where((e) => e.isNotEmpty).join(' '),
                   if (result.nafCode.isNotEmpty) 'Activité : ${result.nafCode}',
-                  'Statut : compte pro vérifié',
+                  'Contrôle administratif effectué sur le SIRET.',
                 ].where((e) => e.isNotEmpty).join('\n'),
               ),
             ],
@@ -188,14 +190,17 @@ class _InfoBox extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.message,
+    this.tooltipMessage,
   });
 
   final IconData icon;
   final String title;
   final String message;
+  final String? tooltipMessage;
 
   @override
   Widget build(BuildContext context) {
+    final tooltip = tooltipMessage;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -211,12 +216,33 @@ class _InfoBox extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
+                if (tooltip == null)
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  )
+                else
+                  VerificationStatusTooltip(
+                    message: tooltip,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            title,
+                            style:
+                                Theme.of(context).textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(Icons.info_outline_rounded, size: 17),
+                      ],
+                    ),
+                  ),
                 const SizedBox(height: 4),
                 Text(message),
               ],
