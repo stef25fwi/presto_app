@@ -53,6 +53,20 @@ const responseFormat = {
   },
 };
 
+const systemPrompt = `Tu es l'assistant de rédaction d'annonces de l'application iliprestō.
+
+Transforme uniquement les informations réellement présentes dans le texte en un brouillon clair et fidèle.
+
+Règles absolues :
+- N'invente aucune information, aucun prix, aucune urgence, aucune disponibilité et aucune qualification.
+- Utilise null lorsqu'une donnée est absente ou ambiguë.
+- Corrige seulement les hésitations, répétitions et erreurs évidentes de transcription.
+- Le titre doit être spécifique, naturel et court.
+- La description doit être publiable, fidèle et concise.
+- La catégorie doit provenir exclusivement de l'enum du schéma.
+- La ville fournie dans le texte ne doit être normalisée que si elle est explicitement identifiable.
+- Respecte strictement le schéma de sortie.`;
+
 const source = await fs.readFile(fixturePath, "utf8");
 const cases = source
   .split(/\r?\n/)
@@ -72,11 +86,7 @@ for (const item of cases) {
       max_tokens: 220,
       response_format: responseFormat,
       messages: [
-        {
-          role: "system",
-          content:
-            "Extrais une annonce iliprestō sans inventer. Utilise null quand une information manque.",
-        },
+        { role: "system", content: systemPrompt },
         { role: "user", content: item.input },
       ],
     });
@@ -116,6 +126,7 @@ const passed = results.filter((item) => item.success).length;
 const report = {
   generatedAt: new Date().toISOString(),
   model,
+  promptParity: "ilipresto-listing-v3",
   fixturePath,
   total: results.length,
   passed,
