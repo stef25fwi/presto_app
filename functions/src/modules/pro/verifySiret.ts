@@ -143,6 +143,9 @@ export const verifySiret = onCall(
 
     const db = getFirestore();
 
+    // Ne persister dans le profil que les éléments nécessaires à prouver
+    // le niveau de contrôle. Le nom/prénom du dirigeant déclaré sert à la
+    // comparaison en mémoire et n'est pas conservé dans pro_profiles.
     const proData = {
       uid,
       siret,
@@ -154,11 +157,6 @@ export const verifySiret = onCall(
       nafCode,
       establishmentActive: true,
       siretVerified: true,
-      leaderDeclaredMatch: true,
-      declaredLeaderFirstName: leaderMatch.declaredFirstName,
-      declaredLeaderLastName: leaderMatch.declaredLastName,
-      declaredLeaderRole: leaderMatch.role,
-      verificationLevel: "siret_declared_leader_match",
       proStatus: VERIFIED_STATUS,
       verifiedSource: VERIFIED_SOURCE,
       verifiedAt: FieldValue.serverTimestamp(),
@@ -167,13 +165,14 @@ export const verifySiret = onCall(
 
     await db.collection("pro_profiles").doc(uid).set(proData, {merge: true});
 
+    // Conserver la compatibilité du document users sans y créer un nouveau
+    // signal renforcé : le statut autoritatif de concordance reste celui de
+    // pro_profiles, dont proStatus est protégé par les règles Firestore.
     await db.collection("users").doc(uid).set(
       {
         accountType: "pro",
-        proStatus: VERIFIED_STATUS,
+        proStatus: "verified_siret",
         siretVerified: true,
-        leaderDeclaredMatch: true,
-        proVerificationLevel: "siret_declared_leader_match",
         updatedAt: FieldValue.serverTimestamp(),
       },
       {merge: true}
@@ -181,6 +180,8 @@ export const verifySiret = onCall(
 
     await logAttempt(uid, siret, "verified_siret_declared_leader_match");
 
+    // Les données déclarées sont renvoyées à la requête courante afin
+    // d'expliquer le résultat sans les conserver durablement dans le profil.
     return {
       ok: true,
       siret,
