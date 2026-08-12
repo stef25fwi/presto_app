@@ -74,11 +74,12 @@ jobs:
           set -euo pipefail
           mkdir -p quality_reports/ai-production
           npm --prefix functions run ai:smoke:production \
-            | tee quality_reports/ai-production/smoke.json
+            2>&1 | tee quality_reports/ai-production/smoke.log
           npm --prefix functions run ai:metrics:report -- 14 \
-            | tee quality_reports/ai-production/metrics.json
+            2>&1 | tee quality_reports/ai-production/metrics.log
           npm --prefix functions run ai:metrics:trend -- \
-            --days 30 --output ../quality_reports/ai-production/metrics-trend.json
+            --days 30 --output ../quality_reports/ai-production/metrics-trend.json \
+            2>&1 | tee quality_reports/ai-production/metrics-trend.log
           printf '%s\n' "$EVIDENCE_SHA" \
             > quality_reports/ai-production/deployed-sha.txt
 
@@ -89,7 +90,7 @@ jobs:
         run: |
           set -euo pipefail
           npm --prefix functions run ai:smoke:rollback \
-            | tee quality_reports/ai-production/remote-config-rollback.json
+            2>&1 | tee quality_reports/ai-production/remote-config-rollback.log
 
       - name: Archive production AI evidence
         if: always()
