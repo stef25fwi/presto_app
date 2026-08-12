@@ -6,6 +6,9 @@ const String kPhoneVerificationDisclaimer =
 const String kSiretVerificationDisclaimer =
     'Contrôle administratif limité : ce badge indique que le SIRET correspondait à un établissement actif dans la source administrative consultée au moment du contrôle. Il ne constitue ni une approbation, ni une certification, ni une recommandation, ni une garantie d’iliprestō sur l’entreprise, le prestataire, ses compétences, ses assurances ou ses prestations.';
 
+const String kSiretLeaderMatchDisclaimer =
+    'Concordance administrative limitée : le SIRET correspondait à un établissement actif et le nom/prénom du dirigeant déclaré concordaient avec un dirigeant personne physique dans la source administrative consultée. Ce contrôle ne prouve pas que la personne connectée est ce dirigeant et ne constitue ni une approbation, ni une certification, ni une recommandation, ni une garantie d’iliprestō.';
+
 class VerificationStatusTooltip extends StatelessWidget {
   const VerificationStatusTooltip({
     super.key,
