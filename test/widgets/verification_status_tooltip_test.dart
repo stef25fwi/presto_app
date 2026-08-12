@@ -9,8 +9,8 @@ void main() {
       const MaterialApp(
         home: Scaffold(
           body: VerificationStatusTooltip(
-            message: kSiretVerificationDisclaimer,
-            child: Text('SIRET vérifié'),
+            message: kSiretLeaderMatchDisclaimer,
+            child: Text('SIRET + dirigeant concordants'),
           ),
         ),
       ),
@@ -18,14 +18,19 @@ void main() {
 
     final tooltip = tester.widget<Tooltip>(find.byType(Tooltip));
     expect(tooltip.triggerMode, TooltipTriggerMode.tap);
-    expect(tooltip.message, kSiretVerificationDisclaimer);
+    expect(tooltip.message, kSiretLeaderMatchDisclaimer);
     expect(tooltip.showDuration, const Duration(seconds: 7));
   });
 
-  test('les deux textes excluent explicitement une approbation iliprestō', () {
+  test('les textes excluent explicitement une approbation iliprestō', () {
     expect(kPhoneVerificationDisclaimer, contains('ni une approbation'));
     expect(kPhoneVerificationDisclaimer, contains('contrôle SMS'));
     expect(kSiretVerificationDisclaimer, contains('ni une approbation'));
     expect(kSiretVerificationDisclaimer, contains('établissement actif'));
+    expect(kSiretLeaderMatchDisclaimer, contains('ni une approbation'));
+    expect(
+      kSiretLeaderMatchDisclaimer,
+      contains('ne prouve pas que la personne connectée est ce dirigeant'),
+    );
   });
 }
