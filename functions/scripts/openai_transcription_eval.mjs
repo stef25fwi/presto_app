@@ -296,10 +296,10 @@ async function main() {
     results,
   };
   summary.gateFailures = evaluateGates(summary, summary.thresholds);
-  enforce(summary);
   const output = JSON.stringify(summary, null, options.jsonOutput ? 0 : 2);
   if (options.output) await fs.writeFile(path.resolve(options.output), `${output}\n`);
   console.log(output);
+  enforce(summary);
 }
 
 const invokedDirectly =
