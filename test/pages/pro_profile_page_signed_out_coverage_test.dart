@@ -89,6 +89,11 @@ void main() {
             widget is TextField && widget.decoration?.labelText == label,
       );
 
+  String fieldValue(WidgetTester tester, String label) {
+    final field = tester.widget<TextField>(textFieldWithLabel(label));
+    return field.controller?.text ?? '';
+  }
+
   Future<void> scrollTo(WidgetTester tester, Finder target) async {
     await tester.scrollUntilVisible(
       target,
@@ -118,8 +123,8 @@ void main() {
     expect(textFieldWithLabel('Activité / secteur *'), findsOneWidget);
     expect(textFieldWithLabel('Email *'), findsOneWidget);
 
-    expect(find.text('12345678901234'), findsOneWidget);
-    expect(find.text('Société Test'), findsOneWidget);
+    expect(fieldValue(tester, 'SIRET *'), '12345678901234');
+    expect(fieldValue(tester, "Nom officiel de l'entreprise"), 'Société Test');
     expect(tester.takeException(), isNull);
   });
 
@@ -184,7 +189,7 @@ void main() {
     final siret = textFieldWithLabel('SIRET *');
     await tester.enterText(siret, '12ab34567890123456');
     await tester.pump();
-    expect(find.text('12345678901234'), findsOneWidget);
+    expect(fieldValue(tester, 'SIRET *'), '12345678901234');
 
     final termsText = find.text(
       "J'accepte les conditions d'utilisation professionnelles",
