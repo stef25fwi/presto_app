@@ -230,6 +230,7 @@ jobs:
         continue-on-error: true
         env:
           AI_EVAL_ENFORCE: 'true'
+          OPENAI_VISION_MODEL: 'gpt-4o-mini'
           OPENAI_INPUT_EUR_PER_MILLION_TOKENS: ${{ vars.OPENAI_INPUT_EUR_PER_MILLION_TOKENS }}
           OPENAI_OUTPUT_EUR_PER_MILLION_TOKENS: ${{ vars.OPENAI_OUTPUT_EUR_PER_MILLION_TOKENS }}
         run: npm --prefix functions run ai:eval:vision -- --output ../quality_reports/ai/vision.json
