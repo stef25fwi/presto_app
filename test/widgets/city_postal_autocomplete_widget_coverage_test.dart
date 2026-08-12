@@ -44,6 +44,11 @@ void main() {
     await tester.pump();
   }
 
+  Autocomplete<CityEntry> autocomplete(WidgetTester tester) =>
+      tester.widget<Autocomplete<CityEntry>>(
+        find.byType(Autocomplete<CityEntry>),
+      );
+
   testWidgets(
     'recherche localement avec deux caractères puis applique une suggestion',
     (tester) async {
@@ -84,6 +89,88 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('sélection sans CP remplit uniquement la ville', (tester) async {
+    await pumpField(tester);
+
+    final entry = CityEntry(
+      name: 'Ville sans CP',
+      dept: '99',
+      cps: const <String>[],
+      nameNorm: 'villesanscp',
+    );
+    autocomplete(tester).onSelected?.call(entry);
+    await tester.pumpAndSettle();
+
+    expect(cityController.text, 'Ville sans CP');
+    expect(postalCodeController.text, isEmpty);
+    expect(selectedEntry, isNull);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('sélection à un CP remplit ville CP et callback', (tester) async {
+    await pumpField(tester);
+
+    final entry = CityEntry(
+      name: 'Ville un CP',
+      dept: '99',
+      cps: const <String>['12345'],
+      nameNorm: 'villeuncp',
+    );
+    autocomplete(tester).onSelected?.call(entry);
+    await tester.pumpAndSettle();
+
+    expect(cityController.text, 'Ville un CP');
+    expect(postalCodeController.text, '12345');
+    expect(selectedEntry, same(entry));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('sélection multi CP conserve le CP déjà saisi', (tester) async {
+    // Prérempli avant initState : aucun debounce postal n'est programmé.
+    postalCodeController.text = '12346';
+    await pumpField(tester);
+
+    final entry = CityEntry(
+      name: 'Ville multi CP',
+      dept: '99',
+      cps: const <String>['12345', '12346'],
+      nameNorm: 'villemulticp',
+    );
+    autocomplete(tester).onSelected?.call(entry);
+    await tester.pumpAndSettle();
+
+    expect(cityController.text, 'Ville multi CP');
+    expect(postalCodeController.text, '12346');
+    expect(selectedEntry, same(entry));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('sélection multi CP ouvre le choix puis applique le CP choisi',
+      (tester) async {
+    await pumpField(tester);
+
+    final entry = CityEntry(
+      name: 'Ville choix CP',
+      dept: '99',
+      cps: const <String>['12345', '12346'],
+      nameNorm: 'villechoixcp',
+    );
+    autocomplete(tester).onSelected?.call(entry);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Choisir le code postal'), findsOneWidget);
+    expect(find.text('12345'), findsOneWidget);
+    expect(find.text('12346'), findsOneWidget);
+
+    await tester.tap(find.text('12346'));
+    await tester.pumpAndSettle();
+
+    expect(cityController.text, 'Ville choix CP');
+    expect(postalCodeController.text, '12346');
+    expect(selectedEntry, same(entry));
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'une saisie manuelle courte et un CP incomplet restent sans appel distant',
