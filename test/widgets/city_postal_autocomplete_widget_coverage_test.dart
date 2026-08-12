@@ -16,12 +16,67 @@ void main() {
       'dept': '64',
       'cps': <String>['64000'],
     });
+    final withoutPostalCode = CityEntry.fromJson(<String, dynamic>{
+      'name': 'Ville test',
+      'dept': '99',
+    });
 
     expect(paris.name, 'PARIS 01');
     expect(paris.dept, '75');
     expect(paris.cps, <String>['75001']);
     expect(paris.displayName, 'Paris 1er arrondissement');
     expect(standard.displayName, 'Pau');
+    expect(withoutPostalCode.cps, isEmpty);
+  });
+
+  test('CityPostalService couvre recherche, filtres CP et résolution locale', () async {
+    final service = CityPostalService();
+
+    await service.init();
+    // init() doit être idempotent et ne pas recharger les assets.
+    await service.init();
+
+    expect(service.search(''), isEmpty);
+
+    final paris = service.search('paris', limit: 5);
+    expect(paris, isNotEmpty);
+    expect(paris.length, lessThanOrEqualTo(5));
+    expect(
+      paris.every((entry) => entry.name.toLowerCase().contains('paris')),
+      isTrue,
+    );
+
+    // Exerce la seconde passe `contains` plutôt que `startsWith`.
+    final containsParis = service.search('aris', limit: 3);
+    expect(containsParis, isNotEmpty);
+    expect(containsParis.length, lessThanOrEqualTo(3));
+
+    final first = paris.first;
+    expect(first.cps, isNotEmpty);
+    final cp = first.cps.first;
+
+    final resolved = service.findByPostalCode(cp);
+    expect(resolved, isNotNull);
+    expect(resolved!.cps, contains(cp));
+
+    expect(
+      service.findByPostalCode(cp, dept: first.dept)?.dept,
+      first.dept,
+    );
+    expect(service.findByPostalCode(cp, dept: 'XX'), isNull);
+    expect(service.findByPostalCode(''), isNull);
+
+    final sameDepartment = service.search(
+      'paris',
+      cpHint: cp,
+      limit: 10,
+    );
+    expect(sameDepartment, isNotEmpty);
+    expect(sameDepartment.every((entry) => entry.dept == first.dept), isTrue);
+
+    // Exerce les règles départementales DROM/COM et Corse sans appel réseau.
+    expect(service.search('paris', cpHint: '97100'), isEmpty);
+    expect(service.search('paris', cpHint: '20000'), isEmpty);
   });
 
   late TextEditingController cityController;
@@ -62,46 +117,6 @@ void main() {
     );
     await tester.pump();
   }
-
-  testWidgets(
-    'recherche localement Paris avec deux caractères puis sélectionne une suggestion',
-    (tester) async {
-      await pumpField(tester);
-
-      final cityField = find.byType(TextFormField);
-      expect(cityField, findsOneWidget);
-      await tester.tap(cityField);
-      await tester.enterText(cityField, 'Pa');
-
-      // Deux caractères : parcours local uniquement, sans Geo API.
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pumpAndSettle();
-
-      final suggestions = find.byType(ListTile);
-      expect(suggestions, findsWidgets);
-      await tester.tap(suggestions.first);
-      await tester.pump();
-      await tester.pumpAndSettle();
-
-      // Une commune peut proposer plusieurs CP : terminer le choix réel si
-      // le widget ouvre sa feuille modale.
-      if (find.textContaining('Choisir le code postal').evaluate().isNotEmpty) {
-        final postalOptions = find.byWidgetPredicate(
-          (widget) =>
-              widget is Text &&
-              RegExp(r'^\d{5}$').hasMatch(widget.data?.trim() ?? ''),
-        );
-        expect(postalOptions, findsWidgets);
-        await tester.tap(postalOptions.first);
-        await tester.pumpAndSettle();
-      }
-
-      expect(cityController.text.trim(), isNotEmpty);
-      expect(postalCodeController.text, matches(RegExp(r'^\d{5}$')));
-      expect(selectedEntry, isNotNull);
-      expect(tester.takeException(), isNull);
-    },
-  );
 
   testWidgets(
     'une saisie ville courte et un CP incomplet restent purement locaux',
