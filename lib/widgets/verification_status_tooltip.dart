@@ -17,16 +17,60 @@ class VerificationStatusTooltip extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: message,
-      triggerMode: TooltipTriggerMode.tap,
-      showDuration: const Duration(seconds: 7),
-      child: Semantics(
-        button: true,
-        hint: 'Afficher la portée de cette vérification',
-        child: child,
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Tooltip(
+        message: message,
+        triggerMode: TooltipTriggerMode.tap,
+        showDuration: const Duration(seconds: 7),
+        child: Semantics(
+          button: true,
+          hint: 'Afficher la portée de cette vérification',
+          child: child,
+        ),
+      );
+}
+
+class VerificationStatusBadge extends StatelessWidget {
+  const VerificationStatusBadge({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.backgroundColor,
+    required this.message,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final Color backgroundColor;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => VerificationStatusTooltip(
+        message: message,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 13, color: color),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.info_outline_rounded, size: 13, color: color),
+            ],
+          ),
+        ),
+      );
 }
