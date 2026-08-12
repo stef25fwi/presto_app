@@ -834,12 +834,12 @@ class _FicheProPageState extends State<FicheProPage> {
                   Row(
                     children: [
                       if (_siretVerified) ...[
-                        _badge(
+                        const VerificationStatusBadge(
                           icon: Icons.verified_rounded,
                           label: 'SIRET vérifié',
                           color: _kBlue,
-                          bg: const Color(0xFFEBF5FB),
-                          tooltipMessage: kSiretVerificationDisclaimer,
+                          backgroundColor: Color(0xFFEBF5FB),
+                          message: kSiretVerificationDisclaimer,
                         ),
                         const SizedBox(width: 10),
                       ],
@@ -890,49 +890,6 @@ class _FicheProPageState extends State<FicheProPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _badge({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required Color bg,
-    String? tooltipMessage,
-  }) {
-    final badge = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-          if (tooltipMessage != null) ...[
-            const SizedBox(width: 4),
-            Icon(Icons.info_outline_rounded, size: 13, color: color),
-          ],
-        ],
-      ),
-    );
-
-    final tooltip = tooltipMessage;
-    if (tooltip == null) return badge;
-
-    return VerificationStatusTooltip(
-      message: tooltip,
-      child: badge,
     );
   }
 
