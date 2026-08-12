@@ -60,4 +60,24 @@ void main() {
     expect(text, contains('Stripe'));
     expect(text, contains('commercial-v1'));
   });
+
+  test('les badges téléphone et SIRET sont juridiquement limités', () {
+    final text = allText(stateFor(AppOperatingMode.freeBeta));
+    expect(text, contains('« téléphone vérifié »'));
+    expect(text, contains('« SIRET vérifié »'));
+    expect(
+      text,
+      contains('ne constituent ni un agrément, ni une certification'),
+    );
+    expect(
+      text,
+      contains(
+        'ne permet pas, à lui seul, d’établir que le titulaire du compte est le représentant légal',
+      ),
+    );
+    expect(
+      text,
+      contains('ne constituent en aucun cas un agrément'),
+    );
+  });
 }
