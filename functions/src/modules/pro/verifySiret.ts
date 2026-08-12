@@ -16,6 +16,8 @@ if (!getApps().length) {
 
 const REGION = "europe-west1";
 const API_HOST = "recherche-entreprises.api.gouv.fr";
+const VERIFIED_STATUS = "verified_siret_leader_match";
+const VERIFIED_SOURCE = "api_recherche_entreprises_siret_leader_match";
 
 type AnyMap = Record<string, any>;
 
@@ -157,8 +159,8 @@ export const verifySiret = onCall(
       declaredLeaderLastName: leaderMatch.declaredLastName,
       declaredLeaderRole: leaderMatch.role,
       verificationLevel: "siret_declared_leader_match",
-      proStatus: "verified_siret",
-      verifiedSource: "api_recherche_entreprises",
+      proStatus: VERIFIED_STATUS,
+      verifiedSource: VERIFIED_SOURCE,
       verifiedAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     };
@@ -168,7 +170,7 @@ export const verifySiret = onCall(
     await db.collection("users").doc(uid).set(
       {
         accountType: "pro",
-        proStatus: "verified_siret",
+        proStatus: VERIFIED_STATUS,
         siretVerified: true,
         leaderDeclaredMatch: true,
         proVerificationLevel: "siret_declared_leader_match",
@@ -188,7 +190,7 @@ export const verifySiret = onCall(
       postalCode,
       city,
       nafCode,
-      proStatus: "verified_siret",
+      proStatus: VERIFIED_STATUS,
       leaderDeclaredMatch: true,
       declaredLeaderFirstName: leaderMatch.declaredFirstName,
       declaredLeaderLastName: leaderMatch.declaredLastName,
