@@ -16,6 +16,11 @@ class ProSiretVerificationResult {
     required this.city,
     required this.nafCode,
     required this.proStatus,
+    this.leaderDeclaredMatch = false,
+    this.declaredLeaderFirstName = '',
+    this.declaredLeaderLastName = '',
+    this.declaredLeaderRole = '',
+    this.verificationLevel = '',
   });
 
   final bool ok;
@@ -27,6 +32,11 @@ class ProSiretVerificationResult {
   final String city;
   final String nafCode;
   final String proStatus;
+  final bool leaderDeclaredMatch;
+  final String declaredLeaderFirstName;
+  final String declaredLeaderLastName;
+  final String declaredLeaderRole;
+  final String verificationLevel;
 
   factory ProSiretVerificationResult.fromMap(Map<String, dynamic> map) {
     return ProSiretVerificationResult(
@@ -39,6 +49,13 @@ class ProSiretVerificationResult {
       city: (map['city'] ?? '').toString(),
       nafCode: (map['nafCode'] ?? '').toString(),
       proStatus: (map['proStatus'] ?? '').toString(),
+      leaderDeclaredMatch: map['leaderDeclaredMatch'] == true,
+      declaredLeaderFirstName:
+          (map['declaredLeaderFirstName'] ?? '').toString(),
+      declaredLeaderLastName:
+          (map['declaredLeaderLastName'] ?? '').toString(),
+      declaredLeaderRole: (map['declaredLeaderRole'] ?? '').toString(),
+      verificationLevel: (map['verificationLevel'] ?? '').toString(),
     );
   }
 }
@@ -132,8 +149,14 @@ class ProSiretService {
     return ProSiretVerificationResult.fromMap(data);
   }
 
-  Future<ProSiretVerificationResult> verifySiret(String rawSiret) async {
+  Future<ProSiretVerificationResult> verifySiret(
+    String rawSiret, {
+    required String leaderFirstName,
+    required String leaderLastName,
+  }) async {
     final siret = cleanSiret(rawSiret);
+    final firstName = leaderFirstName.trim();
+    final lastName = leaderLastName.trim();
 
     if (!isValidSiretFormat(siret)) {
       throw const ProSiretException(
@@ -147,9 +170,17 @@ class ProSiretService {
       );
     }
 
+    if (firstName.length < 2 || lastName.length < 2) {
+      throw const ProSiretException(
+        'Indiquez le nom et le prénom du dirigeant déclaré.',
+      );
+    }
+
     try {
       final rawData = await _call('verifySiret', <String, dynamic>{
         'siret': siret,
+        'leaderFirstName': firstName,
+        'leaderLastName': lastName,
       });
       final data = Map<String, dynamic>.from(rawData as Map);
 
