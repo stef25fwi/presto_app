@@ -1,10 +1,19 @@
 const admin = require('../functions/node_modules/firebase-admin');
 
 const PROJECT_ID = 'presto-app-74abe';
-const EMAIL = (process.env.STEPHANE_EMAIL || 'sahai.stephane@gmail.com').trim().toLowerCase();
-const UID = (process.env.STEPHANE_UID || '').trim();
-const LEGACY_UID = (process.env.STEPHANE_LEGACY_UID || 'modRxXduO8TnMlD6MFxobuKigVy2').trim();
-const LISTING_SAMPLE_LIMIT = Number.parseInt(process.env.LISTING_SAMPLE_LIMIT || '5', 10);
+const EMAIL = (process.env.ADMIN_TARGET_EMAIL || '').trim().toLowerCase();
+const UID = (process.env.ADMIN_TARGET_UID || '').trim();
+const LEGACY_UID = (process.env.ADMIN_LEGACY_UID || '').trim();
+const LISTING_SAMPLE_LIMIT = Number.parseInt(
+  process.env.LISTING_SAMPLE_LIMIT || '5',
+  10,
+);
+
+if (!UID && !EMAIL) {
+  throw new Error(
+    'Missing admin target. Set ADMIN_TARGET_UID or ADMIN_TARGET_EMAIL before running this tool.',
+  );
+}
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -27,9 +36,33 @@ function normalizeText(value) {
   return text.length ? text : null;
 }
 
+function serializeValue(value) {
+  if (!value) return null;
+  if (typeof value.toDate === 'function') return value.toDate().toISOString();
+  if (value instanceof Date) return value.toISOString();
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
+    return value;
+  }
+  return String(value);
+}
+
+function compactObject(value) {
+  if (Array.isArray(value)) return value.map(compactObject);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([, entry]) => entry !== null && entry !== undefined)
+      .map(([key, entry]) => [key, compactObject(entry)]),
+  );
+}
+
 function summarizeProfileData(data) {
   if (!data) return null;
-  return {
+  return compactObject({
     uid: normalizeText(data.uid),
     email: normalizeText(data.email),
     pseudo: normalizeText(data.pseudo),
@@ -55,16 +88,19 @@ function summarizeProfileData(data) {
     superAdmin: data.superAdmin === true,
     accountType: normalizeText(data.accountType),
     profileCompleted: data.profileCompleted === true,
-    profileCompleteness: typeof data.profileCompleteness === 'number' ? data.profileCompleteness : null,
+    profileCompleteness:
+      typeof data.profileCompleteness === 'number'
+        ? data.profileCompleteness
+        : null,
     updatedAt: serializeValue(data.updatedAt),
     profileUpdatedAt: serializeValue(data.profileUpdatedAt),
     createdAt: serializeValue(data.createdAt),
-  };
+  });
 }
 
 function summarizeAdminData(data) {
   if (!data) return null;
-  return {
+  return compactObject({
     uid: normalizeText(data.uid),
     email: normalizeText(data.email),
     displayName: normalizeText(data.displayName),
@@ -75,12 +111,12 @@ function summarizeAdminData(data) {
     grantedAt: serializeValue(data.grantedAt),
     updatedAt: serializeValue(data.updatedAt),
     expiresAt: serializeValue(data.expiresAt),
-  };
+  });
 }
 
 function summarizeProData(data) {
   if (!data) return null;
-  return {
+  return compactObject({
     uid: normalizeText(data.uid),
     companyName: normalizeText(data.companyName),
     contactName: normalizeText(data.contactName),
@@ -95,27 +131,7 @@ function summarizeProData(data) {
     plan: normalizeText(data.plan),
     updatedAt: serializeValue(data.updatedAt),
     createdAt: serializeValue(data.createdAt),
-  };
-}
-
-function serializeValue(value) {
-  if (!value) return null;
-  if (typeof value.toDate === 'function') return value.toDate().toISOString();
-  if (value instanceof Date) return value.toISOString();
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value;
-  return String(value);
-}
-
-function compactObject(value) {
-  if (Array.isArray(value)) {
-    return value.map(compactObject);
-  }
-  if (!value || typeof value !== 'object') return value;
-  return Object.fromEntries(
-    Object.entries(value)
-      .filter(([, entry]) => entry !== null && entry !== undefined)
-      .map(([key, entry]) => [key, compactObject(entry)]),
-  );
+  });
 }
 
 async function resolveTargetUser() {
@@ -125,11 +141,10 @@ async function resolveTargetUser() {
 
 async function readDoc(collection, uid, summarize) {
   const snap = await db.collection(collection).doc(uid).get();
-  const data = snap.exists ? snap.data() : null;
   return {
     path: `${collection}/${uid}`,
     exists: snap.exists,
-    data: summarize(data),
+    data: summarize(snap.exists ? snap.data() : null),
   };
 }
 
@@ -145,7 +160,10 @@ async function auditListingsForUid(uid) {
     sampleCount: snapshot.size,
     sample: snapshot.docs.map((doc) => {
       const data = doc.data() || {};
-      const advertiser = data.advertiser && typeof data.advertiser === 'object' ? data.advertiser : {};
+      const advertiser =
+        data.advertiser && typeof data.advertiser === 'object'
+          ? data.advertiser
+          : {};
       return compactObject({
         id: doc.id,
         status: normalizeText(data.status),
@@ -168,26 +186,23 @@ async function auditListingsForUid(uid) {
 }
 
 async function auditUid(uid, label) {
-  const [users, profiles, pros, admins, adminUsers, listings] = await Promise.all([
-    readDoc('users', uid, summarizeProfileData),
-    readDoc('profiles', uid, summarizeProfileData),
-    readDoc('pros', uid, summarizeProData),
-    readDoc('admins', uid, summarizeAdminData),
-    readDoc('adminUsers', uid, summarizeAdminData),
-    auditListingsForUid(uid),
-  ]);
+  const [users, profiles, pros, admins, adminUsers, listings] =
+    await Promise.all([
+      readDoc('users', uid, summarizeProfileData),
+      readDoc('profiles', uid, summarizeProfileData),
+      readDoc('pros', uid, summarizeProData),
+      readDoc('admins', uid, summarizeAdminData),
+      readDoc('adminUsers', uid, summarizeAdminData),
+      auditListingsForUid(uid),
+    ]);
 
   return compactObject({
     label,
     uid,
-    profileDocumentCount: [users, profiles, pros, admins, adminUsers].filter((entry) => entry.exists).length,
-    documents: {
-      users,
-      profiles,
-      pros,
-      admins,
-      adminUsers,
-    },
+    profileDocumentCount: [users, profiles, pros, admins, adminUsers].filter(
+      (entry) => entry.exists,
+    ).length,
+    documents: { users, profiles, pros, admins, adminUsers },
     listings,
   });
 }
@@ -195,19 +210,21 @@ async function auditUid(uid, label) {
 async function main() {
   const authUser = await resolveTargetUser();
   const currentUid = authUser.uid;
-  const auditedUids = [{ uid: currentUid, label: 'current-auth-uid' }];
+  const targets = [{ uid: currentUid, label: 'current-auth-uid' }];
+
   if (LEGACY_UID && LEGACY_UID !== currentUid) {
-    auditedUids.push({ uid: LEGACY_UID, label: 'legacy-uid' });
+    targets.push({ uid: LEGACY_UID, label: 'legacy-uid' });
   }
 
   const uidAudits = await Promise.all(
-    auditedUids.map((entry) => auditUid(entry.uid, entry.label)),
+    targets.map((entry) => auditUid(entry.uid, entry.label)),
   );
+  const tokenRoles = normalizeRoles(authUser.customClaims?.roles);
 
   const report = compactObject({
     projectId: PROJECT_ID,
     lookup: {
-      email: (authUser.email || EMAIL).trim().toLowerCase(),
+      email: authUser.email || EMAIL || null,
       currentUid,
       legacyUid: LEGACY_UID || null,
       legacyUidIsCurrent: LEGACY_UID === currentUid,
@@ -219,10 +236,10 @@ async function main() {
       photoURL: authUser.photoURL || null,
       disabled: authUser.disabled === true,
       customClaims: authUser.customClaims || {},
-      tokenRoles: normalizeRoles(authUser.customClaims?.roles),
+      tokenRoles,
       tokenHasAdmin:
-        normalizeRoles(authUser.customClaims?.roles).includes('admin') ||
-        normalizeRoles(authUser.customClaims?.roles).includes('superadmin') ||
+        tokenRoles.includes('admin') ||
+        tokenRoles.includes('superadmin') ||
         authUser.customClaims?.admin === true ||
         authUser.customClaims?.superadmin === true,
     },

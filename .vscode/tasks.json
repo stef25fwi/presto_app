@@ -106,7 +106,7 @@
     {
       "label": "Git: Stage Messages Release",
       "type": "shell",
-      "command": "git add .vscode/tasks.json lib/main.dart lib/pages/messages/conversations_list_page.dart lib/services/notification_service.dart tools/create_stephane_test_conversation.cjs",
+      "command": "git add .vscode/tasks.json lib/main.dart lib/pages/messages/conversations_list_page.dart lib/services/notification_service.dart tools/create_test_conversation.cjs",
       "problemMatcher": []
     },
     {
@@ -784,21 +784,21 @@
       "problemMatcher": []
     },
     {
-      "label": "Messaging: Create Stephane Test Conversation",
+      "label": "Messaging: Create Test Conversation",
       "type": "shell",
-      "command": "node tools/create_stephane_test_conversation.cjs",
+      "command": "FIREBASE_WEB_API_KEY=${env:FIREBASE_WEB_API_KEY} MESSAGING_TARGET_UID=${input:messagingTargetUid} MESSAGING_TEST_EMAIL=${input:messagingTestEmail} MESSAGING_TEST_PASSWORD=${env:MESSAGING_TEST_PASSWORD} node tools/create_test_conversation.cjs",
       "problemMatcher": []
     },
     {
-      "label": "Admin: Check Stephane Access",
+      "label": "Admin: Check Access",
       "type": "shell",
-      "command": "node tools/check_stephane_admin_access.cjs",
+      "command": "ADMIN_TARGET_UID=${input:adminTargetUid} node tools/check_admin_access.cjs",
       "problemMatcher": []
     },
     {
-      "label": "Admin: Audit Stephane Profile Sources",
+      "label": "Admin: Audit Profile Sources",
       "type": "shell",
-      "command": "node tools/audit_stephane_profile_sources.cjs",
+      "command": "ADMIN_TARGET_UID=${input:adminTargetUid} node tools/audit_admin_profile_sources.cjs",
       "problemMatcher": [],
       "presentation": {
         "reveal": "always",
@@ -806,9 +806,9 @@
       }
     },
     {
-      "label": "Admin: Grant Stephane Access",
+      "label": "Admin: Grant Access",
       "type": "shell",
-      "command": "node tools/grant_stephane_admin_access.cjs",
+      "command": "ADMIN_TARGET_UID=${input:adminTargetUid} node tools/grant_admin_access.cjs",
       "problemMatcher": []
     },
     {
@@ -901,21 +901,21 @@
     {
       "label": "Messaging: Inspect Conversation Visibility",
       "type": "shell",
-      "command": "node tools/inspect_conversation_visibility.cjs offer_KTctKNE2gKK8mEm1yrTM__4TMLQxgGZZTvkScQYDxyfILOjsH2__modRxXduO8TnMlD6MFxobuKigVy2",
+      "command": "node tools/inspect_conversation_visibility.cjs ${input:conversationId}",
       "problemMatcher": []
     },
     {
-      "label": "Messaging: Recreate Real Missing Conversation",
+      "label": "Messaging: Recreate Conversation",
       "type": "shell",
-      "command": "node tools/recreate_offer_conversation_via_callable.cjs KTctKNE2gKK8mEm1yrTM modRxXduO8TnMlD6MFxobuKigVy2 4TMLQxgGZZTvkScQYDxyfILOjsH2",
+      "command": "node tools/recreate_offer_conversation_via_callable.cjs ${input:offerId} ${input:messagingTargetUid} ${input:otherParticipantUid}",
       "problemMatcher": []
     },
     {
-      "label": "Messaging: Send Real Conversation Message",
+      "label": "Messaging: Send Conversation Message",
       "type": "shell",
-      "command": "node tools/send_real_conversation_message.cjs",
+      "command": "CONVERSATION_ID=${input:conversationId} SENDER_ID=${input:senderUid} node tools/send_real_conversation_message.cjs",
       "problemMatcher": []
-    },
+    }
   ],
   "inputs": [
     {
@@ -923,6 +923,41 @@
       "type": "promptString",
       "description": "Message du commit",
       "default": "feat(trust-score): add verified reviews flow and profile trust card"
+    },
+    {
+      "id": "adminTargetUid",
+      "type": "promptString",
+      "description": "UID Firebase du compte administrateur à cibler"
+    },
+    {
+      "id": "messagingTargetUid",
+      "type": "promptString",
+      "description": "UID Firebase du compte cible de messagerie"
+    },
+    {
+      "id": "messagingTestEmail",
+      "type": "promptString",
+      "description": "Adresse e-mail du compte de test de messagerie"
+    },
+    {
+      "id": "conversationId",
+      "type": "promptString",
+      "description": "Identifiant de conversation à diagnostiquer"
+    },
+    {
+      "id": "offerId",
+      "type": "promptString",
+      "description": "Identifiant de l'annonce"
+    },
+    {
+      "id": "otherParticipantUid",
+      "type": "promptString",
+      "description": "UID Firebase de l'autre participant"
+    },
+    {
+      "id": "senderUid",
+      "type": "promptString",
+      "description": "UID Firebase de l'expéditeur du message de diagnostic"
     }
   ]
 }

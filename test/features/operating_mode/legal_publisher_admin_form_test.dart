@@ -44,7 +44,7 @@ void main() {
 
     await tester.enterText(
       find.byKey(const ValueKey<String>('legal_publisherName')),
-      'Stéphane Sahai',
+      'Éditeur Exemple',
     );
     await tester.enterText(
       find.byKey(const ValueKey<String>('legal_postalAddress')),
@@ -60,7 +60,7 @@ void main() {
     );
     await tester.enterText(
       find.byKey(const ValueKey<String>('legal_publicationDirector')),
-      'Stéphane Sahai',
+      'Direction Exemple',
     );
 
     final saveButton =
@@ -83,11 +83,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(saved, isNotNull);
-    expect(saved!.publisherName, 'Stéphane Sahai');
+    expect(saved!.publisherName, 'Éditeur Exemple');
     expect(saved!.postalAddress, '1 rue Exemple, 97122 Baie-Mahault');
     expect(saved!.phone, '0590 00 00 00');
     expect(saved!.email, 'contact@example.fr');
-    expect(saved!.publicationDirector, 'Stéphane Sahai');
+    expect(saved!.publicationDirector, 'Direction Exemple');
   });
 
   testWidgets('réhydrate les champs quand la fiche Firestore arrive',
