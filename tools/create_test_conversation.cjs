@@ -4,11 +4,11 @@ const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY || '';
 const PROJECT_ID = 'presto-app-74abe';
 const FUNCTIONS_REGION = process.env.FUNCTIONS_REGION || 'europe-west1';
 const CALLABLE_BASE_URL = `https://${FUNCTIONS_REGION}-${PROJECT_ID}.cloudfunctions.net`;
-const STEPHANE_UID = process.env.STEPHANE_UID || 'modRxXduO8TnMlD6MFxobuKigVy2';
-const TEST_EMAIL = process.env.STEPHANE_TEST_EMAIL || '';
-const TEST_PASSWORD = process.env.STEPHANE_TEST_PASSWORD || '';
-const TEST_DISPLAY_NAME = process.env.STEPHANE_TEST_DISPLAY_NAME || 'Profil Test Stephane';
-const SEED_TAG = 'messaging-stephane-test-20260329';
+const TARGET_UID = (process.env.MESSAGING_TARGET_UID || '').trim();
+const TEST_EMAIL = (process.env.MESSAGING_TEST_EMAIL || '').trim().toLowerCase();
+const TEST_PASSWORD = process.env.MESSAGING_TEST_PASSWORD || '';
+const TEST_DISPLAY_NAME = process.env.MESSAGING_TEST_DISPLAY_NAME || 'Profil Test Messagerie';
+const SEED_TAG = process.env.MESSAGING_SEED_TAG || 'messaging-generic-test';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -33,8 +33,9 @@ function normalizeString(value) {
 function assertRequiredEnv() {
   const missing = [];
   if (!FIREBASE_WEB_API_KEY) missing.push('FIREBASE_WEB_API_KEY');
-  if (!TEST_EMAIL) missing.push('STEPHANE_TEST_EMAIL');
-  if (!TEST_PASSWORD) missing.push('STEPHANE_TEST_PASSWORD');
+  if (!TARGET_UID) missing.push('MESSAGING_TARGET_UID');
+  if (!TEST_EMAIL) missing.push('MESSAGING_TEST_EMAIL');
+  if (!TEST_PASSWORD) missing.push('MESSAGING_TEST_PASSWORD');
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
   }
@@ -103,41 +104,13 @@ function readDisplayName(userDoc, authUser, fallback) {
   );
 }
 
-async function signInWithCustomToken(customToken) {
-  const response = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${FIREBASE_WEB_API_KEY}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token: customToken,
-        returnSecureToken: true,
-      }),
-    },
-  );
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(`signInWithCustomToken failed: ${response.status} ${JSON.stringify(data)}`);
-  }
-  return data;
-}
-
 async function signInWithPassword(email, password) {
   const response = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}`,
     {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email,
-        password,
-        returnSecureToken: true,
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, returnSecureToken: true }),
     },
   );
 
@@ -165,18 +138,18 @@ async function callCallable(name, idToken, data) {
   return payload.result;
 }
 
-async function createOfferForStephane(stephaneName) {
+async function createOfferForTarget(targetName) {
   const offerRef = db.collection('offers').doc();
   const now = admin.firestore.FieldValue.serverTimestamp();
-  const title = `Conversation test Stephane ${new Date().toISOString()}`;
+  const title = `Conversation test ${new Date().toISOString()}`;
 
   await offerRef.set({
     title,
-    description: 'Annonce créée automatiquement pour ouvrir une conversation entre Stephane et un profil test.',
-    advertiserName: stephaneName,
-    userId: STEPHANE_UID,
-    ownerId: STEPHANE_UID,
-    uid: STEPHANE_UID,
+    description: 'Annonce créée automatiquement pour tester une conversation entre un compte cible et un profil de test.',
+    advertiserName: targetName,
+    userId: TARGET_UID,
+    ownerId: TARGET_UID,
+    uid: TARGET_UID,
     status: 'active',
     isActive: true,
     isPublished: true,
@@ -191,10 +164,7 @@ async function createOfferForStephane(stephaneName) {
     updatedAt: now,
   });
 
-  return {
-    offerId: offerRef.id,
-    title,
-  };
+  return { offerId: offerRef.id, title };
 }
 
 async function waitForNotification({ userId, conversationId }) {
@@ -209,17 +179,9 @@ async function waitForNotification({ userId, conversationId }) {
       const data = doc.data() || {};
       return normalizeString(data.conversationId) === conversationId;
     });
-
-    if (match) {
-      return {
-        id: match.id,
-        ...match.data(),
-      };
-    }
-
+    if (match) return { id: match.id, ...match.data() };
     await sleep(1000);
   }
-
   return null;
 }
 
@@ -235,17 +197,9 @@ async function waitForEmailEvent({ userId, conversationId }) {
       return normalizeString(data.recipient_user_id) === userId &&
         normalizeString(data.source_id) === conversationId;
     });
-
-    if (match) {
-      return {
-        id: match.id,
-        ...match.data(),
-      };
-    }
-
+    if (match) return { id: match.id, ...match.data() };
     await sleep(1000);
   }
-
   return null;
 }
 
@@ -253,7 +207,6 @@ async function inspectMessagesVisibility({ userId, conversationId }) {
   const snapshot = await db.collection('conversations')
     .where('participants', 'array-contains', userId)
     .get();
-
   const ids = snapshot.docs.map((doc) => doc.id);
   return {
     fetchedConversationIds: ids,
@@ -264,15 +217,15 @@ async function inspectMessagesVisibility({ userId, conversationId }) {
 async function main() {
   assertRequiredEnv();
 
-  const [stephaneAuth, stephaneDocSnap] = await Promise.all([
-    admin.auth().getUser(STEPHANE_UID),
-    db.collection('users').doc(STEPHANE_UID).get(),
+  const [targetAuth, targetDocSnap] = await Promise.all([
+    admin.auth().getUser(TARGET_UID),
+    db.collection('users').doc(TARGET_UID).get(),
   ]);
 
-  const stephaneName = readDisplayName(
-    stephaneDocSnap.data(),
-    stephaneAuth,
-    'Stephane',
+  const targetName = readDisplayName(
+    targetDocSnap.data(),
+    targetAuth,
+    'Utilisateur cible',
   );
 
   const testUser = await upsertAuthUser({
@@ -282,16 +235,15 @@ async function main() {
   });
   await upsertUserDoc(testUser, SEED_TAG);
 
-  const offer = await createOfferForStephane(stephaneName);
-
+  const offer = await createOfferForTarget(targetName);
   const testSession = await signInWithPassword(TEST_EMAIL, TEST_PASSWORD);
 
   const ensureResult = await callCallable('ensureOfferConversation', testSession.idToken, {
     offerId: offer.offerId,
     offerTitle: offer.title,
-    otherUserId: STEPHANE_UID,
+    otherUserId: TARGET_UID,
     currentUserName: TEST_DISPLAY_NAME,
-    otherUserName: stephaneName,
+    otherUserName: targetName,
   });
 
   const conversationId = normalizeString(ensureResult.conversationId);
@@ -299,7 +251,7 @@ async function main() {
     throw new Error('Conversation ID missing from ensureOfferConversation result');
   }
 
-  const firstMessage = `Bonjour ${stephaneName}, ceci est une conversation de test créée automatiquement.`;
+  const firstMessage = `Bonjour ${targetName}, ceci est une conversation de test créée automatiquement.`;
   const sendResult = await callCallable('sendConversationMessage', testSession.idToken, {
     conversationId,
     text: firstMessage,
@@ -312,21 +264,21 @@ async function main() {
     .orderBy('createdAt', 'asc')
     .limit(10)
     .get();
-  const [stephaneUserAfter, inAppNotification, emailEvent, visibility] = await Promise.all([
-    db.collection('users').doc(STEPHANE_UID).get(),
-    waitForNotification({ userId: STEPHANE_UID, conversationId }),
-    waitForEmailEvent({ userId: STEPHANE_UID, conversationId }),
-    inspectMessagesVisibility({ userId: STEPHANE_UID, conversationId }),
+  const [targetUserAfter, inAppNotification, emailEvent, visibility] = await Promise.all([
+    db.collection('users').doc(TARGET_UID).get(),
+    waitForNotification({ userId: TARGET_UID, conversationId }),
+    waitForEmailEvent({ userId: TARGET_UID, conversationId }),
+    inspectMessagesVisibility({ userId: TARGET_UID, conversationId }),
   ]);
   const [pushPrefsSnap, pushTokensSnap] = await Promise.all([
-    db.collection('notification_preferences').doc(STEPHANE_UID).get(),
-    db.collection('users').doc(STEPHANE_UID).collection('push_tokens').get(),
+    db.collection('notification_preferences').doc(TARGET_UID).get(),
+    db.collection('users').doc(TARGET_UID).collection('push_tokens').get(),
   ]);
 
-  logStep('stephane', {
-    uid: STEPHANE_UID,
-    displayName: stephaneName,
-    email: stephaneAuth.email || null,
+  logStep('target', {
+    uid: TARGET_UID,
+    displayName: targetName,
+    email: targetAuth.email || null,
   });
   logStep('testProfile', {
     uid: testUser.uid,
@@ -348,10 +300,10 @@ async function main() {
       text: doc.data().text || doc.data().body || null,
     })),
   });
-  logStep('stephaneInbox', {
-    inboxCounts: stephaneUserAfter.data()?.inboxCounts || null,
+  logStep('targetInbox', {
+    inboxCounts: targetUserAfter.data()?.inboxCounts || null,
   });
-  logStep('stephaneNotification', inAppNotification
+  logStep('targetNotification', inAppNotification
     ? {
         id: inAppNotification.id,
         title: inAppNotification.title || null,
@@ -362,7 +314,7 @@ async function main() {
         conversationId: inAppNotification.conversationId || null,
       }
     : 'Aucune notification in-app trouvée après polling.');
-  logStep('stephaneEmailEvent', emailEvent
+  logStep('targetEmailEvent', emailEvent
     ? {
         id: emailEvent.id,
         event_name: emailEvent.event_name || null,
@@ -370,8 +322,8 @@ async function main() {
         source_id: emailEvent.source_id || null,
       }
     : 'Aucun email_event trouvé après polling.');
-  logStep('stephaneMessagesVisibility', visibility);
-  logStep('stephanePushState', {
+  logStep('targetMessagesVisibility', visibility);
+  logStep('targetPushState', {
     notificationPreferences: pushPrefsSnap.exists ? (pushPrefsSnap.data() || {}) : null,
     pushTokenCount: pushTokensSnap.size,
     pushTokens: pushTokensSnap.docs.map((doc) => ({

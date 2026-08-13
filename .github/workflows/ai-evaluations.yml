@@ -53,9 +53,6 @@ on:
     types:
       - completed
   schedule:
-    # Les jeux d'évaluation réels tournent chaque lundi matin afin que la
-    # qualité par accent et par format soit re-mesurée régulièrement et pas
-    # seulement au moment d'une modification du corpus.
     - cron: '0 5 * * 1'
   workflow_dispatch:
     inputs:
@@ -211,28 +208,41 @@ jobs:
       - name: Run live listing evaluation
         id: listing_eval
         continue-on-error: true
+        shell: bash
         env:
           AI_EVAL_ENFORCE: 'true'
           OPENAI_INPUT_EUR_PER_MILLION_TOKENS: ${{ vars.OPENAI_INPUT_EUR_PER_MILLION_TOKENS }}
           OPENAI_OUTPUT_EUR_PER_MILLION_TOKENS: ${{ vars.OPENAI_OUTPUT_EUR_PER_MILLION_TOKENS }}
-        run: npm --prefix functions run ai:eval:listing -- evals/listing_cases.jsonl ../quality_reports/ai/listing.json
+        run: |
+          set -o pipefail
+          npm --prefix functions run ai:eval:listing -- evals/listing_cases.jsonl ../quality_reports/ai/listing.json \
+            2>&1 | tee quality_reports/ai/listing.log
 
       - name: Run live transcription evaluation
         id: transcription_eval
         continue-on-error: true
+        shell: bash
         env:
           AI_EVAL_ENFORCE: 'true'
           OPENAI_TRANSCRIPTION_EUR_PER_MINUTE: ${{ vars.OPENAI_TRANSCRIPTION_EUR_PER_MINUTE }}
-        run: npm --prefix functions run ai:eval:transcription -- --output ../quality_reports/ai/transcription.json
+        run: |
+          set -o pipefail
+          npm --prefix functions run ai:eval:transcription -- --output ../quality_reports/ai/transcription.json \
+            2>&1 | tee quality_reports/ai/transcription.log
 
       - name: Run live vision evaluation
         id: vision_eval
         continue-on-error: true
+        shell: bash
         env:
           AI_EVAL_ENFORCE: 'true'
+          OPENAI_VISION_MODEL: 'gpt-4o-mini'
           OPENAI_INPUT_EUR_PER_MILLION_TOKENS: ${{ vars.OPENAI_INPUT_EUR_PER_MILLION_TOKENS }}
           OPENAI_OUTPUT_EUR_PER_MILLION_TOKENS: ${{ vars.OPENAI_OUTPUT_EUR_PER_MILLION_TOKENS }}
-        run: npm --prefix functions run ai:eval:vision -- --output ../quality_reports/ai/vision.json
+        run: |
+          set -o pipefail
+          npm --prefix functions run ai:eval:vision -- --output ../quality_reports/ai/vision.json \
+            2>&1 | tee quality_reports/ai/vision.log
 
       - name: Archive live evaluation reports
         if: always()

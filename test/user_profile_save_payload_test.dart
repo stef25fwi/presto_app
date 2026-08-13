@@ -6,7 +6,7 @@ void main() {
     test('calcule une complétude strictement positive avec champs remplis', () {
       expect(
         UserProfileSavePayload.calculateCompleteness(
-          displayName: 'Stephane S',
+          displayName: 'Utilisateur Démo',
           city: 'Baie-Mahault',
           phone: '+590690000000',
         ),
@@ -18,7 +18,7 @@ void main() {
       final payload = UserProfileSavePayload.build(
         uid: 'uid-123',
         email: 'USER@EXAMPLE.COM ',
-        displayName: ' Stephane S ',
+        displayName: ' Utilisateur Démo ',
         accountType: 'Particulier',
         phone: '+590690000000',
         city: 'Baie-Mahault (97122)',
@@ -53,8 +53,8 @@ void main() {
 
       expect(payload['uid'], 'uid-123');
       expect(payload['email'], 'user@example.com');
-      expect(payload['displayName'], 'Stephane S');
-      expect(payload['pseudo'], 'Stephane S');
+      expect(payload['displayName'], 'Utilisateur Démo');
+      expect(payload['pseudo'], 'Utilisateur Démo');
       expect(payload['accountType'], 'Particulier');
       expect(payload['phone'], '+590690000000');
       expect(payload['phoneCountryCode'], '+590');

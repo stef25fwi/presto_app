@@ -55,7 +55,7 @@ jobs:
             --output quality_reports/coverage-supervisor/plan.json \
             --global-percent "$percent" \
             --target-percent "${{ vars.COVERAGE_GLOBAL_TARGET || '80' }}" \
-            --max-workers "${{ vars.COVERAGE_MAX_WORKERS || '4' }}" \
+            --max-workers "${{ vars.COVERAGE_MAX_WORKERS || '2' }}" \
             --stale-hours "${{ vars.COVERAGE_WORKER_STALE_HOURS || '8' }}"
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json

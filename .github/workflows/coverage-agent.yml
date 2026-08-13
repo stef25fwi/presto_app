@@ -61,8 +61,6 @@ jobs:
             --json headRefName --jq '[.[] | select(.headRefName | startswith("coverage/w"))] | length')"
           active_issues="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
             --label coverage-worker --limit 100 --json number --jq 'length')"
-          # A worker normally has both an issue and a PR. Count the larger set,
-          # not their sum, otherwise one worker incorrectly consumes two slots.
           occupied="$active_prs"
           [ "$active_issues" -gt "$occupied" ] && occupied="$active_issues"
           [ "$occupied" -gt 2 ] && occupied=2
@@ -143,7 +141,7 @@ jobs:
         if: steps.dedupe.outputs.run == 'true' && steps.factory.outputs.count != '0'
         env:
           GH_TOKEN: ${{ github.token }}
-          AGENT_ASSIGNEE: ${{ vars.COVERAGE_AGENT_ASSIGNEE }}
+          AGENT_ASSIGNEE: ${{ github.repository_owner }}
         run: |
           set -euo pipefail
           python3 - <<'PY' > /tmp/workers.tsv

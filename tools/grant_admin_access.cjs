@@ -1,10 +1,16 @@
 const admin = require('../functions/node_modules/firebase-admin');
 
 const PROJECT_ID = 'presto-app-74abe';
-const EMAIL = process.env.STEPHANE_EMAIL || 'sahai.stephane@gmail.com';
-const UID = process.env.STEPHANE_UID || '';
+const EMAIL = (process.env.ADMIN_TARGET_EMAIL || '').trim().toLowerCase();
+const UID = (process.env.ADMIN_TARGET_UID || '').trim();
 const GRANT_SUPERADMIN =
-  (process.env.STEPHANE_SUPERADMIN || 'true').trim().toLowerCase() !== 'false';
+  (process.env.GRANT_SUPERADMIN || 'false').trim().toLowerCase() === 'true';
+
+if (!UID && !EMAIL) {
+  throw new Error(
+    'Missing admin target. Set ADMIN_TARGET_UID or ADMIN_TARGET_EMAIL before running this tool.',
+  );
+}
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -16,11 +22,10 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 async function resolveTargetUser() {
-  if (UID.trim()) {
-    return admin.auth().getUser(UID.trim());
+  if (UID) {
+    return admin.auth().getUser(UID);
   }
-
-  return admin.auth().getUserByEmail(EMAIL.trim().toLowerCase());
+  return admin.auth().getUserByEmail(EMAIL);
 }
 
 function mergeRoles(...roleLists) {
@@ -29,15 +34,11 @@ function mergeRoles(...roleLists) {
     if (!Array.isArray(roles)) continue;
     for (const role of roles) {
       const normalized = String(role || '').trim().toLowerCase();
-      if (normalized) {
-        merged.add(normalized);
-      }
+      if (normalized) merged.add(normalized);
     }
   }
   merged.add('admin');
-  if (GRANT_SUPERADMIN) {
-    merged.add('superadmin');
-  }
+  if (GRANT_SUPERADMIN) merged.add('superadmin');
   return Array.from(merged);
 }
 
@@ -101,7 +102,7 @@ async function main() {
       roles: mergedRoles,
       primaryRole,
       marketplaceAccess: true,
-      grantedBy: 'tools/grant_stephane_admin_access.cjs',
+      grantedBy: 'tools/grant_admin_access.cjs',
       grantedAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     },

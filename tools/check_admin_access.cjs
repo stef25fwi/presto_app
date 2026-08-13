@@ -1,8 +1,14 @@
 const admin = require('../functions/node_modules/firebase-admin');
 
 const PROJECT_ID = 'presto-app-74abe';
-const EMAIL = process.env.STEPHANE_EMAIL || 'sahai.stephane@gmail.com';
-const UID = process.env.STEPHANE_UID || '';
+const EMAIL = (process.env.ADMIN_TARGET_EMAIL || '').trim().toLowerCase();
+const UID = (process.env.ADMIN_TARGET_UID || '').trim();
+
+if (!UID && !EMAIL) {
+  throw new Error(
+    'Missing admin target. Set ADMIN_TARGET_UID or ADMIN_TARGET_EMAIL before running this tool.',
+  );
+}
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -14,11 +20,10 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 async function resolveTargetUser() {
-  if (UID.trim()) {
-    return admin.auth().getUser(UID.trim());
+  if (UID) {
+    return admin.auth().getUser(UID);
   }
-
-  return admin.auth().getUserByEmail(EMAIL.trim().toLowerCase());
+  return admin.auth().getUserByEmail(EMAIL);
 }
 
 function normalizeRoles(value) {
@@ -96,7 +101,7 @@ async function main() {
     JSON.stringify(
       {
         lookup: {
-          email: (authUser.email || EMAIL).trim().toLowerCase(),
+          email: authUser.email || EMAIL || null,
           uid: targetUid,
         },
         uid: authUser.uid,

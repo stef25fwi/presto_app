@@ -8,9 +8,17 @@ const {
 } = require('../functions/lib/modules/notifications/counters.js');
 
 const PROJECT_ID = 'presto-app-74abe';
-const CONVERSATION_ID = 'offer_KTctKNE2gKK8mEm1yrTM__4TMLQxgGZZTvkScQYDxyfILOjsH2__modRxXduO8TnMlD6MFxobuKigVy2';
-const SENDER_ID = 'modRxXduO8TnMlD6MFxobuKigVy2';
-const DEFAULT_TEXT = 'Bonjour, je vous recontacte au sujet de votre annonce "monter une etagere".';
+const CONVERSATION_ID = (process.env.CONVERSATION_ID || '').trim();
+const SENDER_ID = (process.env.SENDER_ID || '').trim();
+const DEFAULT_TEXT =
+  process.env.MESSAGE_TEXT ||
+  'Bonjour, je vous recontacte au sujet de votre annonce.';
+
+if (!CONVERSATION_ID || !SENDER_ID) {
+  throw new Error(
+    'Missing target identifiers. Set CONVERSATION_ID and SENDER_ID before running this tool.',
+  );
+}
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -59,7 +67,9 @@ async function main() {
     const conversation = readConversationMirrorData(raw);
     const participants = conversation.participants;
     if (!participants.includes(SENDER_ID)) {
-      throw new Error(`Sender ${SENDER_ID} is not a participant of ${CONVERSATION_ID}`);
+      throw new Error(
+        `Configured sender is not a participant of the configured conversation`,
+      );
     }
 
     const messageRef = convRef.collection('messages').doc();
@@ -78,17 +88,14 @@ async function main() {
       created_at: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    const archivedBy = {
-      ...conversation.archivedBy,
-    };
-    const unreadCount = {
-      ...conversation.unreadCount,
-    };
+    const archivedBy = { ...conversation.archivedBy };
+    const unreadCount = { ...conversation.unreadCount };
 
     for (const participantId of participants) {
       archivedBy[participantId] = false;
       const currentUnread = Number(unreadCount[participantId] || 0);
-      unreadCount[participantId] = participantId === SENDER_ID ? 0 : currentUnread + 1;
+      unreadCount[participantId] =
+        participantId === SENDER_ID ? 0 : currentUnread + 1;
     }
 
     transaction.set(
@@ -116,7 +123,11 @@ async function main() {
     participantsToRefresh = participants;
   });
 
-  await Promise.all(participantsToRefresh.map((participantId) => refreshUnreadMessageCount(participantId)));
+  await Promise.all(
+    participantsToRefresh.map((participantId) =>
+      refreshUnreadMessageCount(participantId),
+    ),
+  );
 
   const updatedSnap = await convRef.get();
   const updated = updatedSnap.data() || {};

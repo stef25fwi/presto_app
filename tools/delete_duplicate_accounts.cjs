@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Suppression des comptes doublons pour un email donné.
+ * Suppression contrôlée de comptes doublons.
  *
  * Conserve UNIQUEMENT le compte gardé (KEEP_UID) et supprime, pour chaque
  * compte à effacer (DELETE_UIDS) :
@@ -10,10 +10,15 @@
  *   - son compte Firebase Auth
  *
  * SÉCURITÉ : dry-run par défaut. Ajoute --apply pour exécuter réellement.
+ * Les UID ne doivent jamais être stockés dans le dépôt : fournis-les par
+ * variables d'environnement au moment de l'exécution.
  *
  * Usage :
- *   node tools/delete_duplicate_accounts.cjs              # dry-run (aucune écriture)
- *   node tools/delete_duplicate_accounts.cjs --apply      # suppression réelle
+ *   KEEP_UID="uid-a-conserver" DELETE_UIDS="uid-1,uid-2" \
+ *     node tools/delete_duplicate_accounts.cjs
+ *
+ *   KEEP_UID="uid-a-conserver" DELETE_UIDS="uid-1,uid-2" \
+ *     node tools/delete_duplicate_accounts.cjs --apply
  *
  * Auth : sa-key.json à la racine du repo SINON GOOGLE_APPLICATION_CREDENTIALS.
  */
@@ -22,15 +27,18 @@ const path = require("path");
 const admin = require(path.join(__dirname, "..", "functions", "node_modules", "firebase-admin"));
 
 // ---- Configuration -------------------------------------------------------
-const KEEP_UID = "jyRmGHNVTvQF5QgjPbS2zpquiSY2"; // azertax — À CONSERVER
-const DELETE_UIDS = [
-  "CIExQfQ1gWbX9obuo6Mn", // Stephane Stef
-  "LdQdbuNFgjgjXN0GMZwyAy1E0rq2", // (sans pseudo)
-  "OyVhJNFF8ryIHPLLBd9C", // Stef971
-  "S4IvRC4n2HQJ17UMFtlKb8sHQJ82", // user
-  "aUPAjx1PvseHBJXBZZ4YOw6gwYh2", // userstef
-  "y4d9ZdizRsK8eEYdIZkw", // Stef971
-];
+const KEEP_UID = String(process.env.KEEP_UID || "").trim();
+const DELETE_UIDS = String(process.env.DELETE_UIDS || "")
+  .split(",")
+  .map((value) => value.trim())
+  .filter(Boolean);
+
+if (!KEEP_UID || DELETE_UIDS.length === 0) {
+  console.error(
+    "❌ Configuration manquante. Définis KEEP_UID et DELETE_UIDS (liste séparée par des virgules).",
+  );
+  process.exit(1);
+}
 
 const PARTICIPANT_ALIASES = [
   "participantIds",
@@ -56,6 +64,11 @@ const auth = admin.auth();
 
 if (DELETE_UIDS.includes(KEEP_UID)) {
   console.error("❌ KEEP_UID figure dans DELETE_UIDS. Abandon.");
+  process.exit(1);
+}
+
+if (new Set(DELETE_UIDS).size !== DELETE_UIDS.length) {
+  console.error("❌ DELETE_UIDS contient des doublons. Abandon.");
   process.exit(1);
 }
 
@@ -103,7 +116,7 @@ async function main() {
   console.log("==================================================");
   console.log(APPLY ? "🔴 MODE SUPPRESSION RÉELLE (--apply)" : "🟢 DRY-RUN (aucune écriture)");
   console.log("==================================================");
-  console.log(`✅ Compte CONSERVÉ : ${KEEP_UID} (azertax)`);
+  console.log(`✅ Compte CONSERVÉ : ${KEEP_UID}`);
   console.log(`🗑️  Comptes à supprimer : ${DELETE_UIDS.length}`);
 
   const totals = { listings: 0, conversations: 0, conversationsWithKeep: 0, users: 0, authDeleted: 0 };
@@ -121,7 +134,7 @@ async function main() {
     const conversations = await findConversations(uid);
     console.log(`   💬 Conversations rattachées : ${conversations.size}`);
     for (const [id, info] of conversations) {
-      console.log(`      - conversations/${id}${info.involvesKeep ? "  ⚠️ (implique aussi azertax)" : ""}`);
+      console.log(`      - conversations/${id}${info.involvesKeep ? "  ⚠️ (implique aussi le compte conservé)" : ""}`);
       if (info.involvesKeep) totals.conversationsWithKeep += 1;
     }
 
@@ -130,17 +143,13 @@ async function main() {
     totals.users += 1;
 
     if (APPLY) {
-      // Supprime annonces
       for (const ref of listings.values()) {
         await db.recursiveDelete(ref);
       }
-      // Supprime conversations + sous-collections (messages)
       for (const info of conversations.values()) {
         await db.recursiveDelete(info.ref);
       }
-      // Supprime le doc user + ses sous-collections
       await db.recursiveDelete(db.collection("users").doc(uid));
-      // Supprime le compte Auth
       try {
         await auth.deleteUser(uid);
         totals.authDeleted += 1;
@@ -156,16 +165,16 @@ async function main() {
   console.log(APPLY ? "RÉSUMÉ SUPPRESSION" : "RÉSUMÉ DRY-RUN (rien supprimé)");
   console.log("==================================================");
   console.log(`Annonces        : ${totals.listings}`);
-  console.log(`Conversations   : ${totals.conversations}  (dont ${totals.conversationsWithKeep} impliquant aussi azertax)`);
+  console.log(`Conversations   : ${totals.conversations}  (dont ${totals.conversationsWithKeep} impliquant aussi le compte conservé)`);
   console.log(`Docs users      : ${totals.users}`);
   if (APPLY) console.log(`Comptes Auth    : ${totals.authDeleted}`);
   if (!APPLY) {
     console.log("\n👉 Vérifie la liste ci-dessus, puis relance avec --apply pour supprimer réellement.");
   }
   if (totals.conversationsWithKeep > 0 && !APPLY) {
-    console.log(`\n⚠️  ${totals.conversationsWithKeep} conversation(s) impliquent AUSSI le compte conservé (azertax)`);
-    console.log("   et seront supprimées car rattachées à un compte doublon. C'est attendu");
-    console.log("   (même personne), mais signalé pour transparence.");
+    console.log(`\n⚠️  ${totals.conversationsWithKeep} conversation(s) impliquent AUSSI le compte conservé`);
+    console.log("   et seront supprimées car rattachées à un compte doublon.");
+    console.log("   Vérifie ce point avant de relancer avec --apply.");
   }
 }
 

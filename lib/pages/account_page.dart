@@ -186,11 +186,9 @@ class _AccountPageState extends State<AccountPage> {
     _adminLoadingTimedOut = false;
   }
 
-  bool _shouldShowAdminDebugCard(User user, {AdminAccessState? state}) {
+  bool _shouldShowAdminDebugCard(User _, {AdminAccessState? state}) {
     final resolvedState = state ?? _lastAdminAccessState;
-    final email = (user.email ?? '').trim().toLowerCase();
-    return email == 'sahai.stephane@gmail.com' ||
-        (resolvedState?.effectiveIsAdmin ?? false) ||
+    return (resolvedState?.effectiveIsAdmin ?? false) ||
         resolvedState?.serverErrorCode != null;
   }
 
@@ -2672,7 +2670,7 @@ class _AccountPageState extends State<AccountPage> {
                                 setState(() {
                                   _draftFavoriteSelections.remove(category);
                                   _draftFavoriteSelections.removeWhere(
-                                    (e) => e.startsWith('\$category — '),
+                                    (e) => e.startsWith('$category — '),
                                   );
                                 });
                                 unawaited(_applyDraftFavorites(user));

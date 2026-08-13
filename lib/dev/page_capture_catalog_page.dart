@@ -285,7 +285,7 @@ class PageCaptureCatalogPage extends StatelessWidget {
       status: PageStatus.active,
       builder: (_) => const UserPublicProfilePage(
         userId: 'demo-public-user',
-        initialPseudo: 'Stephane Demo',
+        initialPseudo: 'Utilisateur Démo',
       ),
     ),
     PageCaptureEntry(
@@ -717,8 +717,8 @@ Map<String, dynamic> _sampleOfferData() {
     'location': 'Les Abymes',
     'category': 'Transport / Livraison',
     'advertiserId': 'seller-demo',
-    'advertiserName': 'Stephane Demo',
-    'displayName': 'Stephane Demo',
+    'advertiserName': 'Utilisateur Démo',
+    'displayName': 'Utilisateur Démo',
     'userId': 'seller-demo',
     'ownerId': 'seller-demo',
     'uid': 'seller-demo',
