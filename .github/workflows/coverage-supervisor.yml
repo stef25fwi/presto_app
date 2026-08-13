@@ -1,124 +1,14 @@
-name: LCOV Supervisor 80
+name: LCOV Supervisor (paused)
 
+# Supervision LCOV mise en pause volontairement.
+# Aucun déclenchement automatique (schedule ou pull_request).
+# La logique précédente reste récupérable dans l'historique Git.
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "7,37 * * * *"
-  pull_request:
-    types: [closed]
-    branches: [main]
-
-concurrency:
-  group: lcov-supervisor-80
-  cancel-in-progress: false
-
-permissions:
-  actions: write
-  contents: read
-  issues: write
-  pull-requests: read
 
 jobs:
-  supervise:
+  paused:
+    if: ${{ false }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: main
-
-      - name: Collect active workers and latest coverage
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          mkdir -p quality_reports/coverage-supervisor
-          gh issue list --repo "$GITHUB_REPOSITORY" --state open --label coverage-worker \
-            --limit 100 --json number,title,body,updatedAt \
-            > quality_reports/coverage-supervisor/issues.json
-          gh pr list --repo "$GITHUB_REPOSITORY" --state open --limit 100 \
-            --json number,title,body,headRefName,updatedAt \
-            --jq '[.[] | select(.headRefName | startswith("coverage/w"))]' \
-            > quality_reports/coverage-supervisor/prs.json
-          percent="$(gh issue view 553 --repo "$GITHUB_REPOSITORY" --comments \
-            --json comments --jq '[.comments[].body | capture("Couverture globale : \\*\\*(?<p>[0-9.]+)%")?.p] | map(select(. != null)) | last // "0"')"
-          echo "$percent" > quality_reports/coverage-supervisor/global-percent.txt
-
-      - name: Build supervision plan
-        id: plan
-        run: |
-          set -euo pipefail
-          percent="$(cat quality_reports/coverage-supervisor/global-percent.txt)"
-          python3 tools/coverage/coverage_supervisor.py \
-            --issues quality_reports/coverage-supervisor/issues.json \
-            --prs quality_reports/coverage-supervisor/prs.json \
-            --output quality_reports/coverage-supervisor/plan.json \
-            --global-percent "$percent" \
-            --target-percent "${{ vars.COVERAGE_GLOBAL_TARGET || '80' }}" \
-            --max-workers "${{ vars.COVERAGE_MAX_WORKERS || '4' }}" \
-            --stale-hours "${{ vars.COVERAGE_WORKER_STALE_HOURS || '8' }}"
-          python3 - <<'PY' >> "$GITHUB_OUTPUT"
-          import json
-          from pathlib import Path
-          p = json.loads(Path('quality_reports/coverage-supervisor/plan.json').read_text())
-          print(f"available={p['available_slots']}")
-          print(f"reached={str(p['target_reached']).lower()}")
-          print(f"stale={len(p['stale_workers'])}")
-          print(f"orphaned={len(p['orphaned_workers'])}")
-          print(f"healthy={len(p['healthy_workers'])}")
-          PY
-
-      - name: Mark stale or orphaned worker missions
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          python3 - <<'PY' > /tmp/stale.tsv
-          import json
-          from pathlib import Path
-          p = json.loads(Path('quality_reports/coverage-supervisor/plan.json').read_text())
-          for kind in ('stale_workers', 'orphaned_workers'):
-              for w in p[kind]:
-                  if w.get('issue_number'):
-                      print(f"{w['issue_number']}\t{kind}\t{w.get('path', '')}")
-          PY
-          while IFS=$'\t' read -r issue kind path; do
-            [ -n "$issue" ] || continue
-            gh issue edit "$issue" --repo "$GITHUB_REPOSITORY" --add-label coverage-stalled || true
-            gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" --body \
-              "LCOV Supervisor: mission classée **${kind}**. Elle ne bloque plus une lane active. Reprendre avec une branche/PR récente ou fermer la mission. Cible: \`${path}\`." || true
-          done < /tmp/stale.tsv
-
-      - name: Refill available lanes
-        if: steps.plan.outputs.reached != 'true' && steps.plan.outputs.available != '0'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh workflow run coverage-agent.yml --repo "$GITHUB_REPOSITORY" -f force_measure=true
-
-      - name: Update central dashboard
-        env:
-          GH_TOKEN: ${{ github.token }}
-          AVAILABLE: ${{ steps.plan.outputs.available }}
-          HEALTHY: ${{ steps.plan.outputs.healthy }}
-          STALE: ${{ steps.plan.outputs.stale }}
-          ORPHANED: ${{ steps.plan.outputs.orphaned }}
-          REACHED: ${{ steps.plan.outputs.reached }}
-        run: |
-          percent="$(cat quality_reports/coverage-supervisor/global-percent.txt)"
-          gh issue comment 553 --repo "$GITHUB_REPOSITORY" --body "### LCOV Supervisor 80 — run $GITHUB_RUN_ID
-
-          - Couverture connue : **${percent}%**
-          - Workers actifs utiles : **${HEALTHY}**
-          - Workers stagnants : **${STALE}**
-          - Missions orphelines : **${ORPHANED}**
-          - Lanes à remplir : **${AVAILABLE}**
-          - Objectif 80 % atteint : **${REACHED}**
-
-          Le superviseur ignore désormais les missions orphelines pour éviter le verrouillage permanent et relance la Coverage Factory dès qu’une capacité utile est disponible."
-
-      - name: Upload supervision evidence
-        uses: actions/upload-artifact@v7
-        with:
-          name: coverage-supervisor-${{ github.run_id }}
-          path: quality_reports/coverage-supervisor/
-          retention-days: 14
+      - run: echo "LCOV Supervisor paused"
