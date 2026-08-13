@@ -4,6 +4,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 
+import { getApps, initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+
 import {
   latencyPercentiles,
   mergeLatencyBuckets,
@@ -202,12 +205,10 @@ function parseArgs(argv) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const { default: admin } = await import("firebase-admin");
-  if (!admin.apps.length) admin.initializeApp();
+  if (!getApps().length) initializeApp();
   const days = Math.min(90, Math.max(1, Math.round(options.days)));
   const start = expectedDays(days, new Date())[0];
-  const snapshot = await admin
-    .firestore()
+  const snapshot = await getFirestore()
     .collection("_ai_metrics_daily")
     .where("day", ">=", start)
     .orderBy("day", "desc")
