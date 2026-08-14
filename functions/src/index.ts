@@ -195,6 +195,12 @@ export {
 } from "./modules/email/queue/triggers";
 
 export { handleEmailProviderWebhook } from "./modules/email/webhooks/handler";
+export {
+  handleInboundContactEmailWebhook,
+  adminGetInboundMailboxSummary,
+  adminListInboundEmails,
+  adminMarkInboundEmailRead,
+} from "./modules/email/inbound_contact";
 
 export { purgeOldEmailWebhooks, purgeOldEmailLogs, syncEmailAnalytics } from "./modules/email/scheduled";
 
