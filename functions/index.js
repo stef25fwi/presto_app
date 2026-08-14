@@ -1588,9 +1588,18 @@ ${g.text}
   return { text: cleaned, googleConfidence: g.googleConfidence, raw: { google: g.raw, openai: completion } };
 }
 
-function buildTryOrder(mode) {
-  if (mode === "GOOGLE_ONLY") return ["GOOGLE_ONLY"];
-  if (mode === "WHISPER_ONLY") return ["WHISPER_ONLY"];
+// Les modes à provider unique n'offrent aucune récupération : si ce provider
+// répond sans rien reconnaître, la requête est perdue et `fallbackEnabled`
+// reste sans effet faute de tentative suivante. Quand le fallback est activé,
+// on adjoint donc le provider complémentaire. Il n'est sollicité que si la
+// première tentative reste sous le seuil de qualité (voir la boucle STT).
+function buildTryOrder(mode, fallbackEnabled = false) {
+  if (mode === "GOOGLE_ONLY") {
+    return fallbackEnabled ? ["GOOGLE_ONLY", "WHISPER_ONLY"] : ["GOOGLE_ONLY"];
+  }
+  if (mode === "WHISPER_ONLY") {
+    return fallbackEnabled ? ["WHISPER_ONLY", "GOOGLE_ONLY"] : ["WHISPER_ONLY"];
+  }
   return ["HYBRID", "WHISPER_ONLY", "GOOGLE_ONLY"];
 }
 
@@ -2186,7 +2195,7 @@ exports.microIaProcessAudio = onCall(
         ? ["GOOGLE_ONLY"]
         : ultraFastEnabled
           ? ["GOOGLE_ONLY", "WHISPER_ONLY"]
-          : buildTryOrder(cfg.mode);
+          : buildTryOrder(cfg.mode, cfg.fallbackEnabled);
 
       // En ultra-rapide, on accepte plus souvent le premier résultat pour éviter d'enchaîner des tentatives.
       // On garde tout de même un fallback si le score est extrêmement bas (ex: texte vide).

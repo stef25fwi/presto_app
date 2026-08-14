@@ -222,6 +222,33 @@ abandonnés : le contrôle d'éligibilité MIME est inutile puisque V1 convertit
 lieu de router, et le nom de fichier `audio.wav` passé à Whisper est correct
 puisque le buffer est effectivement du WAV à ce stade.
 
+**Second correctif : ouvrir un repli vers Whisper.** `buildTryOrder` (l. 1591)
+retournait une tentative unique pour les modes `GOOGLE_ONLY` et
+`WHISPER_ONLY`, ce qui privait `fallbackEnabled` de tout effet — il n'existait
+aucun provider suivant à essayer. Ces deux modes se voient désormais adjoindre
+le provider complémentaire **lorsque `fallbackEnabled` est actif** (valeur par
+défaut : `true`). Le mode `HYBRID` est inchangé, et le comportement strict à un
+seul provider reste accessible en passant `fallbackEnabled` à `false`.
+
+Comportement vérifié par simulation de la boucle sur cinq scénarios :
+
+| Scénario | Providers appelés | Résultat |
+|---|---|---|
+| Google vide, fallback actif | `GOOGLE_ONLY → WHISPER_ONLY` | récupéré par Whisper |
+| Google satisfaisant | `GOOGLE_ONLY` seul | rendu sans appel à Whisper |
+| Les deux vides | `GOOGLE_ONLY → WHISPER_ONLY` | erreur explicite, plus de 200 vide |
+| `fallbackEnabled = false` | `GOOGLE_ONLY` seul | comportement strict préservé |
+| Panne technique de Google | `GOOGLE_ONLY → WHISPER_ONLY` | récupéré par Whisper |
+
+**Incidence sur les coûts, à connaître.** Whisper n'est sollicité que si la
+première tentative reste sous le seuil de qualité (`qualityThreshold`, 0.62 par
+défaut) : une transcription correcte n'entraîne aucun appel supplémentaire. En
+revanche, d'après le barème de `evaluateQuality` (l. 900-925), un énoncé court
+— entre 12 et 29 caractères, soit 0.50 même avec une bonne confiance Google —
+passe sous le seuil et déclenchera désormais un appel Whisper. Les leviers de
+réglage sont `microia_quality_threshold` et `microia_fallback_enabled` dans
+Remote Config.
+
 **Limite de vérification** : `functions/index.js` est du code legacy hors du
 périmètre de `npm test`, qui n'exécute que les tests compilés depuis
 `functions/src`. Ce correctif n'est donc pas couvert par un test automatisé ;
@@ -359,11 +386,15 @@ mode Stripe — pas une clé en dur. Aucun secret réel trouvé.
 - **P1 — fait dans ce commit** : une transcription vide n'est plus renvoyée
   comme un succès par V1 (§1.h). C'est le défaut qui rendait une panne de
   transcription invisible côté serveur.
-- **P1 — à arbitrer** : le mode par défaut `GOOGLE_ONLY` réduit `tryOrder` à
-  une seule tentative, ce qui rend le mot « fallback » trompeur dans tout le
-  code environnant — `fallbackEnabled` n'a aucun effet s'il n'existe pas de
-  second provider à essayer. Autoriser au moins un repli vers Whisper donnerait
-  au chemin V1 la résilience que le smoke test cherche à vérifier.
+- **P1 — fait dans ce commit** : les modes à provider unique acceptent
+  désormais un repli vers le provider complémentaire quand `fallbackEnabled`
+  est actif (§1.h). `fallbackEnabled` avait jusqu'ici un effet nul dans le mode
+  par défaut. Surveiller la consommation OpenAI après déploiement : les énoncés
+  courts déclencheront un appel Whisper supplémentaire.
+- **P1 — déploiement requis** : les deux correctifs V1 ne prennent effet
+  qu'une fois les Functions déployées. Le smoke test interroge les endpoints de
+  production : tant que le déploiement n'a pas eu lieu, il continuera d'échouer
+  sur l'ancien code, indépendamment du contenu de cette branche.
 - **P2** — Remplacer l'audio de synthèse `espeak-ng` du smoke test par un
   extrait de voix humaine réelle (§1.f) : le fixture actuel dépend de la
   capacité de Google STT à transcrire une voix robotique, ce qui n'est pas
