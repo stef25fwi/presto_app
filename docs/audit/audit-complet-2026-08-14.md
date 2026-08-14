@@ -22,7 +22,7 @@ d'exécution (voir limites en fin de document) ; l'audit s'appuie sur :
 | # | Constat | Sévérité |
 |---|---|---|
 | 1 | `ai-production-smoke.yml` n'a **jamais** été vert : 89 exécutions depuis le 05/08, 0 succès. Trois causes de plomberie empilées (IAM `signBlob`, jeton App Check non transmis, TTL invalide), corrigées ici | P0 |
-| 1 bis | **Une fois la plomberie réparée, le test révèle un défaut de production réel** : sur un audio identique, `microIaProcessAudioV2` transcrit correctement mais le fallback `microIaProcessAudio` (V1) répond HTTP 200 avec un transcript vide. Le filet de sécurité du pipeline micro-IA ne fonctionne pas | **P0 — le plus important de cet audit** |
+| 1 bis | **Une fois la plomberie réparée, le test révèle un défaut de production réel** : V1 envoie tout audio non-WAV à Google STT en `LINEAR16`, reçoit zéro résultat sans erreur, et renvoie ce transcript vide en HTTP 200. Le mobile enregistrant en AAC/m4a, la dictée vocale est concernée dès que le rollout V2 ne couvre pas l'utilisateur — à confirmer en Remote Config | **P0 — le plus important de cet audit** |
 | 2 | La checklist Play Store affirme au point 1.1 qu'« aucun AAB release n'a jamais été produit » — **faux** : un run réussi existe (`release_android.yml`, run du 2026-07-30, AAB construit et signé, upload Play Console volontairement `skipped`) | P1 — doc à corriger |
 | 3 | 7 des 9 contrôles de sécurité Phase 8 restent `pending` — mais l'enforcement App Check Firestore/Storage est en réalité **déjà actif** en console : déficit de preuve, pas de blocage technique | P1 (requalifié) |
 | 4 | `docs/DEPENDENCY_AUDIT.md` reste périmé : déclare 9 modérées / 0 haute, la réalité est 7-9 modérées + 1 haute (`brace-expansion`, DoS) | P1 |
@@ -152,14 +152,80 @@ micro-IA. Si V2 devient indisponible, l'application bascule sur un chemin qui,
 en l'état, retourne des transcriptions vides. Le mécanisme de résilience que ce
 smoke test a précisément pour rôle de vérifier ne fonctionne pas.
 
-Pistes à investiguer (non tranchées ici, hors périmètre d'un audit) : le
-routeur de modes de V1 (`HYBRID` / `GOOGLE_ONLY` / `WHISPER_ONLY`,
-`functions/index.js` l. 780), un quota ou une clé de fournisseur épuisée sur la
-branche empruntée par V1, ou le garde-fou de score bas mentionné l. 2192 qui
-laisserait passer un texte vide sans lever d'erreur.
-
 **Ce constat est resté invisible au moins 10 jours** : il ne pouvait pas être
 détecté tant que le script échouait avant d'atteindre cette étape.
+
+### 1.f Cause racine du fallback V1 (analyse de code)
+
+La chaîne est entièrement reconstituable dans `functions/index.js`.
+
+**Configuration par défaut** (l. 849 et 868) : `mode = "GOOGLE_ONLY"` et
+`ultraFastEnabled = false`. Donc `buildTryOrder("GOOGLE_ONLY")` (l. 1592)
+retourne **une seule tentative** : `["GOOGLE_ONLY"]`. Le `fallbackEnabled`
+n'a alors aucun effet — il n'y a pas de second provider à essayer.
+
+**Routage audio** (l. 1503) : `canUseGoogleStt()` retourne `true` dès que
+l'audio n'est pas du WAV — commentaire à l'appui : *« may be raw PCM or other;
+let Google try »*. Un conteneur m4a/AAC est donc transmis à Google STT
+configuré en dur en `encoding: "LINEAR16"` (l. 1532). Google ne décode rien,
+ne lève pas d'erreur, et renvoie simplement zéro résultat : `text = ""`
+(l. 1546-1548).
+
+**Absorption silencieuse de l'échec** (l. 2243-2270) : `best` est affecté à
+chaque tentative *techniquement* réussie, y compris avec `out.text` vide. Le
+seul garde-fou est `if (!best) throw` — il ne se déclenche que si **toutes**
+les tentatives ont levé une exception. Un provider qui répond « sans erreur
+mais sans texte » remplit `best`, neutralise le chemin d'erreur, et la
+fonction retourne HTTP 200 avec `text: ""`. Aucune vérification que
+`best.text` est non vide n'existe avant le `return best` (l. 2337).
+
+**Pourquoi V2 réussit sur le même audio** : `micro_ia_callable.ts` mappe
+explicitement les types MIME vers les encodages Google (l. 35-46) et
+`googleEligible()` retourne `false` pour `audio/mp4`, qui n'est dans aucune
+branche du mapping. V2 route donc vers OpenAI Whisper, qui gère nativement le
+m4a. V2 a le contrôle d'éligibilité que V1 n'a pas.
+
+### 1.g Portée réelle : le mobile est concerné, pas seulement le fallback
+
+Le point suivant dépasse le cadre du smoke test.
+
+- Le client Flutter enregistre en **AAC/m4a** sur mobile
+  (`lib/pages/publish_offer_page.dart` l. 3200-3204 : `AudioEncoder.aacLc`,
+  extension `m4a` ; trace utilisateur l. 3266 : « Enregistrement mobile lancé
+  en AAC/m4a ») et envoie `audioContentType: 'audio/mp4'` (l. 3490).
+- Le choix V1/V2 est piloté par Remote Config
+  (`micro_ia_remote_config.dart`) : `shouldUseV2()` retourne `false` si le flag
+  est absent ou le rollout à 0. **Les valeurs par défaut du dépôt sont
+  `micro_ia_v2_enabled = false` et `rollout = 0`** (l. 45-46).
+
+Autrement dit, avec la configuration par défaut, un enregistrement vocal
+mobile emprunte V1 et retombe exactement sur la chaîne décrite en §1.f :
+transcription vide renvoyée en HTTP 200, sans erreur remontée à
+l'utilisateur. V1 ne fonctionne de façon fiable que pour du WAV PCM 16 bits.
+
+**À vérifier en console** (non lisible depuis le dépôt) : les valeurs réelles
+de `micro_ia_v2_enabled` et `micro_ia_v2_rollout_percent` dans Remote Config.
+Elles déterminent la part d'utilisateurs actuellement exposée. Deux cas :
+
+- rollout à 100 % → les utilisateurs passent par V2 et sont épargnés, mais le
+  filet de sécurité V1 reste inopérant en cas de bascule ;
+- rollout à 0 % ou flag absent → **la dictée vocale mobile renvoie des
+  transcriptions vides pour tout le monde**.
+
+Ce point est directement lié à l'objet de cette branche : publier l'AAB
+Android sans avoir tranché la configuration V1/V2 revient à livrer la dictée
+vocale dans un état potentiellement non fonctionnel.
+
+### 1.h Deux défauts secondaires relevés au passage
+
+- `providerWhisper` (l. 1555) nomme systématiquement le fichier `audio.wav`
+  quel que soit le format réel. L'API OpenAI déduit le format de l'extension :
+  un vrai m4a serait donc mal étiqueté. Sans effet dans le mode `GOOGLE_ONLY`
+  par défaut, mais actif dès que `WHISPER_ONLY` ou `HYBRID` est retenu.
+- Le commentaire l. 2192 annonce un fallback « si le score est extrêmement bas
+  (ex : texte vide) ». L'intention est correcte, mais elle n'est pas réalisée :
+  le fallback n'existe que s'il reste une tentative dans `tryOrder`, ce qui
+  n'est jamais le cas dans le mode par défaut.
 
 ## 2. Checklist Play Store — un point factuellement faux (P1, doc)
 
@@ -291,10 +357,21 @@ mode Stripe — pas une clé en dur. Aucun secret réel trouvé.
 
 ## Recommandations priorisées
 
-- **P0 — nouveau, à traiter en priorité** : investiguer et corriger le fallback
-  V1 du pipeline micro-IA, qui renvoie des transcriptions vides en production
-  (§1.e). C'est le seul constat de cet audit qui décrit un dysfonctionnement
-  subi par les utilisateurs en cas de bascule, et non un écart de process.
+- **P0 — immédiat, sans code** : relever `micro_ia_v2_enabled` et
+  `micro_ia_v2_rollout_percent` dans Remote Config (§1.g). Cette seule lecture
+  dit si la dictée vocale mobile est actuellement dégradée pour les
+  utilisateurs ou seulement en cas de bascule. Rien d'autre ne peut être
+  priorisé correctement avant.
+- **P0 — corriger V1** (§1.f), trois défauts distincts et indépendants :
+  1. ne plus renvoyer un transcript vide en succès (ajouter un contrôle sur
+     `best.text` avant le `return`, ou ne pas affecter `best` sur un résultat
+     vide) — c'est le défaut qui transforme une panne en silence ;
+  2. donner à V1 un contrôle d'éligibilité par type MIME comme celui de V2,
+     pour ne pas envoyer de m4a à un décodeur `LINEAR16` ;
+  3. nommer correctement le fichier transmis à Whisper (§1.h).
+- **P1** — Reconsidérer le mode par défaut `GOOGLE_ONLY` : il réduit
+  `tryOrder` à une seule tentative et rend le mot « fallback » trompeur dans
+  tout le code environnant.
 - **P0 — fait le 14/08** : rôle IAM `serviceAccountTokenCreator` accordé au
   compte de service CI (§1) ; les correctifs du jeton App Check (§1.b) et du
   TTL (§1.c) sont inclus dans ce commit. La CI ne redeviendra verte qu'une fois
