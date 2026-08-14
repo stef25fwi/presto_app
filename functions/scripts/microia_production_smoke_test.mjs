@@ -44,8 +44,9 @@ async function createFirebaseTokens() {
   });
   // L'API Authentication applique App Check : le jeton doit être créé avant
   // l'échange et joint à la requête, sinon Identity Toolkit répond 401.
+  // 30 minutes est le TTL minimal accepté par l'API App Check.
   const appCheck = await getAppCheck().createToken(appId, {
-    ttlMillis: 10 * 60 * 1000,
+    ttlMillis: 30 * 60 * 1000,
   });
   const authResponse = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${encodeURIComponent(apiKey)}`,
