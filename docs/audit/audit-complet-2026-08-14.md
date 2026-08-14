@@ -25,7 +25,7 @@ d'exécution (voir limites en fin de document) ; l'audit s'appuie sur :
 | 1 bis | **Une fois la plomberie réparée, le test révèle un défaut réel** : quand un provider STT répond sans erreur mais sans texte, V1 présentait ce résultat vide comme un **succès HTTP 200**. Une transcription ratée était donc invisible dans les métriques serveur et empêchait la chaîne de fallback de s'enclencher. Corrigé ici | P1 |
 | 2 | La checklist Play Store affirme au point 1.1 qu'« aucun AAB release n'a jamais été produit » — **faux** : un run réussi existe (`release_android.yml`, run du 2026-07-30, AAB construit et signé, upload Play Console volontairement `skipped`) | P1 — doc à corriger |
 | 3 | 7 des 9 contrôles de sécurité Phase 8 restent `pending` — mais l'enforcement App Check Firestore/Storage est en réalité **déjà actif** en console : déficit de preuve, pas de blocage technique | P1 (requalifié) |
-| 4 | `docs/DEPENDENCY_AUDIT.md` reste périmé : déclare 9 modérées / 0 haute, la réalité est 7-9 modérées + 1 haute (`brace-expansion`, DoS) | P1 |
+| 4 | `docs/DEPENDENCY_AUDIT.md` était périmé : déclarait 9 modérées / 0 haute, masquant `brace-expansion` (haute, DoS). Régénéré ici : 1 haute / 7 modérées | P1 — corrigé |
 | 5 | Cloud Functions : build et **307/307 tests passent** (223 lors du dernier audit — progression réelle) | ✅ sain |
 | 6 | Dette structurelle : 18 fichiers Dart/TS dépassent 1200 lignes (19 au dernier audit) ; le plus gros fichier est passé de 7218 à 3901 lignes — découpage réel en cours | 🟡 en amélioration |
 | 7 | Aucun secret en dur détecté ; `firestore.rules` quasi inchangé depuis le 29/07, design toujours sain | ✅ sain |
@@ -325,10 +325,17 @@ second échec de la CI décrit au §1.
   `google-gax`/`@google-cloud/firestore` (dépendances directes
   `@google-cloud/speech`, `@google-cloud/vision`).
 
-`docs/DEPENDENCY_AUDIT.md` déclare toujours 9 modérées / **0 haute** : la
-vulnérabilité `brace-expansion` (haute) reste non documentée. Le correctif
-`npm audit fix --force` imposerait toujours un downgrade cassant de
-`firebase-admin` vers 10.3.0 — à ne pas appliquer sans étude d'impact.
+`docs/DEPENDENCY_AUDIT.md` déclarait 9 modérées / **0 haute**, masquant la
+vulnérabilité `brace-expansion` (haute). **Régénéré dans ce commit** avec le
+générateur officiel du dépôt (la logique de
+`.github/workflows/dependency-audit-report.yml`, reproduite à l'identique) :
+il annonce désormais 1 haute et 7 modérées. Le rapport était figé depuis le
+2026-08-08.
+
+Le correctif `npm audit fix --force` imposerait toujours un downgrade cassant
+de `firebase-admin` vers 10.3.0 — à ne pas appliquer sans étude d'impact.
+`brace-expansion` est en revanche corrigeable par un simple `npm audit fix`
+d'après le rapport.
 
 ## 5. Cloud Functions — build et tests (sain, progression)
 
@@ -407,8 +414,9 @@ mode Stripe — pas une clé en dur. Aucun secret réel trouvé.
   `docs/evidence/security/` et passer ces deux contrôles à `verified` : ils
   sont **déjà appliqués en production** (§3). Seul
   `app-check-functions-enforced` demande une action technique réelle.
-- **P1** — Régénérer `docs/DEPENDENCY_AUDIT.md` pour refléter la vulnérabilité
-  haute (`brace-expansion`) non documentée (§4).
+- **P1 — fait dans ce commit** : `docs/DEPENDENCY_AUDIT.md` régénéré, la
+  vulnérabilité haute `brace-expansion` y figure désormais (§4). Reste à
+  décider de son traitement (`npm audit fix` suffit d'après le rapport).
 - **P1** — Le point 1.1 de la checklist Play Store a été corrigé dans ce
   commit (§2) ; revalider les autres points 🔴 de la section 1
   (`PLAY_SERVICE_ACCOUNT_JSON`, dépôt manuel initial) qui restent d'actualité.

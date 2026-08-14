@@ -1,26 +1,6 @@
 {
   "auditReportVersion": 2,
   "vulnerabilities": {
-    "@google-cloud/firestore": {
-      "name": "@google-cloud/firestore",
-      "severity": "moderate",
-      "isDirect": false,
-      "via": [
-        "google-gax"
-      ],
-      "effects": [
-        "firebase-admin"
-      ],
-      "range": "7.5.0-pre.0 || 7.6.0 - 7.11.6",
-      "nodes": [
-        "node_modules/@google-cloud/firestore"
-      ],
-      "fixAvailable": {
-        "name": "firebase-admin",
-        "version": "10.3.0",
-        "isSemVerMajor": true
-      }
-    },
     "@google-cloud/storage": {
       "name": "@google-cloud/storage",
       "severity": "moderate",
@@ -42,12 +22,58 @@
         "isSemVerMajor": true
       }
     },
+    "brace-expansion": {
+      "name": "brace-expansion",
+      "severity": "high",
+      "isDirect": false,
+      "via": [
+        {
+          "source": 1130589,
+          "name": "brace-expansion",
+          "dependency": "brace-expansion",
+          "title": "brace-expansion: DoS via unbounded expansion length causing an out-of-memory process crash",
+          "url": "https://github.com/advisories/GHSA-mh99-v99m-4gvg",
+          "severity": "high",
+          "cwe": [
+            "CWE-400",
+            "CWE-770"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": ">=2.0.0 <2.1.3"
+        },
+        {
+          "source": 1130736,
+          "name": "brace-expansion",
+          "dependency": "brace-expansion",
+          "title": "brace-expansion: DoS via unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation",
+          "url": "https://github.com/advisories/GHSA-rgw5-rvv9-x895",
+          "severity": "high",
+          "cwe": [
+            "CWE-400",
+            "CWE-770"
+          ],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          },
+          "range": ">=2.0.0 <2.1.4"
+        }
+      ],
+      "effects": [],
+      "range": "2.0.0 - 2.1.3",
+      "nodes": [
+        "node_modules/brace-expansion"
+      ],
+      "fixAvailable": true
+    },
     "firebase-admin": {
       "name": "firebase-admin",
       "severity": "moderate",
       "isDirect": true,
       "via": [
-        "@google-cloud/firestore",
         "@google-cloud/storage"
       ],
       "effects": [
@@ -95,27 +121,6 @@
       ],
       "fixAvailable": true
     },
-    "google-gax": {
-      "name": "google-gax",
-      "severity": "moderate",
-      "isDirect": false,
-      "via": [
-        "retry-request",
-        "uuid"
-      ],
-      "effects": [
-        "@google-cloud/firestore"
-      ],
-      "range": "4.0.5-experimental - 4.6.1",
-      "nodes": [
-        "node_modules/@google-cloud/firestore/node_modules/google-gax"
-      ],
-      "fixAvailable": {
-        "name": "firebase-admin",
-        "version": "10.3.0",
-        "isSemVerMajor": true
-      }
-    },
     "retry-request": {
       "name": "retry-request",
       "severity": "moderate",
@@ -124,8 +129,7 @@
         "teeny-request"
       ],
       "effects": [
-        "@google-cloud/storage",
-        "google-gax"
+        "@google-cloud/storage"
       ],
       "range": "7.0.0 - 7.0.2",
       "nodes": [
@@ -183,7 +187,6 @@
       ],
       "effects": [
         "gaxios",
-        "google-gax",
         "teeny-request"
       ],
       "range": "<11.1.1",
@@ -201,18 +204,18 @@
     "vulnerabilities": {
       "info": 0,
       "low": 0,
-      "moderate": 9,
-      "high": 0,
+      "moderate": 7,
+      "high": 1,
       "critical": 0,
-      "total": 9
+      "total": 8
     },
     "dependencies": {
-      "prod": 342,
-      "dev": 109,
-      "optional": 53,
-      "peer": 5,
+      "prod": 304,
+      "dev": 59,
+      "optional": 86,
+      "peer": 0,
       "peerOptional": 0,
-      "total": 508
+      "total": 428
     }
   }
 }
