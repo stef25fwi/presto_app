@@ -6,6 +6,7 @@ import 'admin_contact_mail_detail_dialog.dart';
 import 'admin_contact_mail_list_tile.dart';
 import 'admin_contact_mail_models.dart';
 import 'admin_contact_mail_service.dart';
+import 'admin_contact_mail_states.dart';
 
 const adminContactMailboxAddress = 'contact@ilipresto.fr';
 
@@ -100,15 +101,11 @@ class _AdminContactMailboxSheetState extends State<AdminContactMailboxSheet> {
   }
 
   Widget _buildBody() {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
-      return _ErrorState(message: _error!, onRetry: _load);
+      return AdminContactMailErrorState(message: _error!, onRetry: _load);
     }
-    if (_items.isEmpty) {
-      return const _EmptyState();
-    }
+    if (_items.isEmpty) return const AdminContactMailEmptyState();
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView.separated(
@@ -146,7 +143,10 @@ class _InboxHeader extends StatelessWidget {
   final bool loading;
   final VoidCallback onRefresh;
 
-  const _InboxHeader({required this.loading, required this.onRefresh});
+  const _InboxHeader({
+    required this.loading,
+    required this.onRefresh,
+  });
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -188,65 +188,6 @@ class _InboxHeader extends StatelessWidget {
               icon: const Icon(Icons.close_rounded),
             ),
           ],
-        ),
-      );
-}
-
-class _ErrorState extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-
-  const _ErrorState({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.cloud_off_rounded,
-                size: 38,
-                color: Color(0xFFD93025),
-              ),
-              const SizedBox(height: 12),
-              Text(message, textAlign: TextAlign.center),
-              const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Réessayer'),
-              ),
-            ],
-          ),
-        ),
-      );
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.mark_email_read_outlined,
-                size: 42,
-                color: Color(0xFF0F9D58),
-              ),
-              SizedBox(height: 12),
-              Text(
-                'Aucun mail reçu pour le moment.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ],
-          ),
         ),
       );
 }
