@@ -14,7 +14,7 @@ Légende : 🔴 bloquant · 🟠 à faire avant publication en production · �
 
 | # | Point | État |
 |---|---|---|
-| 1.1 | 🔴 **Aucun AAB release n'a jamais été produit.** `release_android.yml` existe mais n'apparaît dans aucun run GitHub Actions. Le build release active `isMinifyEnabled` + `isShrinkResources` (`android/app/build.gradle.kts:69`) avec un `proguard-rules.pro` minimal : les régressions R8 (réflexion Firebase/UMP/reCAPTCHA) ne se voient qu'en release. Premier passage obligatoire avec `upload` décoché. | à faire |
+| 1.1 | 🟠 **Un premier AAB release a été produit avec succès** (`release_android.yml`, run du 2026-07-30, commit `33b6cc2`, `upload` décoché comme prévu). Le build release active `isMinifyEnabled` + `isShrinkResources` (`android/app/build.gradle.kts:69`) avec un `proguard-rules.pro` minimal : les régressions R8 (réflexion Firebase/UMP/reCAPTCHA) ne se voient qu'en release — reste à tester cet AAB sur appareil réel (1.6) avant tout second passage. | fait (à valider sur appareil) |
 | 1.2 | 🔴 **Secret `PLAY_SERVICE_ACCOUNT_JSON` absent** de l'environnement `recaptcha` (documenté « à créer »). Le workflow le contrôle désormais avant l'envoi (étape *Check Play Console credentials*) et échoue avec un message explicite plutôt qu'au fond de l'action d'upload — mais **le secret reste à créer**. | à faire |
 | 1.3 | 🔴 **Premier dépôt manuel obligatoire** : l'API Play refuse tout envoi tant qu'aucune version n'existe pour le package. Récupérer l'artefact `.aab` et le déposer à la main sur la piste interne. | à faire |
 | 1.4 | 🟠 Créer la fiche Play Console avec le package `fr.ilipresto.app` — **irréversible**, il doit correspondre exactement à `applicationId`. | à faire |
@@ -70,7 +70,7 @@ console, la déclaration restant un acte de l'éditeur.
 
 | # | Point | État |
 |---|---|---|
-| 6.1 | 🔴 **CI rouge sur `main`** : le workflow *AI production smoke* échoue à l'étape « Verify production Functions, Auth, App Check, fallback and logs » (run `30680761027`, commit `e5ddc88`). À diagnostiquer avant de figer une release candidate — c'est exactement le périmètre Auth/App Check qui conditionne le point 2.1. | à corriger |
+| 6.1 | 🔴 **CI rouge sur `main`, toujours active au 14/08** : le workflow *AI production smoke* échoue en continu (30/30 dernières exécutions depuis le 10/08, dernier run `31820005895`, commit `09bae36`) à l'étape « Verify production Functions, Auth, App Check, fallback and logs ». Cause identifiée : `Permission 'iam.serviceAccounts.signBlob' denied` — il manque le rôle IAM `roles/iam.serviceAccountTokenCreator` sur le compte de service CI dans le projet `presto-app-74abe`. Voir `docs/audit/audit-complet-2026-08-14.md` §1. À corriger avant de figer une release candidate — c'est exactement le périmètre Auth/App Check qui conditionne le point 2.1. | à corriger (cause identifiée) |
 | 6.2 | 🔴 `quality/mobile_readiness.json` : 7 contrôles sur 8 en `pending` — build Android, build iOS, permissions, notifications push sur appareil réel, deep links, métadonnées store, signature. Chacun demande une preuve versionnée. | à faire |
 | 6.3 | 🟠 **Deep links non validés** : aucun `assetlinks.json` dans le dépôt, aucun `intent-filter` de liens web au manifeste. Si les notifications ou les partages doivent ouvrir l'application, ajouter les App Links et publier `/.well-known/assetlinks.json` avec l'empreinte SHA-256 de la clé Play. | à faire |
 | 6.4 | 🟠 **Notifications push à valider sur appareil réel** (canal `ilipresto_messages`, icône `ic_notification`, réception en arrière-plan et application tuée). | à faire |

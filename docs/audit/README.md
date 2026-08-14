@@ -25,4 +25,5 @@ Un seuil ne doit jamais être abaissé pour faire passer une PR. Toute exception
 
 ## Derniers audits
 
+- [Audit complet — 2026-08-14](audit-complet-2026-08-14.md)
 - [Audit complet — 2026-07-29](audit-complet-2026-07-29.md)
