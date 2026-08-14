@@ -30,10 +30,17 @@ class _SignedOutConsultAuthPlatform extends FirebaseAuthPlatform {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  late FirebaseAuthPlatform originalAuthPlatform;
+
   setUpAll(() async {
     setupFirebaseCoreMocks();
     await Firebase.initializeApp();
+    originalAuthPlatform = FirebaseAuthPlatform.instance;
     FirebaseAuthPlatform.instance = _SignedOutConsultAuthPlatform();
+  });
+
+  tearDownAll(() {
+    FirebaseAuthPlatform.instance = originalAuthPlatform;
   });
 
   Future<void> pumpPage(WidgetTester tester, {String? categoryFilter}) async {
