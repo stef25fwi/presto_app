@@ -2198,6 +2198,7 @@ exports.microIaProcessAudio = onCall(
 
       let best = null;
       let lastErr = null;
+      const emptyAttempts = [];
       const _tStt = Date.now();
 
       for (let i = 0; i < tryOrder.length; i++) {
@@ -2233,12 +2234,29 @@ exports.microIaProcessAudio = onCall(
             audioInfo,
           });
 
+          const transcript = String(out.text || '').trim();
+
           console.log("[microIaProcessAudio] TRY", {
             requestId,
             attemptMode,
             score: quality.score,
-            textLen: (out.text || '').length,
+            textLen: transcript.length,
           });
+
+          // Un provider peut répondre sans erreur et sans texte (Google STT
+          // renvoie zéro résultat quand il ne reconnaît rien). Ce n'est pas un
+          // succès : sans ce garde-fou, `best` absorbe le vide et neutralise le
+          // seul contrôle existant (`if (!best)`), si bien que la fonction
+          // retourne HTTP 200 avec un transcript vide.
+          if (!transcript) {
+            emptyAttempts.push(attemptMode);
+            console.warn("[microIaProcessAudio] TRY_EMPTY", {
+              requestId,
+              attemptMode,
+            });
+            if (!fallbackEnabled) break;
+            continue;
+          }
 
           best = {
             modeUsed: attemptMode,
@@ -2263,6 +2281,14 @@ exports.microIaProcessAudio = onCall(
       }
 
       if (!best) {
+        // Distinction utile en exploitation : un provider qui répond sans rien
+        // reconnaître n'est pas une panne technique.
+        if (emptyAttempts.length > 0) {
+          throw new HttpsError(
+            "failed-precondition",
+            `Aucun texte reconnu dans l'audio (providers=${emptyAttempts.join(',')}, requestId=${requestId}).`
+          );
+        }
         throw new HttpsError(
           "internal",
           `All STT providers failed (requestId=${requestId}): ${lastErr?.message || 'unknown'}`
