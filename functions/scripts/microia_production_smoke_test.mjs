@@ -42,11 +42,19 @@ async function createFirebaseTokens() {
     aiSmokeTest: true,
     admin: true,
   });
+  // L'API Authentication applique App Check : le jeton doit être créé avant
+  // l'échange et joint à la requête, sinon Identity Toolkit répond 401.
+  const appCheck = await getAppCheck().createToken(appId, {
+    ttlMillis: 10 * 60 * 1000,
+  });
   const authResponse = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${encodeURIComponent(apiKey)}`,
     {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        "X-Firebase-AppCheck": appCheck.token,
+      },
       body: JSON.stringify({ token: customToken, returnSecureToken: true }),
     },
   );
@@ -54,9 +62,6 @@ async function createFirebaseTokens() {
   if (!authResponse.ok || !authPayload.idToken) {
     throw new Error(`Unable to exchange custom token: ${JSON.stringify(authPayload)}`);
   }
-  const appCheck = await getAppCheck().createToken(appId, {
-    ttlMillis: 10 * 60 * 1000,
-  });
   return { idToken: authPayload.idToken, appCheckToken: appCheck.token };
 }
 

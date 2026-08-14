@@ -23,7 +23,7 @@ d'exécution (voir limites en fin de document) ; l'audit s'appuie sur :
 |---|---|---|
 | 1 | `ai-production-smoke.yml` échoue en continu sur `main` depuis au moins le 10/08 (30/30 dernières exécutions) : `iam.serviceAccounts.signBlob` refusé au compte de service CI lors de la création de jetons Auth personnalisés | P0 |
 | 2 | La checklist Play Store affirme au point 1.1 qu'« aucun AAB release n'a jamais été produit » — **faux** : un run réussi existe (`release_android.yml`, run du 2026-07-30, AAB construit et signé, upload Play Console volontairement `skipped`) | P1 — doc à corriger |
-| 3 | 7 des 9 contrôles de sécurité Phase 8 restent `pending` sans preuve déposée, inchangé depuis le dernier audit (29/07) | P0 avant tout go-live |
+| 3 | 7 des 9 contrôles de sécurité Phase 8 restent `pending` — mais l'enforcement App Check Firestore/Storage est en réalité **déjà actif** en console : déficit de preuve, pas de blocage technique | P1 (requalifié) |
 | 4 | `docs/DEPENDENCY_AUDIT.md` reste périmé : déclare 9 modérées / 0 haute, la réalité est 7-9 modérées + 1 haute (`brace-expansion`, DoS) | P1 |
 | 5 | Cloud Functions : build et **307/307 tests passent** (223 lors du dernier audit — progression réelle) | ✅ sain |
 | 6 | Dette structurelle : 18 fichiers Dart/TS dépassent 1200 lignes (19 au dernier audit) ; le plus gros fichier est passé de 7218 à 3901 lignes — découpage réel en cours | 🟡 en amélioration |
@@ -61,6 +61,30 @@ au compte de service utilisé par `ai-production-smoke.yml` (identité fédéré
 sur lui-même (IAM → compte de service → Accorder l'accès), puis relancer le
 workflow.
 
+### 1.b Second blocage, masqué par le premier (corrigé dans ce commit)
+
+Le rôle IAM a été accordé le 2026-08-14 à
+`github-firebase-deploy@presto-app-74abe.iam.gserviceaccount.com` et la
+signature de jetons fonctionne désormais. Le workflow relancé échoue alors une
+étape plus loin, sur une cause **différente** que le blocage IAM masquait :
+
+```
+Error: Unable to exchange custom token:
+{"error":{"code":401,"message":"Firebase App Check token is invalid.",
+"status":"UNAUTHENTICATED"}}
+```
+
+`functions/scripts/microia_production_smoke_test.mjs` créait le jeton App
+Check **après** l'appel `signInWithCustomToken` à Identity Toolkit, et ne le
+joignait pas à la requête. Or l'enforcement App Check est actif sur l'API
+Authentication (§3), qui rejette donc l'échange. Corrigé ici : le jeton App
+Check est créé avant l'échange et transmis dans l'en-tête
+`X-Firebase-AppCheck`.
+
+Cet enchaînement illustre un point de méthode : la CI était rouge pour deux
+causes indépendantes empilées, la seconde invisible tant que la première
+bloquait.
+
 ## 2. Checklist Play Store — un point factuellement faux (P1, doc)
 
 Le point 1.1 de `docs/deployment/playstore-launch-checklist.md` affirme :
@@ -85,19 +109,41 @@ Aucune autre modification n'a été apportée depuis le 1er août à
 `quality/security-controls.json` : le reste de la checklist reste
 d'actualité.
 
-## 3. Sécurité — contrôles Phase 8 (P0, inchangé)
+## 3. Sécurité — contrôles Phase 8 (P0, à requalifier)
 
 ```
 node tools/quality/check_security_controls.mjs
 → {"ready":true,"total":9,"verified":2,"pending":7}
 ```
 
-Toujours seulement 2 contrôles `verified` (blocage previews Firebase → prod,
-CodeQL actif) ; les 7 mêmes contrôles restent `pending` sans preuve dans
-`docs/evidence/security/` (le dossier n'a que `ai/`, `go-live/`,
-`messaging/`, `ux/`) : App Check Firestore/Storage/Functions, restriction des
-clés API, inventaire des secrets, audit de dépendances propre, revue OWASP.
-Aucun changement depuis l'audit du 29/07.
+Toujours seulement 2 contrôles `verified` dans le dépôt (blocage previews
+Firebase → prod, CodeQL actif) ; les 7 mêmes contrôles restent `pending` sans
+preuve dans `docs/evidence/security/` (le dossier n'a que `ai/`, `go-live/`,
+`messaging/`, `ux/`).
+
+**Écart important entre le dépôt et la réalité (constaté en console Firebase
+le 2026-08-14)** : l'enforcement App Check est en fait **déjà actif** sur
+plusieurs API, alors que `quality/security-controls.json` les déclare
+`pending` :
+
+| Contrôle | État déclaré (dépôt) | État réel (console App Check) |
+|---|---|---|
+| `app-check-firestore-enforced` | `pending` | **Appliqué** — 100 % de requêtes validées |
+| `app-check-storage-enforced` | `pending` | **Appliqué** |
+| `app-check-functions-enforced` | `pending` | **non appliqué** (console propose encore de l'activer) |
+
+Sont également appliqués mais hors périmètre des 9 contrôles : Realtime
+Database, Firebase AI Logic (mode basique), Authentication (99 % validées) et
+Places API.
+
+Deux contrôles sur trois sont donc **satisfaits dans les faits mais non
+documentés** : le blocage n'est pas technique, c'est un déficit de preuve. Il
+suffit de déposer les captures/exports correspondants dans
+`docs/evidence/security/` et de passer les statuts à `verified`. Seul
+`app-check-functions-enforced` demande une action réelle.
+
+À noter : c'est précisément cet enforcement sur Authentication qui provoque le
+second échec de la CI décrit au §1.
 
 ## 4. Dépendances (P1, inchangé)
 
@@ -163,16 +209,19 @@ mode Stripe — pas une clé en dur. Aucun secret réel trouvé.
 - `quality-baseline.yml` et `security-controls.yml` : 5 dernières exécutions
   sur `main` toutes en succès (jusqu'au 2026-08-14T16:14Z).
 - `ai-production-smoke.yml` : rouge en continu (§1) — seule anomalie CI
-  détectée dans ce périmètre.
+  détectée dans ce périmètre. Les deux causes racines sont identifiées et
+  traitées (IAM en console, jeton App Check dans le script) ; un run vert reste
+  à obtenir pour clore le point.
 
 ## Recommandations priorisées
 
-- **P0** — Corriger le rôle IAM `serviceAccountTokenCreator` manquant sur le
-  compte de service CI pour rétablir `ai-production-smoke.yml` (§1) : c'est le
-  seul bloquant technique nouveau et il conditionne la vérification App
-  Check/Auth avant toute release Android.
-- **P0** — Statuer sur les 7 contrôles de sécurité Phase 8 en attente (§3),
-  inchangé depuis deux audits consécutifs.
+- **P0 — fait le 14/08** : rôle IAM `serviceAccountTokenCreator` accordé au
+  compte de service CI (§1) ; le correctif du jeton App Check dans le script de
+  smoke (§1.b) est inclus dans ce commit. À confirmer par un run vert.
+- **P1** — Déposer les preuves App Check Firestore et Storage dans
+  `docs/evidence/security/` et passer ces deux contrôles à `verified` : ils
+  sont **déjà appliqués en production** (§3). Seul
+  `app-check-functions-enforced` demande une action technique réelle.
 - **P1** — Régénérer `docs/DEPENDENCY_AUDIT.md` pour refléter la vulnérabilité
   haute (`brace-expansion`) non documentée (§4).
 - **P1** — Le point 1.1 de la checklist Play Store a été corrigé dans ce
