@@ -31,7 +31,7 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     environment: recaptcha
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     env:
       DEPLOYED_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
       CANARY_RECIPIENT: ${{ github.event_name == 'workflow_dispatch' && inputs.canary_recipient || 'contact@ilipresto.fr' }}
@@ -168,16 +168,30 @@ jobs:
           echo "WEBHOOK_URL=https://europe-west1-presto-app-74abe.cloudfunctions.net/handleEmailProviderWebhook" >> "$GITHUB_ENV"
           echo "EMAIL_FROM=iliprestō <noreply@ilipresto.fr>" >> "$GITHUB_ENV"
           echo "EMAIL_REPLY_TO=contact@ilipresto.fr" >> "$GITHUB_ENV"
+          echo "INBOUND_DOMAIN=inbound.ilipresto.fr" >> "$GITHUB_ENV"
+          echo "INBOUND_WEBHOOK_URL=https://europe-west1-presto-app-74abe.cloudfunctions.net/handleInboundContactEmailWebhook" >> "$GITHUB_ENV"
+          echo "INBOUND_SOURCE_ADDRESS=contact@ilipresto.fr" >> "$GITHUB_ENV"
+          echo "INBOUND_TEST_SENDER=noreply@ilipresto.fr" >> "$GITHUB_ENV"
           echo "Credential Brevo validée via /v3/account : $valid_source."
 
-      - name: Ensure Brevo webhook configuration
+      - name: Ensure Brevo transactional webhook configuration
         run: bash scripts/create_brevo_webhook.sh
+
+      - name: Ensure Brevo inbound contact webhook configuration
+        run: bash scripts/create_brevo_inbound_contact_webhook.sh
 
       - name: Verify secured production webhook
         run: |
           node functions/scripts/brevo_webhook_smoke_test.mjs \
             --url "$WEBHOOK_URL" \
             --secret "$BREVO_WEBHOOK_SECRET"
+
+      - name: Verify Brevo inbound MX delegation
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p quality
+          node functions/scripts/check_brevo_inbound_dns.mjs 2>&1 | tee quality/brevo-inbound-dns.log
 
       - name: Repair and certify Brevo domain, sender, webhook and real delivery
         env:
@@ -195,6 +209,16 @@ jobs:
             --timeout-ms 180000 \
             --output quality/brevo-production-certification.json
 
+      - name: Certify contact@ilipresto.fr inbound routing end-to-end
+        env:
+          GOOGLE_CLOUD_PROJECT: presto-app-74abe
+          GCLOUD_PROJECT: presto-app-74abe
+          INBOUND_E2E_TIMEOUT_MS: '180000'
+        shell: bash
+        run: |
+          set -o pipefail
+          node functions/scripts/brevo_inbound_contact_e2e.mjs 2>&1 | tee quality/brevo-inbound-e2e.log
+
       - name: Archive certification evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -203,6 +227,8 @@ jobs:
           path: |
             quality/brevo-production-certification.json
             quality/brevo-runtime-canary.log
+            quality/brevo-inbound-dns.log
+            quality/brevo-inbound-e2e.log
           if-no-files-found: warn
           retention-days: 90
 
@@ -217,10 +243,19 @@ jobs:
             echo '- Domaine : `ilipresto.fr`'
             echo '- Expéditeur : `noreply@ilipresto.fr`'
             echo '- Reply-To : `contact@ilipresto.fr`'
-            echo '- Webhook : Bearer + événements transactionnels complets'
-            echo "- Canary E2E : \`$CANARY_RECIPIENT\`"
+            echo '- Webhook transactionnel : Bearer + événements complets'
+            echo '- Domaine inbound : `inbound.ilipresto.fr`'
+            echo '- Webhook inbound : `handleInboundContactEmailWebhook` + Bearer'
+            echo '- Routage attendu : `contact@ilipresto.fr` → `contact@inbound.ilipresto.fr` → Firestore `adminInboundEmails`'
+            echo "- Canary E2E sortant : \`$CANARY_RECIPIENT\`"
             if [ -f quality/brevo-runtime-canary.log ]; then
               grep 'BREVO_RUNTIME_CANARY_RESULT=' quality/brevo-runtime-canary.log | tail -1 | sed 's/^/- Runtime Firebase : `/' | sed 's/$/`/' || true
+            fi
+            if [ -f quality/brevo-inbound-dns.log ]; then
+              grep 'BREVO_INBOUND_DNS_RESULT=' quality/brevo-inbound-dns.log | tail -1 | sed 's/^/- DNS inbound : `/' | sed 's/$/`/' || true
+            fi
+            if [ -f quality/brevo-inbound-e2e.log ]; then
+              grep 'BREVO_INBOUND_E2E_RESULT=' quality/brevo-inbound-e2e.log | tail -1 | sed 's/^/- Inbound E2E : `/' | sed 's/$/`/' || true
             fi
             if [ -f quality/brevo-production-certification.json ]; then
               node -e 'const r=require("./quality/brevo-production-certification.json"); console.log(`- Certifié : **${r.certified ? "OUI" : "NON"}**`); for (const a of r.repairActions || []) console.log(`- 🔧 réparation: ${a}`); for (const c of r.checks) console.log(`- ${c.ok ? "✅" : "❌"} ${c.name}`);'
@@ -237,9 +272,9 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$STATUS_STATE" = "success" ]; then
-            description="Brevo production certifié E2E"
+            description="Brevo production + inbound contact certifiés E2E"
           else
-            description="Certification Brevo production en échec"
+            description="Certification Brevo production/inbound en échec"
           fi
           export description
           payload="$(node -e 'console.log(JSON.stringify({state:process.env.STATUS_STATE,context:process.env.BREVO_STATUS_CONTEXT,description:process.env.description,target_url:process.env.RUN_URL}))')"
