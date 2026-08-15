@@ -4,12 +4,107 @@
   "status": "in_progress",
   "updatedAt": "2026-08-04",
   "controls": [
-    {"id":"system-boundaries","status":"implemented","evidence":["docs/architecture/system-overview.md","docs/architecture/data-flows.md"]},
-    {"id":"critical-data-flows","status":"implemented","evidence":["docs/architecture/data-flows.md"]},
-    {"id":"architecture-budgets","status":"in_progress","evidence":["quality/technical-debt-register.md","tools/quality/audit_repository.py"]},
-    {"id":"p0-debt","status":"pending","evidence":["quality/technical-debt-register.md"]},
-    {"id":"repository-audit","status":"pending","evidence":[]},
-    {"id":"flutter-analysis","status":"pending","evidence":[]},
-    {"id":"functions-build","status":"pending","evidence":[]}
+    {
+      "id": "system-boundaries",
+      "objective": "Les frontières du système sont documentées : couches Flutter, services, Cloud Functions et données.",
+      "doneWhen": [
+        "Le découpage entre pages, widgets, services et repositories est décrit.",
+        "Les responsabilités des Cloud Functions et leur regroupement par module sont explicites.",
+        "Tout nouveau module trouve sa place sans ambiguïté dans le schéma."
+      ],
+      "validationCommands": [
+        "Lecture de docs/architecture/system-overview.md et docs/architecture/data-flows.md"
+      ],
+      "status": "implemented",
+      "evidence": [
+        "docs/architecture/system-overview.md",
+        "docs/architecture/data-flows.md"
+      ]
+    },
+    {
+      "id": "critical-data-flows",
+      "objective": "Les flux de données critiques sont tracés de bout en bout : publication d'annonce, messagerie, paiement, micro-IA.",
+      "doneWhen": [
+        "Chaque flux critique indique son point d'entrée, ses écritures Firestore et ses effets de bord.",
+        "Les données personnelles traversant chaque flux sont identifiées."
+      ],
+      "validationCommands": [
+        "Lecture de docs/architecture/data-flows.md"
+      ],
+      "status": "implemented",
+      "evidence": [
+        "docs/architecture/data-flows.md"
+      ]
+    },
+    {
+      "id": "architecture-budgets",
+      "objective": "Aucun fichier Flutter ne dépasse le budget de taille défini par type : 500 lignes pour un écran, 250 pour un widget.",
+      "doneWhen": [
+        "`check_flutter_architecture_size.py` ne rapporte aucun dépassement.",
+        "Les budgets de quality/flutter_architecture_size_budget.json sont respectés sans exception non documentée."
+      ],
+      "validationCommands": [
+        "python3 tools/quality/check_flutter_architecture_size.py"
+      ],
+      "status": "in_progress",
+      "evidence": [
+        "quality/technical-debt-register.md",
+        "tools/quality/audit_repository.py"
+      ]
+    },
+    {
+      "id": "p0-debt",
+      "objective": "Aucune dette classée P0 ne subsiste, c'est-à-dire aucun fichier source de plus de 1200 lignes.",
+      "doneWhen": [
+        "Le rapport oversized-files.md ne contient plus aucune ligne de priorité P0.",
+        "Les entrées P0 de quality/technical-debt-register.md sont closes ou requalifiées avec justification."
+      ],
+      "validationCommands": [
+        "python3 tools/quality/audit_repository.py --output-dir quality_reports/local"
+      ],
+      "status": "pending",
+      "evidence": [
+        "quality/technical-debt-register.md"
+      ]
+    },
+    {
+      "id": "repository-audit",
+      "objective": "L'audit de dépôt s'exécute et respecte les seuils de quality/quality-gates.json.",
+      "doneWhen": [
+        "La commande sort en succès avec --enforce, donc aucun fichier au-delà du plafond dur et couverture au-dessus du minimum."
+      ],
+      "validationCommands": [
+        "python3 tools/quality/audit_repository.py --output-dir quality_reports/local --enforce"
+      ],
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "flutter-analysis",
+      "objective": "L'analyse statique Flutter passe sans aucun diagnostic, y compris les informations.",
+      "doneWhen": [
+        "`flutter analyze --fatal-infos` sort en succès.",
+        "Aucune règle n'est ajoutée à la liste des diagnostics ignorés de analysis_options.yaml pour y parvenir."
+      ],
+      "validationCommands": [
+        "flutter analyze --fatal-infos"
+      ],
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "functions-build",
+      "objective": "Les Cloud Functions compilent et leur suite de tests passe intégralement.",
+      "doneWhen": [
+        "`npm --prefix functions run build` compile sans erreur TypeScript.",
+        "`npm --prefix functions test` passe sans échec."
+      ],
+      "validationCommands": [
+        "npm --prefix functions run build",
+        "npm --prefix functions test"
+      ],
+      "status": "pending",
+      "evidence": []
+    }
   ]
 }
