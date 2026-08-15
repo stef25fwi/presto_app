@@ -15,7 +15,6 @@ analyzer:
 
   errors:
     deprecated_member_use: ignore
-    use_build_context_synchronously: ignore
     strict_top_level_inference: ignore
 
 linter:

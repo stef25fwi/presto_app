@@ -10,9 +10,9 @@ du code et de la configuration de build.
 
 | # | Constat | Sévérité |
 |---|---|---|
-| 1 | **306 appels `print`/`debugPrint`** dans `lib/`, dont 17 fichiers seulement gardés par `kDebugMode`. Les plus fournis manipulent des données personnelles : notifications (29), compte (21), authentification sociale (18) | **P0 — fuite de données en journal** |
-| 2 | `use_build_context_synchronously` est **ignoré globalement** dans `analysis_options.yaml`. C'est une classe de bugs de plantage, pas une préférence de style | **P1** |
-| 3 | ProGuard : 29 lignes, 10 règles `-keep`. Les classes du SDK Firebase Android ne sont pas explicitement préservées, alors que R8 est actif en release | **P1 — risque de régression en release seulement** |
+| 1 | **316 appels `debugPrint`** dans `lib/`, écrivant dans logcat en release. Les plus fournis manipulent des données personnelles : notifications (29), compte (21), authentification sociale (18). Neutralisés le 15/08 en remplaçant l'implémentation de `debugPrint` au démarrage | P0 — **corrigé** |
+| 2 | `use_build_context_synchronously` était **ignoré globalement**. Mesure faite : **aucun site fautif** dans `lib/`, la discipline étant appliquée systématiquement (452 gardes `mounted`). Règle réactivée | P2 — garde-fou rétabli |
+| 3 | ProGuard ne préservait pas les classes du SDK Firebase Android alors que R8 est actif en release. Règles ajoutées le 15/08 — mais **l'AAB reste non testé sur appareil**, seule preuve qui vaudrait | **P1 — test sur appareil requis** |
 | 4 | Aucun `assetlinks.json`, aucun `intent-filter` de lien web : les App Links ne fonctionneront pas | P2 |
 | 5 | Configuration de build Android : minification, réduction de ressources, signature et versionnage corrects | ✅ sain |
 | 6 | Permissions Android minimales et justifiées : 5 permissions, toutes rattachées à une fonctionnalité réelle | ✅ sain |
@@ -54,41 +54,69 @@ clé sensible n'apparaît dans les journaux Functions
 (`forbiddenLogKeys`, `microia_production_smoke_test.mjs`). Le client n'a pas
 d'équivalent.
 
-**Correctif recommandé** : router toute la journalisation client par un
-utilitaire unique qui n'émet rien hors `kDebugMode`, puis réactiver
-`avoid_print` pour empêcher la réintroduction. Le volume rend la reprise
-mécanique mais elle n'est pas risquée.
+**Correctif appliqué le 15/08.** La mesure a orienté la solution : sur 318
+appels, **316 sont des `debugPrint`** et les 2 `print` bruts sont déjà gardés
+par `kDebugMode`. Or Flutter expose `debugPrint` comme un point d'extension
+réassignable. Son implémentation est donc remplacée au démarrage en release
+(`lib/bootstrap/release_logging.dart`), plutôt que de reprendre 316 appelants :
+un seul point de contrôle, aucun appelant modifié, et la sortie de débogage
+reste intacte en debug et en profil. Un test couvre les deux comportements.
 
-## 2. Diagnostics ignorés globalement (P1)
+Reste à faire : réactiver `avoid_print` pour empêcher la réintroduction de
+`print` bruts non gardés.
+
+## 2. Diagnostics ignorés globalement (requalifié P2)
 
 ```yaml
 analyzer:
   errors:
     deprecated_member_use: ignore
-    use_build_context_synchronously: ignore
+    use_build_context_synchronously: ignore   # retiré le 15/08
     strict_top_level_inference: ignore
 ```
 
-Les trois ne se valent pas.
+**Rectification du 15/08.** Une première version de ce document présentait
+`use_build_context_synchronously` comme « une classe de bugs de plantage »
+active dans le code. La mesure contredit cette crainte.
 
-`use_build_context_synchronously` signale l'usage d'un `BuildContext` après un
-`await`, alors que le widget peut avoir été démonté entre-temps. C'est une
-cause classique de plantage à l'exécution, pas une question de style — et les
-plantages remontent directement dans le pre-launch report de la Play Console,
-puis dans la note de l'application.
+Trois passes successives ont été nécessaires, les deux premières étant fausses :
 
-L'ignorer globalement supprime le seul garde-fou automatique contre cette
-famille de bugs, dans une application où les parcours asynchrones sont
-nombreux : publication d'annonce, messagerie, authentification.
+| Mesure | Sites signalés |
+|---|---:|
+| Heuristique initiale | 116 |
+| Heuristique resserrée | 61 |
+| **Mesure corrigée** | **0** |
 
-`deprecated_member_use` est défendable pendant une migration de SDK, à
-condition d'être borné dans le temps. `strict_top_level_inference` est une
-règle récente et son coût de mise en conformité peut légitimement être différé.
+L'erreur des deux premières était de confondre « ligne suivant un `await` » et
+« après la fin de l'instruction attendue ». Les sites signalés avaient tous
+cette forme :
 
-**Correctif recommandé** : réactiver `use_build_context_synchronously` et
-traiter les occurrences. Si le volume l'impose, le faire fichier par fichier
-avec des `// ignore:` locaux plutôt qu'une désactivation globale — un masque
-local est visible et se compte, un masque global s'oublie.
+```dart
+final confirmed = await showDialog<bool>(
+  context: context,        // argument de l'appel attendu
+  builder: (dialogContext) => AlertDialog(...),
+);
+```
+
+Le `BuildContext` y est passé **en argument de l'appel qu'on attend** : il est
+évalué avant la suspension, pas après. L'analyseur ne signale pas ce motif.
+
+Le détecteur corrigé a été validé sur un cas fautif connu, puis exécuté sur
+`lib/` : **1 379 `await` détectés, aucun suivi d'un usage de `BuildContext`
+sans garde**. Parmi eux, 227 sont immédiatement suivis d'une garde `mounted`,
+et le dépôt en compte 452 au total. La discipline n'est pas seulement
+appliquée, elle l'est systématiquement.
+
+**Conséquence** : la règle a été réactivée le 15/08. Le risque décrit
+initialement ne s'était pas matérialisé ; ce qui manquait était le garde-fou
+empêchant sa réapparition, et il est désormais en place. La confirmation
+définitive revient à `flutter analyze --fatal-infos` en intégration continue,
+non exécutable depuis l'environnement d'audit.
+
+Les deux autres diagnostics sont maintenus. `deprecated_member_use` est
+défendable pendant une migration de SDK, à condition d'être borné dans le
+temps. `strict_top_level_inference` est une règle récente dont le coût de mise
+en conformité peut légitimement être différé.
 
 Un critère a été ajouté le 15/08 au contrôle `flutter-analysis` de
 `quality/architecture-readiness.json` : ajouter une règle à cette liste ne vaut
@@ -116,11 +144,16 @@ la checklist indique qu'il n'a jamais été testé sur appareil réel. **Rien ne
 prouve donc à ce jour que le build minifié fonctionne.** C'est le point 1.6 de
 la checklist, et il conditionne tout le reste.
 
-**Correctif recommandé** : tester l'AAB existant sur appareil via `bundletool`
-ou un partage interne, en exerçant authentification Google, notifications et
-micro-IA. Ajouter les règles `-keep` Firebase seulement si une régression est
-constatée — ajouter des règles à l'aveugle réduit le bénéfice de R8 sans
-justification.
+**Correctif appliqué le 15/08** : ajout des règles `-keep` pour
+`com.google.firebase.**`, `com.google.android.gms.common.**`, les
+`ComponentRegistrar` et les annotations `PropertyName` de la désérialisation
+Firestore. Le fichier passe de 29 à 49 lignes et de 10 à 14 règles `keep`.
+
+**Ce correctif ne dispense pas du test sur appareil**, il en réduit seulement
+le risque d'échec. Tant que l'AAB n'a pas été exercé sur un téléphone réel —
+authentification Google, notifications, micro-IA — rien ne prouve que le build
+minifié fonctionne. C'est la seule action de cet audit qu'aucune modification
+de code ne peut remplacer.
 
 ## 4. App Links (P2)
 
@@ -174,17 +207,18 @@ Le découpage progresse réellement — le plus gros fichier est passé de 7 218
    aucun développement.
 2. **Neutraliser la journalisation en release** (§1), puis réactiver
    `avoid_print`. Reprise mécanique, risque faible, enjeu de conformité réel.
-3. **Réactiver `use_build_context_synchronously`** et traiter les occurrences
-   (§2). À faire avant la montée en charge du parc, les plantages pesant sur la
-   note de l'application.
+3. ~~Réactiver `use_build_context_synchronously`~~ — **fait le 15/08**, sans
+   correctif nécessaire, la mesure n'ayant révélé aucun site fautif (§2).
 4. Ajouter les App Links si les notifications doivent ouvrir un contenu précis
    (§4).
 
 ## Limites
 
 Le SDK Flutter n'est pas installé dans cet environnement : `flutter analyze` et
-`flutter test` n'ont pas été exécutés ici, et le nombre d'occurrences réelles
-de `use_build_context_synchronously` n'a donc pas pu être mesuré — seul le fait
-que la règle soit désactivée est établi. Ces vérifications restent couvertes
-par la CI. L'AAB n'a pas été construit ni analysé depuis cette session : les
+`flutter test` n'ont pas été exécutés ici, et le compte d'occurrences de
+`use_build_context_synchronously` repose sur un détecteur statique maison,
+validé sur un cas fautif connu mais moins fin que l'analyseur, qui tient compte
+du flot de contrôle réel. Ces vérifications restent couvertes
+par la CI — et c'est elle qui confirmera la réactivation de
+`use_build_context_synchronously` opérée au §2. L'AAB n'a pas été construit ni analysé depuis cette session : les
 conclusions sur R8 portent sur la configuration, pas sur un artefact.
