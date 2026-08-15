@@ -24,8 +24,8 @@ d'exécution (voir limites en fin de document) ; l'audit s'appuie sur :
 | 1 | `ai-production-smoke.yml` n'a **jamais** été vert : 89 exécutions depuis le 05/08, 0 succès. Trois causes de plomberie empilées (IAM `signBlob`, jeton App Check non transmis, TTL invalide), corrigées ici | P0 |
 | 1 bis | **Une fois la plomberie réparée, le test révèle un défaut réel** : quand un provider STT répond sans erreur mais sans texte, V1 présentait ce résultat vide comme un **succès HTTP 200**. Une transcription ratée était donc invisible dans les métriques serveur et empêchait la chaîne de fallback de s'enclencher. Corrigé ici | P1 |
 | 2 | La checklist Play Store affirme au point 1.1 qu'« aucun AAB release n'a jamais été produit » — **faux** : un run réussi existe (`release_android.yml`, run du 2026-07-30, AAB construit et signé, upload Play Console volontairement `skipped`) | P1 — doc à corriger |
-| 3 | 7 des 9 contrôles de sécurité Phase 8 restent `pending` — mais l'enforcement App Check Firestore/Storage est en réalité **déjà actif** en console : déficit de preuve, pas de blocage technique | P1 (requalifié) |
-| 4 | `docs/DEPENDENCY_AUDIT.md` était périmé : déclarait 9 modérées / 0 haute, masquant `brace-expansion` (haute, DoS). Régénéré ici : 1 haute / 7 modérées | P1 — corrigé |
+| 3 | 7 des 9 contrôles de sécurité Phase 8 étaient `pending` alors que **les trois contrôles App Check étaient déjà satisfaits** (Firestore et Storage en console, Functions dans le code : 83/83 callables). Déficit de preuve, pas blocage technique. Preuves déposées le 15/08 : `security-controls` passe de 2/9 à **5/9** | P1 — corrigé |
+| 4 | `docs/DEPENDENCY_AUDIT.md` était périmé : déclarait 9 modérées / 0 haute, masquant `brace-expansion` (haute, DoS). Régénéré, puis la vulnérabilité corrigée le 15/08 par `npm audit fix` — le dépôt est désormais à **0 haute / 7 modérées** | P1 — corrigé |
 | 5 | Cloud Functions : build et **307/307 tests passent** (223 lors du dernier audit — progression réelle) | ✅ sain |
 | 6 | Dette structurelle : 18 fichiers Dart/TS dépassent 1200 lignes (19 au dernier audit) ; le plus gros fichier est passé de 7218 à 3901 lignes — découpage réel en cours | 🟡 en amélioration |
 | 7 | Aucun secret en dur détecté ; `firestore.rules` quasi inchangé depuis le 29/07, design toujours sain | ✅ sain |
@@ -298,17 +298,28 @@ plusieurs API, alors que `quality/security-controls.json` les déclare
 |---|---|---|
 | `app-check-firestore-enforced` | `pending` | **Appliqué** — 100 % de requêtes validées |
 | `app-check-storage-enforced` | `pending` | **Appliqué** |
-| `app-check-functions-enforced` | `pending` | **non appliqué** (console propose encore de l'activer) |
+| `app-check-functions-enforced` | `pending` | **appliqué dans le code** — 83/83 callables, politique fail-closed en production |
 
 Sont également appliqués mais hors périmètre des 9 contrôles : Realtime
 Database, Firebase AI Logic (mode basique), Authentication (99 % validées) et
 Places API.
 
-Deux contrôles sur trois sont donc **satisfaits dans les faits mais non
-documentés** : le blocage n'est pas technique, c'est un déficit de preuve. Il
-suffit de déposer les captures/exports correspondants dans
-`docs/evidence/security/` et de passer les statuts à `verified`. Seul
-`app-check-functions-enforced` demande une action réelle.
+**Les trois contrôles sont satisfaits dans les faits mais non documentés** :
+le blocage n'est pas technique, c'est un déficit de preuve.
+
+Rectification apportée le 15/08 : une version antérieure de ce rapport
+affirmait que `app-check-functions-enforced` demandait une action réelle,
+en s'appuyant sur la console — qui n'y propose qu'un lien de documentation.
+C'était une mauvaise lecture. L'enforcement App Check des Cloud Functions ne
+se règle pas en console : c'est le paramètre `enforceAppCheck` de chaque
+callable. Le gate `tools/quality/check_functions_app_check.mjs` rapporte
+**83 callables et zéro violation**, et `app_check_policy.ts` est fail-closed
+en production (`if (isProduction) return true`, les variables d'environnement
+ne peuvent pas le désactiver).
+
+Les preuves des trois contrôles ont été déposées dans
+`docs/evidence/security/` et les statuts passés à `verified` :
+`security-controls` passe de 2/9 à 5/9, sans échec de gate.
 
 À noter : c'est précisément cet enforcement sur Authentication qui provoque le
 second échec de la CI décrit au §1.
@@ -410,13 +421,14 @@ mode Stripe — pas une clé en dur. Aucun secret réel trouvé.
   compte de service CI (§1) ; les correctifs du jeton App Check (§1.b) et du
   TTL (§1.c) sont inclus dans ce commit. La CI ne redeviendra verte qu'une fois
   le §1.e traité — l'échec restant est désormais un signal juste.
-- **P1** — Déposer les preuves App Check Firestore et Storage dans
-  `docs/evidence/security/` et passer ces deux contrôles à `verified` : ils
-  sont **déjà appliqués en production** (§3). Seul
-  `app-check-functions-enforced` demande une action technique réelle.
-- **P1 — fait dans ce commit** : `docs/DEPENDENCY_AUDIT.md` régénéré, la
-  vulnérabilité haute `brace-expansion` y figure désormais (§4). Reste à
-  décider de son traitement (`npm audit fix` suffit d'après le rapport).
+- **P1 — fait le 15/08** : preuves App Check Firestore, Storage et Functions
+  déposées dans `docs/evidence/security/`, statuts passés à `verified` (§3).
+  `security-controls` : 2/9 → 5/9. Restent `api-keys-restricted`,
+  `secrets-inventory-current` et `owasp-review-complete`.
+- **P1 — traité le 15/08** : `brace-expansion` corrigée par `npm audit fix`
+  (7 lignes de `package-lock.json`, aucun changement cassant, 308/308 tests
+  verts). Le dépôt passe de 1 haute + 7 modérées à **0 haute + 7 modérées**,
+  et `docs/DEPENDENCY_AUDIT.md` est régénéré en conséquence (§4).
 - **P1** — Le point 1.1 de la checklist Play Store a été corrigé dans ce
   commit (§2) ; revalider les autres points 🔴 de la section 1
   (`PLAY_SERVICE_ACCOUNT_JSON`, dépôt manuel initial) qui restent d'actualité.

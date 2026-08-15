@@ -8,6 +8,13 @@
     {
       "id": "design-system",
       "title": "Design system centralisé",
+      "doneWhen": [
+        "Les jetons de design sont centralisés et le thème les applique sans valeur codée en dur ailleurs.",
+        "Toute couleur ou espacement nouveau passe par les jetons."
+      ],
+      "validationCommands": [
+        "flutter test test/app/presto_design_system_accessibility_test.dart"
+      ],
       "status": "verified",
       "evidence": [
         "lib/app/presto_design_tokens.dart",
@@ -19,6 +26,13 @@
     {
       "id": "contrast-aa",
       "title": "Contrastes conformes WCAG AA",
+      "doneWhen": [
+        "Chaque couple texte/fond officiel atteint le ratio WCAG AA, soit 4,5:1 en texte normal et 3:1 en grand texte.",
+        "Le blanc sur orange reste interdit au texte normal, ce couple étant explicitement exclu par le test."
+      ],
+      "validationCommands": [
+        "flutter test test/app/presto_design_system_accessibility_test.dart"
+      ],
       "status": "verified",
       "evidence": [
         "lib/app/presto_design_tokens.dart",
@@ -30,6 +44,16 @@
     {
       "id": "keyboard-focus",
       "title": "Navigation clavier et focus visibles",
+      "doneWhen": [
+        "Les actions communes restent atteignables et actionnables au clavier — partiellement couvert par le test « les actions communes restent utilisables au clavier ».",
+        "L'indicateur de focus est visible sur tout élément interactif, y compris sur fond coloré.",
+        "L'ordre de tabulation suit l'ordre visuel sur les parcours principaux : publication d'annonce, messagerie, compte.",
+        "Aucun piège au clavier : toute surface ouverte peut être quittée sans souris."
+      ],
+      "validationCommands": [
+        "flutter test test/app/presto_design_system_accessibility_test.dart",
+        "Parcours manuel au clavier sur les trois parcours principaux, relevé daté à déposer dans docs/evidence/ux/accessibility-audit.md"
+      ],
       "status": "pending",
       "evidence": [
         "docs/evidence/ux/accessibility-audit.md",
@@ -39,6 +63,15 @@
     {
       "id": "screen-reader",
       "title": "Lecteur d’écran et sémantique",
+      "doneWhen": [
+        "Chaque élément interactif porte un libellé annoncé, sans « bouton » nu ni libellé dupliqué.",
+        "Les images porteuses de sens ont une description ; les images décoratives sont ignorées du lecteur.",
+        "Les changements d'état importants sont annoncés : envoi d'un message, erreur de formulaire, fin de transcription.",
+        "Validé sur appareil réel avec TalkBack sur Android et VoiceOver sur iOS, l'émulateur ne suffisant pas."
+      ],
+      "validationCommands": [
+        "Validation manuelle sur appareil réel, TalkBack et VoiceOver, relevé daté à déposer."
+      ],
       "status": "pending",
       "evidence": [
         "docs/evidence/ux/accessibility-audit.md"
@@ -47,6 +80,13 @@
     {
       "id": "touch-targets",
       "title": "Cibles tactiles accessibles",
+      "doneWhen": [
+        "Toute cible tactile mesure au moins 48 px, valeur imposée par le thème.",
+        "Deux cibles adjacentes restent distinguables au doigt."
+      ],
+      "validationCommands": [
+        "flutter test test/app/presto_design_system_accessibility_test.dart"
+      ],
       "status": "verified",
       "evidence": [
         "lib/app/presto_design_tokens.dart",
@@ -58,6 +98,15 @@
     {
       "id": "responsive-text-scale",
       "title": "Responsive et tailles de texte élevées",
+      "doneWhen": [
+        "Les largeurs 320 à 1440 px sont couvertes sans débordement ni troncature.",
+        "Un texte agrandi à 200 % reste lisible et n'écrase aucun contenu — partiellement couvert par le test « un bouton essentiel supporte 320 px et un texte à 200 % ».",
+        "La matrice de docs/evidence/ux/responsive-matrix.md est renseignée pour chaque écran principal."
+      ],
+      "validationCommands": [
+        "flutter test test/app/presto_design_system_accessibility_test.dart",
+        "Relevé de la matrice responsive à compléter."
+      ],
       "status": "pending",
       "evidence": [
         "docs/evidence/ux/responsive-matrix.md",
@@ -68,6 +117,14 @@
     {
       "id": "states-consistency",
       "title": "États loading, empty et error cohérents",
+      "doneWhen": [
+        "Les états de chargement, vide, erreur et succès existent sur chaque écran principal et suivent le même vocabulaire visuel.",
+        "Un état d'erreur propose toujours une action de sortie, jamais une impasse.",
+        "Aucun écran ne reste indéfiniment en chargement sans message ni recours."
+      ],
+      "validationCommands": [
+        "Revue écran par écran, relevé daté à déposer dans docs/evidence/ux/accessibility-audit.md"
+      ],
       "status": "pending",
       "evidence": [
         "docs/design/design-system.md",
@@ -77,6 +134,14 @@
     {
       "id": "accessibility-audit",
       "title": "Audit accessibilité des parcours principaux",
+      "doneWhen": [
+        "Un audit complet est consigné, daté, couvrant les sept contrôles précédents.",
+        "Chaque écart est soit corrigé, soit accepté avec une justification et une échéance.",
+        "L'audit précise les appareils et les technologies d'assistance utilisés."
+      ],
+      "validationCommands": [
+        "Audit à conduire. Ce contrôle ne peut être satisfait qu'en dernier, les sept autres étant ses prérequis."
+      ],
       "status": "pending",
       "evidence": [
         "docs/evidence/ux/accessibility-audit.md",

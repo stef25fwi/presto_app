@@ -27,3 +27,23 @@
 
 # Play Core (split install requis par Flutter deferred components / R8)
 -dontwarn com.google.android.play.core.**
+
+# Firebase — le SDK Android instancie plusieurs composants par réflexion, via
+# les registrars de composants et l'initialisation par ContentProvider. Les
+# règles io.flutter.plugins.** ci-dessus ne couvrent que la couche plugin
+# Flutter, pas les classes natives auxquelles elle délègue. Sans ces règles, un
+# build minifié peut compiler puis échouer à l'exécution sur l'authentification
+# ou les notifications — un défaut invisible en debug, R8 n'y étant pas appliqué.
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.common.** { *; }
+-keepclassmembers class * {
+    @com.google.firebase.components.ComponentRegistrar <methods>;
+}
+-dontwarn com.google.firebase.**
+
+# Modèles sérialisés vers/depuis Firestore : conserver les constructeurs et les
+# champs, la désérialisation reposant sur la réflexion.
+-keepclassmembers class * {
+    @com.google.firebase.firestore.PropertyName <fields>;
+    @com.google.firebase.firestore.PropertyName <methods>;
+}

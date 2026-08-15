@@ -3,13 +3,12 @@
 Rapport reproductible généré à partir de `functions/package-lock.json`.
 
 - Critiques : **0**
-- Hautes : **1**
+- Hautes : **0**
 - Modérées : **7**
 - Faibles : **0**
 
 | Module | Sévérité | Direct | Correctif disponible | Dépendances affectées |
 |---|---|---:|---:|---|
-| brace-expansion | high | non | oui |  |
 | @google-cloud/storage | moderate | non | oui | firebase-admin |
 | firebase-admin | moderate | oui | oui | firebase-functions |
 | firebase-functions | moderate | oui | oui |  |

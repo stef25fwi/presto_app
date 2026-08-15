@@ -5,6 +5,14 @@
   "controls": [
     {
       "id": "text-messaging",
+      "objective": "L'envoi et la réception de messages texte fonctionnent dans un fil de conversation, avec accusés d'état.",
+      "doneWhen": [
+        "Un message envoyé apparaît chez le destinataire et son état (envoyé, lu) est reflété.",
+        "Les cas d'erreur réseau laissent le message dans un état explicite, jamais silencieusement perdu."
+      ],
+      "validationCommands": [
+        "flutter test test/pages/messages/conversation_thread_page_interactions_test.dart"
+      ],
       "status": "in_progress",
       "evidence": [
         "lib/pages/messages/conversation_thread_page.dart",
@@ -13,6 +21,14 @@
     },
     {
       "id": "photo-file-messaging",
+      "objective": "L'envoi de photos et de fichiers depuis un fil de conversation aboutit et reste consultable.",
+      "doneWhen": [
+        "La pièce jointe est téléversée, affichée dans le fil et rouvrable après rechargement.",
+        "Les types et tailles refusés produisent un message d'erreur compréhensible."
+      ],
+      "validationCommands": [
+        "flutter test test/pages/messages/conversation_thread_page_confirmation_test.dart"
+      ],
       "status": "in_progress",
       "evidence": [
         "lib/pages/messages/conversation_thread_page.dart",
@@ -21,6 +37,14 @@
     },
     {
       "id": "audio-messaging",
+      "objective": "L'enregistrement, l'envoi et la lecture de messages vocaux fonctionnent de bout en bout.",
+      "doneWhen": [
+        "Un message vocal enregistré est envoyé, puis lisible par le destinataire.",
+        "La prévisualisation avant envoi permet d'annuler sans laisser de trace."
+      ],
+      "validationCommands": [
+        "flutter test test/pages/messages/conversation_thread_voice_preview_coverage_test.dart"
+      ],
       "status": "in_progress",
       "evidence": [
         "test/pages/messages/conversation_thread_voice_preview_coverage_test.dart"
@@ -28,6 +52,14 @@
     },
     {
       "id": "fullscreen-watermark",
+      "objective": "L'affichage plein écran d'un média porte un filigrane identifiant, non contournable par capture.",
+      "doneWhen": [
+        "Le filigrane est présent sur toute ouverture plein écran d'une image de conversation.",
+        "Il reste lisible quels que soient le format et l'orientation du média."
+      ],
+      "validationCommands": [
+        "flutter test test/pages/messages/conversation_thread_fullscreen_watermark_test.dart"
+      ],
       "status": "in_progress",
       "evidence": [
         "test/pages/messages/conversation_thread_fullscreen_watermark_test.dart"
@@ -35,6 +67,14 @@
     },
     {
       "id": "delete-confirmations",
+      "objective": "Toute suppression destructive dans la messagerie demande une confirmation explicite.",
+      "doneWhen": [
+        "Supprimer un message, une pièce jointe ou une conversation ouvre une confirmation.",
+        "Aucun chemin ne permet une suppression en un seul geste involontaire."
+      ],
+      "validationCommands": [
+        "flutter test test/pages/messages/conversation_thread_page_confirmation_test.dart"
+      ],
       "status": "in_progress",
       "evidence": [
         "test/pages/messages/conversation_thread_page_confirmation_test.dart"
@@ -42,6 +82,15 @@
     },
     {
       "id": "moderation-block-report",
+      "objective": "Le signalement d'une conversation et le blocage d'un utilisateur sont disponibles et effectifs.",
+      "doneWhen": [
+        "Le signalement crée un enregistrement exploitable par la modération.",
+        "Un utilisateur bloqué ne peut plus initier de conversation ni envoyer de message.",
+        "Le délai de traitement d'un signalement est documenté, Play exigeant un dispositif effectif et pas seulement un bouton."
+      ],
+      "validationCommands": [
+        "flutter test test/pages/messages/messaging_phase1_contracts_test.dart"
+      ],
       "status": "in_progress",
       "evidence": [
         "test/pages/messages/messaging_phase1_contracts_test.dart"
@@ -49,31 +98,78 @@
     },
     {
       "id": "archive-read-state",
+      "objective": "L'archivage d'une conversation et l'état lu/non lu sont persistants et cohérents entre appareils.",
+      "doneWhen": [
+        "Archiver une conversation la retire de la liste principale sans perte d'historique.",
+        "Le compteur de non-lus reflète l'état réel après lecture sur un autre appareil."
+      ],
+      "validationCommands": [
+        "Test à écrire : aucun test ne couvre ce contrôle à ce jour."
+      ],
       "status": "pending",
       "evidence": []
     },
     {
       "id": "backend-authorization",
+      "objective": "Les callables de messagerie refusent tout accès à une conversation dont l'appelant n'est pas participant.",
+      "doneWhen": [
+        "Un appel portant l'identifiant d'une conversation tierce est rejeté côté serveur, pas seulement masqué côté client.",
+        "Les règles Firestore refusent la lecture directe des mêmes documents."
+      ],
+      "validationCommands": [
+        "npm --prefix functions test",
+        "npm --prefix functions run test:firestore"
+      ],
       "status": "pending",
       "evidence": []
     },
     {
       "id": "push-foreground",
+      "objective": "Une notification de nouveau message est reçue et affichée application au premier plan.",
+      "doneWhen": [
+        "Sur appareil réel, un message entrant produit une notification visible sans quitter l'application."
+      ],
+      "validationCommands": [
+        "Validation manuelle sur appareil réel, capture datée à déposer."
+      ],
       "status": "pending",
       "evidence": []
     },
     {
       "id": "push-background",
+      "objective": "Une notification de nouveau message est reçue application en arrière-plan.",
+      "doneWhen": [
+        "Sur appareil réel, application en arrière-plan, la notification arrive sur le canal ilipresto_messages avec l'icône ic_notification.",
+        "Le tap sur la notification ouvre la conversation concernée."
+      ],
+      "validationCommands": [
+        "Validation manuelle sur appareil réel, capture datée à déposer."
+      ],
       "status": "pending",
       "evidence": []
     },
     {
       "id": "push-terminated",
+      "objective": "Une notification de nouveau message est reçue application fermée.",
+      "doneWhen": [
+        "Sur appareil réel, application tuée, la notification arrive et ouvre la bonne conversation au tap."
+      ],
+      "validationCommands": [
+        "Validation manuelle sur appareil réel, capture datée à déposer."
+      ],
       "status": "pending",
       "evidence": []
     },
     {
       "id": "real-device-matrix",
+      "objective": "La messagerie est validée sur une matrice d'appareils réels représentative du parc cible.",
+      "doneWhen": [
+        "Au moins un Android récent, un Android ancien encore supporté et un iOS sont couverts.",
+        "Chaque appareil de la matrice a exécuté les scénarios texte, photo, audio et notifications."
+      ],
+      "validationCommands": [
+        "Validation manuelle, matrice datée à déposer dans docs/evidence/messaging/."
+      ],
       "status": "pending",
       "evidence": []
     }

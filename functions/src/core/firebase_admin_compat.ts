@@ -38,6 +38,11 @@ import {
   type MulticastMessage,
   type SendResponse,
 } from "firebase-admin/messaging";
+import {
+  getRemoteConfig,
+  type RemoteConfig,
+  type RemoteConfigTemplate,
+} from "firebase-admin/remote-config";
 import { getStorage, type Storage } from "firebase-admin/storage";
 
 const liveApps = new Proxy([] as FirebaseApp[], {
@@ -161,6 +166,22 @@ namespace admin {
     export type UserRecord = import("firebase-admin/auth").UserRecord;
   }
 
+  // Utilisé par l'entrypoint legacy pour lire et publier la configuration
+  // micro-IA. Son absence faisait échouer getMicroIaConfig à chaque appel
+  // (« admin.remoteConfig is not a function »), qui retombait silencieusement
+  // sur les valeurs par défaut.
+  export function remoteConfig(appInstance?: FirebaseApp): RemoteConfig {
+    return appInstance == null
+      ? getRemoteConfig()
+      : getRemoteConfig(appInstance);
+  }
+
+  export namespace remoteConfig {
+    export type RemoteConfig = import("firebase-admin/remote-config").RemoteConfig;
+    export type RemoteConfigTemplate =
+      import("firebase-admin/remote-config").RemoteConfigTemplate;
+  }
+
   export function storage(appInstance?: FirebaseApp): Storage {
     return appInstance == null ? getStorage() : getStorage(appInstance);
   }
@@ -195,6 +216,7 @@ void (null as unknown as UpdateRequest);
 void (null as unknown as UserImportOptions);
 void (null as unknown as UserImportRecord);
 void (null as unknown as UserRecord);
+void (null as unknown as RemoteConfigTemplate);
 void (null as unknown as BatchResponse);
 void (null as unknown as Message);
 void (null as unknown as MulticastMessage);
