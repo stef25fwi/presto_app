@@ -55,6 +55,11 @@ void main() {
     }
   }
 
+  Future<void> drainQueryTimeouts(WidgetTester tester) async {
+    await tester.pump(const Duration(seconds: 13));
+    await tester.pump();
+  }
+
   testWidgets('ouvre et referme le panneau de filtres sans backend réel', (tester) async {
     await pumpPage(tester);
 
@@ -69,7 +74,9 @@ void main() {
 
     await tester.tap(find.text('Filtres'));
     await tester.pump();
-    expect(find.byType(TextField), findsNothing);
+    expect(find.byType(DropdownButtonFormField<String>), findsNothing);
+
+    await drainQueryTimeouts(tester);
     expect(tester.takeException(), isNull);
   });
 
@@ -87,6 +94,8 @@ void main() {
 
     expect(find.text('Je consulte les offres'), findsOneWidget);
     expect(find.byType(InputChip), findsNothing);
+
+    await drainQueryTimeouts(tester);
     expect(tester.takeException(), isNull);
   });
 
@@ -97,6 +106,7 @@ void main() {
     expect(find.text('Filtres'), findsOneWidget);
     expect(find.byType(InputChip), findsNothing);
 
+    await drainQueryTimeouts(tester);
     await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
     await tester.pump();
     expect(tester.takeException(), isNull);
