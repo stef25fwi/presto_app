@@ -25,6 +25,7 @@ Un seuil ne doit jamais être abaissé pour faire passer une PR. Toute exception
 
 ## Derniers audits
 
+- [Audit général performance / UI / UX / sécurité — 2026-08-15](audit-general-perf-ui-ux-securite-2026-08-15.md)
 - [Audit qualité de code — préparation Play Store — 2026-08-15](audit-qualite-code-playstore-2026-08-15.md)
 - [Plan de mise à niveau pré-production — 2026-08-15](pre-prod-readiness-plan-2026-08-15.md)
 - [Audit complet — 2026-08-14](audit-complet-2026-08-14.md)
