@@ -18,9 +18,11 @@ import 'auth_startup.dart';
 import 'background_services.dart';
 import 'crash_reporting.dart';
 import 'firebase_runtime_startup.dart';
+import 'release_logging.dart';
 
 Future<void> bootstrapPrestoApp(Widget app) async {
   runZonedGuarded(() async {
+    silenceDebugPrintInRelease();
     WidgetsFlutterBinding.ensureInitialized();
     AppMonitoringService.instance.configureGlobalErrorHandling();
 
