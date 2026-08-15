@@ -20,12 +20,15 @@ class PublicPrelaunchHeroSlider extends StatelessWidget {
     this.slidesStream,
   });
 
-  /// Injection utile pour les tests. En production, on écoute le service Hero.
+  /// Injection utile pour les tests. En production, seuls les slides globaux
+  /// sont affichés afin de ne pas mélanger une campagne régionale avec la
+  /// landing nationale de pré-lancement.
   final Stream<List<HeroSlide>>? slidesStream;
 
   @override
   Widget build(BuildContext context) {
-    final stream = slidesStream ?? HeroSlidesService().watchActiveSlides();
+    final stream =
+        slidesStream ?? HeroSlidesService().watchSlidesForRegion(null);
 
     return StreamBuilder<List<HeroSlide>>(
       stream: stream,
@@ -41,7 +44,10 @@ class PublicPrelaunchHeroSlider extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        return _PublicPrelaunchHeroCarousel(slides: slides);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: _PublicPrelaunchHeroCarousel(slides: slides),
+        );
       },
     );
   }
@@ -104,7 +110,8 @@ class _PublicPrelaunchHeroCarouselState
     if (widget.slides.length <= 1) return;
 
     final safeIndex = _index.clamp(0, widget.slides.length - 1);
-    final duration = widget.slides[safeIndex].durationSeconds.clamp(3, 60);
+    final duration =
+        widget.slides[safeIndex].durationSeconds.clamp(3, 60).toInt();
     _timer = Timer(Duration(seconds: duration), () {
       if (!mounted || !_controller.hasClients || widget.slides.length <= 1) {
         return;
