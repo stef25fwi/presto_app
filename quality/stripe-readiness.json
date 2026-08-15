@@ -5,6 +5,15 @@
   "controls": [
     {
       "id": "stripe-webhook-signature",
+      "objective": "Tout webhook Stripe est rejeté si sa signature n'est pas vérifiable avec le secret de signature.",
+      "doneWhen": [
+        "La vérification utilise le corps brut de la requête, non le JSON reparsé, faute de quoi la signature ne peut pas correspondre.",
+        "Un webhook sans en-tête de signature, ou signé avec un mauvais secret, est rejeté avec un code 4xx.",
+        "Le secret de signature provient de Secret Manager et n'apparaît jamais dans le dépôt."
+      ],
+      "validationCommands": [
+        "npm --prefix functions test"
+      ],
       "required": true,
       "status": "implemented",
       "evidence": [
@@ -14,6 +23,14 @@
     },
     {
       "id": "stripe-idempotency",
+      "objective": "Un même événement Stripe rejoué ne produit jamais deux fois ses effets.",
+      "doneWhen": [
+        "Stripe rejouant ses webhooks en cas d'absence d'accusé, un événement traité deux fois ne doit pas créditer deux fois un abonnement ni dupliquer une écriture.",
+        "La clé d'idempotence dérive de l'identifiant d'événement Stripe, stable entre rejeux."
+      ],
+      "validationCommands": [
+        "npm --prefix functions test"
+      ],
       "required": true,
       "status": "implemented",
       "evidence": [
@@ -24,6 +41,14 @@
     },
     {
       "id": "stripe-checkout-e2e",
+      "objective": "Le parcours de paiement complet est vérifié de bout en bout contre Stripe.",
+      "doneWhen": [
+        "Le scénario couvre la création de session, la redirection, le retour et la réception du webhook.",
+        "Il s'exécute en mode test, jamais avec une clé live."
+      ],
+      "validationCommands": [
+        "node functions/scripts/stripe_checkout_e2e.mjs"
+      ],
       "required": true,
       "status": "implemented",
       "evidence": [
@@ -34,6 +59,14 @@
     },
     {
       "id": "stripe-subscription-lifecycle",
+      "objective": "Le cycle de vie d'un abonnement est reflété fidèlement côté application.",
+      "doneWhen": [
+        "Création, renouvellement, échec de paiement, annulation et fin de période aboutissent chacun au bon statut applicatif.",
+        "Un abonnement expiré ne laisse aucun accès résiduel aux fonctionnalités payantes."
+      ],
+      "validationCommands": [
+        "npm --prefix functions test"
+      ],
       "required": true,
       "status": "implemented",
       "evidence": [
@@ -43,6 +76,14 @@
     },
     {
       "id": "stripe-refund-dispute",
+      "objective": "Les remboursements et les litiges sont traités sans intervention manuelle sur la base de données.",
+      "doneWhen": [
+        "Un remboursement retire l'accès correspondant.",
+        "Un litige est enregistré et signalé, sans blocage silencieux du compte."
+      ],
+      "validationCommands": [
+        "npm --prefix functions test"
+      ],
       "required": true,
       "status": "implemented",
       "evidence": [
@@ -52,6 +93,14 @@
     },
     {
       "id": "stripe-reconciliation",
+      "objective": "Les écarts entre l'état Stripe et l'état applicatif sont détectables.",
+      "doneWhen": [
+        "Un rapprochement compare périodiquement les abonnements actifs côté Stripe et côté Firestore.",
+        "Tout écart est journalisé de façon exploitable, la source de vérité restant Stripe."
+      ],
+      "validationCommands": [
+        "npm --prefix functions test"
+      ],
       "required": true,
       "status": "implemented",
       "evidence": [
@@ -61,6 +110,15 @@
     },
     {
       "id": "stripe-test-mode-isolation",
+      "objective": "Une clé de test ne peut jamais servir en production, ni une clé live en développement.",
+      "doneWhen": [
+        "Le mode est déduit du préfixe de clé et non d'une variable d'environnement indépendante, qui pourrait diverger.",
+        "Le démarrage échoue explicitement en cas d'incohérence entre le mode détecté et l'environnement.",
+        "Aucune clé secrète n'est présente dans le dépôt : stripe_mode.ts ne manipule que des préfixes."
+      ],
+      "validationCommands": [
+        "npm --prefix functions test"
+      ],
       "required": true,
       "status": "implemented",
       "evidence": [
