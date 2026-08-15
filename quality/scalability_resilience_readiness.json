@@ -3,16 +3,158 @@
   "name": "scalability-resilience-readiness",
   "updatedAt": "2026-07-13",
   "controls": [
-    {"id":"load-test-1k","status":"verified","evidence":["functions/scripts/load_test_1000_users.mjs",".github/workflows/emulator-load-test.yml"]},
-    {"id":"load-test-10k","status":"pending","evidence":[]},
-    {"id":"load-test-50k","status":"pending","evidence":[]},
-    {"id":"firestore-cost-budget","status":"pending","evidence":[]},
-    {"id":"functions-cost-budget","status":"pending","evidence":[]},
-    {"id":"storage-cost-budget","status":"pending","evidence":[]},
-    {"id":"cost-alerting","status":"pending","evidence":[]},
-    {"id":"backup-restore-runbook","status":"pending","evidence":[]},
-    {"id":"timed-restore-exercise","status":"pending","evidence":[]},
-    {"id":"regional-resilience-strategy","status":"pending","evidence":[]},
-    {"id":"critical-dependency-register","status":"pending","evidence":[]}
+    {
+      "id": "load-test-1k",
+      "objective": "Le système tient 1 000 utilisateurs simultanés sans dégradation fonctionnelle.",
+      "doneWhen": [
+        "Le scénario 1 000 utilisateurs s'exécute sans erreur fonctionnelle.",
+        "Aucune requête n'est rejetée par la limitation de débit sur un usage nominal."
+      ],
+      "validationCommands": [
+        "npm --prefix functions run test:load:1000"
+      ],
+      "status": "verified",
+      "evidence": [
+        "functions/scripts/load_test_1000_users.mjs",
+        ".github/workflows/emulator-load-test.yml"
+      ]
+    },
+    {
+      "id": "load-test-10k",
+      "objective": "Le système tient 10 000 utilisateurs simultanés, avec des latences restant dans les objectifs.",
+      "doneWhen": [
+        "Le scénario 10 000 utilisateurs s'exécute sans erreur fonctionnelle.",
+        "La latence au 95e centile reste sous les objectifs de quality/quality-gates.json (2,5 s à l'affichage initial, 200 ms sur interaction locale).",
+        "Les index Firestore requis existent : aucune erreur d'index manquant dans les journaux."
+      ],
+      "validationCommands": [
+        "Scénario à écrire : load-tests/k6_1000_users.js ne couvre que 1 000 utilisateurs."
+      ],
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "load-test-50k",
+      "objective": "Le système tient 50 000 utilisateurs simultanés, ou ses limites sont connues et documentées.",
+      "doneWhen": [
+        "Soit le scénario passe, soit le point de rupture est identifié et chiffré, avec le plan de contournement associé.",
+        "Le coût projeté à cette charge est estimé avant l'exécution, la charge synthétique étant facturée."
+      ],
+      "validationCommands": [
+        "Scénario à écrire. Prérequis : load-test-10k satisfait."
+      ],
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "firestore-cost-budget",
+      "objective": "Un budget de coût Firestore est défini et le coût réel est suivi par rapport à ce budget.",
+      "doneWhen": [
+        "Un plafond mensuel est fixé et documenté, avec l'hypothèse de volumétrie qui le sous-tend.",
+        "Le coût constaté des 30 derniers jours est comparé au plafond.",
+        "Les collections les plus coûteuses en lectures sont identifiées."
+      ],
+      "validationCommands": [
+        "Console GCP → Facturation → Rapports, filtre Cloud Firestore. Relevé daté à déposer."
+      ],
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "functions-cost-budget",
+      "objective": "Un budget de coût Cloud Functions est défini et suivi, invocations et temps de calcul inclus.",
+      "doneWhen": [
+        "Un plafond mensuel est fixé et documenté.",
+        "Le surcoût des instances toujours chaudes est isolé : microIaProcessAudio tourne avec minInstances à 1.",
+        "Le coût des appels OpenAI et Google STT est suivi séparément, le repli vers Whisper introduit au 15/08 pouvant l'augmenter sur les énoncés courts."
+      ],
+      "validationCommands": [
+        "Console GCP → Facturation. Relevé daté à déposer."
+      ],
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "storage-cost-budget",
+      "objective": "Un budget de coût Cloud Storage est défini et suivi, stockage et sortie réseau inclus.",
+      "doneWhen": [
+        "Un plafond mensuel est fixé et documenté.",
+        "Les règles de cycle de vie des médias sont en place : les audios de micro-IA sont purgés, la fonction purgeExpiredAiAudio existant à cet effet."
+      ],
+      "validationCommands": [
+        "Console GCP → Facturation. Relevé daté à déposer."
+      ],
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "cost-alerting",
+      "objective": "Une alerte se déclenche avant que le coût ne dépasse le budget, pas après.",
+      "doneWhen": [
+        "Des seuils d'alerte budgétaire sont configurés à 50, 80 et 100 % du plafond mensuel.",
+        "Les destinataires de l'alerte sont nommés et l'ont confirmé.",
+        "Une alerte de test a été déclenchée et reçue."
+      ],
+      "validationCommands": [
+        "Console GCP → Facturation → Budgets et alertes. Capture datée à déposer."
+      ],
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "backup-restore-runbook",
+      "objective": "Une procédure de sauvegarde et de restauration Firestore existe et est écrite pour être exécutée sous pression.",
+      "doneWhen": [
+        "La fréquence des sauvegardes et leur durée de rétention sont documentées.",
+        "La procédure de restauration est décrite pas à pas, sans étape implicite.",
+        "Le périmètre est explicite : ce qui est sauvegardé, et ce qui ne l'est pas."
+      ],
+      "validationCommands": [
+        "Runbook à rédiger dans docs/deployment/."
+      ],
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "timed-restore-exercise",
+      "objective": "Une restauration a été réellement exécutée et son temps mesuré.",
+      "doneWhen": [
+        "L'exercice est daté, avec la durée constatée entre la décision et le retour au service.",
+        "Le résultat est comparé à l'objectif de temps de reprise, lequel doit être fixé.",
+        "Les écarts entre la procédure écrite et ce qui s'est réellement passé sont consignés."
+      ],
+      "validationCommands": [
+        "Exercice à mener. Un runbook non éprouvé ne satisfait pas ce contrôle."
+      ],
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "regional-resilience-strategy",
+      "objective": "La stratégie face à une panne régionale est arbitrée, même si l'arbitrage est d'accepter le risque.",
+      "doneWhen": [
+        "La position est explicite : redondance multirégionale, ou acceptation documentée de l'indisponibilité en cas de panne d'europe-west1.",
+        "Si le risque est accepté, la durée d'indisponibilité tolérée et la communication utilisateur associée sont définies."
+      ],
+      "validationCommands": [
+        "Décision à consigner. Accepter le risque est une réponse valide si elle est écrite."
+      ],
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "critical-dependency-register",
+      "objective": "Les dépendances externes critiques sont recensées, avec l'effet de leur indisponibilité.",
+      "doneWhen": [
+        "Chaque dépendance externe est listée : Firebase, Stripe, OpenAI, Google STT, Brevo, AdMob.",
+        "Pour chacune, l'effet d'une panne est décrit et le comportement de repli précisé.",
+        "Les dépendances sans repli sont identifiées comme telles."
+      ],
+      "validationCommands": [
+        "Registre à rédiger. L'audit du 14/08 a montré qu'un repli déclaré peut être inopérant : le repli V1 du micro-IA renvoyait des transcriptions vides en succès."
+      ],
+      "status": "pending",
+      "evidence": []
+    }
   ]
 }
