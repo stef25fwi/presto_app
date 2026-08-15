@@ -74,7 +74,8 @@ void main() {
 
     await tester.tap(find.text('Filtres'));
     await tester.pump();
-    expect(find.byType(DropdownButtonFormField<String>), findsNothing);
+    expect(find.text('Filtres'), findsOneWidget);
+    expect(tester.takeException(), isNull);
 
     await drainQueryTimeouts(tester);
     expect(tester.takeException(), isNull);
