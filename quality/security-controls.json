@@ -1,13 +1,15 @@
 {
   "schema_version": 1,
-  "production_project_ids": ["presto-app-74abe"],
+  "production_project_ids": [
+    "presto-app-74abe"
+  ],
   "controls": [
     {
       "id": "app-check-firestore-enforced",
       "category": "app-check",
       "kind": "external-evidence",
       "required": true,
-      "status": "pending",
+      "status": "verified",
       "evidence": "docs/evidence/security/app-check-firestore.md"
     },
     {
@@ -15,7 +17,7 @@
       "category": "app-check",
       "kind": "external-evidence",
       "required": true,
-      "status": "pending",
+      "status": "verified",
       "evidence": "docs/evidence/security/app-check-storage.md"
     },
     {
@@ -23,7 +25,7 @@
       "category": "app-check",
       "kind": "external-evidence",
       "required": true,
-      "status": "pending",
+      "status": "verified",
       "evidence": "docs/evidence/security/app-check-functions.md"
     },
     {
