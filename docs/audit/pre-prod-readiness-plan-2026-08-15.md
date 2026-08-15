@@ -54,6 +54,65 @@ Par registre :
 | `messaging-readiness` | 0/12 |
 | `18-point-completion` | 1/18 (16 `blocked`) |
 
+## La cause profonde de la dérive : des contrôles sans énoncé
+
+Mesure faite sur les 16 registres : **108 contrôles sur 157 (68 %) n'ont
+aucune description**. Ni `description`, ni `label`, ni `title` — seulement un
+identifiant. Dix registres sont à 100 % de contrôles non décrits, dont
+`security-controls`, `production_go_live_readiness`, `messaging-readiness` et
+`18-point-completion`.
+
+| Registre | Contrôles sans énoncé |
+|---|---:|
+| `18-point-completion` | 18/18 |
+| `messaging-readiness` | 12/12 |
+| `seo-monitoring-readiness` | 12/12 |
+| `seo_acquisition_readiness` | 12/12 |
+| `scalability_resilience_readiness` | 11/11 |
+| `production_go_live_readiness` | 10/10 |
+| `seo-programmatic-local-readiness` | 10/10 |
+| `security-controls` | 9/9 |
+| `architecture-readiness` | 7/7 |
+| `stripe-readiness` | 7/7 |
+
+C'est la cause profonde de tout ce qui précède. Un contrôle réduit à un
+identifiant n'est auditable que par son auteur, et seulement tant qu'il s'en
+souvient. Personne d'autre ne peut dire ce que `p0-debt` exige exactement, ni à
+partir de quand `moderation-block-report` est satisfait. Le statut devient
+alors une opinion, et il dérive — **dans les deux sens** :
+
+- `app-check-functions-enforced` était `pending` alors qu'il était satisfait
+  depuis longtemps, faute que quiconque ait su où regarder (le code, pas la
+  console) ;
+- à l'inverse, un contrôle peut rester `verified` longtemps après avoir cessé
+  d'être vrai, sans que rien ne le signale.
+
+**Recommandation prioritaire, avant toute campagne d'attestation** : donner à
+chaque contrôle un énoncé vérifiable, formulé de façon à ce qu'un tiers puisse
+trancher sans interpréter — « quelle commande, quelle observation, quel seuil
+prouve que ce contrôle est satisfait ». Sans cela, viser 10/10 revient à
+demander à quelqu'un de cocher des cases dont il ignore le sens.
+
+## Calibrage : tous les `pending` ne sont pas des déficits de preuve
+
+Vérification faite sur `architecture-readiness`, dont deux contrôles figuraient
+dans le lot « preuves présentes » :
+
+```
+$ python3 tools/quality/check_flutter_architecture_size.py
+- lib/pages/user_offers_section.dart: 3429 lines > 500
+- lib/widgets/je_me_lance_model_section.dart: 993 lines > 250
+  … et de nombreux autres dépassements
+```
+
+`architecture-budgets` (`in_progress`) et `p0-debt` (`pending`) sont donc
+**correctement déclarés** : le travail n'est réellement pas fait. Le registre
+est honnête ici.
+
+C'est un garde-fou utile contre la tentation de traiter le lot des 29 comme un
+gisement de points faciles. Chaque contrôle demande une vérification propre, et
+certains se solderont par « toujours pending, à juste titre ».
+
 ## Ce qui peut être clos depuis le dépôt
 
 Ces contrôles sont vérifiables par exécution ou par lecture de code, sans accès
