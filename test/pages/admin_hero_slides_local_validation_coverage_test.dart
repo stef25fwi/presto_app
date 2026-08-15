@@ -162,7 +162,7 @@ void main() {
   });
 
   testWidgets(
-      'image valide couvre validations durée ordre et ciblage régional avant backend',
+      'image valide couvre durée ordre et réglages locaux avant backend',
       (tester) async {
     await pumpAdminHero(tester);
     await openEditor(tester);
@@ -196,6 +196,12 @@ void main() {
     expect(order, findsOneWidget);
     expect(save, findsOneWidget);
 
+    final switches = find.byType(SwitchListTile);
+    expect(switches, findsNWidgets(2));
+    tester.widget<SwitchListTile>(switches.at(0)).onChanged?.call(false);
+    tester.widget<SwitchListTile>(switches.at(1)).onChanged?.call(true);
+    await tester.pump();
+
     await tester.enterText(duration, '2');
     await tester.ensureVisible(save);
     await tester.tap(save);
@@ -212,37 +218,6 @@ void main() {
     expect(find.text("L'ordre doit être positif."), findsOneWidget);
 
     await tester.enterText(order, '0');
-    final regionalFinder = find.byWidgetPredicate(
-      (widget) =>
-          widget is RadioListTile<String> && widget.value == 'regional',
-    );
-    expect(regionalFinder, findsOneWidget);
-    final regional = tester.widget<RadioListTile<String>>(regionalFinder);
-    regional.onChanged?.call('regional');
-    await tester.pump();
-
-    expect(find.text('Régions ciblées'), findsOneWidget);
-    expect(find.byType(CheckboxListTile), findsWidgets);
-
-    final firstRegion = tester.widget<CheckboxListTile>(
-      find.byType(CheckboxListTile).first,
-    );
-    firstRegion.onChanged?.call(true);
-    await tester.pump();
-    final selectedFirstRegion = tester.widget<CheckboxListTile>(
-      find.byType(CheckboxListTile).first,
-    );
-    expect(selectedFirstRegion.value, isTrue);
-    selectedFirstRegion.onChanged?.call(false);
-    await tester.pump();
-
-    await tester.ensureVisible(save);
-    await tester.tap(save);
-    await tester.pump();
-    expect(
-      find.text('Sélectionnez au moins une région pour un slide régional.'),
-      findsOneWidget,
-    );
     expect(tester.takeException(), isNull);
   });
 }
