@@ -52,34 +52,38 @@ Par registre :
 | `production_go_live_readiness` | 1/10 |
 | `scalability_resilience_readiness` | 1/11 |
 | `messaging-readiness` | 0/12 |
-| `18-point-completion` | 1/18 (16 `blocked`) |
+| `18-point-completion` | point 2/18 actif (séquentiel, voir plus bas) |
 
 ## La cause profonde de la dérive : des contrôles sans énoncé
 
-Mesure faite sur les 16 registres : **108 contrôles sur 157 (68 %) n'ont
-aucune description**. Ni `description`, ni `label`, ni `title` — seulement un
-identifiant. Dix registres sont à 100 % de contrôles non décrits, dont
-`security-controls`, `production_go_live_readiness`, `messaging-readiness` et
-`18-point-completion`.
+**Rectification du 15/08.** Une première version de ce document annonçait 108
+contrôles sur 157 (68 %) sans description. Le chiffre était faux : le script de
+mesure ne cherchait que `description`, `label` et `title`, alors que plusieurs
+registres portent leur énoncé dans `name`, `objective` ou `doneWhen`. Après
+correction, le compte réel est de **71 contrôles sur 157 (45 %)**, et sept
+registres sont concernés au lieu de dix.
 
 | Registre | Contrôles sans énoncé |
 |---|---:|
-| `18-point-completion` | 18/18 |
 | `messaging-readiness` | 12/12 |
 | `seo-monitoring-readiness` | 12/12 |
 | `seo_acquisition_readiness` | 12/12 |
 | `scalability_resilience_readiness` | 11/11 |
-| `production_go_live_readiness` | 10/10 |
 | `seo-programmatic-local-readiness` | 10/10 |
-| `security-controls` | 9/9 |
 | `architecture-readiness` | 7/7 |
 | `stripe-readiness` | 7/7 |
 
-C'est la cause profonde de tout ce qui précède. Un contrôle réduit à un
-identifiant n'est auditable que par son auteur, et seulement tant qu'il s'en
-souvient. Personne d'autre ne peut dire ce que `p0-debt` exige exactement, ni à
-partir de quand `moderation-block-report` est satisfait. Le statut devient
-alors une opinion, et il dérive — **dans les deux sens** :
+Sont au contraire correctement énoncés : `18-point-completion` (objectif,
+critères `doneWhen`, fichiers requis et commandes de validation par point),
+`ai-readiness`, `mobile_readiness`, `rgpd_readiness`, `observability_slo`,
+`accessibility_ux_readiness`, `product-readiness`, ainsi que
+`security-controls` et `production_go_live_readiness` depuis leur reprise du
+15/08.
+
+Le constat de fond reste valable pour les sept registres restants : un contrôle
+réduit à un identifiant n'est auditable que par son auteur, et seulement tant
+qu'il s'en souvient. Le statut devient une opinion, et il dérive **dans les
+deux sens** :
 
 - `app-check-functions-enforced` était `pending` alors qu'il était satisfait
   depuis longtemps, faute que quiconque ait su où regarder (le code, pas la
@@ -87,11 +91,46 @@ alors une opinion, et il dérive — **dans les deux sens** :
 - à l'inverse, un contrôle peut rester `verified` longtemps après avoir cessé
   d'être vrai, sans que rien ne le signale.
 
-**Recommandation prioritaire, avant toute campagne d'attestation** : donner à
-chaque contrôle un énoncé vérifiable, formulé de façon à ce qu'un tiers puisse
-trancher sans interpréter — « quelle commande, quelle observation, quel seuil
-prouve que ce contrôle est satisfait ». Sans cela, viser 10/10 revient à
-demander à quelqu'un de cocher des cases dont il ignore le sens.
+**Recommandation** : donner à chaque contrôle des sept registres restants un
+énoncé vérifiable — quelle commande, quelle observation, quel seuil prouve
+qu'il est satisfait. `18-point-completion` fournit le modèle à suivre, avec son
+triplet `objective` / `doneWhen` / `validationCommands`.
+
+## `18-point-completion` : un programme séquentiel, pas un registre bloqué
+
+**Rectification du 15/08.** Ce document a d'abord présenté les 16 points
+`blocked` comme « une dépendance amont à lever ». C'était une mauvaise lecture.
+Le registre porte des règles explicites :
+
+```json
+"rules": {
+  "singleActivePoint": true,
+  "priorPointsMustBeVerified": true,
+  "laterPointsMustRemainBlocked": true
+}
+```
+
+`blocked` y est l'**état normal** d'un point pas encore atteint. Un seul point
+est actif à la fois, et les suivants doivent rester bloqués par construction.
+Il n'y a donc rien à débloquer : le programme est simplement au point 2 sur 18.
+
+| Point | Nom | État |
+|---|---|---|
+| 1 | Cadrage produit | `verified` |
+| 2 | UX/UI et design system | **`active`** |
+| 3 → 18 | Architecture technique, … | `blocked` (en attente de leur tour) |
+
+Le point 2 est donc le véritable front de travail. Ses critères sont explicites
+— design system centralisé, contrastes, focus, lecteurs d'écran, cibles
+tactiles, tailles 320 à 1440 px — et son registre de contrôle est
+`quality/accessibility_ux_readiness.json`, qui doit passer intégralement à
+`verified` pour promouvoir le point. C'est cohérent avec les 5 contrôles
+d'accessibilité en attente, qui exigent un passage sur appareil avec lecteur
+d'écran.
+
+**Conséquence pour le go-live** : `all-prior-phases-reviewed` ne peut pas être
+satisfait avant la fin des 18 points. Ce n'est pas un blocage à lever, c'est un
+programme à dérouler — et l'accessibilité en est l'étape courante.
 
 ## Calibrage : tous les `pending` ne sont pas des déficits de preuve
 
@@ -183,8 +222,9 @@ visible dans le pre-launch report.
    que le ratio effort/résultat est le meilleur.
 5. ~~Traiter `brace-expansion`~~ — **fait le 15/08** : le dépôt est passé de
    1 haute + 7 modérées à 0 haute + 7 modérées, sans changement cassant.
-6. **Reprendre `18-point-completion`** : 16 contrôles y sont `blocked`, ce qui
-   suggère une dépendance amont à lever avant tout le reste.
+6. **Dérouler `18-point-completion`** à partir du point 2 (UX/UI et design
+   system), actuellement actif. Son avancement conditionne
+   `all-prior-phases-reviewed` côté go-live.
 
 ## Ce que ce plan ne prétend pas
 
