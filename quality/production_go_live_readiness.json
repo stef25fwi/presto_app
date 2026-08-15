@@ -6,15 +6,95 @@
   "status": "in_progress",
   "updatedAt": "2026-08-04",
   "controls": [
-    {"id":"all-prior-phases-reviewed","status":"pending","evidence":["quality/18-point-completion.json"]},
-    {"id":"release-candidate-tag","status":"pending","evidence":["docs/production/PHASE_16_PRIORITY_EXECUTION.md"]},
-    {"id":"production-smoke-tests","status":"pending","evidence":["tools/production/run_smoke_tests.sh",".github/workflows/deploy.yml"]},
-    {"id":"rollback-plan-tested","status":"pending","evidence":["docs/deployment/rollback.md"]},
-    {"id":"incident-contacts-confirmed","status":"pending","evidence":["docs/production/PHASE_16_PRIORITY_EXECUTION.md"]},
-    {"id":"support-playbook-ready","status":"verified","evidence":["docs/production/SUPPORT_PLAYBOOK.md"]},
-    {"id":"monitoring-dashboards-live","status":"pending","evidence":["docs/monitoring_incident_rollback.md",".github/workflows/seo-continuous-monitoring.yml"]},
-    {"id":"legal-store-assets-approved","status":"pending","evidence":["docs/audit_cgu_checklist_20260703_134400.md"]},
-    {"id":"go-no-go-decision-recorded","status":"pending","evidence":[]},
-    {"id":"post-launch-review-scheduled","status":"pending","evidence":["docs/production/PHASE_16_PRIORITY_EXECUTION.md"]}
+    {
+      "id": "all-prior-phases-reviewed",
+      "description": "Toutes les phases antérieures ont été revues et leurs écarts sont soit clos, soit explicitement acceptés.",
+      "verification": "quality/18-point-completion.json ne comporte plus aucun contrôle `blocked` ; chaque contrôle non `verified` est assorti d'une décision d'acceptation datée. À ce jour 16 des 18 sont `blocked`, ce qui rend ce contrôle non satisfait.",
+      "status": "pending",
+      "evidence": [
+        "quality/18-point-completion.json"
+      ]
+    },
+    {
+      "id": "release-candidate-tag",
+      "description": "Un tag de release candidate immuable désigne le commit soumis au go-live.",
+      "verification": "Un tag git de la forme rc-AAAAMMJJ-N existe, pointe sur un commit de main dont la CI est intégralement verte, et correspond au SHA déployé. Vérification : `git tag --points-at <sha>` et comparaison avec l'artefact production-release-<sha> archivé par deploy.yml.",
+      "status": "pending",
+      "evidence": [
+        "docs/production/PHASE_16_PRIORITY_EXECUTION.md"
+      ]
+    },
+    {
+      "id": "production-smoke-tests",
+      "description": "Les tests de fumée post-déploiement passent sur l'environnement de production.",
+      "verification": "Deux sources doivent être vertes sur le SHA déployé : l'étape « Production smoke tests » de deploy.yml, et le workflow ai-production-smoke.yml. Ce second point n'est pas satisfait à ce jour — voir docs/audit/audit-complet-2026-08-14.md §1.",
+      "status": "pending",
+      "evidence": [
+        "tools/production/run_smoke_tests.sh",
+        ".github/workflows/deploy.yml"
+      ]
+    },
+    {
+      "id": "rollback-plan-tested",
+      "description": "La procédure de rollback a été exécutée pour de vrai, pas seulement rédigée.",
+      "verification": "Un exercice de rollback daté est consigné : restauration effective depuis l'artefact production-release-<sha>, durée constatée, et vérification qu'une page publique répond après retour arrière. La seule existence de docs/deployment/rollback.md ne suffit pas.",
+      "status": "pending",
+      "evidence": [
+        "docs/deployment/rollback.md"
+      ]
+    },
+    {
+      "id": "incident-contacts-confirmed",
+      "description": "Les personnes joignables en cas d'incident sont identifiées et ont confirmé leur disponibilité.",
+      "verification": "Liste nominative avec canal de contact et créneau de couverture, chaque personne ayant confirmé. Date de dernière confirmation de moins de 90 jours.",
+      "status": "pending",
+      "evidence": [
+        "docs/production/PHASE_16_PRIORITY_EXECUTION.md"
+      ]
+    },
+    {
+      "id": "support-playbook-ready",
+      "description": "Le playbook de support couvre les cas de saisine les plus probables du lancement.",
+      "verification": "docs/production/SUPPORT_PLAYBOOK.md décrit pour chaque cas fréquent le diagnostic et la réponse, et cite un contact d'escalade. À relire avant chaque go-live.",
+      "status": "verified",
+      "evidence": [
+        "docs/production/SUPPORT_PLAYBOOK.md"
+      ]
+    },
+    {
+      "id": "monitoring-dashboards-live",
+      "description": "Les tableaux de bord de supervision affichent des données réelles de production.",
+      "verification": "Capture datée montrant des séries non vides sur la fenêtre des 24 dernières heures pour au moins : taux d'erreur des Cloud Functions, latence du pipeline micro-IA, et Core Web Vitals. Un dashboard créé mais vide ne satisfait pas le contrôle.",
+      "status": "pending",
+      "evidence": [
+        "docs/monitoring_incident_rollback.md",
+        ".github/workflows/seo-continuous-monitoring.yml"
+      ]
+    },
+    {
+      "id": "legal-store-assets-approved",
+      "description": "Les mentions légales et les éléments de fiche store sont relus et validés.",
+      "verification": "Les quatre pages publiques (/confidentialite, /cgu, /mentions-legales, /suppression-compte) répondent en production, et les textes de marketing/play-store/listing-fr.md ont été relus. Vérification des limites de caractères par `node tools/quality/check_play_listing.mjs`.",
+      "status": "pending",
+      "evidence": [
+        "docs/audit_cgu_checklist_20260703_134400.md"
+      ]
+    },
+    {
+      "id": "go-no-go-decision-recorded",
+      "description": "La décision de lancement est prise explicitement et tracée, avec son auteur et sa date.",
+      "verification": "Document de décision citant l'état de chaque registre au moment du choix, les réserves acceptées, et la personne qui engage la décision. Ce contrôle ne peut être satisfait qu'en dernier.",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "post-launch-review-scheduled",
+      "description": "Une revue post-lancement est planifiée avant le lancement, pas après.",
+      "verification": "Date et participants fixés, avec l'ordre du jour minimal : lecture du pre-launch report Play Console, incidents survenus, écarts entre métriques attendues et constatées.",
+      "status": "pending",
+      "evidence": [
+        "docs/production/PHASE_16_PRIORITY_EXECUTION.md"
+      ]
+    }
   ]
 }

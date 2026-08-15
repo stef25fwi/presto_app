@@ -9,6 +9,8 @@
       "category": "app-check",
       "kind": "external-evidence",
       "required": true,
+      "description": "L'enforcement App Check est actif sur l'API Cloud Firestore du projet de production.",
+      "verification": "Console Firebase → App Check → APIs : ligne « Cloud Firestore » à l'état « Appliqué », taux de requêtes validées ≥ 99 %. Un taux inférieur signale des clients légitimes rejetés et invalide le contrôle. Relevé daté déposé dans docs/evidence/security/app-check-firestore.md. Non reproductible en CI : à revérifier à chaque revue de sécurité.",
       "status": "verified",
       "evidence": "docs/evidence/security/app-check-firestore.md"
     },
@@ -17,6 +19,8 @@
       "category": "app-check",
       "kind": "external-evidence",
       "required": true,
+      "description": "L'enforcement App Check est actif sur l'API Cloud Storage du projet de production.",
+      "verification": "Console Firebase → App Check → APIs : ligne « Storage » à l'état « Appliqué ». Si des métriques de trafic sont affichées, taux de requêtes validées ≥ 99 %. Relevé daté déposé dans docs/evidence/security/app-check-storage.md. Non reproductible en CI.",
       "status": "verified",
       "evidence": "docs/evidence/security/app-check-storage.md"
     },
@@ -25,6 +29,8 @@
       "category": "app-check",
       "kind": "external-evidence",
       "required": true,
+      "description": "Toute callable Cloud Functions exige un jeton App Check valide, sans exception non documentée.",
+      "verification": "`node tools/quality/check_functions_app_check.mjs` retourne violations: [] et exceptions: []. Vérifier en outre que functions/src/config/app_check_policy.ts reste fail-closed en production (`if (isProduction) return true`). Rejoué en CI par le job app-check-source. Ne se règle pas en console : la page App Check n'y propose qu'un lien de documentation.",
       "status": "verified",
       "evidence": "docs/evidence/security/app-check-functions.md"
     },
@@ -33,6 +39,8 @@
       "category": "api-keys",
       "kind": "external-evidence",
       "required": true,
+      "description": "Chaque clé API du projet de production est restreinte, en application et en périmètre d'API.",
+      "verification": "Console GCP → API et services → Identifiants : aucune clé sans restriction d'application (origines HTTP pour le Web, nom de package + empreinte SHA pour Android, bundle ID pour iOS) ni sans restriction d'API. Les empreintes Android doivent inclure celle de la clé de signature Play, pas seulement celle d'upload. Relevé daté à déposer dans docs/evidence/security/api-key-restrictions.md.",
       "status": "pending",
       "evidence": "docs/evidence/security/api-key-restrictions.md"
     },
@@ -41,6 +49,8 @@
       "category": "secrets",
       "kind": "external-evidence",
       "required": true,
+      "description": "Un inventaire à jour recense chaque secret de production, son emplacement et sa dernière rotation.",
+      "verification": "docs/evidence/security/secrets-inventory.md daté de moins de 90 jours, listant pour chaque secret son nom, son stockage (Secret Manager ou secret GitHub), son propriétaire et sa date de dernière rotation. Complété par l'absence de secret en dur : `grep -rIlE 'sk_live_|sk_test_|BEGIN (RSA |EC )?PRIVATE KEY|AKIA[0-9A-Z]{16}'` ne doit remonter que des validations de préfixe, jamais une clé.",
       "status": "pending",
       "evidence": "docs/evidence/security/secrets-inventory.md"
     },
@@ -49,6 +59,8 @@
       "category": "dependencies",
       "kind": "external-evidence",
       "required": true,
+      "description": "Aucune vulnérabilité critique ou haute dans les dépendances des Cloud Functions.",
+      "verification": "`npm --prefix functions audit` rapporte 0 critique et 0 haute. Les vulnérabilités modérées sont tolérées si elles figurent dans docs/DEPENDENCY_AUDIT.md, régénéré à la même date par le workflow dependency-audit-report.yml. Toute correction ne doit pas imposer de downgrade majeur de firebase-admin.",
       "status": "pending",
       "evidence": "docs/evidence/security/dependency-audit.md"
     },
@@ -57,6 +69,8 @@
       "category": "owasp",
       "kind": "external-evidence",
       "required": true,
+      "description": "Une revue OWASP Top 10 a été conduite sur les surfaces exposées et ses conclusions sont tracées.",
+      "verification": "docs/evidence/security/owasp-review.md couvrant les dix catégories, chacune assortie d'un constat et d'une décision (traité, accepté avec justification, ou reporté avec échéance). Périmètre minimal : callables Cloud Functions, règles Firestore et Storage, webhooks Stripe et Brevo, pages publiques. Daté et attribué.",
       "status": "pending",
       "evidence": "docs/evidence/security/owasp-review.md"
     },
@@ -65,6 +79,8 @@
       "category": "deployment",
       "kind": "source-control",
       "required": true,
+      "description": "Aucun déploiement de preview Firebase ne peut cibler le projet de production.",
+      "verification": "`node tools/quality/check_firebase_preview_project.mjs` sort en succès. Le contrôle échoue si un workflow de preview référence presto-app-74abe.",
       "status": "verified",
       "evidence": "tools/quality/check_firebase_preview_project.mjs"
     },
@@ -73,6 +89,8 @@
       "category": "sast",
       "kind": "source-control",
       "required": true,
+      "description": "L'analyse statique CodeQL s'exécute sur chaque pull request et sur main.",
+      "verification": "Présence de .github/workflows/codeql.yml et dernier run vert sur main. Le contrôle porte sur l'exécution effective, pas sur la seule présence du fichier.",
       "status": "verified",
       "evidence": ".github/workflows/codeql.yml"
     }
