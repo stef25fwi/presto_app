@@ -124,9 +124,12 @@ void main() {
     );
     expect(find.text('Je me connecte'), findsOneWidget);
     expect(find.text('Je crée mon compte'), findsOneWidget);
-    expect(find.text('Plus tard'), findsOneWidget);
 
-    await tester.tap(find.text('Plus tard'));
+    final later = find.text('Plus tard');
+    expect(later, findsOneWidget);
+    await tester.ensureVisible(later);
+    await tester.pump();
+    await tester.tap(later);
     await tester.pump();
     expect(tester.takeException(), isNull);
   });
@@ -144,17 +147,24 @@ void main() {
 
     expect(find.text('Proposer mes services'), findsWidgets);
     expect(find.text('Envoyer un message'), findsOneWidget);
-    expect(find.text('Appeler'), findsOneWidget);
 
-    await tester.tap(find.text('Appeler'));
+    final callCta = find.text('Appeler');
+    expect(callCta, findsOneWidget);
+    await tester.ensureVisible(callCta);
+    await tester.pump();
+    await tester.tap(callCta);
     await tester.pump();
 
     expect(
       find.text("Connectez-vous pour appeler l'annonceur"),
       findsOneWidget,
     );
-    expect(find.text('Plus tard'), findsOneWidget);
-    await tester.tap(find.text('Plus tard'));
+
+    final callLater = find.text('Plus tard');
+    expect(callLater, findsOneWidget);
+    await tester.ensureVisible(callLater);
+    await tester.pump();
+    await tester.tap(callLater);
     await tester.pump();
 
     expect(tester.takeException(), isNull);
