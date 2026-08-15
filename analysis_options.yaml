@@ -15,6 +15,10 @@ analyzer:
 
   errors:
     deprecated_member_use: ignore
+    # Réactivation tentée le 15/08 puis annulée : flutter analyze signale des
+    # occurrences qu'un détecteur statique maison n'avait pas vues. À reprendre
+    # avec la sortie réelle de l'analyseur, voir docs/audit/audit-qualite-code-playstore-2026-08-15.md §2.
+    use_build_context_synchronously: ignore
     strict_top_level_inference: ignore
 
 linter:

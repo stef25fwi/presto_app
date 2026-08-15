@@ -11,7 +11,7 @@ du code et de la configuration de build.
 | # | Constat | Sévérité |
 |---|---|---|
 | 1 | **316 appels `debugPrint`** dans `lib/`, écrivant dans logcat en release. Les plus fournis manipulent des données personnelles : notifications (29), compte (21), authentification sociale (18). Neutralisés le 15/08 en remplaçant l'implémentation de `debugPrint` au démarrage | P0 — **corrigé** |
-| 2 | `use_build_context_synchronously` était **ignoré globalement**. Mesure faite : **aucun site fautif** dans `lib/`, la discipline étant appliquée systématiquement (452 gardes `mounted`). Règle réactivée | P2 — garde-fou rétabli |
+| 2 | `use_build_context_synchronously` reste **ignoré globalement**. Une réactivation tentée le 15/08 a été annulée : `flutter analyze` signale des occurrences qu'un détecteur statique maison n'avait pas vues. À reprendre à partir de la sortie réelle de l'analyseur | P1 — **non résolu** |
 | 3 | ProGuard ne préservait pas les classes du SDK Firebase Android alors que R8 est actif en release. Règles ajoutées le 15/08 — mais **l'AAB reste non testé sur appareil**, seule preuve qui vaudrait | **P1 — test sur appareil requis** |
 | 4 | Aucun `assetlinks.json`, aucun `intent-filter` de lien web : les App Links ne fonctionneront pas | P2 |
 | 5 | Configuration de build Android : minification, réduction de ressources, signature et versionnage corrects | ✅ sain |
@@ -107,11 +107,23 @@ sans garde**. Parmi eux, 227 sont immédiatement suivis d'une garde `mounted`,
 et le dépôt en compte 452 au total. La discipline n'est pas seulement
 appliquée, elle l'est systématiquement.
 
-**Conséquence** : la règle a été réactivée le 15/08. Le risque décrit
-initialement ne s'était pas matérialisé ; ce qui manquait était le garde-fou
-empêchant sa réapparition, et il est désormais en place. La confirmation
-définitive revient à `flutter analyze --fatal-infos` en intégration continue,
-non exécutable depuis l'environnement d'audit.
+**La CI a tranché, et contre moi.** La règle a été réactivée le 15/08, puis la
+validation a rapporté `Flutter analyze | failure`. Mon détecteur maison, malgré
+sa validation sur un cas fautif connu, manque donc des occurrences que
+l'analyseur voit — son suivi du flot de contrôle est trop grossier. La ligne a
+été remise en attente pour ne pas bloquer des correctifs de production sans
+rapport.
+
+**Ce qu'il faut retenir** : trois mesures successives, trois résultats
+différents, tous faux. 116, puis 61, puis 0 — et la réalité est ailleurs. La
+seule source fiable est `flutter analyze --fatal-infos`, non exécutable depuis
+l'environnement d'audit. La reprise doit partir de sa sortie, disponible dans
+l'artefact `pr-validation-*` du run 31884684486, et non d'une nouvelle
+heuristique.
+
+Le constat de fond tient : la règle est désactivée, ce qui supprime le
+garde-fou. Sa réactivation demande de traiter les occurrences d'abord, dans un
+travail dédié.
 
 Les deux autres diagnostics sont maintenus. `deprecated_member_use` est
 défendable pendant une migration de SDK, à condition d'être borné dans le
@@ -207,8 +219,9 @@ Le découpage progresse réellement — le plus gros fichier est passé de 7 218
    aucun développement.
 2. **Neutraliser la journalisation en release** (§1), puis réactiver
    `avoid_print`. Reprise mécanique, risque faible, enjeu de conformité réel.
-3. ~~Réactiver `use_build_context_synchronously`~~ — **fait le 15/08**, sans
-   correctif nécessaire, la mesure n'ayant révélé aucun site fautif (§2).
+3. **Réactiver `use_build_context_synchronously`** en partant de la sortie
+   réelle de `flutter analyze`, et non d'une heuristique (§2). Tentative du
+   15/08 annulée faute d'avoir pu mesurer correctement.
 4. Ajouter les App Links si les notifications doivent ouvrir un contenu précis
    (§4).
 
