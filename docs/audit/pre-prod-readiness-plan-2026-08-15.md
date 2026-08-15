@@ -45,7 +45,7 @@ Par registre :
 | `accessibility_ux_readiness` | 3/8 |
 | `observability_slo` | 3/6 |
 | `architecture-readiness` | 2/7 |
-| `security-controls` | 2/9 |
+| `security-controls` | 5/9 (2/9 avant les attestations du 15/08) |
 | `seo_acquisition_readiness` | 3/12 |
 | `rgpd_readiness` | 1/7 |
 | `mobile_readiness` | 1/8 |
@@ -141,11 +141,9 @@ constituent le vrai chemin critique du pré-prod.
 
 ### Console Firebase / GCP
 
-- `app-check-functions-enforced` — seul contrôle App Check réellement non
-  appliqué (Firestore et Storage le sont déjà, voir §3 de l'audit).
-- `app-check-firestore-enforced`, `app-check-storage-enforced` — **déjà actifs
-  en production**, il ne manque que la capture déposée dans
-  `docs/evidence/security/`.
+- ~~Les trois contrôles App Check~~ — **clos le 15/08**. Firestore et Storage
+  étaient appliqués en console, Functions l'était dans le code (83/83 callables,
+  politique fail-closed). Preuves déposées dans `docs/evidence/security/`.
 - `api-keys-restricted` — restreindre les clés par origine et par package.
 - `secrets-inventory-current` — inventaire à produire.
 - `monitoring-dashboards-live` — dashboards à constater.
@@ -176,16 +174,15 @@ visible dans le pre-launch report.
 
 ## Ordre conseillé
 
+0. **Donner un énoncé vérifiable à chaque contrôle** — préalable à toute
+   campagne d'attestation, sans quoi les statuts resteront des opinions.
 1. **Lancer le test fermé Play** (12 testeurs, 14 jours) — c'est le seul délai
    incompressible, tout le reste peut avancer en parallèle.
-2. **Déposer les preuves App Check Firestore et Storage** — deux contrôles
-   gagnés en quelques minutes, pour un travail déjà fait.
-3. **Trancher `app-check-functions-enforced`** : l'activer, ou documenter
-   formellement son report.
-4. **Instruire le lot des 29** contrôles dont les preuves existent — c'est là
+2. ~~Déposer les preuves App Check~~ — **fait**, 2/9 → 5/9.
+3. **Instruire le lot des 29** contrôles dont les preuves existent — c'est là
    que le ratio effort/résultat est le meilleur.
-5. **Traiter `brace-expansion`** (`npm audit fix`, non cassant d'après le
-   rapport régénéré) pour approcher `dependency-audit-clean`.
+5. ~~Traiter `brace-expansion`~~ — **fait le 15/08** : le dépôt est passé de
+   1 haute + 7 modérées à 0 haute + 7 modérées, sans changement cassant.
 6. **Reprendre `18-point-completion`** : 16 contrôles y sont `blocked`, ce qui
    suggère une dépendance amont à lever avant tout le reste.
 
