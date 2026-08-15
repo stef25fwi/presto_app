@@ -3,15 +3,131 @@
   "name": "SEO Programmatique Local — Services × Missions × Annonces × Profils × Villes",
   "status": "in_progress",
   "controls": [
-    {"id":"registry","status":"complete","evidence":"3 services, 6 villes et 2 intentions configurés"},
-    {"id":"generator","status":"complete","evidence":"36 pages locales générables automatiquement"},
-    {"id":"activation_gate","status":"complete","evidence":"noindex par défaut; indexation seulement après seuil de données réelles et récentes"},
-    {"id":"listing_aggregates","status":"complete","evidence":"agrégation anonyme des annonces publiques actives par catégorie et ville"},
-    {"id":"firebase_pipeline","status":"complete","evidence":"génération et validation branchées avant le build Hosting avec smoke test"},
-    {"id":"local_sitemap","status":"complete","evidence":"sitemap-local.xml ne contient que les pages éligibles"},
-    {"id":"profile_signals","status":"pending","evidence":"à activer uniquement après audit des champs publics et du consentement profil"},
-    {"id":"public_listing_pages","status":"pending","evidence":"URLs SEO individuelles d'annonces publiques à concevoir"},
-    {"id":"public_profile_pages","status":"pending","evidence":"ProfilePage et URLs publiques à concevoir"},
-    {"id":"search_console_validation","status":"pending","evidence":"à mesurer après fusion et déploiement du même SHA"}
+    {
+      "id": "registry",
+      "objective": "Le référentiel services, villes et intentions est configuré et cohérent.",
+      "doneWhen": [
+        "Chaque combinaison génère une page unique sans collision d'URL."
+      ],
+      "validationCommands": [
+        "node tools/quality/check_programmatic_local_seo.mjs"
+      ],
+      "status": "complete",
+      "evidence": "3 services, 6 villes et 2 intentions configurés"
+    },
+    {
+      "id": "generator",
+      "objective": "Les pages locales sont générées automatiquement, sans édition manuelle.",
+      "doneWhen": [
+        "La génération est reproductible et produit le même résultat à données égales."
+      ],
+      "validationCommands": [
+        "node tools/quality/check_programmatic_local_seo.mjs"
+      ],
+      "status": "complete",
+      "evidence": "36 pages locales générables automatiquement"
+    },
+    {
+      "id": "activation_gate",
+      "objective": "Une page locale reste noindex tant qu'elle n'a pas assez de contenu réel.",
+      "doneWhen": [
+        "Le seuil de données est explicite et vérifié avant indexation.",
+        "Une page vide ou quasi vide n'est jamais exposée à l'indexation."
+      ],
+      "validationCommands": [
+        "node tools/quality/check_programmatic_local_seo.mjs"
+      ],
+      "status": "complete",
+      "evidence": "noindex par défaut; indexation seulement après seuil de données réelles et récentes"
+    },
+    {
+      "id": "listing_aggregates",
+      "objective": "Les agrégats d'annonces publiques sont anonymes et ne réidentifient personne.",
+      "doneWhen": [
+        "Aucun agrégat ne descend à un effectif permettant d'identifier une annonce ou un professionnel."
+      ],
+      "validationCommands": [
+        "node tools/quality/check_programmatic_local_seo.mjs"
+      ],
+      "status": "complete",
+      "evidence": "agrégation anonyme des annonces publiques actives par catégorie et ville"
+    },
+    {
+      "id": "firebase_pipeline",
+      "objective": "La génération et la validation SEO s'exécutent avant le build Hosting, pas après.",
+      "doneWhen": [
+        "Un échec de validation empêche le déploiement plutôt que de le suivre."
+      ],
+      "validationCommands": [
+        "Étapes 12 à 15 de .github/workflows/deploy.yml"
+      ],
+      "status": "complete",
+      "evidence": "génération et validation branchées avant le build Hosting avec smoke test"
+    },
+    {
+      "id": "local_sitemap",
+      "objective": "sitemap-local.xml ne contient que des pages éligibles à l'indexation.",
+      "doneWhen": [
+        "Aucune page noindex n'y figure.",
+        "Toute URL du sitemap répond en 200."
+      ],
+      "validationCommands": [
+        "node tools/quality/check_programmatic_local_seo.mjs"
+      ],
+      "status": "complete",
+      "evidence": "sitemap-local.xml ne contient que les pages éligibles"
+    },
+    {
+      "id": "profile_signals",
+      "objective": "Les signaux issus des profils publics ne sont exploités qu'après audit des champs exposés.",
+      "doneWhen": [
+        "L'audit des champs publics et du consentement est mené avant toute exploitation.",
+        "Aucun champ personnel non consenti n'alimente une page indexable."
+      ],
+      "validationCommands": [
+        "Audit à conduire avant activation."
+      ],
+      "status": "pending",
+      "evidence": "à activer uniquement après audit des champs publics et du consentement profil"
+    },
+    {
+      "id": "public_listing_pages",
+      "objective": "Les annonces publiques disposent d'URLs SEO stables et indexables.",
+      "doneWhen": [
+        "Les identifiants d'URL sont stables et sûrs.",
+        "Une annonce retirée renvoie 404 avec noindex, sans laisser d'URL fantôme."
+      ],
+      "validationCommands": [
+        "node tools/quality/check_public_marketplace_seo.mjs"
+      ],
+      "status": "pending",
+      "evidence": "URLs SEO individuelles d'annonces publiques à concevoir"
+    },
+    {
+      "id": "public_profile_pages",
+      "objective": "Les profils professionnels publics disposent d'URLs dédiées et maîtrisées.",
+      "doneWhen": [
+        "Le périmètre des données exposées est arbitré et documenté avant conception.",
+        "Un professionnel peut refuser l'exposition publique de son profil."
+      ],
+      "validationCommands": [
+        "À concevoir. Prérequis : profile_signals audité."
+      ],
+      "status": "pending",
+      "evidence": "ProfilePage et URLs publiques à concevoir"
+    },
+    {
+      "id": "search_console_validation",
+      "objective": "L'effet des pages programmatiques est mesuré dans Search Console après déploiement.",
+      "doneWhen": [
+        "La mesure porte sur le même SHA que celui déployé.",
+        "Impressions et clics sont relevés sur au moins 28 jours avant conclusion."
+      ],
+      "validationCommands": [
+        "Search Console. Relevé daté à déposer."
+      ],
+      "status": "pending",
+      "evidence": "à mesurer après fusion et déploiement du même SHA"
+    }
   ]
 }

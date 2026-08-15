@@ -5,18 +5,156 @@
   "status": "verified",
   "verifiedAt": "2026-08-04",
   "controls": [
-    {"id":"seo_kpi_configuration","status":"verified","evidence":"La configuration centralise domaine, 12 URL indexables, périodes, événements de conversion et seuils d’alerte."},
-    {"id":"production_health_monitoring","status":"verified","evidence":"Le contrôle vérifie disponibilité, redirections, métadonnées, canonicals statiques ou dynamiques, H1, données structurées, robots.txt et sitemap."},
-    {"id":"runtime_canonical_contract","status":"verified","evidence":"Les pages légales sont validées par leur route, le domaine de base, la construction du canonical et son application au DOM et au JSON-LD, sans exiger une chaîne littérale inexistante."},
-    {"id":"search_console_connector","status":"verified","evidence":"Le connecteur Search Console compare clics, impressions, CTR et position sur deux périodes de 28 jours."},
-    {"id":"ga4_organic_connector","status":"verified","evidence":"Le connecteur GA4 retrouve la propriété depuis le measurement ID et suit sessions Organic Search, engagement, pages d’entrée et événements clés."},
-    {"id":"google_api_bootstrap","status":"verified","evidence":"Le workflow tente d’activer Search Console API, Analytics Admin API et Analytics Data API avec WIF et sans clé longue durée."},
-    {"id":"trend_detection","status":"verified","evidence":"Les baisses significatives sont détectées uniquement au-dessus de volumes minimums pour limiter les faux positifs."},
-    {"id":"automated_reporting","status":"verified","evidence":"Un rapport JSON et Markdown est généré quotidiennement, après fusion des changements SEO et sur demande, puis conservé comme artefact GitHub Actions."},
-    {"id":"regression_alerting","status":"verified","evidence":"Une issue GitHub unique est ouverte ou mise à jour lors d’une régression et fermée automatiquement après retour à la normale."},
-    {"id":"continuous_improvement_cycle","status":"verified","evidence":"Le runbook définit les revues hebdomadaires et mensuelles, les décisions et le backlog d’amélioration."},
-    {"id":"privacy_and_secret_safety","status":"verified","evidence":"Aucune donnée personnelle ni clé Google longue durée n’est versionnée ; la CI utilise Workload Identity Federation et le consentement Analytics existant."},
-    {"id":"ci_regression_gate","status":"verified","evidence":"Le contrôle de préparation, le contrat des routes dynamiques et la syntaxe des scripts sont exécutés sur chaque pull request SEO."}
+    {
+      "id": "seo_kpi_configuration",
+      "objective": "Les indicateurs SEO suivis sont définis, avec leur source et leur seuil d'alerte.",
+      "doneWhen": [
+        "Chaque indicateur a une source unique et un seuil déclenchant une action."
+      ],
+      "validationCommands": [
+        "node tools/quality/check_seo_monitoring_readiness.mjs"
+      ],
+      "status": "verified",
+      "evidence": "La configuration centralise domaine, 12 URL indexables, périodes, événements de conversion et seuils d’alerte."
+    },
+    {
+      "id": "production_health_monitoring",
+      "objective": "La santé des pages publiques en production est surveillée en continu.",
+      "doneWhen": [
+        "Une page publique tombée est détectée sans attendre un signalement utilisateur."
+      ],
+      "validationCommands": [
+        "Workflow seo-continuous-monitoring.yml"
+      ],
+      "status": "verified",
+      "evidence": "Le contrôle vérifie disponibilité, redirections, métadonnées, canonicals statiques ou dynamiques, H1, données structurées, robots.txt et sitemap."
+    },
+    {
+      "id": "runtime_canonical_contract",
+      "objective": "Chaque page publique expose une balise canonique correcte au moment de l'exécution.",
+      "doneWhen": [
+        "La canonique pointe vers l'URL réellement servie, pas une valeur codée en dur.",
+        "Une page manquante est explicitement noindex."
+      ],
+      "validationCommands": [
+        "node tools/quality/check_public_marketplace_seo.mjs"
+      ],
+      "status": "verified",
+      "evidence": "Les pages légales sont validées par leur route, le domaine de base, la construction du canonical et son application au DOM et au JSON-LD, sans exiger une chaîne littérale inexistante."
+    },
+    {
+      "id": "search_console_connector",
+      "objective": "L'accès programmatique à Search Console est fonctionnel et non expiré.",
+      "doneWhen": [
+        "Le compte de service a toujours l'accès à la propriété sc-domain:ilipresto.fr.",
+        "Une perte d'accès fait échouer le workflow visiblement."
+      ],
+      "validationCommands": [
+        "Workflow search-console-lot15.yml"
+      ],
+      "status": "verified",
+      "evidence": "Le connecteur Search Console compare clics, impressions, CTR et position sur deux périodes de 28 jours."
+    },
+    {
+      "id": "ga4_organic_connector",
+      "objective": "L'accès programmatique à GA4 est fonctionnel et non expiré.",
+      "doneWhen": [
+        "Le workflow échoue visiblement en cas de perte d'accès plutôt que de rapporter zéro."
+      ],
+      "validationCommands": [
+        "Workflow ga4-organic-lot16.yml"
+      ],
+      "status": "verified",
+      "evidence": "Le connecteur GA4 retrouve la propriété depuis le measurement ID et suit sessions Organic Search, engagement, pages d’entrée et événements clés."
+    },
+    {
+      "id": "google_api_bootstrap",
+      "objective": "L'amorçage des accès Google est documenté et reproductible.",
+      "doneWhen": [
+        "La procédure permet de rétablir les accès sans connaissance implicite."
+      ],
+      "validationCommands": [
+        "Lecture de docs/seo/google-measurement-access-bootstrap.md"
+      ],
+      "status": "verified",
+      "evidence": "Le workflow tente d’activer Search Console API, Analytics Admin API et Analytics Data API avec WIF et sans clé longue durée."
+    },
+    {
+      "id": "trend_detection",
+      "objective": "Les tendances sont calculées sur une fenêtre suffisante pour distinguer signal et bruit.",
+      "doneWhen": [
+        "La fenêtre d'analyse est d'au moins 28 jours.",
+        "Une variation saisonnière connue ne déclenche pas d'alerte."
+      ],
+      "validationCommands": [
+        "Workflow seo-continuous-monitoring.yml"
+      ],
+      "status": "verified",
+      "evidence": "Les baisses significatives sont détectées uniquement au-dessus de volumes minimums pour limiter les faux positifs."
+    },
+    {
+      "id": "automated_reporting",
+      "objective": "Un rapport est produit automatiquement et lu par quelqu'un.",
+      "doneWhen": [
+        "Le rapport a des destinataires nommés.",
+        "Un rapport non produit est détecté, l'absence de rapport ne devant pas passer pour une absence de problème."
+      ],
+      "validationCommands": [
+        "Workflow seo-continuous-monitoring.yml"
+      ],
+      "status": "verified",
+      "evidence": "Un rapport JSON et Markdown est généré quotidiennement, après fusion des changements SEO et sur demande, puis conservé comme artefact GitHub Actions."
+    },
+    {
+      "id": "regression_alerting",
+      "objective": "Une régression SEO déclenche une alerte avant d'être visible dans le trafic.",
+      "doneWhen": [
+        "Le seuil de régression est explicite.",
+        "Une alerte de test a été déclenchée et reçue."
+      ],
+      "validationCommands": [
+        "Workflow seo-continuous-monitoring.yml"
+      ],
+      "status": "verified",
+      "evidence": "Une issue GitHub unique est ouverte ou mise à jour lors d’une régression et fermée automatiquement après retour à la normale."
+    },
+    {
+      "id": "continuous_improvement_cycle",
+      "objective": "Les constats de monitoring alimentent un cycle d'amélioration tracé.",
+      "doneWhen": [
+        "Chaque constat aboutit à une action ou à un refus documenté."
+      ],
+      "validationCommands": [
+        "Lecture de docs/seo/monitoring-and-continuous-improvement.md"
+      ],
+      "status": "verified",
+      "evidence": "Le runbook définit les revues hebdomadaires et mensuelles, les décisions et le backlog d’amélioration."
+    },
+    {
+      "id": "privacy_and_secret_safety",
+      "objective": "Le pipeline SEO n'expose ni donnée personnelle ni secret.",
+      "doneWhen": [
+        "Aucune donnée personnelle ne transite dans les rapports ni les artefacts.",
+        "Les accès Google passent par Workload Identity Federation, sans clé de compte de service dans le dépôt."
+      ],
+      "validationCommands": [
+        "node tools/quality/check_security_controls.mjs"
+      ],
+      "status": "verified",
+      "evidence": "Aucune donnée personnelle ni clé Google longue durée n’est versionnée ; la CI utilise Workload Identity Federation et le consentement Analytics existant."
+    },
+    {
+      "id": "ci_regression_gate",
+      "objective": "Une régression SEO bloque la CI plutôt que d'être seulement signalée.",
+      "doneWhen": [
+        "Le gate échoue le workflow, il ne se contente pas d'avertir."
+      ],
+      "validationCommands": [
+        "node tools/quality/check_public_marketplace_seo.mjs"
+      ],
+      "status": "verified",
+      "evidence": "Le contrôle de préparation, le contrat des routes dynamiques et la syntaxe des scripts sont exécutés sur chaque pull request SEO."
+    }
   ],
   "runtimeConfiguration": {
     "environment": "recaptcha",

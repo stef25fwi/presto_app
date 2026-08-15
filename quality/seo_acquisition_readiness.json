@@ -2,17 +2,159 @@
   "phase": 14,
   "name": "SEO, acquisition, CRM et contenu",
   "controls": [
-    {"id":"seo_metadata","status":"pending","evidence":"Métadonnées uniques et vérifiées sur les pages publiques"},
-    {"id":"seo_sitemap","status":"pending","evidence":"Sitemap et robots.txt validés"},
-    {"id":"seo_indexation","status":"pending","evidence":"Indexation réelle contrôlée dans les outils webmaster"},
-    {"id":"public_pages_performance","status":"complete","evidence":"Lot 13 certifié en production le 2026-08-05 sur le SHA Firebase 79033ab51b7a41ac1377359f592a48f4ef95d5a8. Déploiement Firebase run 31048557909 réussi avec smoke tests. Lighthouse run 31049564594 réussi en mobile et desktop sur quatre pages, trois mesures médianes par page, budgets bloquants inchangés, artefacts conservés 90 jours et statuts quality/lighthouse-mobile, quality/lighthouse-desktop et quality/lighthouse-lot13 au vert sur le même SHA."},
-    {"id":"core_web_vitals_field","status":"pending","evidence":"Lot 14 instrumenté avec une collecte RUM auto-hébergée et anonyme de LCP, INP et CLS, séparée mobile/desktop. Rapport glissant de 28 jours au 75e centile, seuils LCP 2500 ms, INP 200 ms et CLS 0,1, rétention des échantillons 35 jours, respect DNT/GPC et refus analytics. Certification maintenue en pending jusqu’à au moins 75 échantillons par métrique et catégorie d’appareil et un rapport mobile/desktop intégralement au vert."},
-    {"id":"search_console_automation","status":"complete","evidence":"Lot 15 certifié le 2026-08-06 sur le SHA af7e4f59ea096e1b9f3361237823149b54f38a84. Workflow Search Console run 31063053383 réussi après authentification WIF et accès siteFullUser à sc-domain:ilipresto.fr. Rapport réel disponible avec données présentes (9 clics, 24 impressions, CTR 37,5 %, position moyenne 1,58 sur la période 2026-07-07 au 2026-08-03), artefact 8962121309 conservé 90 jours, statut quality/search-console-lot15 au vert et issue #1237 fermée automatiquement."},
-    {"id":"ga4_organic_search","status":"complete","evidence":"Lot 16 certifié le 2026-08-06 sur le SHA 309524aa92d94ad437c9d191c7bfc26ad03cf5d2. Workflow GA4 Organic Search run 31091519469 réussi après authentification WIF, activation des API Analytics Admin et Analytics Data, et accès Lecteur à la propriété GA4 536902302 contenant le Measurement ID G-NT4PEHQ3CJ. Rapport réel disponible sur les périodes 2026-07-07 au 2026-08-03 et 2026-06-09 au 2026-07-06 avec statut zero-data-valid, zéro session organique et zéro événement clé, ce qui constitue une réponse Analytics Data API valide. Artefact 8964803988 conservé 90 jours, statut quality/ga4-organic-lot16 au vert et issue #1242 fermée automatiquement."},
-    {"id":"campaign_attribution","status":"pending","evidence":"Lot 17 implémenté avec capture consentie des paramètres UTM et identifiants de clic, attribution première touche et dernière touche conservée 90 jours, enrichissement des événements produit et événements campaign_landing/deep_link_open. Certification maintenue en pending jusqu’au workflow de production quality/campaign-attribution-lot17 vert sur le SHA déployé."},
-    {"id":"deep_links_campaigns","status":"pending","evidence":"Lot 17 implémenté avec liens canoniques https://ilipresto.fr/app/*, App Links Android autoVerify, Universal Links iOS, schéma ilipresto:// et associations .well-known générées depuis les vrais certificats. Certification maintenue en pending jusqu’à la validation réelle Web, Android et iOS par quality/campaign-attribution-lot17."},
-    {"id":"crm_consent","status":"pending","evidence":"Email et push segmentés avec consentement versionné"},
-    {"id":"referral_reactivation","status":"pending","evidence":"Boucles referral, onboarding et réactivation mesurées"},
-    {"id":"cac_dashboard","status":"pending","evidence":"CAC et conversion suivis par canal"}
+    {
+      "id": "seo_metadata",
+      "objective": "Chaque page publique porte un titre et une méta-description uniques et pertinents.",
+      "doneWhen": [
+        "Aucun doublon de title ni de meta description entre pages publiques.",
+        "Longueurs dans les bornes usuelles : titre sous 60 caractères, description sous 155."
+      ],
+      "validationCommands": [
+        "node tools/quality/check_public_marketplace_seo.mjs"
+      ],
+      "status": "pending",
+      "evidence": "Métadonnées uniques et vérifiées sur les pages publiques"
+    },
+    {
+      "id": "seo_sitemap",
+      "objective": "Le sitemap et le robots.txt sont valides et cohérents entre eux.",
+      "doneWhen": [
+        "Le sitemap ne référence que des URLs répondant en 200.",
+        "robots.txt n'interdit aucune page présente au sitemap."
+      ],
+      "validationCommands": [
+        "node tools/quality/check_public_marketplace_seo.mjs"
+      ],
+      "status": "pending",
+      "evidence": "Sitemap et robots.txt validés"
+    },
+    {
+      "id": "seo_indexation",
+      "objective": "L'indexation réelle est contrôlée dans Search Console, pas seulement supposée.",
+      "doneWhen": [
+        "Le nombre de pages indexées est relevé et comparé au sitemap.",
+        "Les motifs d'exclusion sont examinés un par un."
+      ],
+      "validationCommands": [
+        "Search Console → Indexation. Relevé daté à déposer."
+      ],
+      "status": "pending",
+      "evidence": "Indexation réelle contrôlée dans les outils webmaster"
+    },
+    {
+      "id": "public_pages_performance",
+      "objective": "Les pages publiques respectent les budgets de performance.",
+      "doneWhen": [
+        "Les budgets de bundle sont tenus.",
+        "Le temps d'affichage initial reste sous 2,5 s."
+      ],
+      "validationCommands": [
+        "node tools/check_web_bundle_size.mjs"
+      ],
+      "status": "complete",
+      "evidence": "Lot 13 certifié en production le 2026-08-05 sur le SHA Firebase 79033ab51b7a41ac1377359f592a48f4ef95d5a8. Déploiement Firebase run 31048557909 réussi avec smoke tests. Lighthouse run 31049564594 réussi en mobile et desktop sur quatre pages, trois mesures médianes par page, budgets bloquants inchangés, artefacts conservés 90 jours et statuts quality/lighthouse-mobile, quality/lighthouse-desktop et quality/lighthouse-lot13 au vert sur le même SHA."
+    },
+    {
+      "id": "core_web_vitals_field",
+      "objective": "Les Core Web Vitals sont mesurés sur le trafic réel, pas en laboratoire.",
+      "doneWhen": [
+        "LCP, INP et CLS sont collectés en conditions réelles sur une fenêtre de 28 jours.",
+        "Les seuils « bon » sont atteints au 75e centile."
+      ],
+      "validationCommands": [
+        "Workflow core-web-vitals-field.yml, puis relevé daté."
+      ],
+      "status": "pending",
+      "evidence": "Lot 14 instrumenté avec une collecte RUM auto-hébergée et anonyme de LCP, INP et CLS, séparée mobile/desktop. Rapport glissant de 28 jours au 75e centile, seuils LCP 2500 ms, INP 200 ms et CLS 0,1, rétention des échantillons 35 jours, respect DNT/GPC et refus analytics. Certification maintenue en pending jusqu’à au moins 75 échantillons par métrique et catégorie d’appareil et un rapport mobile/desktop intégralement au vert."
+    },
+    {
+      "id": "search_console_automation",
+      "objective": "La collecte Search Console est automatisée et son historique conservé.",
+      "doneWhen": [
+        "Le workflow s'exécute sans intervention et échoue visiblement en cas de perte d'accès."
+      ],
+      "validationCommands": [
+        "Workflow search-console-lot15.yml"
+      ],
+      "status": "complete",
+      "evidence": "Lot 15 certifié le 2026-08-06 sur le SHA af7e4f59ea096e1b9f3361237823149b54f38a84. Workflow Search Console run 31063053383 réussi après authentification WIF et accès siteFullUser à sc-domain:ilipresto.fr. Rapport réel disponible avec données présentes (9 clics, 24 impressions, CTR 37,5 %, position moyenne 1,58 sur la période 2026-07-07 au 2026-08-03), artefact 8962121309 conservé 90 jours, statut quality/search-console-lot15 au vert et issue #1237 fermée automatiquement."
+    },
+    {
+      "id": "ga4_organic_search",
+      "objective": "Le trafic organique est suivi dans GA4 et rapproché de Search Console.",
+      "doneWhen": [
+        "Les écarts entre les deux sources sont expliqués, les périmètres de mesure différant."
+      ],
+      "validationCommands": [
+        "Workflow ga4-organic-lot16.yml"
+      ],
+      "status": "complete",
+      "evidence": "Lot 16 certifié le 2026-08-06 sur le SHA 309524aa92d94ad437c9d191c7bfc26ad03cf5d2. Workflow GA4 Organic Search run 31091519469 réussi après authentification WIF, activation des API Analytics Admin et Analytics Data, et accès Lecteur à la propriété GA4 536902302 contenant le Measurement ID G-NT4PEHQ3CJ. Rapport réel disponible sur les périodes 2026-07-07 au 2026-08-03 et 2026-06-09 au 2026-07-06 avec statut zero-data-valid, zéro session organique et zéro événement clé, ce qui constitue une réponse Analytics Data API valide. Artefact 8964803988 conservé 90 jours, statut quality/ga4-organic-lot16 au vert et issue #1242 fermée automatiquement."
+    },
+    {
+      "id": "campaign_attribution",
+      "objective": "Les paramètres de campagne sont capturés avec consentement et attribués jusqu'à la conversion.",
+      "doneWhen": [
+        "La capture UTM respecte le refus de consentement, aucun paramètre n'étant stocké sans accord.",
+        "Le chemin campagne → inscription → conversion est reconstituable."
+      ],
+      "validationCommands": [
+        "Workflow campaign-attribution-lot17.yml"
+      ],
+      "status": "pending",
+      "evidence": "Lot 17 implémenté avec capture consentie des paramètres UTM et identifiants de clic, attribution première touche et dernière touche conservée 90 jours, enrichissement des événements produit et événements campaign_landing/deep_link_open. Certification maintenue en pending jusqu’au workflow de production quality/campaign-attribution-lot17 vert sur le SHA déployé."
+    },
+    {
+      "id": "deep_links_campaigns",
+      "objective": "Les liens de campagne ouvrent la bonne destination, y compris sur mobile.",
+      "doneWhen": [
+        "Les liens canoniques résolvent vers la page attendue.",
+        "Sur mobile, l'ouverture dans l'application suppose des App Links configurés — non validés à ce jour, voir la checklist Play Store 6.3."
+      ],
+      "validationCommands": [
+        "Vérification manuelle des liens, relevé daté."
+      ],
+      "status": "pending",
+      "evidence": "Lot 17 implémenté avec liens canoniques https://ilipresto.fr/app/*, App Links Android autoVerify, Universal Links iOS, schéma ilipresto:// et associations .well-known générées depuis les vrais certificats. Certification maintenue en pending jusqu’à la validation réelle Web, Android et iOS par quality/campaign-attribution-lot17."
+    },
+    {
+      "id": "crm_consent",
+      "objective": "Les envois email et push reposent sur un consentement versionné et révocable.",
+      "doneWhen": [
+        "Chaque destinataire a un consentement daté, avec la version du texte accepté.",
+        "Une révocation prend effet sans délai sur tous les canaux."
+      ],
+      "validationCommands": [
+        "npm --prefix functions test"
+      ],
+      "status": "pending",
+      "evidence": "Email et push segmentés avec consentement versionné"
+    },
+    {
+      "id": "referral_reactivation",
+      "objective": "Les boucles de parrainage, d'accueil et de réactivation sont mesurées.",
+      "doneWhen": [
+        "Chaque boucle a un indicateur d'entrée et un de sortie.",
+        "Une boucle sans mesure est désactivée plutôt que laissée en aveugle."
+      ],
+      "validationCommands": [
+        "Tableau de bord à constater, relevé daté."
+      ],
+      "status": "pending",
+      "evidence": "Boucles referral, onboarding et réactivation mesurées"
+    },
+    {
+      "id": "cac_dashboard",
+      "objective": "Le coût d'acquisition et la conversion sont suivis par canal.",
+      "doneWhen": [
+        "Le CAC est calculable par canal sur une fenêtre glissante.",
+        "Les canaux sans mesure de coût sont identifiés comme tels."
+      ],
+      "validationCommands": [
+        "Tableau de bord à constater, relevé daté."
+      ],
+      "status": "pending",
+      "evidence": "CAC et conversion suivis par canal"
+    }
   ]
 }
