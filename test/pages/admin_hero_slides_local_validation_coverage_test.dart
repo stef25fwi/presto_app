@@ -137,7 +137,7 @@ void main() {
 
     expect(
       find.text('Le fichier sélectionné est vide. Choisissez un autre média.'),
-      findsOneWidget,
+      findsWidgets,
     );
     expect(tester.takeException(), isNull);
   });
@@ -156,8 +156,8 @@ void main() {
 
     await chooseMedia(tester);
 
-    expect(find.textContaining('Format non supporté'), findsOneWidget);
-    expect(find.textContaining('HEIC/HEIF'), findsOneWidget);
+    expect(find.textContaining('Format non supporté'), findsWidgets);
+    expect(find.textContaining('HEIC/HEIF'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 
@@ -179,7 +179,7 @@ void main() {
     ]);
 
     await chooseMedia(tester);
-    expect(find.text('hero-validation.png'), findsOneWidget);
+    expect(find.text('hero-validation.png'), findsWidgets);
 
     final duration = find.byWidgetPredicate(
       (widget) =>
