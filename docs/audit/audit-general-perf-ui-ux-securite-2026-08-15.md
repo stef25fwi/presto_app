@@ -24,8 +24,8 @@ restent couvertes par la CI GitHub Actions (`quality-baseline.yml`), verte au
 |---|---|---|
 | Performance | 🟡 mesures d'il y a 4 semaines ; 2 correctifs ciblés faits le 15/08 | Le rechargement de `cities_compact.json` à chaque montage du widget de publication (§1.3) et une partie du bootstrap séquentiel (§1.2) sont corrigés ; le format du JSON et App Check restent à traiter |
 | UI / UX | 🟡 socle sain, accessibilité inachevée | 5 des 8 contrôles restent `pending` (navigation clavier, lecteur d'écran, responsive, cohérence des états, audit final) ; revues de code partielles + 1 correctif faits le 15/08 sur 2 d'entre eux (§2.2) |
-| Sécurité | 🟢 aucune faille active identifiée, dette documentaire | `owasp-review-complete`, `secrets-inventory-current` et `api-keys-restricted` toujours `pending` ; la vulnérabilité haute non corrigée à la racine du dépôt (§3.2) est **corrigée le 15/08** |
-| Transverse | 🟡 dette structurelle en résorption | 18 fichiers Dart/TS dépassent 1200 lignes ; `use_build_context_synchronously` reste désactivé faute d'une mesure fiable |
+| Sécurité | 🟢 **0 vulnérabilité**, dette documentaire résiduelle | Les 16 modérées et la haute sont éliminées (15 et 16/08, §3.2 bis) sans downgrade. Restent `owasp-review-complete`, `secrets-inventory-current` et `api-keys-restricted` — trois livrables de preuve hors d'atteinte d'une session de code |
+| Transverse | 🟡 dette structurelle en résorption | 18 fichiers Dart/TS dépassent 1200 lignes ; `avoid_print` réactivée le 16/08 ; `use_build_context_synchronously` reste le seul point réellement bloqué par l'absence de SDK Flutter |
 
 ---
 
@@ -144,9 +144,27 @@ retirer dans un nettoyage séparé plutôt que dans ce correctif de performance.
    le budget appliqué à ce moment.
 4. **P1** — poursuivre la décomposition des pages géantes (voir §4), qui est
    le premier facteur de jank perçu.
-5. **P2** — exclure `.js.symbols`/`NOTICES` du déploiement, WebP pour les
-   logos, instrumenter LCP/INP réels (web-vitals déjà présent dans
+5. **P2** — exclure `.js.symbols` du déploiement — **fait le 16/08** :
+   `firebase.json` ignore désormais `**/*.js.symbols` et `**/*.wasm.symbols`
+   sur les deux cibles d'hébergement. Restent : WebP pour les logos,
+   instrumenter LCP/INP réels (web-vitals déjà présent dans
    `web/web-vitals-rum.js`, à vérifier qu'il remonte des données exploitées).
+
+   **Correction apportée à la recommandation d'origine** : l'audit du 19/07
+   proposait d'exclure aussi `assets/NOTICES` (1,44 Mio). À ne pas faire.
+   Ce fichier porte l'attribution des licences open-source embarquées par le
+   moteur Flutter (Skia, ICU…), dont plusieurs — BSD, MIT — **exigent** que
+   l'avis de copyright accompagne toute redistribution. Le retirer d'un
+   déploiement public échange 1,4 Mio sur un build de 67 Mio contre un risque
+   de conformité de licence réel : le compromis n'est pas favorable. Seuls les
+   symboles de debug, qui n'ont aucune fonction légale ni runtime, sont
+   exclus.
+
+   À noter : cette exclusion allège l'artefact **déployé**, mais pas la mesure
+   de `tools/check_web_bundle_size.mjs`, qui pèse le répertoire `build/web`
+   sur disque. Le budget affiché en CI ne bougera donc pas — ce qui est
+   cohérent, le budget mesurant la production du build et non ce qui est
+   servi.
 
 ---
 
@@ -202,16 +220,23 @@ défaut.
 
 ### 3.1 Contrôles vérifiés dans cette session
 
-`node tools/quality/check_security_controls.mjs` → **5/9 `verified`, 4
-`pending`, 0 échec de gate** :
+`node tools/quality/check_security_controls.mjs` → **6/9 `verified`, 3
+`pending`, 0 échec de gate** (5/9 avant le correctif de dépendances du 16/08,
+§3.2) :
 
 - ✅ App Check appliqué sur Firestore, Storage et 83/83 callables Cloud
   Functions (politique fail-closed en production).
 - ✅ Aucun déploiement de preview ne peut cibler le projet de production.
 - ✅ CodeQL actif sur chaque PR et sur `main`.
+- ✅ `dependency-audit-clean` — 0 vulnérabilité sur les deux périmètres du
+  dépôt depuis le 16/08 (§3.2), preuve dans
+  `docs/evidence/security/dependency-audit.md`.
 - ⏳ `api-keys-restricted`, `secrets-inventory-current`, `owasp-review-complete`
   restent `pending` : ce sont des livrables de preuve à produire (console
   GCP, inventaire, revue documentée), pas des failles techniques connues.
+  **Aucun des trois n'est instruisible depuis une session de code** : les deux
+  premiers exigent un accès console GCP, le troisième un jugement humain sur
+  ce qui est accepté et pourquoi.
 
 ### 3.2 Dépendances — écart entre `functions/` et la racine, corrigé le 15/08
 
@@ -226,23 +251,55 @@ scripts `bin/` et `tools/`) avec la même vulnérabilité haute non traitée :
 | `functions/` | 7 modérées, 0 haute | inchangé |
 | racine du dépôt (`package-lock.json`) | 9 modérées, **1 haute** (`brace-expansion`) | **9 modérées, 0 haute** |
 
-**Corrigé dans cette session** par `npm audit fix` (sans `--force`) à la
-racine : `package-lock.json` seul est modifié (359 lignes ajoutées, 248
-retirées), aucune dépendance directe de `package.json` n'a bougé de version.
-Vérifié après coup — `firebase-admin` reste en 13.10.0 (inchangé),
-`firebase-functions` 7.3.0 → 7.3.2 (patch, dans la plage `^7.3.0` déclarée),
-`@google-cloud/storage` 7.21.0 → 7.22.0 (mineur, dépendance transitive) : pas
-de changement cassant. `node -e "require('firebase-admin')"` et équivalents
-pour `@google-cloud/storage` et `firebase-functions` chargent sans erreur
-après le correctif. Les 9 vulnérabilités modérées restantes suivent la même
-chaîne transitive (`uuid` → `gaxios`/`teeny-request` → `@google-cloud/*` →
-`firebase-admin`) déjà documentée pour `functions/`, et nécessiteraient un
-downgrade majeur cassant de `firebase-admin` pour être éliminées — non
-recommandé sans étude d'impact séparée.
+**Première correction (15/08)** par `npm audit fix` (sans `--force`) à la
+racine : la vulnérabilité haute disparaît, `firebase-admin` reste en 13.10.0.
+Restaient alors 9 modérées à la racine et 7 dans `functions/`.
 
-`docs/DEPENDENCY_AUDIT.md` ne documente toujours que le périmètre
-`functions/` : produire son équivalent pour la racine reste à faire pour
-éviter que cet écart ne se reproduise silencieusement (voir §3.5).
+### 3.2 bis — Les 16 modérées éliminées le 16/08, sans downgrade
+
+Les 16 entrées restantes n'étaient **pas 16 problèmes** : elles remontaient
+toutes à une cause racine unique, **`uuid@9.0.1`**
+([GHSA-w5hq-g745-h8pq](https://github.com/advisories/GHSA-w5hq-g745-h8pq)).
+Les huit autres noms (`gaxios`, `google-gax`, `teeny-request`,
+`retry-request`, `@google-cloud/storage`, `@google-cloud/firestore`,
+`firebase-admin`, `firebase-functions`) n'en étaient que la propagation
+transitive.
+
+Les audits des 14 et 15/08 s'étaient arrêtés sur le constat que la seule
+correction proposée par npm — `audit fix --force`, qui downgrade
+`firebase-admin` de 13/14 vers 10.3.0 — était inacceptable. C'était juste,
+mais la conclusion « non corrigeable sans étude d'impact » ne l'était pas :
+un **`overrides` npm sur `uuid`** traite la cause sans toucher à
+`firebase-admin`. Le mécanisme était d'ailleurs déjà en usage dans ce dépôt,
+`functions/package.json` portant déjà un `overrides` sur `@grpc/grpc-js`.
+
+| Périmètre | Avant | Après (16/08) |
+|---|---|---|
+| racine | 9 modérées | **0 vulnérabilité** |
+| `functions/` | 7 modérées | **0 vulnérabilité** |
+
+Vérifications conduites avant de basculer le contrôle :
+
+- `firebase-admin` **inchangé** — 13.10.0 à la racine, 14.2.0 dans
+  `functions/` : aucun downgrade ;
+- `uuid` résolu en 11.1.1 en **copie unique**, aucun `uuid` imbriqué —
+  l'override s'applique bien à tout l'arbre ;
+- les SDK consommateurs n'appellent que **`uuid.v4()`**
+  (`gaxios/build/src/gaxios.js` l. 417, `teeny-request` l. 135, `google-gax`
+  l. 108), dont la signature est identique entre v9 et v11 ;
+- **308/308 tests `functions/` passent**, compilation `tsc` incluse.
+
+**Portée réelle, à ne pas surestimer** : `v4` n'est pas visée par l'avis de
+sécurité, qui porte sur `v3`/`v5`/`v6` avec un paramètre `buf`. Dans ce
+projet précis, l'exposition était donc vraisemblablement nulle. Le gain n'est
+pas la fermeture d'une brèche exploitée mais la disparition d'un bruit
+permanent qui, tant qu'il occupait le rapport, rendait invisible toute
+vulnérabilité réellement sérieuse qui s'y serait ajoutée.
+
+`docs/DEPENDENCY_AUDIT.md` a été régénéré avec la logique exacte du workflow
+`dependency-audit-report.yml` et rapporte 0 partout. Il ne couvre toujours que
+le périmètre `functions/` : produire son équivalent racine reste souhaitable
+(§3.5).
 
 Aucun secret en dur détecté (`sk_live_`, `sk_test_`, clés privées, clés AWS) :
 les seules occurrences sont dans `functions/lib/modules/billing/stripe_mode.js`
@@ -274,15 +331,19 @@ Rien de nouveau à signaler ici.
 ### 3.5 Recommandations
 
 1. ~~**P1** — appliquer à la racine du dépôt le même traitement
-   `brace-expansion` que dans `functions/`~~ — **fait le 15/08** (§3.2) :
-   0 haute à la racine, comme dans `functions/`. Reste à étendre
-   `docs/DEPENDENCY_AUDIT.md` ou créer son équivalent pour la racine, sans
-   quoi cet écart peut se reproduire silencieusement à la prochaine
-   vulnérabilité publiée.
-2. **P2** — les trois contrôles `pending` de sécurité (§3.1) sont des
+   `brace-expansion` que dans `functions/`~~ — **fait le 15/08**, puis
+   ~~éliminer les 16 modérées restantes~~ — **fait le 16/08** via l'override
+   `uuid` (§3.2 bis). Les deux périmètres sont à 0 vulnérabilité.
+2. **P2** — étendre `docs/DEPENDENCY_AUDIT.md` au périmètre racine (il ne
+   couvre que `functions/`), pour qu'un écart entre les deux ne puisse plus
+   passer inaperçu à la prochaine vulnérabilité publiée. C'est ce décalage de
+   couverture qui avait laissé la haute `brace-expansion` invisible côté
+   racine pendant que `functions/` était déclaré sain.
+3. **P2** — les trois contrôles `pending` de sécurité (§3.1) sont des
    livrables de preuve, pas des correctifs de code : à traiter par
-   attestation datée dans `docs/evidence/security/`.
-3. **P2** — documenter explicitement l'acceptation de `'unsafe-inline'` dans
+   attestation datée dans `docs/evidence/security/`. Aucun n'est instruisible
+   sans accès console GCP ou décision humaine.
+4. **P2** — documenter explicitement l'acceptation de `'unsafe-inline'` dans
    la CSP (raison, portée, compensation) plutôt que de la laisser implicite.
 
 ---
@@ -299,9 +360,14 @@ Rien de nouveau à signaler ici.
   du 14/08 pour le correctif STT).
 - **316 appels `debugPrint`** dans `lib/` : neutralisés en release depuis le
   15/08 par un point de contrôle unique (`lib/bootstrap/release_logging.dart`),
-  vérifié présent dans cette session. La règle analyzer `avoid_print` reste
-  cependant désactivée (`analysis_options.yaml:26`) : rien n'empêche la
-  réintroduction d'un `print` brut non neutralisé demain.
+  vérifié présent dans cette session. La règle `avoid_print` a été
+  **réactivée le 16/08**, ce qui verrouille le correctif : un `print` brut
+  réintroduit dans `lib/` fera désormais échouer `flutter analyze
+  --fatal-infos`. Les 2 seuls `print` bruts qui subsistaient
+  (`lib/widgets/ad_banner.dart`, déjà gardés par `kDebugMode`) sont passés à
+  `debugPrint`. La règle est désactivée par `analysis_options.yaml` imbriqués
+  dans `bin/`, `tools/` et `test/`, où les 61 `print` restants sont légitimes
+  — sortie standard des scripts CLI, et code de test jamais livré.
 - **`use_build_context_synchronously` toujours désactivé** dans
   `analysis_options.yaml`. Trois tentatives de mesure par détecteur maison
   ont donné trois résultats contradictoires (116, 61, puis 0 occurrence) ; la
@@ -318,12 +384,13 @@ Rien de nouveau à signaler ici.
 |---|---|---|---|
 | 1 | Décharger le décodage JSON (`cities_compact.json`, fiches parcours) du thread UI | Perf | **partiel, fait le 15/08** — cause de duplication corrigée (§1.3) ; format compact/indexé encore à faire |
 | 2 | Paralléliser le bootstrap réseau avant `runApp()` | Perf | **partiel, fait le 15/08** — Remote Config + état auth en parallèle (§1.2) ; App Check reste bloquant par nécessité |
-| 3 | ~~Corriger `brace-expansion` à la racine du dépôt~~ | Sécurité | **fait le 15/08** |
+| 3 | ~~Corriger `brace-expansion`, puis les 16 modérées restantes~~ | Sécurité | **fait les 15 et 16/08** — 0 vulnérabilité sur les deux périmètres (§3.2 bis) |
 | 4 | Dérouler les contrôles d'accessibilité restants (clavier, lecteur d'écran, responsive, états) | UI/UX | **partiel, fait le 15/08** — revues de code sur 2 des 4 (§2.2) ; le clavier/lecteur d'écran sur appareil réel et la matrice responsive restent à faire, élevé |
 | 5 | Ré-exécuter une mesure de bundle et de runtime à jour (le dernier chiffre a un mois) | Perf | faible (CI existante) |
-| 6 | Réactiver `use_build_context_synchronously` à partir d'une sortie réelle de `flutter analyze` | Transverse | moyen |
-| 7 | Réactiver `avoid_print` pour verrouiller le correctif de journalisation | Sécurité/Transverse | faible |
-| 8 | Produire les livrables de preuve sécurité restants (clés API, inventaire secrets, revue OWASP) | Sécurité | moyen (documentaire) |
+| 6 | Réactiver `use_build_context_synchronously` à partir d'une sortie réelle de `flutter analyze` | Transverse | moyen — **reste ouvert**, seul point que le SDK absent empêche réellement de traiter ici |
+| 7 | ~~Réactiver `avoid_print`~~ | Sécurité/Transverse | **fait le 16/08** (§4) |
+| 8 | Produire les livrables de preuve sécurité restants (clés API, inventaire secrets, revue OWASP) | Sécurité | moyen (documentaire) — **hors d'atteinte d'une session de code** : console GCP ou décision humaine |
+| 9 | ~~Exclure les `.js.symbols` du déploiement~~ | Perf | **fait le 16/08** — `NOTICES` volontairement conservé (attribution de licences, §1.4) |
 
 ## Sources
 
