@@ -24,7 +24,7 @@ restent couvertes par la CI GitHub Actions (`quality-baseline.yml`), verte au
 |---|---|---|
 | Performance | 🟡 mesures d'il y a 4 semaines ; 2 correctifs ciblés faits le 15/08 | Le rechargement de `cities_compact.json` à chaque montage du widget de publication (§1.3) et une partie du bootstrap séquentiel (§1.2) sont corrigés ; le format du JSON et App Check restent à traiter |
 | UI / UX | 🟡 socle sain, accessibilité inachevée | 5 des 8 contrôles restent `pending` (navigation clavier, lecteur d'écran, responsive, cohérence des états, audit final) ; revues de code partielles + 1 correctif faits le 15/08 sur 2 d'entre eux (§2.2) |
-| Sécurité | 🟢 **0 vulnérabilité**, dette documentaire résiduelle | Les 16 modérées et la haute sont éliminées (15 et 16/08, §3.2 bis) sans downgrade. Restent `owasp-review-complete`, `secrets-inventory-current` et `api-keys-restricted` — trois livrables de preuve hors d'atteinte d'une session de code |
+| Sécurité | 🟢 **0 vulnérabilité**, dette documentaire quasi close | Les 16 modérées et la haute sont éliminées (15 et 16/08, §3.2 bis) sans downgrade. Revue OWASP et inventaire de secrets rédigés le 16/08 (§3.1) ; seul `api-keys-restricted` reste entièrement hors d'atteinte (console GCP) |
 | Transverse | 🟡 dette structurelle en résorption | 18 fichiers Dart/TS dépassent 1200 lignes ; `avoid_print` réactivée le 16/08 ; `use_build_context_synchronously` reste le seul point réellement bloqué par l'absence de SDK Flutter |
 
 ---
@@ -241,11 +241,24 @@ défaut.
   dépôt depuis le 16/08 (§3.2), preuve dans
   `docs/evidence/security/dependency-audit.md`.
 - ⏳ `api-keys-restricted`, `secrets-inventory-current`, `owasp-review-complete`
-  restent `pending` : ce sont des livrables de preuve à produire (console
-  GCP, inventaire, revue documentée), pas des failles techniques connues.
-  **Aucun des trois n'est instruisible depuis une session de code** : les deux
-  premiers exigent un accès console GCP, le troisième un jugement humain sur
-  ce qui est accepté et pourquoi.
+  restent `pending`. **Correction du 16/08** : une première version de cette
+  section affirmait qu'aucun des trois n'était instruisible depuis une
+  session de code — c'était trop pessimiste pour deux d'entre eux.
+  - `owasp-review-complete` : revue réelle rédigée
+    (`docs/evidence/security/owasp-review.md`), couvrant le périmètre minimal
+    exigé (callables, règles Firestore *et* Storage, webhooks, en-têtes) avec
+    un constat et une décision par catégorie. Reste `pending` pour un écart
+    littéral assumé : un volet (CSP `unsafe-inline`) est reporté sans
+    échéance faute d'un porteur identifié, alors que l'énoncé du contrôle
+    exige un report *avec* échéance — décision humaine, pas une lecture de
+    code de plus.
+  - `secrets-inventory-current` : inventaire amorcé
+    (`docs/evidence/security/secrets-inventory.md`), 32 secrets recensés par
+    recherche exhaustive dans le code (10 Cloud Functions, 22 GitHub
+    Actions). Reste `pending` : propriétaire et date de rotation, exigés par
+    le contrôle, ne figurent dans aucun fichier du dépôt.
+  - `api-keys-restricted` reste seul entièrement hors d'atteinte : la
+    vérification se fait exclusivement en console GCP.
 
 ### 3.2 Dépendances — écart entre `functions/` et la racine, corrigé le 15/08
 
@@ -436,7 +449,7 @@ posées**. Répartition par registre :
 |---|---:|---|
 | `seo-monitoring-readiness` | 12/12 | — |
 | `product-readiness` | 5/5 | — |
-| `security-controls` | 6/9 | Console GCP (clés API, secrets), revue OWASP humaine |
+| `security-controls` | 6/9 | Console GCP (clés API) ; revue OWASP et inventaire de secrets rédigés le 16/08, il ne manque plus que des faits organisationnels (propriétaire, dates, échéance) |
 | `ai-readiness` | 7/15 | Historique de runs, corpus |
 | `accessibility_ux_readiness` | 3/8 | **Appareil réel** (TalkBack/VoiceOver), passes manuelles |
 | `mobile_readiness` | 0/8 | **Play Console**, dont un test fermé de 12 testeurs sur 14 jours |
@@ -473,15 +486,27 @@ s'est explicitement outillé pour rendre ce raccourci impossible.
 
 ### 5. Le chemin réel vers un pré-prod sans réserve
 
-Aucune de ces étapes ne s'obtient depuis une session de code :
+**Mise à jour du 16/08** : deux des cinq étapes ci-dessous ont maintenant un
+brouillon réel plutôt qu'une page blanche. Aucune ne peut être *terminée*
+depuis une session de code — mais deux sont passées de « à écrire » à « à
+compléter », ce qui change la nature du travail restant.
 
 1. **Lancer le test fermé Play** (12 testeurs, 14 jours) — seul délai
    incompressible, à démarrer en premier ;
 2. **Une passe accessibilité sur appareil** avec TalkBack et VoiceOver ;
-3. **Trois relevés en console GCP** : restrictions de clés API, inventaire
-   des secrets, dashboards ;
-4. **Une revue OWASP** avec, pour chaque catégorie, une décision assumée ;
-5. **Dérouler les 18 points** dans l'ordre, en partant du point 2.
+3. **Un relevé en console GCP** pour les restrictions de clés API
+   (`docs/evidence/security/api-key-restrictions.md`, encore à créer) et des
+   dashboards de surveillance — seuls volets encore entièrement hors
+   d'atteinte du code ;
+4. ~~**Une revue OWASP**~~ — **rédigée le 16/08**
+   (`docs/evidence/security/owasp-review.md`), dix catégories avec constat et
+   décision. Reste : assigner une échéance au seul volet reporté
+   (`unsafe-inline` dans la CSP) ;
+5. ~~**Un inventaire des secrets**~~ — **amorcé le 16/08**
+   (`docs/evidence/security/secrets-inventory.md`), 32 secrets recensés.
+   Reste : renseigner propriétaire et date de rotation pour chaque ligne,
+   deux colonnes qu'aucun fichier du dépôt ne porte ;
+6. **Dérouler les 18 points** dans l'ordre, en partant du point 2.
 
 ## Priorités consolidées
 
@@ -494,12 +519,14 @@ Aucune de ces étapes ne s'obtient depuis une session de code :
 | 5 | Ré-exécuter une mesure de bundle et de runtime à jour (le dernier chiffre a un mois) | Perf | faible (CI existante) |
 | 6 | Réactiver `use_build_context_synchronously` à partir d'une sortie réelle de `flutter analyze` | Transverse | moyen — **reste ouvert**, seul point que le SDK absent empêche réellement de traiter ici |
 | 7 | ~~Réactiver `avoid_print`~~ | Sécurité/Transverse | **fait le 16/08** (§4) |
-| 8 | Produire les livrables de preuve sécurité restants (clés API, inventaire secrets, revue OWASP) | Sécurité | moyen (documentaire) — **hors d'atteinte d'une session de code** : console GCP ou décision humaine |
+| 8 | ~~Produire les livrables de preuve sécurité restants~~ | Sécurité | **partiel, fait le 16/08** — revue OWASP (§3.1) et inventaire de secrets rédigés ; il ne manque plus que propriétaire/dates/échéance, des faits organisationnels absents du dépôt. `api-keys-restricted` seul reste entièrement hors d'atteinte (console GCP) |
 | 9 | ~~Exclure les `.js.symbols` du déploiement~~ | Perf | **fait le 16/08** — `NOTICES` volontairement conservé (attribution de licences, §1.4) |
-| 10 | Trancher le statut de `functions/lib/` : régénéré en CI, ou ignoré par git (§4) | Transverse | faible — mais c'est une décision d'équipe, pas un correctif |
+| 10 | ~~Trancher le statut de `functions/lib/`~~ | Transverse | **fait le 16/08** — retiré du suivi git (`.gitignore`) : `firebase.json` porte un hook `predeploy` qui le reconstruit à chaque déploiement, aligné sur `/build/` déjà ignoré |
 | 11 | ~~Supprimer le code mort `CityRepoCompact` + widget associé~~ | Perf/Propreté | **fait le 16/08** — 231 lignes, dont la 3e copie non mémoïsée du chargement JSON (§1.3) |
 | 12 | ~~Rendre accessible le slide du carrousel hero~~ | UI/UX | **fait le 16/08** — paire slide + icône traitée ensemble (`accessibility-audit.md` §3bis) |
 | 13 | ~~Ignorer les artefacts générés par les gates~~ | Propreté | **fait le 16/08** — `mobile-readiness-report.json` et pages SEO générées ; l'arbre reste propre après régénération complète |
+| 14 | Compléter propriétaire/date de rotation dans l'inventaire de secrets | Sécurité | faible, mais **hors d'atteinte du code** — console GitHub/GCP |
+| 15 | Assigner une échéance au report de `'unsafe-inline'` (CSP) dans la revue OWASP | Sécurité | faible — **décision humaine**, pas une lecture de code |
 
 ## Sources
 
