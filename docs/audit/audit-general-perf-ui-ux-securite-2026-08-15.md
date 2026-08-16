@@ -4,10 +4,12 @@ Ce document synthétise l'état des quatre axes demandés à partir des audits d
 produits cette semaine — [audit complet du 14/08](audit-complet-2026-08-14.md),
 [audit qualité Play Store du 15/08](audit-qualite-code-playstore-2026-08-15.md),
 [plan pré-prod du 15/08](pre-prod-readiness-plan-2026-08-15.md) et [audit
-performance/UI du 19/07](perf-ui-audit-2026-07-19.md) — complétés par des
-vérifications exécutées directement dans cette session (`npm audit`, gate de
-sécurité, recherche de secrets, en-têtes HTTP). Aucun nouveau correctif de
-code n'est appliqué ici : c'est un état des lieux, pas une intervention.
+performance/UI du 19/07](perf-ui-audit-2026-07-19.md) — complété par des
+vérifications exécutées directement en session (`npm audit`, gate de
+sécurité, recherche de secrets, en-têtes HTTP). La version initiale était un
+état des lieux sans intervention ; trois correctifs ciblés, à faible risque
+et documentés à l'endroit où ils s'appliquent (§1.2, §1.3, §3.2) ont été
+apportés depuis, dans le prolongement direct des constats de l'audit.
 
 **Limite méthodologique commune à tout ce document** : le SDK Flutter n'est
 pas installé dans cet environnement d'audit. `flutter analyze`,
@@ -20,9 +22,9 @@ restent couvertes par la CI GitHub Actions (`quality-baseline.yml`), verte au
 
 | Axe | État | Point le plus urgent |
 |---|---|---|
-| Performance | 🟡 mesures d'il y a 4 semaines, jamais reprises | Décodage JSON bloquant (2,2 Mio) sur le thread UI + bootstrap réseau séquentiel avant le premier rendu |
+| Performance | 🟡 mesures d'il y a 4 semaines ; 2 correctifs ciblés faits le 15/08 | Le rechargement de `cities_compact.json` à chaque montage du widget de publication (§1.3) et une partie du bootstrap séquentiel (§1.2) sont corrigés ; le format du JSON et App Check restent à traiter |
 | UI / UX | 🟡 socle sain, accessibilité inachevée | 5 des 8 contrôles d'accessibilité restent `pending` : navigation clavier, lecteur d'écran, responsive, cohérence des états, audit final |
-| Sécurité | 🟢 aucune faille active identifiée, dette documentaire | `owasp-review-complete`, `secrets-inventory-current` et `api-keys-restricted` toujours `pending` ; **1 vulnérabilité haute non corrigée à la racine du dépôt** (nouveau constat, voir §3.2) |
+| Sécurité | 🟢 aucune faille active identifiée, dette documentaire | `owasp-review-complete`, `secrets-inventory-current` et `api-keys-restricted` toujours `pending` ; la vulnérabilité haute non corrigée à la racine du dépôt (§3.2) est **corrigée le 15/08** |
 | Transverse | 🟡 dette structurelle en résorption | 18 fichiers Dart/TS dépassent 1200 lignes ; `use_build_context_synchronously` reste désactivé faute d'une mesure fiable |
 
 ---
@@ -211,26 +213,36 @@ défaut.
   restent `pending` : ce sont des livrables de preuve à produire (console
   GCP, inventaire, revue documentée), pas des failles techniques connues.
 
-### 3.2 Dépendances — un écart entre `functions/` et la racine (constat nouveau)
+### 3.2 Dépendances — écart entre `functions/` et la racine, corrigé le 15/08
 
-Le correctif `brace-expansion` du 14–15/08 a été appliqué **uniquement dans
-`functions/`** :
+Le correctif `brace-expansion` du 14–15/08 avait été appliqué **uniquement
+dans `functions/`**, laissant la racine du dépôt (qui déclare
+`@google-cloud/speech`, `@google-cloud/vision`, `firebase-admin`,
+`firebase-functions`, `openai` en dépendances directes, utilisées par les
+scripts `bin/` et `tools/`) avec la même vulnérabilité haute non traitée :
 
-| Périmètre | `npm audit` | Sévérité haute |
+| Périmètre | `npm audit` avant | `npm audit` après (15/08) |
 |---|---|---|
-| `functions/` | 7 modérées, **0 haute** | corrigé le 15/08 |
-| racine du dépôt (`package-lock.json`) | 9 modérées, **1 haute** (`brace-expansion`) | **toujours présent** |
+| `functions/` | 7 modérées, 0 haute | inchangé |
+| racine du dépôt (`package-lock.json`) | 9 modérées, **1 haute** (`brace-expansion`) | **9 modérées, 0 haute** |
 
-`docs/DEPENDENCY_AUDIT.md` ne documente que le périmètre `functions/` : la
-racine du dépôt (qui déclare `@google-cloud/speech`, `@google-cloud/vision`,
-`firebase-admin`, `firebase-functions`, `openai` en dépendances directes,
-utilisées par les scripts `bin/` et `tools/`) n'a pas de rapport équivalent
-et porte toujours la vulnérabilité haute. `npm audit fix` (sans `--force`)
-n'a pas pu être vérifié comme suffisant depuis ce sandbox (pas de
-`node_modules` installé à la racine), mais le même correctif non cassant
-appliqué à `functions/` est a priori transposable puisque la chaîne de
-dépendance (`uuid` → `gaxios`/`teeny-request` → `@google-cloud/*` →
-`firebase-admin`) est identique.
+**Corrigé dans cette session** par `npm audit fix` (sans `--force`) à la
+racine : `package-lock.json` seul est modifié (359 lignes ajoutées, 248
+retirées), aucune dépendance directe de `package.json` n'a bougé de version.
+Vérifié après coup — `firebase-admin` reste en 13.10.0 (inchangé),
+`firebase-functions` 7.3.0 → 7.3.2 (patch, dans la plage `^7.3.0` déclarée),
+`@google-cloud/storage` 7.21.0 → 7.22.0 (mineur, dépendance transitive) : pas
+de changement cassant. `node -e "require('firebase-admin')"` et équivalents
+pour `@google-cloud/storage` et `firebase-functions` chargent sans erreur
+après le correctif. Les 9 vulnérabilités modérées restantes suivent la même
+chaîne transitive (`uuid` → `gaxios`/`teeny-request` → `@google-cloud/*` →
+`firebase-admin`) déjà documentée pour `functions/`, et nécessiteraient un
+downgrade majeur cassant de `firebase-admin` pour être éliminées — non
+recommandé sans étude d'impact séparée.
+
+`docs/DEPENDENCY_AUDIT.md` ne documente toujours que le périmètre
+`functions/` : produire son équivalent pour la racine reste à faire pour
+éviter que cet écart ne se reproduise silencieusement (voir §3.5).
 
 Aucun secret en dur détecté (`sk_live_`, `sk_test_`, clés privées, clés AWS) :
 les seules occurrences sont dans `functions/lib/modules/billing/stripe_mode.js`
@@ -261,10 +273,12 @@ Rien de nouveau à signaler ici.
 
 ### 3.5 Recommandations
 
-1. **P1** — appliquer à la racine du dépôt le même traitement
-   `brace-expansion` que dans `functions/` (§3.2), et étendre
+1. ~~**P1** — appliquer à la racine du dépôt le même traitement
+   `brace-expansion` que dans `functions/`~~ — **fait le 15/08** (§3.2) :
+   0 haute à la racine, comme dans `functions/`. Reste à étendre
    `docs/DEPENDENCY_AUDIT.md` ou créer son équivalent pour la racine, sans
-   quoi cet écart peut se reproduire silencieusement.
+   quoi cet écart peut se reproduire silencieusement à la prochaine
+   vulnérabilité publiée.
 2. **P2** — les trois contrôles `pending` de sécurité (§3.1) sont des
    livrables de preuve, pas des correctifs de code : à traiter par
    attestation datée dans `docs/evidence/security/`.
@@ -304,7 +318,7 @@ Rien de nouveau à signaler ici.
 |---|---|---|---|
 | 1 | Décharger le décodage JSON (`cities_compact.json`, fiches parcours) du thread UI | Perf | **partiel, fait le 15/08** — cause de duplication corrigée (§1.3) ; format compact/indexé encore à faire |
 | 2 | Paralléliser le bootstrap réseau avant `runApp()` | Perf | **partiel, fait le 15/08** — Remote Config + état auth en parallèle (§1.2) ; App Check reste bloquant par nécessité |
-| 3 | Corriger `brace-expansion` à la racine du dépôt (même correctif que `functions/`) | Sécurité | faible |
+| 3 | ~~Corriger `brace-expansion` à la racine du dépôt~~ | Sécurité | **fait le 15/08** |
 | 4 | Dérouler les contrôles d'accessibilité restants (clavier, lecteur d'écran, responsive, états) | UI/UX | élevé (nécessite du test manuel/appareil) |
 | 5 | Ré-exécuter une mesure de bundle et de runtime à jour (le dernier chiffre a un mois) | Perf | faible (CI existante) |
 | 6 | Réactiver `use_build_context_synchronously` à partir d'une sortie réelle de `flutter analyze` | Transverse | moyen |
