@@ -57,6 +57,13 @@ class CityEntry {
 }
 
 class CityPostalService {
+  /// Instance partagée par tous les champs de l'app : `cities_compact.json`
+  /// (2,2 Mio) ne doit être téléchargé et décodé qu'une seule fois par
+  /// session, pas à chaque montage du widget (chaque `CityPostalService()`
+  /// créé localement repartait de zéro, y compris quand l'utilisateur
+  /// revenait simplement sur l'écran de publication).
+  static final CityPostalService instance = CityPostalService();
+
   List<CityEntry>? _all;
 
   Future<void> init() async {
@@ -167,7 +174,7 @@ class CityPostalAutocompleteField extends StatefulWidget {
 
 class _CityPostalAutocompleteFieldState
     extends State<CityPostalAutocompleteField> {
-  final CityPostalService _localService = CityPostalService();
+  final CityPostalService _localService = CityPostalService.instance;
   final GeoApiGouvService _geoService = GeoApiGouvService();
 
   Timer? _debounce;

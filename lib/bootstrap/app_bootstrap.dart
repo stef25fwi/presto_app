@@ -43,8 +43,16 @@ Future<void> bootstrapPrestoApp(Widget app) async {
     await bootstrapFirestore();
     adminWebDebugStore.recordEvent(area: 'firestore', message: 'bootstrapped');
 
-    await initializeFirebaseRuntimeServices();
-    await initializeAuthState();
+    // Remote Config (+ l'activation réseau Firestore côté natif) et l'état
+    // d'authentification (persistence + retour de redirection OAuth) sont
+    // deux chaînes réseau indépendantes : les lancer en parallèle plutôt
+    // qu'en série évite de payer deux fois un aller-retour réseau complet
+    // avant le premier rendu.
+    await Future.wait([
+      initializeFirebaseRuntimeServices(),
+      initializeAuthState(),
+    ]);
+    adminWebDebugStore.recordEvent(area: 'app', message: 'runtime-ready');
 
     SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));
     await configureCrashReporting();

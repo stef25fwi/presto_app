@@ -70,6 +70,19 @@ produit), cette seule chaîne peut consommer le budget de 2,5 s avant même le
 téléchargement du bundle. Seule une partie des services a été poussée après
 le premier rendu ; le cœur Firebase/AppCheck/RemoteConfig reste bloquant.
 
+**Correctif partiel appliqué le 15/08** (`lib/bootstrap/app_bootstrap.dart`) :
+Remote Config (+ l'activation réseau Firestore côté natif) et l'état
+d'authentification (persistence + `getRedirectResult`) sont deux chaînes
+réseau indépendantes qui s'exécutaient en série ; elles tournent désormais en
+parallèle via `Future.wait`. Cela ne supprime aucun aller-retour réseau mais
+transforme leur coût de « somme des deux latences » en « la plus longue des
+deux ». Init Firebase et App Check restent volontairement séquentiels et
+bloquants : App Check doit être actif avant tout appel Firestore/Storage
+pour éviter des lectures initiales rejetées par l'enforcement (voir §3), donc
+seule la partie sans risque de sécurité a été parallélisée. Non vérifié par
+`flutter analyze`/`flutter test` (SDK Flutter indisponible dans ce sandbox,
+voir limites en tête de document) : à confirmer par la CI.
+
 ### 1.3 Fluidité (jank)
 
 Signaux mesurés par analyse statique sur `lib/` (dernier comptage 19/07) :
@@ -86,13 +99,44 @@ directement depuis `city_postal_autocomplete_field.dart`, déclenché au
 premier focus du champ ville de la publication d'annonce — un des parcours
 les plus fréquentés de l'app.
 
+**Cause précise identifiée et corrigée le 15/08.** `CityPostalService`
+(dans ce même fichier) n'était pas un singleton : `_CityPostalAutocompleteFieldState`
+en créait une nouvelle instance à chaque montage du widget
+(`CityPostalService()` en initialiseur de champ `State`). Chaque fois qu'un
+utilisateur ouvrait — ou rouvrait — l'écran de publication, les 2,2 Mio de
+JSON étaient donc retéléchargés depuis le bundle puis redécodés sur le thread
+UI, alors que `CitySearch.instance` (le service équivalent utilisé ailleurs
+dans l'app) les avait déjà chargés une fois au démarrage. Corrigé en donnant
+à `CityPostalService` une instance partagée (`CityPostalService.instance`,
+même pattern que `CitySearch.instance`) réutilisée par le widget ; le
+constructeur public reste disponible pour les tests existants
+(`test/city_postal_service_test.dart`), qui n'ont pas eu besoin d'être
+modifiés. Effet attendu : le décodage ne se produit plus qu'une fois par
+session au lieu d'une fois par visite de l'écran de publication. Non mesuré
+en runtime (SDK Flutter indisponible dans ce sandbox) — à confirmer en CI ou
+sur un poste avec Flutter.
+
+Le classement « ≥ 3 chemins » ci-dessus recensait aussi `CitySearch`
+(`services/city_search.dart`, singleton, sain) et `CityRepoCompact`
+(`services/city_repo_compact.dart`) : ce dernier n'est en réalité **jamais
+instancié nulle part dans `lib/`** — code mort, sans impact runtime, à
+retirer dans un nettoyage séparé plutôt que dans ce correctif de performance.
+
 ### 1.4 Recommandations (par priorité)
 
-1. **P0** — décharger le décodage JSON volumineux (format compact ou
-   chargement paresseux/mémoïsé, jamais depuis un widget).
+1. ~~**P0** — décharger le décodage JSON volumineux~~ — **traité en partie le
+   15/08** : la cause de la duplication (rechargement à chaque montage du
+   widget de publication) est corrigée. Le format du fichier lui-même
+   (2,2 Mio en un seul bloc, décodé de façon synchrone) reste inchangé et
+   continuera de geler l'UI un instant au premier chargement de session ;
+   un format compact/indexé reste la suite logique si ce coût résiduel est
+   encore perçu après mesure.
 2. **P0** — ne garder bloquant avant `runApp()` que l'initialisation Firebase
    cœur ; paralléliser App Check, Remote Config, persistence et
-   `getRedirectResult` derrière le premier frame.
+   `getRedirectResult` derrière le premier frame. **Traité en partie le
+   15/08** (Remote Config et l'état d'authentification tournent désormais en
+   parallèle, voir §1.2) ; App Check reste bloquant par nécessité de
+   sécurité, donc le P0 n'est que partiellement résorbé.
 3. **P1** — re-mesurer le budget bundle avec un build à jour : la dernière
    mesure a un mois, et une mesure intermédiaire suggère un dépassement selon
    le budget appliqué à ce moment.
@@ -258,8 +302,8 @@ Rien de nouveau à signaler ici.
 
 | # | Action | Axe | Effort |
 |---|---|---|---|
-| 1 | Décharger le décodage JSON (`cities_compact.json`, fiches parcours) du thread UI | Perf | moyen |
-| 2 | Paralléliser le bootstrap réseau avant `runApp()` | Perf | moyen |
+| 1 | Décharger le décodage JSON (`cities_compact.json`, fiches parcours) du thread UI | Perf | **partiel, fait le 15/08** — cause de duplication corrigée (§1.3) ; format compact/indexé encore à faire |
+| 2 | Paralléliser le bootstrap réseau avant `runApp()` | Perf | **partiel, fait le 15/08** — Remote Config + état auth en parallèle (§1.2) ; App Check reste bloquant par nécessité |
 | 3 | Corriger `brace-expansion` à la racine du dépôt (même correctif que `functions/`) | Sécurité | faible |
 | 4 | Dérouler les contrôles d'accessibilité restants (clavier, lecteur d'écran, responsive, états) | UI/UX | élevé (nécessite du test manuel/appareil) |
 | 5 | Ré-exécuter une mesure de bundle et de runtime à jour (le dernier chiffre a un mois) | Perf | faible (CI existante) |
