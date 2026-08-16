@@ -1,0 +1,12 @@
+# Code de test, jamais livré : un `print` de diagnostic y est un outil de
+# mise au point légitime et ne peut pas fuiter dans les journaux d'un appareil
+# utilisateur.
+#
+# La règle `avoid_print` reste active sur `lib/`, où un `print` non neutralisé
+# écrirait dans logcat en production — c'est là qu'est l'enjeu de conformité,
+# voir docs/audit/audit-qualite-code-playstore-2026-08-15.md §1.
+include: ../analysis_options.yaml
+
+linter:
+  rules:
+    avoid_print: false

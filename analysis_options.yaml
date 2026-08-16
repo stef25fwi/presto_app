@@ -23,7 +23,12 @@ analyzer:
 
 linter:
   rules:
-    avoid_print: false
+    # Réactivée le 16/08. Les deux seuls `print` bruts de lib/ (ad_banner.dart,
+    # déjà gardés par kDebugMode) sont passés à debugPrint, lui-même neutralisé
+    # en release par lib/bootstrap/release_logging.dart. La règle empêche
+    # désormais la réintroduction d'un print non neutralisé, qui écrirait dans
+    # logcat en production — voir docs/audit/audit-qualite-code-playstore-2026-08-15.md §1.
+    avoid_print: true
     prefer_const_constructors: false
     prefer_const_literals_to_create_immutables: false
     prefer_final_fields: false

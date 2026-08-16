@@ -60,8 +60,8 @@
       "kind": "external-evidence",
       "required": true,
       "description": "Aucune vulnérabilité critique ou haute dans les dépendances des Cloud Functions.",
-      "verification": "`npm --prefix functions audit` rapporte 0 critique et 0 haute. Les vulnérabilités modérées sont tolérées si elles figurent dans docs/DEPENDENCY_AUDIT.md, régénéré à la même date par le workflow dependency-audit-report.yml. Toute correction ne doit pas imposer de downgrade majeur de firebase-admin.",
-      "status": "pending",
+      "verification": "`npm --prefix functions audit` rapporte 0 critique et 0 haute. Les vulnérabilités modérées sont tolérées si elles figurent dans docs/DEPENDENCY_AUDIT.md, régénéré à la même date par le workflow dependency-audit-report.yml. Toute correction ne doit pas imposer de downgrade majeur de firebase-admin. Le périmètre couvre aussi la racine du dépôt (`npm audit`), qui déclare ses propres dépendances directes pour les scripts bin/ et tools/.",
+      "status": "verified",
       "evidence": "docs/evidence/security/dependency-audit.md"
     },
     {
