@@ -375,6 +375,27 @@ Rien de nouveau à signaler ici.
   source fiable) n'est pas exécutable depuis un environnement sans SDK
   Flutter. Cela reste donc une classe de bugs de plantage potentiels non
   quantifiée à ce jour.
+- **`functions/lib/` est du build output versionné, et il est périmé**
+  (constat nouveau du 16/08). Le répertoire compte 428 fichiers suivis par
+  git, mais lancer `npm --prefix functions run build` produit une centaine de
+  fichiers modifiés et treize non suivis : le compilé de `web_vitals`,
+  `inbound_contact`, `seo/` et `firebase_admin_compat` existe en source
+  (`functions/src/`) sans avoir jamais été committé, et `lib/index.js` ne les
+  exporte donc pas dans la version versionnée.
+
+  **Sans effet sur la production** : `scripts/deploy_all.sh` exécute
+  `npm --prefix functions run build` (l. 35) avant `firebase deploy`, et le
+  script `npm test` reconstruit également. Ce qui est déployé est donc
+  toujours recompilé depuis `src/`, jamais le `lib/` du dépôt.
+
+  L'enjeu est la lisibilité : tant que `lib/` est suivi mais dérive, tout
+  `npm test` local salit l'arbre de travail avec une centaine de fichiers
+  générés, ce qui noie les vraies modifications dans les revues. Deux issues
+  cohérentes, l'une comme l'autre défendable, mais qui relèvent d'une décision
+  d'équipe et non d'une branche d'audit : soit régénérer `lib/` en CI pour
+  qu'il reste fidèle, soit l'ajouter à `.gitignore` puisque rien ne le
+  consomme tel quel. **L'état actuel — suivi mais non maintenu — est le seul
+  qui n'ait aucun avantage.**
 
 ---
 
@@ -391,6 +412,7 @@ Rien de nouveau à signaler ici.
 | 7 | ~~Réactiver `avoid_print`~~ | Sécurité/Transverse | **fait le 16/08** (§4) |
 | 8 | Produire les livrables de preuve sécurité restants (clés API, inventaire secrets, revue OWASP) | Sécurité | moyen (documentaire) — **hors d'atteinte d'une session de code** : console GCP ou décision humaine |
 | 9 | ~~Exclure les `.js.symbols` du déploiement~~ | Perf | **fait le 16/08** — `NOTICES` volontairement conservé (attribution de licences, §1.4) |
+| 10 | Trancher le statut de `functions/lib/` : régénéré en CI, ou ignoré par git (§4) | Transverse | faible — mais c'est une décision d'équipe, pas un correctif |
 
 ## Sources
 
