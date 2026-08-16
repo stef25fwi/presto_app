@@ -125,3 +125,12 @@ functions/evals/media/
 /web/sitemap-local.xml
 /web/missions/
 /web/services/
+
+# Build output des Cloud Functions (tsc). firebase.json porte un hook
+# `predeploy` (npm --prefix "$RESOURCE_DIR" run build) qui reconstruit lib/
+# à chaque `firebase deploy --only functions`, CI ou local : rien ne consomme
+# jamais la version commitée. La conserver en historique ne faisait que
+# dériver silencieusement de src/ (13 fichiers compilés manquants constatés
+# le 16/08) et salir les revues d'une centaine de fichiers générés à chaque
+# `npm test`. Alignée sur /build/ (équivalent Flutter web), déjà ignoré.
+/functions/lib/
