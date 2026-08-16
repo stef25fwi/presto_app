@@ -1169,10 +1169,18 @@ class _HomePageState extends State<HomePage>
 
     if (onTap == null) return child;
 
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: child,
+    // Cette icône déclenche `onSlideTap`, exactement le même callback que le
+    // slide qui la contient (déjà exposé comme bouton accessible). Le tap est
+    // conservé comme confort à la souris, mais retiré de l'arbre sémantique :
+    // sans cela, un lecteur d'écran annoncerait deux fois la même action, la
+    // seconde sous la forme d'un « bouton » nu sans libellé — précisément ce
+    // que proscrit docs/design/design-system.md.
+    return ExcludeSemantics(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: child,
+      ),
     );
   }
 
@@ -1372,10 +1380,22 @@ class _HomePageState extends State<HomePage>
               );
 
               if (onSlideTap == null) return slideBody;
-              return GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: onSlideTap,
-                child: slideBody,
+              // Semantics + InkWell : le slide devient atteignable au clavier
+              // et annoncé une seule fois, avec son titre et son sous-titre,
+              // au lieu d'un GestureDetector muet. L'icône qu'il contient
+              // déclenche le même callback et est donc exclue de la
+              // sémantique (voir _buildSlideIllustration) pour ne pas
+              // produire une seconde annonce du même geste.
+              return Semantics(
+                button: true,
+                label: '${slide.title}. ${slide.subtitle}',
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onSlideTap,
+                    child: slideBody,
+                  ),
+                ),
               );
             },
           ),

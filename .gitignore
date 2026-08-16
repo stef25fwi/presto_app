@@ -115,3 +115,13 @@ android/app/build/
 
 # Corpus IA synthétique régénéré par npm --prefix functions run ai:eval:media
 functions/evals/media/
+
+# Artefacts régénérés par les gates qualité et le générateur SEO.
+# Sans ces lignes, toute exécution locale de `node tools/quality/check_*.mjs`
+# ou du générateur salit l'arbre de travail avec des fichiers non suivis,
+# alors que la CI les reproduit systématiquement avant de les valider
+# (voir l'étape « Generate programmatic local SEO pages » de deploy.yml).
+/mobile-readiness-report.json
+/web/sitemap-local.xml
+/web/missions/
+/web/services/

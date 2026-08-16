@@ -120,9 +120,18 @@ sur un poste avec Flutter.
 
 Le classement « ≥ 3 chemins » ci-dessus recensait aussi `CitySearch`
 (`services/city_search.dart`, singleton, sain) et `CityRepoCompact`
-(`services/city_repo_compact.dart`) : ce dernier n'est en réalité **jamais
-instancié nulle part dans `lib/`** — code mort, sans impact runtime, à
-retirer dans un nettoyage séparé plutôt que dans ce correctif de performance.
+(`services/city_repo_compact.dart`) : ce dernier n'était **jamais instancié
+nulle part**. **Supprimé le 16/08**, avec le widget qui en dépendait
+(`city_postal_autocomplete_compact.dart`, lui-même référencé nulle part) —
+231 lignes formant une boucle morte fermée.
+
+Ce n'est pas qu'un nettoyage cosmétique : `CityRepoCompact` était la
+troisième implémentation du chargement de `cities_compact.json`, et la seule
+à ne **pas** avoir reçu le correctif singleton du §1.3. La laisser en place,
+c'était garder à disposition la version qui recharge 2,2 Mio à chaque usage —
+soit exactement le défaut qu'on venait de corriger, prêt à être réintroduit
+par quiconque aurait choisi cette classe. Il reste désormais deux chemins,
+tous deux mémoïsés.
 
 ### 1.4 Recommandations (par priorité)
 
@@ -399,6 +408,81 @@ Rien de nouveau à signaler ici.
 
 ---
 
+## Ce que « 10/10 » demanderait réellement (mesuré le 16/08)
+
+Deux choses très différentes se cachent derrière ce chiffre, et les confondre
+mène à des conclusions fausses.
+
+### 1. Les gates automatiques : déjà tous verts
+
+27 contrôles exécutables ont été lancés dans cette session. **24 passent.**
+Les 3 restants n'échouent pas sur un défaut du dépôt :
+
+| Gate | Cause de l'échec local | Réalité |
+|---|---|---|
+| `check_firebase_staging_readiness` | `missing-project-id`, `missing-staging-token` | Secrets d'environnement absents du sandbox |
+| `check_live_structured_data` | Réseau | Interroge le site de production, inaccessible ici |
+| `check_programmatic_local_seo` | `ENOENT: web/sitemap-local.xml` | **Faux positif de ma part** : l'artefact est généré. Après `node tools/seo/generate_programmatic_local_pages.mjs`, le gate passe (« 36 pages validées »). Les workflows `deploy.yml` et `seo-acquisition-readiness.yml` exécutent toujours le générateur juste avant le contrôle |
+
+**Aucun gate n'est cassé.** Sur le plan automatisable, le dépôt est déjà au
+vert.
+
+### 2. Les attestations : 36/157 (23 %)
+
+Ce ne sont pas des échecs, ce sont des **déclarations humaines non encore
+posées**. Répartition par registre :
+
+| Registre | Vérifiés | Ce qui bloque |
+|---|---:|---|
+| `seo-monitoring-readiness` | 12/12 | — |
+| `product-readiness` | 5/5 | — |
+| `security-controls` | 6/9 | Console GCP (clés API, secrets), revue OWASP humaine |
+| `ai-readiness` | 7/15 | Historique de runs, corpus |
+| `accessibility_ux_readiness` | 3/8 | **Appareil réel** (TalkBack/VoiceOver), passes manuelles |
+| `mobile_readiness` | 0/8 | **Play Console**, dont un test fermé de 12 testeurs sur 14 jours |
+| `stripe-readiness` | 0/7 | Statut `implemented`, pas `verified` — voir la note ci-dessous |
+| autres registres | le solde | Console, décisions humaines, ou périmètre à définir |
+
+### 3. Le piège de vocabulaire
+
+Les registres n'emploient pas le même vocabulaire de statut : les gates
+acceptent `verified`, `implemented`, `complete`, `pending`, `blocked` et
+`in_progress` selon le registre. `stripe-readiness` affiche ainsi 7
+`implemented` et 0 `verified` — ce qui se lit « 0/7 » ou « 7/7 » suivant la
+convention retenue. **Tout total agrégé sur les 157 contrôles est donc
+ambigu**, et c'est une raison de plus de ne pas piloter par ce chiffre.
+
+### 4. Pourquoi 157/157 est structurellement impossible
+
+`quality/18-point-completion.json` porte ces règles :
+
+```json
+"singleActivePoint": true,
+"laterPointsMustRemainBlocked": true
+```
+
+et `tools/quality/check_18_point_completion.mjs` (l. 123-125) **échoue** si un
+point postérieur au point actif n'est pas `blocked` :
+
+> `Le point N doit rester blocked tant que le point M n'est pas verified.`
+
+Les 16 points `blocked` sont donc l'état **normal et exigé** d'un programme
+séquentiel arrêté au point 2 sur 18. Les basculer pour afficher 18/18 ne
+serait pas seulement malhonnête : **cela ferait échouer le gate**. Le dépôt
+s'est explicitement outillé pour rendre ce raccourci impossible.
+
+### 5. Le chemin réel vers un pré-prod sans réserve
+
+Aucune de ces étapes ne s'obtient depuis une session de code :
+
+1. **Lancer le test fermé Play** (12 testeurs, 14 jours) — seul délai
+   incompressible, à démarrer en premier ;
+2. **Une passe accessibilité sur appareil** avec TalkBack et VoiceOver ;
+3. **Trois relevés en console GCP** : restrictions de clés API, inventaire
+   des secrets, dashboards ;
+4. **Une revue OWASP** avec, pour chaque catégorie, une décision assumée ;
+5. **Dérouler les 18 points** dans l'ordre, en partant du point 2.
+
 ## Priorités consolidées
 
 | # | Action | Axe | Effort |
@@ -413,6 +497,9 @@ Rien de nouveau à signaler ici.
 | 8 | Produire les livrables de preuve sécurité restants (clés API, inventaire secrets, revue OWASP) | Sécurité | moyen (documentaire) — **hors d'atteinte d'une session de code** : console GCP ou décision humaine |
 | 9 | ~~Exclure les `.js.symbols` du déploiement~~ | Perf | **fait le 16/08** — `NOTICES` volontairement conservé (attribution de licences, §1.4) |
 | 10 | Trancher le statut de `functions/lib/` : régénéré en CI, ou ignoré par git (§4) | Transverse | faible — mais c'est une décision d'équipe, pas un correctif |
+| 11 | ~~Supprimer le code mort `CityRepoCompact` + widget associé~~ | Perf/Propreté | **fait le 16/08** — 231 lignes, dont la 3e copie non mémoïsée du chargement JSON (§1.3) |
+| 12 | ~~Rendre accessible le slide du carrousel hero~~ | UI/UX | **fait le 16/08** — paire slide + icône traitée ensemble (`accessibility-audit.md` §3bis) |
+| 13 | ~~Ignorer les artefacts générés par les gates~~ | Propreté | **fait le 16/08** — `mobile-readiness-report.json` et pages SEO générées ; l'arbre reste propre après régénération complète |
 
 ## Sources
 

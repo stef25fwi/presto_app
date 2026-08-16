@@ -130,26 +130,45 @@ transparent). Non vérifié en runtime (SDK Flutter indisponible dans ce
 sandbox) : structure de parenthèses et types revérifiés à la main, mais la
 CI reste la seule confirmation définitive.
 
-### Autres occurrences dans `home_page.dart`, non corrigées (pistes)
+### Second défaut confirmé et corrigé le 16/08 — le slide du carrousel hero
 
-Examinées à la lecture, non modifiées faute de pouvoir vérifier visuellement
-le résultat dans ce sandbox :
+La piste ouverte sur la ligne ~1172 (icône de slide) s'est avérée réelle,
+mais **pas là où on l'attendait** : l'icône appelle `onSlideTap`, exactement
+le même callback que le `GestureDetector` qui enveloppe le slide entier
+(l. ~1375). Le défaut n'était donc pas l'icône seule mais la paire :
 
-| Ligne (avant ce commit) | Rôle | Estimation |
+- le slide entier, cliquable, n'était ni atteignable au clavier ni annoncé ;
+- l'icône imbriquée exposait une **seconde** cible tactile pour la même
+  action, qu'un lecteur d'écran aurait annoncée comme un « bouton » nu sans
+  libellé — exactement ce que le design system proscrit.
+
+Corriger les deux séparément aurait aggravé le problème en produisant une
+double annonce. Le correctif traite la paire :
+
+- le slide devient `Semantics(button: true, label: '<titre>. <sous-titre>')`
+  englobant `Material` + `InkWell` → une annonce unique et porteuse de sens,
+  focus Tab et activation Entrée/Espace fournis par le framework ;
+- l'icône conserve son tap (confort à la souris) mais passe sous
+  `ExcludeSemantics` → plus de doublon dans l'arbre d'accessibilité.
+
+### Occurrences restantes (pistes non traitées)
+
+| Ligne | Rôle | Estimation |
 |---:|---|---|
 | ~1019 | Bascule d'affichage des suggestions de recherche, superposé à un champ de texte déjà focusable | Risque faible — le champ sous-jacent reste accessible par lui-même |
-| ~1172 | Tap sur une icône de slide (fallback hero) | **Piste réelle** — même défaut que la carte corrigée, à vérifier |
-| ~1180 | Swipe horizontal du carrousel hero | Risque faible si des contrôles de pagination alternatifs existent déjà — à confirmer |
-| ~1375, ~1595 | Non examinées en détail | À trier |
+| ~1188 | Swipe horizontal du carrousel hero (`onHorizontalDragEnd`) | **Hors périmètre de la règle** : c'est un geste de défilement, pas une action `onTap`. Des indicateurs de pagination existent déjà |
+| ~1595 | Appui long de diagnostic (`_seedSampleOffers`) | Outil de développement, non destiné à l'utilisateur final |
 
-Les 32 occurrences restantes (38 au total moins les 6 encore dans
-`home_page.dart`), réparties sur 20 autres fichiers
+`lib/` compte désormais **37 `GestureDetector`** répartis sur 21 fichiers
+(39 avant les deux correctifs). Les 32 hors `home_page.dart`
 (`conversation_thread_page.dart` ×4, `ai_publish_control.dart` ×3,
 `admin/ad_placeholder_images_admin_page.dart` ×4, `offer_details_page.dart`
 ×2, `account_page.dart` ×2, `admin_typography_page.dart` ×2,
-`hero_media_slider.dart` ×2, et 13 autres fichiers à 1 occurrence chacun),
-n'ont pas été examinées dans cette session. Elles restent une piste de
-travail pour la suite du §3, pas un constat.
+`hero_media_slider.dart` ×2, et 13 fichiers à 1 occurrence) n'ont pas été
+examinées. Elles restent une piste de travail pour la suite du §3, pas un
+constat — et l'enseignement des deux corrections faites est qu'il faut
+regarder la **paire parent/enfant** avant de conclure, un `GestureDetector`
+isolé ne disant rien de son contexte.
 
 ## 4. Lecteur d’écran et sémantique
 
