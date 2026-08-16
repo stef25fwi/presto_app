@@ -23,7 +23,7 @@ restent couvertes par la CI GitHub Actions (`quality-baseline.yml`), verte au
 | Axe | État | Point le plus urgent |
 |---|---|---|
 | Performance | 🟡 mesures d'il y a 4 semaines ; 2 correctifs ciblés faits le 15/08 | Le rechargement de `cities_compact.json` à chaque montage du widget de publication (§1.3) et une partie du bootstrap séquentiel (§1.2) sont corrigés ; le format du JSON et App Check restent à traiter |
-| UI / UX | 🟡 socle sain, accessibilité inachevée | 5 des 8 contrôles d'accessibilité restent `pending` : navigation clavier, lecteur d'écran, responsive, cohérence des états, audit final |
+| UI / UX | 🟡 socle sain, accessibilité inachevée | 5 des 8 contrôles restent `pending` (navigation clavier, lecteur d'écran, responsive, cohérence des états, audit final) ; revues de code partielles + 1 correctif faits le 15/08 sur 2 d'entre eux (§2.2) |
 | Sécurité | 🟢 aucune faille active identifiée, dette documentaire | `owasp-review-complete`, `secrets-inventory-current` et `api-keys-restricted` toujours `pending` ; la vulnérabilité haute non corrigée à la racine du dépôt (§3.2) est **corrigée le 15/08** |
 | Transverse | 🟡 dette structurelle en résorption | 18 fichiers Dart/TS dépassent 1200 lignes ; `use_build_context_synchronously` reste désactivé faute d'une mesure fiable |
 
@@ -170,10 +170,10 @@ Le registre `quality/accessibility_ux_readiness.json` (phase 13,
 
 | Contrôle | État | Ce qu'il manque concrètement |
 |---|---|---|
-| Navigation clavier et focus | `pending` | Parcours manuel clavier sur publication / messagerie / compte, non consigné |
-| Lecteur d'écran (TalkBack/VoiceOver) | `pending` | Validation sur appareil réel requise — l'émulateur ne suffit pas d'après le registre lui-même |
+| Navigation clavier et focus | `pending` | Parcours manuel clavier sur publication / messagerie / compte, non consigné. **Revue de code faite le 15/08** (`docs/evidence/ux/accessibility-audit.md` §3bis) : 1 défaut réel trouvé et corrigé (carte d'annonce du carrousel d'accueil, `GestureDetector` nu → `Semantics`+`InkWell`), 37 autres occurrences non triées restent des pistes |
+| Lecteur d'écran (TalkBack/VoiceOver) | `pending` | Validation sur appareil réel requise — l'émulateur ne suffit pas d'après le registre lui-même. Le correctif ci-dessus améliore aussi ce point pour la carte concernée, sans s'y substituer |
 | Responsive 320–1440 px + texte à 200 % | `pending` | Matrice `docs/evidence/ux/responsive-matrix.md` non renseignée |
-| Cohérence des états loading/empty/error | `pending` | Revue écran par écran non faite |
+| Cohérence des états loading/empty/error | `pending` | Revue écran par écran non faite. **Revue partielle faite le 15/08** (`docs/evidence/ux/accessibility-audit.md` §7bis) : 4 des 9 parcours principaux (messagerie, compte, publication, consultation d'offres) examinés, comportement cohérent constaté sur cet échantillon, aucun correctif nécessaire |
 | Audit accessibilité final | `pending` | Bloqué par construction tant que les 4 précédents ne sont pas clos |
 
 Ce chantier correspond au **point 2 sur 18** du programme séquentiel
@@ -319,7 +319,7 @@ Rien de nouveau à signaler ici.
 | 1 | Décharger le décodage JSON (`cities_compact.json`, fiches parcours) du thread UI | Perf | **partiel, fait le 15/08** — cause de duplication corrigée (§1.3) ; format compact/indexé encore à faire |
 | 2 | Paralléliser le bootstrap réseau avant `runApp()` | Perf | **partiel, fait le 15/08** — Remote Config + état auth en parallèle (§1.2) ; App Check reste bloquant par nécessité |
 | 3 | ~~Corriger `brace-expansion` à la racine du dépôt~~ | Sécurité | **fait le 15/08** |
-| 4 | Dérouler les contrôles d'accessibilité restants (clavier, lecteur d'écran, responsive, états) | UI/UX | élevé (nécessite du test manuel/appareil) |
+| 4 | Dérouler les contrôles d'accessibilité restants (clavier, lecteur d'écran, responsive, états) | UI/UX | **partiel, fait le 15/08** — revues de code sur 2 des 4 (§2.2) ; le clavier/lecteur d'écran sur appareil réel et la matrice responsive restent à faire, élevé |
 | 5 | Ré-exécuter une mesure de bundle et de runtime à jour (le dernier chiffre a un mois) | Perf | faible (CI existante) |
 | 6 | Réactiver `use_build_context_synchronously` à partir d'une sortie réelle de `flutter analyze` | Transverse | moyen |
 | 7 | Réactiver `avoid_print` pour verrouiller le correctif de journalisation | Sécurité/Transverse | faible |

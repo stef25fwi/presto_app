@@ -15,11 +15,11 @@ Ce document distingue les fondations techniques déjà démontrées des validati
 |---|---|---|---|
 | Design system centralisé | Fondation complète | Tokens, thème, documentation, tests | Vérifiable après CI |
 | Contrastes WCAG AA | Couples officiels testés | Calcul automatisé et couples documentés | Vérifiable après CI |
-| Navigation clavier et focus | Fondation partielle | Traversée Tab sur composants standards | Reste ouvert |
-| Lecteur d’écran et sémantique | Présence ponctuelle | Plusieurs widgets utilisent `Semantics` | Reste ouvert |
+| Navigation clavier et focus | Fondation partielle + 1 correctif ponctuel (15/08) | Traversée Tab sur composants standards ; `home_page.dart` §3bis | Reste ouvert |
+| Lecteur d’écran et sémantique | Présence ponctuelle + 1 correctif ponctuel (15/08) | Plusieurs widgets utilisent `Semantics` ; `home_page.dart` §3bis | Reste ouvert |
 | Cibles tactiles | Fondation globale 48 px | Thèmes boutons, icônes et listes + tests | Vérifiable après CI |
 | Responsive et texte agrandi | Fondation partielle | Breakpoints + test générique 320 px / 200 % | Reste ouvert |
-| États loading, empty et error | Présence hétérogène | Comportements locaux non inventoriés complètement | Reste ouvert |
+| États loading, empty et error | Revue partielle (4/9 parcours, 15/08) | §7bis : messagerie, compte, publication, consultation d'offres | Reste ouvert |
 | Audit des parcours principaux | Non terminé | Cette baseline et les tests existants | Reste ouvert |
 
 ## 1. Design system centralisé
@@ -88,6 +88,68 @@ Les composants personnalisés utilisant `GestureDetector` ou `InkWell` doivent �
 ### Décision
 
 Contrôle maintenu `pending`.
+
+## 3bis. Revue de code ciblée `GestureDetector` — 15/08/2026
+
+Cette section ne remplace pas le parcours manuel au clavier exigé au §3 : elle
+documente une revue de code (pas un test sur appareil ni une sortie
+`flutter analyze`), avec la même prudence méthodologique que l'audit du 14/08
+sur `use_build_context_synchronously` — une heuristique de recherche de motif
+peut se tromper dans les deux sens, elle ne vaut donc que comme liste de
+pistes à vérifier, pas comme certification.
+
+### Méthode
+
+`grep` de `GestureDetector(` sur `lib/` : **39 occurrences** dans 21
+fichiers (avant correctif). Le principe du design system (« aucun `GestureDetector` cliquable
+ne doit être utilisé sans sémantique et gestion clavier équivalente ») ne
+s'applique qu'aux occurrences dont `onTap` déclenche une action de
+navigation ou de sélection — pas à celles qui gèrent un simple geste de
+défilement ou de fermeture de clavier.
+
+### Défaut confirmé et corrigé
+
+`lib/pages/home_page.dart`, méthode `_buildOfferCard` (carte d'annonce du
+carrousel d'accueil, l. 2171 avant correctif) : `GestureDetector(onTap: ...)`
+nu, sans `Semantics` ni mécanisme clavier. Cette carte n'était donc :
+
+- ni atteignable au Tab, ni activable par Entrée/Espace ;
+- ni annoncée de façon cohérente par un lecteur d'écran (aucun rôle
+  « bouton », aucun libellé de groupe — un lecteur d'écran aurait lu les
+  `Text` enfants séparément, contrairement à la règle « une seule annonce
+  pour un groupe visuel »).
+
+C'est un écran d'accueil, le point d'entrée le plus fréquenté de l'app : la
+carte est donc restée exclue de la navigation clavier pour un nombre
+important de visites. **Corrigé** : remplacement par
+`Semantics(button: true, label: ...)` englobant un `Material` +`InkWell`
+(plutôt qu'un `Focus` + gestion clavier manuelle), qui apporte
+automatiquement le focus Tab, l'activation Entrée/Espace et la sémantique
+bouton par le framework Flutter — sans changement visuel (le `Material` est
+transparent). Non vérifié en runtime (SDK Flutter indisponible dans ce
+sandbox) : structure de parenthèses et types revérifiés à la main, mais la
+CI reste la seule confirmation définitive.
+
+### Autres occurrences dans `home_page.dart`, non corrigées (pistes)
+
+Examinées à la lecture, non modifiées faute de pouvoir vérifier visuellement
+le résultat dans ce sandbox :
+
+| Ligne (avant ce commit) | Rôle | Estimation |
+|---:|---|---|
+| ~1019 | Bascule d'affichage des suggestions de recherche, superposé à un champ de texte déjà focusable | Risque faible — le champ sous-jacent reste accessible par lui-même |
+| ~1172 | Tap sur une icône de slide (fallback hero) | **Piste réelle** — même défaut que la carte corrigée, à vérifier |
+| ~1180 | Swipe horizontal du carrousel hero | Risque faible si des contrôles de pagination alternatifs existent déjà — à confirmer |
+| ~1375, ~1595 | Non examinées en détail | À trier |
+
+Les 32 occurrences restantes (38 au total moins les 6 encore dans
+`home_page.dart`), réparties sur 20 autres fichiers
+(`conversation_thread_page.dart` ×4, `ai_publish_control.dart` ×3,
+`admin/ad_placeholder_images_admin_page.dart` ×4, `offer_details_page.dart`
+×2, `account_page.dart` ×2, `admin_typography_page.dart` ×2,
+`hero_media_slider.dart` ×2, et 13 autres fichiers à 1 occurrence chacun),
+n'ont pas été examinées dans cette session. Elles restent une piste de
+travail pour la suite du §3, pas un constat.
 
 ## 4. Lecteur d’écran et sémantique
 
@@ -175,6 +237,46 @@ Les écrans disposent de nombreux états spécifiques mais il n’existe pas enc
 ### Décision
 
 Contrôle maintenu `pending`.
+
+## 7bis. Revue de code ciblée — 4 parcours sur 9 — 15/08/2026
+
+Revue par lecture de code (pas de test sur appareil ni de mesure runtime,
+SDK Flutter indisponible dans ce sandbox) des chargeurs de données
+principaux de 4 des 9 parcours listés au §8 : **messagerie, compte,
+publication d'annonce, consultation d'offres**. Les 5 autres (découverte et
+recherche, authentification, favoris et contact, abonnements, Je me lance,
+administration) restent non couverts.
+
+| Parcours | Fichier(s) examiné(s) | Constat |
+|---|---|---|
+| Messagerie | `lib/pages/messages/conversations_list_page.dart` (l. ~1687) | Loading (spinner tant que l'état est `null`), vide avec message différencié selon le contexte (recherche / filtre archivé / conversations orphelines), erreurs remontées via un champ `errorsByField` dédié plutôt qu'une exception de flux brute. Cohérent. |
+| Compte | `lib/pages/account_page.dart` (l. ~3370, `StreamBuilder<User?>`) | Loading explicite (« Restauration de la session… »), état déconnecté géré par `SignedOutAccountFallback`. Le flux `idTokenChanges()` du SDK Auth n'émet pas d'erreur réseau en pratique — absence de branche `hasError` jugée non risquée. |
+| Publication d'annonce | `lib/pages/publish_offer_page.dart` (soumission, l. ~4080-4145) | Pas de `StreamBuilder`/`FutureBuilder` en tête d'écran (chargement par `bool _isSubmitting` explicite). Erreurs de soumission affichées via `showErrorSnackBar` avec message humain et action de reprise (« Recharge l'application puis réessaie »). Cohérent avec le vocabulaire prescrit. |
+| Consultation d'offres | `lib/pages/consult_offers_page.dart` (l. ~1930-2066) | Loading, erreur avec icône + message + bouton **« Réessayer »** (correspond exactement au vocabulaire imposé par `docs/design/design-system.md`), et état vide dédié (`_EmptyOffers`) avec action de rafraîchissement. Le plus abouti des quatre. |
+
+### Vérification complémentaire — recherche de « spinner infini »
+
+Recherche des fichiers utilisant `StreamBuilder`/`FutureBuilder` sans aucune
+occurrence de `hasError` dans le fichier (candidat à un chargement bloqué
+indéfiniment en cas d'erreur) : **18 fichiers** sur 46 utilisant l'un de ces
+deux widgets. Trois ont été vérifiés individuellement
+(`lib/pages/auth/auth_gate.dart`, `lib/pages/account_page.dart` l. ~3372,
+`lib/pages/offers/offer_details_page.dart` l. ~1566 et ~1691) : dans les
+trois cas, l'absence de `hasError` est un choix défendable — flux
+`FirebaseAuth` locaux qui n'émettent pas d'erreur réseau en pratique, ou
+dégradation silencieuse vers une valeur par défaut (liste vide, offre de
+base sans enrichissement marketplace) plutôt qu'un blocage. Aucun bug de
+type « écran figé en chargement sans message ni recours » trouvé dans ce
+sous-ensemble. Les 15 fichiers restants de cette liste (pages admin
+majoritairement, hors périmètre « parcours principal utilisateur ») n'ont
+pas été examinés.
+
+### Décision
+
+`states-consistency` reste `pending` : le doneWhen exige une revue des neuf
+parcours, celle-ci n'en couvre que quatre. Mais la présence constatée est
+positive et cohérente sur cet échantillon — plus proche d'un travail de
+documentation restant que d'un défaut d'implémentation à corriger.
 
 ## 8. Audit des parcours principaux
 
