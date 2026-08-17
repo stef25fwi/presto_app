@@ -13,7 +13,9 @@ plugins {
 
 android {
     namespace = "fr.ilipresto.app"
-    compileSdk = flutter.compileSdkVersion
+    // P0 Google Play 2026: valeurs explicites pour rendre le build reproductible
+    // et indépendant d'un changement futur des valeurs par défaut de Flutter.
+    compileSdk = 36
     // NDK requis par les plugins Firebase (firebase_core 4.x), google_mobile_ads 7
     // et recaptcha_enterprise. Évite l'erreur "depend on a different Android NDK version".
     ndkVersion = "28.2.13676358"
@@ -30,7 +32,9 @@ android {
         // google_mobile_ads 7.0, recaptcha_enterprise 18.x et record 6.x.
         // (la valeur par défaut flutter.minSdkVersion = 21 ferait échouer le merge du manifest)
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        // P0 Google Play 2026: Android 16 / API 36 obligatoire pour les nouvelles
+        // applications et mises à jour à compter du 31 août 2026.
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         // multidex pour le grand nombre de dépendances Firebase/GMS
