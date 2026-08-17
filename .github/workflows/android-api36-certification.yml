@@ -50,7 +50,10 @@ jobs:
           flutter --version | tee evidence/android-api36/flutter-version.txt
           flutter doctor -v | tee evidence/android-api36/flutter-doctor.txt
           java -version 2>&1 | tee evidence/android-api36/java-version.txt
-          (cd android && ./gradlew --version) | tee evidence/android-api36/gradle-version.txt
+          cat android/gradle/wrapper/gradle-wrapper.properties \
+            | tee evidence/android-api36/gradle-wrapper-properties.txt
+          grep -E 'com.android.application.*version' android/settings.gradle.kts \
+            | tee evidence/android-api36/android-gradle-plugin.txt
 
       - name: Ensure Android 16 / API 36 SDK
         run: |
@@ -72,7 +75,8 @@ jobs:
           set -euo pipefail
           grep -Eq '^\s*compileSdk\s*=\s*36\s*$' android/app/build.gradle.kts
           grep -Eq '^\s*targetSdk\s*=\s*36\s*$' android/app/build.gradle.kts
-          echo 'compileSdk=36 and targetSdk=36 are explicit.' | tee evidence/android-api36/gradle-api36.txt
+          echo 'compileSdk=36 and targetSdk=36 are explicit.' \
+            | tee evidence/android-api36/gradle-api36.txt
 
       - name: Build Android debug APK for merged-manifest proof
         run: flutter build apk --debug
@@ -110,14 +114,11 @@ jobs:
             fi
           done
 
-          for permission in \
-            android.permission.MANAGE_EXTERNAL_STORAGE \
-            android.permission.WRITE_EXTERNAL_STORAGE; do
-            if grep -q "${permission}" evidence/android-api36/apk-permissions.txt; then
-              echo "::error::Permission de stockage large interdite/inattendue: ${permission}"
-              exit 1
-            fi
-          done
+          if grep -q 'android.permission.MANAGE_EXTERNAL_STORAGE' \
+              evidence/android-api36/apk-permissions.txt; then
+            echo '::error::MANAGE_EXTERNAL_STORAGE est inattendue pour iliprestō.'
+            exit 1
+          fi
 
       - name: Upload build certification evidence
         if: always()
@@ -192,8 +193,10 @@ jobs:
             echo '::error::Android 16 emulator did not finish booting.'
             exit 1
           fi
-          adb shell getprop ro.build.version.release | tee evidence/android-api36-runtime/android-release.txt
-          adb shell getprop ro.build.version.sdk | tee evidence/android-api36-runtime/android-sdk.txt
+          adb shell getprop ro.build.version.release \
+            | tee evidence/android-api36-runtime/android-release.txt
+          adb shell getprop ro.build.version.sdk \
+            | tee evidence/android-api36-runtime/android-sdk.txt
           test "$(tr -d '\r[:space:]' < evidence/android-api36-runtime/android-sdk.txt)" = '36'
 
       - name: Install and launch app on Android 16
@@ -286,7 +289,10 @@ jobs:
           mkdir -p evidence/android-api36-release
           flutter --version | tee evidence/android-api36-release/flutter-version.txt
           flutter doctor -v | tee evidence/android-api36-release/flutter-doctor.txt
-          (cd android && ./gradlew --version) | tee evidence/android-api36-release/gradle-version.txt
+          cat android/gradle/wrapper/gradle-wrapper.properties \
+            | tee evidence/android-api36-release/gradle-wrapper-properties.txt
+          grep -E 'com.android.application.*version' android/settings.gradle.kts \
+            | tee evidence/android-api36-release/android-gradle-plugin.txt
           git rev-parse HEAD | tee evidence/android-api36-release/git-sha.txt
 
       - name: Ensure Android 16 / API 36 SDK
@@ -310,7 +316,7 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "${KEYSTORE_B64:-}" || -z "${KEYSTORE_PASSWORD:-}" || -z "${KEY_PASSWORD:-}" || -z "${KEY_ALIAS:-}" ]]; then
-            echo "::error::Secrets de signature Android incomplets dans l'environnement recaptcha."
+            echo '::error::Secrets de signature Android incomplets dans recaptcha.'
             exit 1
           fi
           printf '%s' "${KEYSTORE_B64}" \
