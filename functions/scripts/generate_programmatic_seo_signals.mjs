@@ -6,6 +6,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 const registryPath = 'web/programmatic-seo-registry.json';
 const defaultOutput = 'quality/seo-programmatic-local-signals.json';
+const SAFE_PUBLIC_ID = /^[A-Za-z0-9_-]{6,128}$/;
+const MAX_PREVIEWS_PER_PAGE = 5;
 
 function argValue(prefix, fallback = '') {
   const item = process.argv.slice(2).find((arg) => arg.startsWith(prefix));
@@ -34,6 +36,27 @@ function timestampMs(value) {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+function timestampIso(value) {
+  const ms = timestampMs(value);
+  return ms > 0 ? new Date(ms).toISOString() : null;
+}
+
+function boundedText(value, maxLength) {
+  return String(value || '')
+    .replace(/[\u0000-\u001F\u007F]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLength);
+}
+
+function seoEligibleListing(id, data) {
+  const title = boundedText(data.title, 140);
+  const description = boundedText(data.description, 2000);
+  return SAFE_PUBLIC_ID.test(String(id || ''))
+    && title.length >= 12
+    && description.length >= 80;
+}
+
 const projectId = argValue('--project=', process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || '');
 const outputPath = argValue('--output=', defaultOutput);
 // Le collecteur de production est strict par défaut : une panne Firestore doit
@@ -54,6 +77,7 @@ function emptyPages() {
           recentListings: 0,
           qualifiedProfiles: 0,
           recentProfiles: 0,
+          listingPreviews: [],
         };
       }
     }
@@ -74,19 +98,26 @@ try {
   const query = db.collection('listings')
     .where('status', '==', 'active')
     .where('visibility', '==', 'public')
-    .select('category', 'categoryId', 'city', 'cityId', 'postalCode', 'cp', 'publishedAt', 'createdAt');
+    .select('category', 'categoryId', 'city', 'cityId', 'postalCode', 'cp', 'title', 'description', 'publishedAt', 'createdAt');
 
   const snapshot = await query.get();
   const counts = new Map();
+  let seoQualifiedPublicListings = 0;
 
   for (const service of registry.services) {
     for (const city of registry.cities) {
-      counts.set(`${service.key}:${city.slug}`, {activeListings: 0, recentListings: 0});
+      counts.set(`${service.key}:${city.slug}`, {
+        activeListings: 0,
+        recentListings: 0,
+        listingPreviews: [],
+      });
     }
   }
 
   for (const doc of snapshot.docs) {
     const data = doc.data() || {};
+    if (!seoEligibleListing(doc.id, data)) continue;
+
     const categoryKeys = new Set([
       normalize(data.category),
       normalize(data.categoryId),
@@ -109,7 +140,11 @@ try {
     if (!service) continue;
 
     const city = registry.cities.find((candidate) => {
-      if (postalCode && postalCode === candidate.postalCode) return true;
+      const postalCodes = new Set([
+        String(candidate.postalCode || '').trim(),
+        ...(Array.isArray(candidate.postalCodes) ? candidate.postalCodes.map((value) => String(value).trim()) : []),
+      ].filter(Boolean));
+      if (postalCode && postalCodes.has(postalCode)) return true;
       const expected = new Set([normalize(candidate.name), normalize(candidate.slug)]);
       return [...cityKeys].some((value) => expected.has(value) || value.endsWith(`-${normalize(candidate.slug)}`));
     });
@@ -118,21 +153,42 @@ try {
     const key = `${service.key}:${city.slug}`;
     const bucket = counts.get(key);
     if (!bucket) continue;
+
+    seoQualifiedPublicListings += 1;
     bucket.activeListings += 1;
-    const publicationMs = timestampMs(data.publishedAt) || timestampMs(data.createdAt);
+    const publicationValue = data.publishedAt || data.createdAt;
+    const publicationMs = timestampMs(publicationValue);
     if (publicationMs >= recentCutoff) bucket.recentListings += 1;
+    bucket.listingPreviews.push({
+      id: String(doc.id),
+      title: boundedText(data.title, 140),
+      publishedAt: timestampIso(publicationValue),
+      publicationMs,
+    });
+  }
+
+  for (const bucket of counts.values()) {
+    bucket.listingPreviews = bucket.listingPreviews
+      .sort((a, b) => b.publicationMs - a.publicationMs || a.id.localeCompare(b.id))
+      .slice(0, MAX_PREVIEWS_PER_PAGE)
+      .map(({id, title, publishedAt}) => ({id, title, publishedAt}));
   }
 
   const pages = {};
   for (const intent of registry.intents) {
     for (const service of registry.services) {
       for (const city of registry.cities) {
-        const bucket = counts.get(`${service.key}:${city.slug}`) || {activeListings: 0, recentListings: 0};
+        const bucket = counts.get(`${service.key}:${city.slug}`) || {
+          activeListings: 0,
+          recentListings: 0,
+          listingPreviews: [],
+        };
         pages[`${intent.key}:${service.key}:${city.slug}`] = {
           activeListings: bucket.activeListings,
           recentListings: bucket.recentListings,
           qualifiedProfiles: 0,
           recentProfiles: 0,
+          listingPreviews: bucket.listingPreviews,
         };
       }
     }
@@ -144,10 +200,11 @@ try {
     source: 'production-marketplace-aggregate',
     projectId: projectId || null,
     scannedPublicActiveListings: snapshot.size,
+    seoQualifiedPublicListings,
     recentWindowDays: Number(registry.activationGate.recentWindowDays || 90),
     pages,
   });
-  console.log(`SEO local signals: ${snapshot.size} annonces publiques actives analysées; sortie ${outputPath}.`);
+  console.log(`SEO local signals: ${snapshot.size} annonces publiques actives analysées, ${seoQualifiedPublicListings} annonces SEO qualifiées; sortie ${outputPath}.`);
 } catch (error) {
   if (!allowFallback) throw error;
   writeReport({
@@ -156,6 +213,7 @@ try {
     source: 'production-marketplace-aggregate-unavailable',
     projectId: projectId || null,
     scannedPublicActiveListings: 0,
+    seoQualifiedPublicListings: 0,
     recentWindowDays: Number(registry.activationGate.recentWindowDays || 90),
     pages: emptyPages(),
     fallbackReason: String(error?.message || error || 'unknown'),

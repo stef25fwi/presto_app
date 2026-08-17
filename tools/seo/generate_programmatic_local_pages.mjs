@@ -5,6 +5,7 @@ const registryPath = 'web/programmatic-seo-registry.json';
 const signalsPath = 'quality/seo-programmatic-local-signals.json';
 const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
 const signals = JSON.parse(fs.readFileSync(signalsPath, 'utf8'));
+const SAFE_PUBLIC_ID = /^[A-Za-z0-9_-]{6,128}$/;
 
 const escapeHtml = (value) => String(value)
   .replaceAll('&', '&amp;')
@@ -19,25 +20,68 @@ function pageKey(intent, service, city) {
   return `${intent.key}:${service.key}:${city.slug}`;
 }
 
+function signalsAreFresh() {
+  const generatedMs = Date.parse(String(signals.generatedAt || ''));
+  if (!Number.isFinite(generatedMs)) return false;
+  const maxAgeHours = Number(registry.activationGate.maxSignalAgeHours || 24);
+  const ageMs = Date.now() - generatedMs;
+  return ageMs >= -5 * 60 * 1000 && ageMs <= maxAgeHours * 60 * 60 * 1000;
+}
+
 function readSignals(key) {
   const value = signals.pages?.[key] || {};
+  const listingPreviews = Array.isArray(value.listingPreviews)
+    ? value.listingPreviews
+      .filter((item) => SAFE_PUBLIC_ID.test(String(item?.id || '')) && String(item?.title || '').trim().length >= 12)
+      .slice(0, 5)
+      .map((item) => ({
+        id: String(item.id),
+        title: String(item.title).trim().slice(0, 140),
+        publishedAt: item.publishedAt ? String(item.publishedAt) : null,
+      }))
+    : [];
   return {
     activeListings: Number(value.activeListings || 0),
     qualifiedProfiles: Number(value.qualifiedProfiles || 0),
     recentListings: Number(value.recentListings || 0),
     recentProfiles: Number(value.recentProfiles || 0),
+    listingPreviews,
   };
 }
 
-function activationFor(key, city) {
+function activationFor(intent, key, city) {
   const value = readSignals(key);
-  const realEntities = value.activeListings + value.qualifiedProfiles;
-  const recentEntities = value.recentListings + value.recentProfiles;
   const gate = registry.activationGate;
-  const eligible = realEntities >= gate.minRealEntities
-    && recentEntities >= gate.minRecentEntities
-    && (!gate.requireUniqueLocalIntro || String(city.localIntro || '').trim().length >= 60);
-  return {...value, realEntities, recentEntities, eligible};
+  const localIntroReady = !gate.requireUniqueLocalIntro || String(city.localIntro || '').trim().length >= 60;
+  const fresh = signalsAreFresh();
+  let eligible = false;
+
+  if (intent.key === 'services') {
+    const serviceGate = gate.intentGates?.services || {};
+    const minQualifiedProfiles = Number(serviceGate.minQualifiedProfiles || gate.minRealEntities || 3);
+    const minRecentProfiles = Number(serviceGate.minRecentProfiles || gate.minRecentEntities || 1);
+    eligible = fresh
+      && localIntroReady
+      && value.qualifiedProfiles >= minQualifiedProfiles
+      && value.recentProfiles >= minRecentProfiles;
+  } else if (intent.key === 'missions') {
+    const missionGate = gate.intentGates?.missions || {};
+    const minActiveListings = Number(missionGate.minActiveListings || gate.minRealEntities || 3);
+    const minRecentListings = Number(missionGate.minRecentListings || gate.minRecentEntities || 1);
+    eligible = fresh
+      && localIntroReady
+      && value.activeListings >= minActiveListings
+      && value.recentListings >= minRecentListings
+      && value.listingPreviews.length >= minActiveListings;
+  }
+
+  return {
+    ...value,
+    realEntities: intent.key === 'services' ? value.qualifiedProfiles : value.activeListings,
+    recentEntities: intent.key === 'services' ? value.recentProfiles : value.recentListings,
+    signalsFresh: fresh,
+    eligible,
+  };
 }
 
 function routeFor(intent, service, city) {
@@ -80,16 +124,33 @@ function descriptionFor(intent, service, city) {
   return `Trouvez des missions ${shortMissionLabel(service)} à ${city.name} (${city.postalCode}) et consultez les besoins de services publiés localement sur iliprestō.`;
 }
 
-function statusCopy(activation) {
-  if (!activation.eligible) {
-    return 'Cette page locale reste volontairement hors index Google tant que suffisamment d’annonces ou de profils réels et récents ne sont pas disponibles dans cette zone.';
+function statusCopy(intent, activation) {
+  if (!activation.signalsFresh) {
+    return 'Cette page locale reste volontairement hors index Google tant qu’un agrégat de production récent et vérifiable n’est pas disponible.';
   }
-  return 'Cette page est ouverte à l’indexation car elle dispose d’un niveau minimal de données locales réelles et récentes selon le garde-fou SEO iliprestō.';
+  if (!activation.eligible && intent.key === 'services') {
+    return 'Cette page reste hors index tant que suffisamment de profils publics, qualifiés, récents et publiés avec un consentement explicite ne sont pas disponibles localement.';
+  }
+  if (!activation.eligible) {
+    return 'Cette page reste hors index tant que suffisamment d’annonces publiques, complètes et récentes ne sont pas disponibles localement.';
+  }
+  if (intent.key === 'services') {
+    return 'Cette page est indexable car elle dispose d’un seuil suffisant de profils publics, qualifiés et récents dans cette zone.';
+  }
+  return 'Cette page est indexable car elle présente un seuil suffisant d’annonces publiques, complètes et récentes dans cette zone.';
+}
+
+function renderListingPreviews(intent, activation) {
+  if (intent.key !== 'missions' || !activation.eligible) return '';
+  const items = activation.listingPreviews
+    .map((listing) => `<li><a href="/annonces/${encodeURIComponent(listing.id)}/">${escapeHtml(listing.title)}</a></li>`)
+    .join('');
+  return `<section aria-label="Annonces locales"><h2>Annonces locales disponibles</h2><p>Exemples d’annonces publiques correspondant à cette catégorie et à cette ville :</p><ul>${items}</ul></section>`;
 }
 
 function renderPage(intent, service, city) {
   const key = pageKey(intent, service, city);
-  const activation = activationFor(key, city);
+  const activation = activationFor(intent, key, city);
   const route = routeFor(intent, service, city);
   const canonical = `${registry.baseUrl}${route}`;
   const title = titleFor(intent, service, city);
@@ -98,53 +159,71 @@ function renderPage(intent, service, city) {
   const robots = activation.eligible ? registry.activationGate.activeRobots : registry.activationGate.inactiveRobots;
   const oppositeIntent = registry.intents.find((candidate) => candidate.key !== intent.key);
   const oppositeRoute = routeFor(oppositeIntent, service, city);
+  const oppositeActivation = activationFor(oppositeIntent, pageKey(oppositeIntent, service, city), city);
   const territory = territoryRoute(city);
   const keywords = service.keywords.map((keyword) => `<li>${escapeHtml(keyword)}</li>`).join('');
   const audienceCopy = intent.key === 'services'
     ? 'Cette page répond aux recherches de personnes qui cherchent une compétence ou une aide locale pour réaliser un service du quotidien.'
     : 'Cette page répond aux recherches de personnes qui souhaitent repérer des besoins locaux correspondant à leurs compétences. Une mission de service n’est pas automatiquement une offre d’emploi salarié.';
+  const listingSection = renderListingPreviews(intent, activation);
+  const oppositeLink = oppositeActivation.eligible
+    ? `<a href="${escapeHtml(oppositeRoute)}">${oppositeIntent.key === 'services' ? 'Chercher ce service' : 'Voir les missions correspondantes'}</a>`
+    : '';
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'WebPage',
-        '@id': `${canonical}#webpage`,
-        url: canonical,
-        name: title,
-        description,
-        inLanguage: 'fr-FR',
-        isPartOf: {'@id': `${registry.baseUrl}/#website`},
-        publisher: {'@id': `${registry.baseUrl}/#organization`},
-        mainEntity: {'@id': `${canonical}#service`},
-        breadcrumb: {'@id': `${canonical}#breadcrumb`},
+  const graph = [
+    {
+      '@type': 'WebPage',
+      '@id': `${canonical}#webpage`,
+      url: canonical,
+      name: title,
+      description,
+      inLanguage: 'fr-FR',
+      isPartOf: {'@id': `${registry.baseUrl}/#website`},
+      publisher: {'@id': `${registry.baseUrl}/#organization`},
+      mainEntity: {'@id': `${canonical}#service`},
+      breadcrumb: {'@id': `${canonical}#breadcrumb`},
+    },
+    {
+      '@type': 'Service',
+      '@id': `${canonical}#service`,
+      name: `${service.serviceTitle} – ${city.name}`,
+      serviceType: service.taxonomyValue,
+      description,
+      provider: {'@id': `${registry.baseUrl}/#organization`},
+      areaServed: {
+        '@type': 'City',
+        name: city.name,
+        containedInPlace: {'@type': 'AdministrativeArea', name: city.territory},
       },
-      {
-        '@type': 'Service',
-        '@id': `${canonical}#service`,
-        name: `${service.serviceTitle} – ${city.name}`,
-        serviceType: service.taxonomyValue,
-        description,
-        provider: {'@id': `${registry.baseUrl}/#organization`},
-        areaServed: {
-          '@type': 'City',
-          name: city.name,
-          containedInPlace: {'@type': 'AdministrativeArea', name: city.territory},
-        },
-        availableChannel: {'@type': 'ServiceChannel', serviceUrl: canonical},
-      },
-      {
-        '@type': 'BreadcrumbList',
-        '@id': `${canonical}#breadcrumb`,
-        itemListElement: [
-          {'@type': 'ListItem', position: 1, name: 'Accueil', item: `${registry.baseUrl}/`},
-          {'@type': 'ListItem', position: 2, name: intent.key === 'services' ? 'Services' : 'Missions', item: `${registry.baseUrl}${intent.routePrefix}/`},
-          {'@type': 'ListItem', position: 3, name: service.serviceTitle, item: `${registry.baseUrl}${intent.routePrefix}/${service.slug}/`},
-          {'@type': 'ListItem', position: 4, name: city.name, item: canonical},
-        ],
-      },
-    ],
-  };
+      availableChannel: {'@type': 'ServiceChannel', serviceUrl: canonical},
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${canonical}#breadcrumb`,
+      itemListElement: [
+        {'@type': 'ListItem', position: 1, name: 'Accueil', item: `${registry.baseUrl}/`},
+        {'@type': 'ListItem', position: 2, name: intent.key === 'services' ? 'Services' : 'Missions', item: `${registry.baseUrl}${intent.routePrefix}/`},
+        {'@type': 'ListItem', position: 3, name: service.serviceTitle, item: `${registry.baseUrl}${intent.routePrefix}/${service.slug}/`},
+        {'@type': 'ListItem', position: 4, name: city.name, item: canonical},
+      ],
+    },
+  ];
+
+  if (intent.key === 'missions' && activation.eligible) {
+    graph.push({
+      '@type': 'ItemList',
+      '@id': `${canonical}#annonces`,
+      name: `Annonces ${service.serviceTitle} à ${city.name}`,
+      itemListElement: activation.listingPreviews.map((listing, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: listing.title,
+        url: `${registry.baseUrl}/annonces/${listing.id}/`,
+      })),
+    });
+  }
+
+  const jsonLd = {'@context': 'https://schema.org', '@graph': graph};
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -181,14 +260,15 @@ function renderPage(intent, service, city) {
       <p class="public-lead">${escapeHtml(city.localIntro)} ${escapeHtml(audienceCopy)}</p>
       <section class="public-grid" aria-label="Informations locales">
         <article><h2>Recherche locale précise</h2><p>La page associe une catégorie de service, une ville et une intention de recherche afin d’éviter les pages génériques ou dupliquées.</p></article>
-        <article><h2>Données réelles avant indexation</h2><p>L’indexation n’est activée qu’après atteinte du seuil minimal de signaux réels et récents défini par le SEO Activation Gate.</p></article>
+        <article><h2>Données réelles avant indexation</h2><p>L’indexation n’est activée qu’après atteinte du seuil minimal de signaux réels, récents et adaptés à l’intention de recherche.</p></article>
         <article><h2>Échange direct</h2><p>iliprestō facilite la mise en relation. La plateforme n’est ni employeur, ni agence d’intérim, et ne garantit ni mission, ni revenu, ni délai de réponse.</p></article>
       </section>
+      ${listingSection}
       <h2>Recherches associées</h2>
       <ul>${keywords}</ul>
-      <p class="public-status">${escapeHtml(statusCopy(activation))}</p>
+      <p class="public-status">${escapeHtml(statusCopy(intent, activation))}</p>
       <nav class="public-links" aria-label="Explorer iliprestō">
-        <a href="${escapeHtml(oppositeRoute)}">${oppositeIntent.key === 'services' ? 'Chercher ce service' : 'Voir les missions correspondantes'}</a>
+        ${oppositeLink}
         <a href="${escapeHtml(territory)}">Services en ${escapeHtml(city.territory)}</a>
         <a href="/trouver-une-personne-disponible/">Trouver une personne disponible</a>
         <a href="/guides/comment-fonctionne-ilipresto">Comment fonctionne iliprestō ?</a>
@@ -209,7 +289,7 @@ for (const intent of registry.intents) {
       const output = path.join('web', route, 'index.html');
       fs.mkdirSync(path.dirname(output), {recursive: true});
       fs.writeFileSync(output, renderPage(intent, service, city));
-      const activation = activationFor(pageKey(intent, service, city), city);
+      const activation = activationFor(intent, pageKey(intent, service, city), city);
       generated.push({route, eligible: activation.eligible});
     }
   }
