@@ -59,7 +59,7 @@ class AdminPlaceholderImageTile extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           PrestoTapTarget(
-            semanticLabel: 'Agrandir ${image.title ?? "l\'image"}',
+            semanticLabel: 'Agrandir ${image.title ?? "l'image"}',
             onTap: onTapImage,
             child: Image.network(
               image.imageUrl,

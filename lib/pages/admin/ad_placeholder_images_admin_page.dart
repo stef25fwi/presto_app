@@ -1250,7 +1250,7 @@ class _ReorderTile extends StatelessWidget {
                 Icon(Icons.drag_handle_rounded, color: Colors.grey, size: 26),
           ),
           PrestoTapTarget(
-            semanticLabel: 'Agrandir ${image.title ?? "l\'image"}',
+            semanticLabel: 'Agrandir ${image.title ?? "l'image"}',
             onTap: onTapImage,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
