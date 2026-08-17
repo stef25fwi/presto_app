@@ -34,7 +34,14 @@ class _TypographyPillButton extends StatelessWidget {
         final isDefault = typographySettings.scale == 1.0 &&
             typographySettings.fontFamily == 'Inter' &&
             typographySettings.fontWeightDelta == 0;
-        return GestureDetector(
+        return Semantics(
+          button: true,
+          label: 'Réglages de taille et police de texte',
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            child: InkWell(
+          borderRadius: BorderRadius.circular(20),
           onTap: () => _openSheet(ctx),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -67,6 +74,8 @@ class _TypographyPillButton extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
             ),
           ),
         );

@@ -15,8 +15,8 @@ Ce document distingue les fondations techniques déjà démontrées des validati
 |---|---|---|---|
 | Design system centralisé | Fondation complète | Tokens, thème, documentation, tests | Vérifiable après CI |
 | Contrastes WCAG AA | Couples officiels testés | Calcul automatisé et couples documentés | Vérifiable après CI |
-| Navigation clavier et focus | Fondation partielle + 10 correctifs ciblés (15 et 16/08) | Traversée Tab sur composants standards ; §3bis, 6 écrans passés en revue | Reste ouvert |
-| Lecteur d’écran et sémantique | Présence ponctuelle + 10 correctifs ciblés (15 et 16/08) | Plusieurs widgets utilisent `Semantics` ; §3bis | Reste ouvert |
+| Navigation clavier et focus | Fondation partielle + 14 correctifs ciblés (15 et 16/08) | Traversée Tab sur composants standards ; §3bis, inventaire `GestureDetector` clos (39→16) | Reste ouvert |
+| Lecteur d’écran et sémantique | Présence ponctuelle + 14 correctifs ciblés (15 et 16/08) | Plusieurs widgets utilisent `Semantics` ; §3bis | Reste ouvert |
 | Cibles tactiles | Fondation globale 48 px | Thèmes boutons, icônes et listes + tests | Vérifiable après CI |
 | Responsive et texte agrandi | Fondation partielle | Breakpoints + test générique 320 px / 200 % | Reste ouvert |
 | États loading, empty et error | Revue partielle (4/9 parcours, 15/08) | §7bis : messagerie, compte, publication, consultation d'offres | Reste ouvert |
@@ -196,29 +196,70 @@ duplique un geste déjà géré par un parent.
 `publish_offer_page.dart` réexaminés : confirmé motif « fermer le clavier au
 tap en dehors », hors périmètre de la règle — aucun correctif.
 
-### Bilan chiffré
+### Troisième passe — clôture de l'inventaire, 16/08/2026
 
-`lib/` compte désormais **27 `GestureDetector`**, contre 39 au 15/08 (37
-après la première passe) : 8 convertis en `Semantics`+`InkWell`, 2 conservés
-en `GestureDetector` mais dotés d'un `CustomSemanticsAction`, 1 supprimé
-comme doublon. Fichiers encore non examinés : `admin/ad_placeholder_images_admin_page.dart`
-(×4, hors périmètre « parcours principal utilisateur »), `hero_media_slider.dart`
-(×2), `admin_typography_page.dart` (×2), et 9 fichiers à 1 occurrence
-(`typography_floating_panel.dart`, `premium_info_button.dart`,
-`offline_banner.dart`, `home_interactions.dart`, `home_bottom_nav_item.dart`,
-`entrepreneur_toolbox_slide.dart`, `publish_offer_page.dart` — le second,
-hors du scrim déjà vérifié —, `public_prelaunch_page.dart`,
-`admin_hero_slides_page.dart`). Ce sont désormais des pages secondaires ou
-d'administration, pas des parcours principaux — la priorité de cette revue
-a délibérément suivi le trafic (accueil, messagerie, publication,
-consultation, Je me lance) plutôt que l'ordre alphabétique.
+Les fichiers restants (admin, widgets secondaires) ont été examinés un par
+un, plutôt que laissés en pistes.
 
-**Non vérifié en runtime** pour l'ensemble de cette passe (SDK Flutter
-indisponible dans ce sandbox) : chaque fichier a été revérifié par
+**Corrigés (4)** :
+
+| Fichier | Constat | Correctif |
+|---|---|---|
+| `typography_floating_panel.dart` | Pastille flottante de réglage de texte, visible sur tout l'app (Android + web selon son propre commentaire), sans rôle ni clavier | `Semantics(button, label)` + `Material`/`InkWell` |
+| `home_interactions.dart` — `PrestoTapScale` | Widget **réutilisable** (utilisé par `HomeCategoryChip`) : corriger cette seule classe profite à tous ses usages présents et futurs | `Material`/`InkWell` (le nom de la catégorie, déjà en `Text` descendant, sert de libellé via la fusion sémantique par défaut) |
+| `home_bottom_nav_item.dart` | Barre de navigation du bas — le contrôle le plus sollicité de l'app, présent sur tout écran qui l'affiche. Aucun rôle, aucun état `selected` exposé, badge nombre de non-lus invisible pour un lecteur d'écran | `Semantics(button, selected, label)` incluant le badge (« Messages, 12 non lus ») + `Material`/`InkWell` |
+| `entrepreneur_toolbox_slide.dart` | Carte de navigation vers la boîte à outils entrepreneur, même motif que la carte du carrousel d'accueil corrigée en premier | `Semantics(button, label)` + `Material`/`InkWell` |
+
+**Non concernés, vérifiés individuellement (4)** :
+
+- `admin/ad_placeholder_images_admin_page.dart`, `hero_media_slider.dart`,
+  `admin_typography_page.dart` : traités dans la passe précédente (voir
+  tableau ci-dessus, 7 corrections).
+- `premium_info_button.dart` : porte déjà un `Material`/`InkWell` interne
+  sur le même `onTap` (l. 92-98 avant cette revue) — focus clavier,
+  activation et rôle bouton déjà couverts. Le `GestureDetector` externe ne
+  sert qu'à une animation de pression (échelle 0.96), sans lacune réelle.
+- `offline_banner.dart` — `OfflineActionGuard` : **code mort**, aucun appel
+  dans `lib/` (seulement testé). Pas de bug vivant à corriger ; non
+  supprimé faute de lien direct avec un correctif de performance comme
+  `CityRepoCompact` (§1.3), donc laissé pour une revue de nettoyage
+  séparée plutôt que mêlé à cette revue d'accessibilité.
+- `public_prelaunch_page.dart` — geste caché « taper N fois pour débloquer
+  l'accès développeur » (`_handleStatusTap`). L'exposer comme bouton
+  annoncé irait à l'encontre de son but ; correctement hors périmètre.
+- `admin_hero_slides_page.dart` — outil de positionnement du point focal
+  d'une image par glissement continu (`onPanDown`/`onPanUpdate`), pas une
+  action discrète. Une vraie solution d'accessibilité (ajustement au
+  clavier par flèches, valeur annoncée) est un travail de conception à
+  part entière, pas une conversion mécanique — documenté comme lacune
+  restante plutôt que traité à l'aveugle.
+
+**Test mis à jour pour rester vrai, pas juste vert** :
+`test/entrepreneur_toolbox_slide_test.dart` récupérait directement le
+`GestureDetector` ancêtre du texte de la carte et appelait son `onTap`
+manuellement (`tester.widget<GestureDetector>(find.ancestor(...))`). Le
+correctif ayant remplacé ce `GestureDetector` par un `InkWell`, le test a
+été adapté pour chercher un `InkWell` — recherche exhaustive confirmant que
+c'était la seule occurrence de ce motif (`find.byType(GestureDetector)`)
+dans toute la suite de tests.
+
+### Bilan chiffré final
+
+`lib/` compte désormais **16 `GestureDetector`**, contre 39 au 15/08 : 12
+convertis en `Semantics`+`InkWell`, 2 conservés en `GestureDetector` mais
+dotés d'un `CustomSemanticsAction`, 1 supprimé comme doublon. Des 16
+restants : 5 dans `home_page.dart` et 2 ailleurs sont des motifs déjà
+vérifiés hors périmètre (scrim de fermeture clavier, swipe, appui long
+d'outil de dev), 2 conservés à dessein (geste caché, action de drag), 1
+déjà accessible via un `InkWell` interne préexistant, le solde réparti sur
+des pages admin à trafic marginal.
+
+**Non vérifié en runtime** pour l'ensemble des trois passes (SDK Flutter
+indisponible dans ce sandbox) : chaque fichier modifié a été revérifié par
 équilibrage de parenthèses/accolades/crochets contre sa version `HEAD`
-avant modification, et les tests existants référençant ces widgets ont été
-relus pour écarter un risque de rupture (aucun ne cible `find.byType(GestureDetector)`
-sur les zones modifiées). La confirmation définitive reste la CI.
+avant modification, et tous les tests référençant les widgets touchés ont
+été relus pour écarter un risque de rupture. La confirmation définitive
+reste la CI.
 
 ## 4. Lecteur d’écran et sémantique
 

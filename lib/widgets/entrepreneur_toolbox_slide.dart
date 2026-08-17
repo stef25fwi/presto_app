@@ -18,7 +18,14 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
   }
 
   Widget _buildCompact(BuildContext context) {
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: "Boîte à outils de l'entrepreneur",
+      child: Material(
+        color: kPrestoOrange,
+        borderRadius: BorderRadius.circular(20),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
       onTap: () => _openToolbox(context),
       child: Container(
         height: double.infinity,
@@ -67,6 +74,8 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
               ],
             ),
           ],
+        ),
+      ),
         ),
       ),
     );
