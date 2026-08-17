@@ -8,32 +8,47 @@ Avant toute soumission Google Play à compter du 31 août 2026, iliprestō doit 
 
 - Flutter CI de référence : `3.44.6`.
 - Java : `17`.
-- Android Gradle Plugin : branche 8.11.x du projet.
+- Android Gradle Plugin : `8.11.1`.
+- Gradle : `8.14`.
 - `compileSdk = 36` explicite dans `android/app/build.gradle.kts`.
 - `targetSdk = 36` explicite dans `android/app/build.gradle.kts`.
-- Le workflow `.github/workflows/android-api36-certification.yml` doit être vert sur le SHA candidat à la soumission.
+- Le workflow `.github/workflows/android-api36-certification.yml` doit être vert sur le SHA candidat.
+- Le workflow `.github/workflows/release_android.yml` doit produire l'AAB signé et sa preuve `targetSdkVersion=36` avant tout upload Play.
 
 ## Preuves automatisées obligatoires
 
-Le workflow de certification doit produire et archiver, pour le même SHA :
+### PR / compatibilité Android 16
+
+Le workflow `Android API 36 certification` doit produire et archiver, pour le même SHA :
 
 1. `flutter --version`.
 2. `flutter doctor -v`.
-3. Version Java et Gradle.
+3. Versions Java, AGP et Gradle.
 4. Installation/présence du SDK Android API 36.
 5. `flutter analyze --fatal-infos` réussi.
 6. `flutter test --reporter expanded` réussi.
 7. Build Android sans erreur.
 8. Manifest APK fusionné avec `targetSdkVersion=36`.
 9. Permissions finales attendues : notifications, caméra et microphone.
-10. Absence de permission de stockage large `MANAGE_EXTERNAL_STORAGE` / `WRITE_EXTERNAL_STORAGE`.
+10. Absence de `MANAGE_EXTERNAL_STORAGE`.
 11. Démarrage de l'application sur un émulateur Android 16 / API 36.
 12. Résolution des deep links `ilipresto://...` et `https://ilipresto.fr/app` sur Android 16.
-13. Build AAB release signé.
-14. Lecture directe du manifest du `.aab` final avec `bundletool` et preuve `targetSdkVersion=36`.
-15. Empreinte SHA-256 de l'AAB final.
 
-Les artefacts GitHub Actions de preuve sont conservés 90 jours. L'AAB de certification est conservé 30 jours.
+### AAB réellement destiné à Google Play
+
+Le workflow `Release Android (AAB → Play Console)` doit, **avant** l'étape d'upload Play :
+
+1. utiliser Flutter `3.44.6` et Java 17 ;
+2. enregistrer `flutter doctor -v` et le SHA Git ;
+3. installer/vérifier la plateforme Android API 36 ;
+4. rejouer analyse et tests Flutter ;
+5. construire l'AAB release signé ;
+6. lire le manifest du `.aab` final avec `bundletool` ;
+7. échouer si `targetSdkVersion` n'est pas exactement `36` ;
+8. archiver le manifest, la preuve `targetSdkVersion=36` et le SHA-256 de l'AAB ;
+9. seulement ensuite autoriser l'envoi sur Google Play.
+
+Les preuves sont conservées 90 jours et l'AAB de release 30 jours.
 
 ## Tests fonctionnels Android 16 obligatoires sur appareil réel
 
@@ -52,9 +67,9 @@ Les tests ci-dessous doivent être exécutés sur le **même SHA** que l'AAB can
 
 Le P0 « Android API 36 » peut être déclaré **certifié** uniquement lorsque :
 
-- le workflow `Android API 36 certification` est vert ;
-- l'AAB final du SHA candidat annonce `targetSdkVersion=36` ;
-- le build release signé est réussi ;
+- le workflow `Android API 36 certification` est vert sur le SHA candidat ;
+- le workflow `Release Android` a construit l'AAB signé du même SHA ;
+- l'AAB final annonce `targetSdkVersion=36` ;
 - les tests Android 16 sur appareil réel ci-dessus sont tous validés avec preuve ;
 - aucune régression Android bloquante n'est ouverte sur ce SHA.
 
