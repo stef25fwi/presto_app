@@ -32,16 +32,17 @@ export const setPublicProfessionalProfileVisibility = onCall(
     const uid = request.auth.uid;
     const enabled = request.data.enabled as boolean;
     const privateRef = db.collection(PRIVATE_COLLECTION).doc(uid);
+    const snapshot = await privateRef.get();
+
+    if (!snapshot.exists) {
+      if (!enabled) return { ok: true, enabled: false };
+      throw new HttpsError(
+        "failed-precondition",
+        "Votre profil professionnel doit être vérifié avant de pouvoir être rendu public.",
+      );
+    }
 
     if (enabled) {
-      const snapshot = await privateRef.get();
-      if (!snapshot.exists) {
-        throw new HttpsError(
-          "failed-precondition",
-          "Votre profil professionnel doit être vérifié avant de pouvoir être rendu public.",
-        );
-      }
-
       const candidate = {
         ...(snapshot.data() ?? {}),
         publicProfileEnabled: true,
