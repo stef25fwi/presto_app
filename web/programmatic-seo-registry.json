@@ -1,12 +1,23 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-09",
+  "updatedAt": "2026-08-17",
   "baseUrl": "https://ilipresto.fr",
   "positioning": "Services et missions de proximité, sans promesse de réponse garantie et sans assimilation automatique à une offre d'emploi.",
   "activationGate": {
     "minRealEntities": 3,
     "minRecentEntities": 1,
     "recentWindowDays": 90,
+    "maxSignalAgeHours": 24,
+    "intentGates": {
+      "services": {
+        "minQualifiedProfiles": 3,
+        "minRecentProfiles": 1
+      },
+      "missions": {
+        "minActiveListings": 3,
+        "minRecentListings": 1
+      }
+    },
     "requireUniqueLocalIntro": true,
     "requireCrossLinks": true,
     "inactiveRobots": "noindex,follow",
