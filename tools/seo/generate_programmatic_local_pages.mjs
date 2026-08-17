@@ -16,6 +16,23 @@ const escapeHtml = (value) => String(value)
 
 const escapeJson = (value) => JSON.stringify(value).replaceAll('<', '\\u003c');
 
+function postalCodesForCity(city) {
+  const candidates = [
+    city.postalCode,
+    ...(Array.isArray(city.postalCodes) ? city.postalCodes : []),
+  ];
+  return [...new Set(candidates
+    .map((value) => String(value || '').trim())
+    .filter((value) => /^\d{5}$/.test(value)))];
+}
+
+function postalLabelForCity(city) {
+  const codes = postalCodesForCity(city);
+  if (codes.length === 0) return '';
+  if (codes.length === 1) return codes[0];
+  return `${codes[0]} + ${codes.length - 1} autres codes`;
+}
+
 function pageKey(intent, service, city) {
   return `${intent.key}:${service.key}:${city.slug}`;
 }
@@ -118,10 +135,12 @@ function h1For(intent, service, city) {
 }
 
 function descriptionFor(intent, service, city) {
+  const postalLabel = postalLabelForCity(city);
+  const postalSuffix = postalLabel ? ` (${postalLabel})` : '';
   if (intent.key === 'services') {
-    return `Recherchez ${service.serviceLower} à ${city.name} (${city.postalCode}) et consultez les besoins, annonces et profils locaux disponibles sur iliprestō.`;
+    return `Recherchez ${service.serviceLower} à ${city.name}${postalSuffix} et consultez les besoins, annonces et profils locaux disponibles sur iliprestō.`;
   }
-  return `Trouvez des missions ${shortMissionLabel(service)} à ${city.name} (${city.postalCode}) et consultez les besoins de services publiés localement sur iliprestō.`;
+  return `Trouvez des missions ${shortMissionLabel(service)} à ${city.name}${postalSuffix} et consultez les besoins de services publiés localement sur iliprestō.`;
 }
 
 function statusCopy(intent, activation) {
@@ -156,6 +175,7 @@ function renderPage(intent, service, city) {
   const title = titleFor(intent, service, city);
   const h1 = h1For(intent, service, city);
   const description = descriptionFor(intent, service, city);
+  const postalLabel = postalLabelForCity(city);
   const robots = activation.eligible ? registry.activationGate.activeRobots : registry.activationGate.inactiveRobots;
   const oppositeIntent = registry.intents.find((candidate) => candidate.key !== intent.key);
   const oppositeRoute = routeFor(oppositeIntent, service, city);
@@ -255,7 +275,7 @@ function renderPage(intent, service, city) {
     <header><a class="public-brand" href="/" aria-label="Accueil iliprestō"><img src="/assets/assets/images/ilipresto_splash_logo.webp" alt="Logo iliprestō" width="54" height="54"><span>iliprestō</span></a></header>
     <nav class="public-breadcrumb" aria-label="Fil d’Ariane"><ol><li><a href="/">Accueil</a></li><li>${intent.key === 'services' ? 'Services' : 'Missions'}</li><li>${escapeHtml(service.serviceTitle)}</li><li aria-current="page">${escapeHtml(city.name)}</li></ol></nav>
     <main class="public-card">
-      <span class="public-kicker">${escapeHtml(city.territory)} · ${escapeHtml(city.postalCode)}</span>
+      <span class="public-kicker">${escapeHtml(city.territory)}${postalLabel ? ` · ${escapeHtml(postalLabel)}` : ''}</span>
       <h1>${escapeHtml(h1)}</h1>
       <p class="public-lead">${escapeHtml(city.localIntro)} ${escapeHtml(audienceCopy)}</p>
       <section class="public-grid" aria-label="Informations locales">
