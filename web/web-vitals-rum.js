@@ -7,6 +7,7 @@
   const optOutKey = 'ilipresto-cwv-optout';
   const observers = [];
   let reportingDisabled = false;
+  let inpFlushTimer = null;
 
   function hasPersistentOptOut() {
     try {
@@ -18,6 +19,10 @@
 
   window.iliprestoDisableWebVitals = function () {
     reportingDisabled = true;
+    if (inpFlushTimer !== null) {
+      window.clearTimeout(inpFlushTimer);
+      inpFlushTimer = null;
+    }
     try {
       window.localStorage.setItem(optOutKey, '1');
     } catch (_) {
@@ -127,6 +132,15 @@
     return values[Math.min(ignoredWorstInteractions, values.length - 1)] || null;
   }
 
+  function scheduleInpFlush() {
+    if (inpFlushTimer !== null) window.clearTimeout(inpFlushTimer);
+    inpFlushTimer = window.setTimeout(function () {
+      inpFlushTimer = null;
+      const inpValue = currentInp();
+      if (inpValue !== null) sendMetric('INP', inpValue);
+    }, 250);
+  }
+
   function flush() {
     if (lcpValue !== null) sendMetric('LCP', lcpValue);
     sendMetric('CLS', clsValue);
@@ -171,14 +185,17 @@
   });
 
   observe('event', function (list) {
+    let observedInteraction = false;
     list.getEntries().forEach(function (entry) {
       const interactionId = Number(entry.interactionId || 0);
       if (interactionId <= 0) return;
       const duration = Number(entry.duration || 0);
       const previous = interactions.get(interactionId) || 0;
       if (duration > previous) interactions.set(interactionId, duration);
+      observedInteraction = true;
     });
-  }, { durationThreshold: 40 });
+    if (observedInteraction) scheduleInpFlush();
+  }, { durationThreshold: 16 });
 
   window.addEventListener('ilipresto-consent-updated', function (event) {
     const detail = event && event.detail;
