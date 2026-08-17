@@ -132,6 +132,15 @@ n'atteste l'usage. Même catégorie que `functions/lib/` retiré du suivi le
    gabarit Firebase, pas un périmètre réfléchi. Retirer au minimum
    `sqladmin`.
 
+Les commandes correspondantes sont écrites dans
+`tools/security/restrict_api_keys.sh`, à relire puis exécuter depuis Cloud
+Shell. Le script ne modifie rien par défaut (`APPLY=1` pour exécuter), et
+sa première étape est obligatoire : `api-keys list` ne renvoyant pas le
+matériel des clés, l'association entre les deux clés navigateur et leurs
+valeurs réelles n'a pas pu être établie depuis le relevé — seulement
+supposée par date de création. Il faut la confirmer avec
+`get-key-string` avant toute suppression.
+
 ### Avertissement d'exploitation sur le point 3
 
 Poser des référents HTTP sur la clé navigateur casse la production si la

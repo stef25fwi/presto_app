@@ -134,3 +134,25 @@ functions/evals/media/
 # le 16/08) et salir les revues d'une centaine de fichiers générés à chaque
 # `npm test`. Alignée sur /build/ (équivalent Flutter web), déjà ignoré.
 /functions/lib/
+
+# Build Flutter web déposé sous docs/ (publication GitHub Pages abandonnée :
+# `base href="/presto_app/"`, aucun CNAME, aucun workflow ne le régénère, et
+# la production sert depuis Firebase Hosting sur ilipresto.fr). 90 Mo
+# d'artefacts figés au 08/08/2026 dont plus rien n'atteste l'usage, et qui
+# publiaient une clé navigateur périmée dans docs/firebase-messaging-sw.js —
+# voir docs/evidence/security/api-key-restrictions.md. La documentation de
+# docs/ reste versionnée : seules les sorties de `flutter build web` sont
+# ignorées ici. Même traitement que /functions/lib/ et /build/.
+/docs/index.html
+/docs/main.dart.js
+/docs/flutter.js
+/docs/flutter_bootstrap.js
+/docs/flutter_service_worker.js
+/docs/firebase-messaging-sw.js
+/docs/version.json
+/docs/manifest.json
+/docs/favicon.png
+/docs/maintenance.html
+/docs/icons/
+/docs/assets/
+/docs/canvaskit/
