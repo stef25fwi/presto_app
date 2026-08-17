@@ -547,12 +547,19 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
               hintText: '🔍 Rechercher une police...',
               prefixIcon: const Icon(Icons.search_rounded, size: 18),
               suffixIcon: _searchController.text.isNotEmpty
-                  ? GestureDetector(
-                      onTap: () {
-                        _searchController.clear();
-                        setState(() {});
-                      },
-                      child: const Icon(Icons.clear_rounded, size: 18),
+                  ? Semantics(
+                      button: true,
+                      label: 'Effacer la recherche',
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            _searchController.clear();
+                            setState(() {});
+                          },
+                          child: const Icon(Icons.clear_rounded, size: 18),
+                        ),
+                      ),
                     )
                   : null,
               border: OutlineInputBorder(
@@ -590,44 +597,61 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
                 final isSelected = _selectedFont == font;
                 final isDefault = font == 'Inter';
 
+                void deleteFont() {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Supprimer la police ?'),
+                      content: Text(
+                        'Êtes-vous sûr de vouloir supprimer "$font" ?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Annuler'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            _removeFont(font);
+                          },
+                          child: const Text('Supprimer',
+                              style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
                 return Tooltip(
                   message: isDefault
                       ? 'Police par défaut'
                       : 'Cliquer pour sélectionner',
-                  child: GestureDetector(
+                  child: Semantics(
+                    button: true,
+                    selected: isSelected,
+                    // L'appui long ouvre une suppression pour les polices
+                    // personnalisées : exposé en plus comme action discrète,
+                    // l'appui long n'ayant pas d'équivalent clavier garanti.
+                    customSemanticsActions: isDefault
+                        ? const <CustomSemanticsAction, VoidCallback>{}
+                        : <CustomSemanticsAction, VoidCallback>{
+                            const CustomSemanticsAction(
+                              label: 'Supprimer la police',
+                            ): deleteFont,
+                          },
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                      child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
                     onTap: () {
                       setState(() => _selectedFont = font);
                       _updateIsModified();
                       _showSnackbar(
                           '✅ Police "$font" sélectionnée', Colors.blue);
                     },
-                    onLongPress: !isDefault
-                        ? () {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: const Text('Supprimer la police ?'),
-                                content: Text(
-                                  'Êtes-vous sûr de vouloir supprimer "$font" ?',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx),
-                                    child: const Text('Annuler'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(ctx);
-                                      _removeFont(font);
-                                    },
-                                    child: const Text('Supprimer',
-                                        style: TextStyle(color: Colors.red)),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-                        : null,
+                    onLongPress: !isDefault ? deleteFont : null,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(
@@ -677,6 +701,8 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
                             ),
                         ],
                       ),
+                    ),
+                  ),
                     ),
                   ),
                 );

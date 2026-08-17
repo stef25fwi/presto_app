@@ -358,19 +358,29 @@ class _MuteToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onToggle,
-      child: Container(
-        width: 30,
-        height: 30,
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.45),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          isMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
-          color: Colors.white,
-          size: 17,
+    return Semantics(
+      button: true,
+      toggled: isMuted,
+      label: isMuted ? 'Activer le son' : 'Couper le son',
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          onTap: onToggle,
+          customBorder: const CircleBorder(),
+          child: Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.45),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+              color: Colors.white,
+              size: 17,
+            ),
+          ),
         ),
       ),
     );

@@ -186,16 +186,29 @@ class _AdPlaceholderImagesAdminPageState
             Positioned(
               top: 40,
               right: 16,
-              child: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    shape: BoxShape.circle,
+              child: Semantics(
+                button: true,
+                label: 'Fermer',
+                child: Material(
+                  color: Colors.transparent,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    onTap: () => Navigator.pop(context),
+                    customBorder: const CircleBorder(),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
                   ),
-                  child: const Icon(Icons.close, color: Colors.white, size: 20),
                 ),
               ),
             ),
@@ -1266,14 +1279,21 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           // Image — tap pour viewer
-          GestureDetector(
-            onTap: onTapImage,
-            child: Image.network(
-              image.imageUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const ColoredBox(
-                color: Color(0xFFF2F4F7),
-                child: Center(child: Icon(Icons.broken_image_outlined)),
+          Semantics(
+            button: true,
+            label: 'Agrandir ${image.title ?? "l\'image"}',
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTapImage,
+                child: Image.network(
+                  image.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const ColoredBox(
+                    color: Color(0xFFF2F4F7),
+                    child: Center(child: Icon(Icons.broken_image_outlined)),
+                  ),
+                ),
               ),
             ),
           ),
@@ -1295,25 +1315,39 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
           Positioned(
             top: 6,
             right: 6,
-            child: GestureDetector(
-              onTap: () => onVisibilityChanged(!selected),
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: selected ? orange : Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: selected ? orange : Colors.grey.shade400,
-                    width: 2.5,
+            child: Semantics(
+              button: true,
+              toggled: selected,
+              label: activeLabel,
+              child: Material(
+                color: Colors.transparent,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  onTap: () => onVisibilityChanged(!selected),
+                  customBorder: const CircleBorder(),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: selected ? orange : Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: selected ? orange : Colors.grey.shade400,
+                        width: 2.5,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black26, blurRadius: 4),
+                      ],
+                    ),
+                    child: selected
+                        ? const Icon(
+                            Icons.check,
+                            size: 20,
+                            color: Colors.white,
+                          )
+                        : null,
                   ),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black26, blurRadius: 4),
-                  ],
                 ),
-                child: selected
-                    ? const Icon(Icons.check, size: 20, color: Colors.white)
-                    : null,
               ),
             ),
           ),
@@ -1445,9 +1479,14 @@ class _ReorderTile extends StatelessWidget {
                 Icon(Icons.drag_handle_rounded, color: Colors.grey, size: 26),
           ),
           // Aperçu image
-          GestureDetector(
-            onTap: onTapImage,
-            child: ClipRRect(
+          Semantics(
+            button: true,
+            label: 'Agrandir ${image.title ?? "l\'image"}',
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTapImage,
+                child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: SizedBox(
                 width: 72,
@@ -1468,6 +1507,8 @@ class _ReorderTile extends StatelessWidget {
                           color: Colors.white70, size: 16),
                     ),
                   ],
+                ),
+              ),
                 ),
               ),
             ),
