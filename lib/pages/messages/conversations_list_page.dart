@@ -2018,16 +2018,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
                                                 children: [
-                                                  // Pas de GestureDetector
-                                                  // ici : la ligne entière
-                                                  // est déjà un InkWell qui
-                                                  // ouvre la même
-                                                  // conversation (l. ~1978).
-                                                  // Un second onTap sur
-                                                  // l'avatar dupliquait le
-                                                  // même geste sans retour
-                                                  // visuel — voir
-                                                  // docs/evidence/ux/accessibility-audit.md §3bis.
+                                                  // La ligne entière est
+                                                  // déjà l'InkWell qui ouvre
+                                                  // cette conversation.
                                                   _ConversationAvatar(
                                                     title: title,
                                                     userId: otherParticipantId,

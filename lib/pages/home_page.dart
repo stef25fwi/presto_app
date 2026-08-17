@@ -29,6 +29,8 @@ import '../widgets/hero_media_slider.dart';
 import '../widgets/home_bottom_nav_item.dart';
 import '../widgets/home_interactions.dart';
 import '../widgets/presto_info_icon_animated.dart';
+import '../widgets/presto_tap_target.dart';
+import '../widgets/unread_inbox_bell.dart';
 import '../pages/offers/offer_details_page.dart';
 import '../pages/messages/messages_page_v2.dart';
 import 'account_page.dart';
@@ -1169,12 +1171,8 @@ class _HomePageState extends State<HomePage>
 
     if (onTap == null) return child;
 
-    // Cette icône déclenche `onSlideTap`, exactement le même callback que le
-    // slide qui la contient (déjà exposé comme bouton accessible). Le tap est
-    // conservé comme confort à la souris, mais retiré de l'arbre sémantique :
-    // sans cela, un lecteur d'écran annoncerait deux fois la même action, la
-    // seconde sous la forme d'un « bouton » nu sans libellé — précisément ce
-    // que proscrit docs/design/design-system.md.
+    // Même callback que le slide qui la contient (déjà accessible) : exclue
+    // de la sémantique pour ne pas annoncer deux fois la même action.
     return ExcludeSemantics(
       child: GestureDetector(
         onTap: onTap,
@@ -1380,22 +1378,12 @@ class _HomePageState extends State<HomePage>
               );
 
               if (onSlideTap == null) return slideBody;
-              // Semantics + InkWell : le slide devient atteignable au clavier
-              // et annoncé une seule fois, avec son titre et son sous-titre,
-              // au lieu d'un GestureDetector muet. L'icône qu'il contient
-              // déclenche le même callback et est donc exclue de la
-              // sémantique (voir _buildSlideIllustration) pour ne pas
-              // produire une seconde annonce du même geste.
-              return Semantics(
-                button: true,
-                label: '${slide.title}. ${slide.subtitle}',
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: onSlideTap,
-                    child: slideBody,
-                  ),
-                ),
+              // L'icône du slide (même onSlideTap) est exclue de la
+              // sémantique pour ne pas annoncer deux fois le même geste.
+              return PrestoTapTarget(
+                semanticLabel: '${slide.title}. ${slide.subtitle}',
+                onTap: onSlideTap,
+                child: slideBody,
               );
             },
           ),
@@ -1899,51 +1887,6 @@ class _PulseWaveLayerState extends State<_PulseWaveLayer>
   }
 }
 
-class UnreadInboxBell extends StatelessWidget {
-  final String userId;
-  final String? monitoringKeyPrefix;
-  final InboxCountType countType;
-  final Widget Function(BuildContext context, int badgeCount) builder;
-
-  const UnreadInboxBell({
-    super.key,
-    required this.userId,
-    required this.builder,
-    this.monitoringKeyPrefix,
-    this.countType = InboxCountType.totalUnread,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<int>(
-      stream: streamInboxCount(userId: userId, type: countType),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          final error = snapshot.error;
-          if (error != null) {
-            PrestoMonitoring.I.trackError(
-              '${monitoringKeyPrefix ?? 'messages'}.badge',
-              error,
-            );
-          }
-          return builder(context, 0);
-        }
-
-        final badgeCount = snapshot.data ?? 0;
-
-        if (monitoringKeyPrefix != null) {
-          PrestoMonitoring.I.trackOtherStream(
-            key: '${monitoringKeyPrefix!}.badge',
-            docsCount: badgeCount,
-          );
-        }
-
-        return builder(context, badgeCount);
-      },
-    );
-  }
-}
-
 /// BLOC COMMENT ÇA MARCHE /////////////////////////////////////////////////
 
 class MessagesPage extends StatelessWidget {
@@ -2188,115 +2131,102 @@ class _AutoScrollingOffersCarouselState
   }
 
   Widget _buildOfferCard(_CarouselOfferCardData cardData) {
-    // Semantics + InkWell (plutôt qu'un GestureDetector nu) : la carte
-    // devient atteignable au clavier (Tab), activable (Entrée/Espace) et
-    // annoncée en une seule fois par un lecteur d'écran, conformément à
-    // docs/design/design-system.md (« aucun GestureDetector cliquable ne
-    // doit être utilisé sans sémantique et gestion clavier équivalente »).
-    return Semantics(
-      button: true,
-      label: 'Annonce ${cardData.displayTitle}, ${cardData.location}',
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
+    return PrestoTapTarget(
+      semanticLabel: 'Annonce ${cardData.displayTitle}, ${cardData.location}',
+      borderRadius: BorderRadius.circular(20),
+      onTap: () => widget.onOfferTap?.call(cardData.doc),
+      child: Container(
+        width: 280,
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
+        decoration: BoxDecoration(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          onTap: () => widget.onOfferTap?.call(cardData.doc),
-          child: Container(
-            width: 280,
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: kPrestoBlue, width: 1.8),
+          border: Border.all(color: kPrestoBlue, width: 1.8),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              cardData.displayTitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                height: 1.12,
+                color: Colors.black87,
+              ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  cardData.displayTitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    height: 1.12,
-                    color: Colors.black87,
-                  ),
-                ),
-                const Spacer(),
-                SizedBox(
-                  height: 32,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
+            const Spacer(),
+            SizedBox(
+              height: 32,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF3E0),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(11),
+                      child: Image.asset(
+                        'assets/images/logowebp.webp',
                         width: 32,
                         height: 32,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF3E0),
-                          borderRadius: BorderRadius.circular(11),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(11),
-                          child: Image.asset(
-                            'assets/images/logowebp.webp',
-                            width: 32,
-                            height: 32,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                        fit: BoxFit.cover,
                       ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF4F8FF),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          cardData.whenLabel,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: kPrestoBlue,
-                          ),
-                        ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF4F8FF),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      cardData.whenLabel,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: kPrestoBlue,
                       ),
-                    ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 5),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    cardData.location,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 5),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        cardData.location,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(
-                      Icons.chevron_right,
-                      size: 20,
-                      color: Colors.black38,
-                    ),
-                  ],
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: Colors.black38,
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );

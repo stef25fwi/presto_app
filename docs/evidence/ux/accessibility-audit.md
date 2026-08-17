@@ -261,6 +261,28 @@ avant modification, et tous les tests référençant les widgets touchés ont
 été relus pour écarter un risque de rupture. La confirmation définitive
 reste la CI.
 
+### Passe de consolidation — PR #1396, 17/08/2026
+
+Le motif `Semantics`+`Material`+`InkWell` répété à chaque correctif ci-dessus
+a été factorisé dans `lib/widgets/presto_tap_target.dart`
+(`PrestoTapTarget`), sans changement de comportement, pour rester sous le
+budget de lignes par fichier (`tools/quality/check_flutter_architecture_size.py`)
+que les correctifs avaient fait dépasser dans 11 fichiers. Certains blocs
+auto-suffisants ont aussi été extraits en widgets dédiés
+(`admin_placeholder_image_tile.dart`, `presto_info_pill.dart`,
+`presto_save_footer_button.dart`, `unread_inbox_bell.dart`,
+`conversation_banner.dart`, `ai_writing_button.dart`,
+`rocket_takeoff_icon.dart`, `hero_media_fallbacks.dart`).
+
+La CI réelle du PR #1396 (première exécution depuis le début de cet audit,
+`flutter analyze --fatal-infos`) a détecté une régression que la
+vérification locale par équilibrage de parenthèses ne pouvait pas voir :
+`CustomSemanticsAction` n'est pas réexporté par `material.dart` et
+nécessite `import 'package:flutter/semantics.dart';` explicite, absent de 4
+fichiers (dont `presto_tap_target.dart` lui-même). Corrigé dans la foulée.
+Ce point confirme que la vérification locale de ce sandbox a une limite
+réelle et que le passage en CI n'est pas une formalité.
+
 ## 4. Lecteur d’écran et sémantique
 
 ### Constat

@@ -9,6 +9,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -36,7 +37,9 @@ import '../../utils/local_audio_preview_source_io.dart'
     if (dart.library.js_interop) '../../utils/local_audio_preview_source_web.dart';
 import '../../utils/open_attachment_file_web.dart'
     if (dart.library.io) '../../utils/open_attachment_file_io.dart';
+import '../../widgets/conversation_banner.dart';
 import '../../widgets/offer_network_image.dart';
+import '../../widgets/presto_tap_target.dart';
 import 'package:presto_app/services/auth_guard.dart';
 import 'package:presto_app/utils/profile_avatar_resolver.dart';
 import '../../utils/recording_path_web.dart'
@@ -45,6 +48,8 @@ import '../../utils/temp_file_helper_web.dart'
     if (dart.library.io) '../../utils/temp_file_helper_io.dart';
 import 'package:presto_app/widgets/deleted_user_profile.dart';
 import 'package:presto_app/pages/fiche_pro_page.dart';
+
+export '../../widgets/conversation_banner.dart' show ConversationBanner;
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -979,18 +984,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Widget _buildThreadAppBarTitle() {
-    // Semantics + InkWell (plutôt qu'un GestureDetector nu) : ouvert sur
-    // chaque conversation, ce titre d'AppBar devient atteignable au clavier
-    // et annoncé une seule fois par son nom, au lieu de deux Text lus
-    // séparément sans rôle — voir docs/design/design-system.md.
-    return Semantics(
-      button: true,
-      label: 'Voir le profil de $headerDisplayName',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: _openOtherParticipantProfile,
-          child: Row(
+    return PrestoTapTarget(
+      semanticLabel: 'Voir le profil de $headerDisplayName',
+      onTap: _openOtherParticipantProfile,
+      child: Row(
         children: [
           CircleAvatar(
             radius: 18,
@@ -1045,8 +1042,6 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             ),
           ),
         ],
-          ),
-        ),
       ),
     );
   }
@@ -3071,46 +3066,39 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           Positioned(
             top: -6,
             right: -6,
-            child: Semantics(
-              button: true,
-              label: isDeleting
+            child: PrestoTapTarget(
+              semanticLabel: isDeleting
                   ? 'Suppression de la pièce jointe en cours'
                   : 'Supprimer la pièce jointe',
-              child: Material(
-                color: Colors.transparent,
-                shape: const CircleBorder(),
-                child: InkWell(
-                  onTap: isDeleting ? null : onDelete,
-                  customBorder: const CircleBorder(),
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: isDeleting ? Colors.grey : Colors.red,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+              shape: const CircleBorder(),
+              onTap: isDeleting ? null : onDelete,
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: isDeleting ? Colors.grey : Colors.red,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
-                    child: isDeleting
-                        ? const Padding(
-                            padding: EdgeInsets.all(6),
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(
-                            Icons.delete_rounded,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                  ),
+                  ],
                 ),
+                child: isDeleting
+                    ? const Padding(
+                        padding: EdgeInsets.all(6),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.delete_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
               ),
             ),
           ),
@@ -3123,12 +3111,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           ? attachment.url
           : attachment.thumbnailUrl;
       return buildDeleteOverlay(
-        Semantics(
-          button: true,
-          label: 'Voir la photo en plein écran',
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
+        PrestoTapTarget(
+          semanticLabel: 'Voir la photo en plein écran',
           onTap: () => showGeneralDialog<void>(
             context: context,
             barrierDismissible: true,
@@ -3231,8 +3215,6 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             ),
           ),
         ),
-            ),
-          ),
       );
     }
 
@@ -3512,11 +3494,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       ),
     );
 
-    // Un appui long n'a pas d'équivalent clavier ni de geste garanti chez
-    // tous les lecteurs d'écran. `CustomSemanticsAction` expose la même
-    // action (menu contextuel du message) comme une action discrète et
-    // annoncée, sans changer le geste tactile existant — c'est le mécanisme
-    // que Flutter prévoit précisément pour ce cas.
+    // Appui long sans équivalent clavier garanti : exposé aussi en action
+    // sémantique discrète (menu contextuel du message).
     return Semantics(
       customSemanticsActions: onLongPress == null
           ? const <CustomSemanticsAction, VoidCallback>{}
@@ -4582,47 +4561,6 @@ enum _ConversationThreadAction {
   adminUnblock,
   delete,
   report,
-}
-
-class ConversationBanner extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String message;
-
-  const ConversationBanner({
-    super.key,
-    required this.icon,
-    required this.color,
-    required this.message,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: color.withValues(alpha: 0.20)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              message,
-              style: kPrestoMetaTextStyle.copyWith(
-                color: color,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class ConversationPatternBackground extends StatelessWidget {

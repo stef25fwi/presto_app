@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:presto_app/pages/toolbox_page.dart';
 import 'package:presto_app/widgets/presto_info_icon_animated.dart';
+import 'package:presto_app/widgets/presto_tap_target.dart';
+import 'package:presto_app/widgets/rocket_takeoff_icon.dart';
 
 class EntrepreneurToolboxSlide extends StatelessWidget {
   const EntrepreneurToolboxSlide({super.key});
 
-  // Couleurs Prestō
   static const Color kPrestoOrange = Color(0xFFFF6600);
   static const Color kPrestoBlue = Color(0xFF1A73E8);
 
@@ -18,14 +19,11 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
   }
 
   Widget _buildCompact(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: "Boîte à outils de l'entrepreneur",
-      child: Material(
-        color: kPrestoOrange,
-        borderRadius: BorderRadius.circular(20),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
+    return PrestoTapTarget(
+      semanticLabel: "Boîte à outils de l'entrepreneur",
+      color: kPrestoOrange,
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
       onTap: () => _openToolbox(context),
       child: Container(
         height: double.infinity,
@@ -59,7 +57,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const _RocketTakeoffIcon(),
+                  const RocketTakeoffIcon(),
                   const Spacer(),
                   const _VibrantPulseChip(label: 'Cliquez ici'),
                 ],
@@ -74,8 +72,6 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
               ],
             ),
           ],
-        ),
-      ),
         ),
       ),
     );
@@ -294,80 +290,6 @@ class _CompactTutorialBanner extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _RocketTakeoffIcon extends StatefulWidget {
-  const _RocketTakeoffIcon();
-
-  @override
-  State<_RocketTakeoffIcon> createState() => _RocketTakeoffIconState();
-}
-
-class _RocketTakeoffIconState extends State<_RocketTakeoffIcon>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 950),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        final t = Curves.easeInOut.transform(_controller.value);
-        final dy = (1.0 - t) * 3.0;
-        final flameOpacity = 0.35 + (t * 0.55);
-        return Transform.translate(
-          offset: Offset(0, dy),
-          child: Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF3E0),
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                const Icon(
-                  Icons.rocket_launch_rounded,
-                  size: 19,
-                  color: Color(0xFFFF6600),
-                ),
-                Positioned(
-                  bottom: 4,
-                  child: Opacity(
-                    opacity: flameOpacity,
-                    child: Container(
-                      width: 7,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFA000),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }

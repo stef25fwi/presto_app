@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../app/typography_settings.dart';
+import 'presto_tap_target.dart';
 
-/// Floating typography control — visible on ALL platforms (Android + web).
-/// Renders a small pill button anchored to the bottom-right corner.
-/// Tapping it opens a bottom sheet with scale and font-weight sliders.
+/// Floating pill button (bottom-right, all platforms) opening a bottom
+/// sheet with scale and font-weight sliders.
 class TypographyFloatingPanel extends StatelessWidget {
   const TypographyFloatingPanel({super.key, required this.child});
 
@@ -34,13 +34,8 @@ class _TypographyPillButton extends StatelessWidget {
         final isDefault = typographySettings.scale == 1.0 &&
             typographySettings.fontFamily == 'Inter' &&
             typographySettings.fontWeightDelta == 0;
-        return Semantics(
-          button: true,
-          label: 'Réglages de taille et police de texte',
-          child: Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-            child: InkWell(
+        return PrestoTapTarget(
+          semanticLabel: 'Réglages de taille et police de texte',
           borderRadius: BorderRadius.circular(20),
           onTap: () => _openSheet(ctx),
           child: Container(
@@ -74,8 +69,6 @@ class _TypographyPillButton extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ),
             ),
           ),
         );
@@ -169,7 +162,6 @@ class _TypographySheetState extends State<_TypographySheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle bar
             Center(
               child: Container(
                 margin: const EdgeInsets.only(top: 10, bottom: 4),
@@ -182,7 +174,6 @@ class _TypographySheetState extends State<_TypographySheet> {
               ),
             ),
 
-            // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Row(
