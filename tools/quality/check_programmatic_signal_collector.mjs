@@ -17,5 +17,11 @@ assert.ok(source.includes(".where('status', '==', 'active')"), 'Filtre annonces 
 assert.ok(source.includes(".where('visibility', '==', 'public')"), 'Filtre annonces publiques absent');
 assert.ok(source.includes(".select('category', 'categoryId', 'city', 'cityId', 'postalCode', 'cp', 'publishedAt', 'createdAt')"), 'Projection minimale du collecteur absente');
 assert.ok(source.includes("source: 'production-marketplace-aggregate-unavailable'"), 'Fail-safe noindex absent');
+assert.ok(
+  source.includes("const allowFallback = hasFlag('--allow-fallback') && !hasFlag('--strict');"),
+  'Le collecteur doit être strict par défaut et n’autoriser le fallback que via --allow-fallback',
+);
+assert.ok(!source.includes("const safeFallback = !hasFlag('--strict')"), 'Le fallback implicite par défaut est interdit');
+assert.ok(source.includes('if (!allowFallback) throw error;'), 'Une erreur Firestore doit faire échouer le collecteur par défaut');
 
-console.log('Collecteur de signaux SEO production: API Admin modulaire et garde-fous validés.');
+console.log('Collecteur de signaux SEO production: API Admin modulaire, mode strict par défaut et garde-fous validés.');
