@@ -119,6 +119,14 @@
     {"slug":"pointe-a-pitre","name":"Pointe-à-Pitre","postalCode":"97110","territory":"Guadeloupe","localIntro":"À Pointe-à-Pitre, cette page regroupe l'intention locale autour des services du quotidien et des missions correspondantes."},
     {"slug":"fort-de-france","name":"Fort-de-France","postalCode":"97200","territory":"Martinique","localIntro":"À Fort-de-France, iliprestō structure les recherches locales de services et de missions autour de besoins réellement publiés."},
     {"slug":"le-lamentin-martinique","name":"Le Lamentin","postalCode":"97232","territory":"Martinique","localIntro":"Au Lamentin en Martinique, cette page vise à faciliter la découverte des besoins et compétences disponibles à proximité."},
-    {"slug":"cayenne","name":"Cayenne","postalCode":"97300","territory":"Guyane","localIntro":"À Cayenne, iliprestō prépare un accès local aux annonces de services et aux missions de proximité dès que l'activité réelle le justifie."}
+    {"slug":"cayenne","name":"Cayenne","postalCode":"97300","territory":"Guyane","localIntro":"À Cayenne, iliprestō prépare un accès local aux annonces de services et aux missions de proximité dès que l'activité réelle le justifie."},
+    {"slug":"angers","name":"Angers","postalCode":"49000","territory":"Pays de la Loire","localIntro":"À Angers, iliprestō organise la découverte locale de services et de missions à partir des besoins réellement présents sur la plateforme."},
+    {"slug":"amiens","name":"Amiens","postalCode":"80000","territory":"Hauts-de-France","localIntro":"À Amiens, cette page rapproche les recherches de services du quotidien des annonces et compétences réellement disponibles à proximité."},
+    {"slug":"brest","name":"Brest","postalCode":"29200","territory":"Bretagne","localIntro":"À Brest, iliprestō structure les recherches locales afin de faire émerger uniquement les services et missions soutenus par une activité réelle."},
+    {"slug":"caen","name":"Caen","postalCode":"14000","territory":"Normandie","localIntro":"À Caen, cette page facilite la découverte de besoins de proximité et de compétences locales lorsque les données de production le justifient."},
+    {"slug":"dijon","name":"Dijon","postalCode":"21000","territory":"Bourgogne-Franche-Comté","localIntro":"À Dijon, iliprestō relie les intentions de recherche locales aux services et missions réellement publiés dans cette zone de proximité."},
+    {"slug":"le-mans","name":"Le Mans","postalCode":"72000","territory":"Pays de la Loire","localIntro":"Au Mans, cette page rassemble les recherches de services et de missions de proximité lorsque l'activité réelle atteint les seuils requis."},
+    {"slug":"poitiers","name":"Poitiers","postalCode":"86000","territory":"Nouvelle-Aquitaine","localIntro":"À Poitiers, iliprestō prépare une visibilité locale fondée sur les annonces et compétences réellement présentes, sans générer de page vide indexable."},
+    {"slug":"reims","name":"Reims","postalCode":"51100","territory":"Grand Est","localIntro":"À Reims, cette page organise l'accès aux services et missions de proximité uniquement lorsque des signaux de production récents sont disponibles."}
   ]
 }
