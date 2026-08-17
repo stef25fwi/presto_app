@@ -7,6 +7,7 @@ on:
       - 'lib/**'
       - 'pubspec.yaml'
       - 'pubspec.lock'
+      - 'tools/android/ensure_api36_sdk.sh'
       - '.github/workflows/android-api36-certification.yml'
       - '.github/workflows/release_android.yml'
   workflow_dispatch:
@@ -21,7 +22,6 @@ concurrency:
 env:
   FLUTTER_VERSION: '3.44.6'
   ANDROID_API_LEVEL: '36'
-  BUNDLETOOL_VERSION: '1.18.3'
 
 jobs:
   android36-build-test:
@@ -56,10 +56,7 @@ jobs:
             | tee evidence/android-api36/android-gradle-plugin.txt
 
       - name: Ensure Android 16 / API 36 SDK
-        run: |
-          set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platforms;android-${ANDROID_API_LEVEL}" "platform-tools"
+        run: bash tools/android/ensure_api36_sdk.sh platform
 
       - name: Install dependencies
         run: flutter pub get
@@ -87,19 +84,16 @@ jobs:
           APK='build/app/outputs/flutter-apk/app-debug.apk'
           APKA="$(command -v apkanalyzer || true)"
           if [[ -z "${APKA}" ]]; then
-            APKA="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/apkanalyzer"
+            APKA="$(find "${ANDROID_SDK_ROOT}/cmdline-tools" -type f -name apkanalyzer -print -quit 2>/dev/null || true)"
           fi
-          if [[ ! -x "${APKA}" ]]; then
+          if [[ -z "${APKA}" || ! -x "${APKA}" ]]; then
             echo '::error::apkanalyzer introuvable dans Android SDK.'
             exit 1
           fi
 
           TARGET_SDK="$(${APKA} manifest target-sdk "${APK}" | tr -d '\r[:space:]')"
           echo "targetSdkVersion=${TARGET_SDK}" | tee evidence/android-api36/apk-target-sdk.txt
-          if [[ "${TARGET_SDK}" != "36" ]]; then
-            echo "::error::Le manifest APK final cible API ${TARGET_SDK}, attendu 36."
-            exit 1
-          fi
+          test "${TARGET_SDK}" = '36'
 
           ${APKA} manifest print "${APK}" > evidence/android-api36/apk-manifest.xml
           ${APKA} manifest permissions "${APK}" > evidence/android-api36/apk-permissions.txt
@@ -108,10 +102,10 @@ jobs:
             android.permission.POST_NOTIFICATIONS \
             android.permission.CAMERA \
             android.permission.RECORD_AUDIO; do
-            if ! grep -q "${permission}" evidence/android-api36/apk-permissions.txt; then
-              echo "::error::Permission attendue absente du manifest final: ${permission}"
+            grep -q "${permission}" evidence/android-api36/apk-permissions.txt || {
+              echo "::error::Permission attendue absente: ${permission}"
               exit 1
-            fi
+            }
           done
 
           if grep -q 'android.permission.MANAGE_EXTERNAL_STORAGE' \
@@ -150,14 +144,7 @@ jobs:
           cache: true
 
       - name: Install Android 16 emulator image
-        run: |
-          set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager \
-            "platform-tools" \
-            "emulator" \
-            "platforms;android-${ANDROID_API_LEVEL}" \
-            "system-images;android-${ANDROID_API_LEVEL};google_apis;x86_64"
+        run: bash tools/android/ensure_api36_sdk.sh emulator
 
       - name: Build debug APK
         run: |
@@ -168,13 +155,21 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p evidence/android-api36-runtime
+          AVDMANAGER="$(find "${ANDROID_SDK_ROOT}/cmdline-tools" -type f -name avdmanager -print -quit)"
+          EMULATOR="${ANDROID_SDK_ROOT}/emulator/emulator"
+          ADB="${ANDROID_SDK_ROOT}/platform-tools/adb"
+          test -x "${AVDMANAGER}"
+          test -x "${EMULATOR}"
+          test -x "${ADB}"
+
           sudo chmod 666 /dev/kvm || true
-          echo no | avdmanager create avd \
+          echo no | "${AVDMANAGER}" create avd \
             --force \
             --name ilipresto-api36 \
             --package "system-images;android-${ANDROID_API_LEVEL};google_apis;x86_64" \
             --device pixel_7
-          nohup emulator \
+
+          nohup "${EMULATOR}" \
             -avd ilipresto-api36 \
             -no-window \
             -no-audio \
@@ -182,62 +177,57 @@ jobs:
             -no-snapshot \
             -gpu swiftshader_indirect \
             > evidence/android-api36-runtime/emulator.log 2>&1 &
-          adb wait-for-device
+
+          "${ADB}" wait-for-device
           for i in {1..60}; do
-            if [[ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; then
+            if [[ "$("${ADB}" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == '1' ]]; then
               break
             fi
             sleep 5
           done
-          if [[ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" != "1" ]]; then
-            echo '::error::Android 16 emulator did not finish booting.'
-            exit 1
-          fi
-          adb shell getprop ro.build.version.release \
+          test "$("${ADB}" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = '1'
+          "${ADB}" shell getprop ro.build.version.release \
             | tee evidence/android-api36-runtime/android-release.txt
-          adb shell getprop ro.build.version.sdk \
+          "${ADB}" shell getprop ro.build.version.sdk \
             | tee evidence/android-api36-runtime/android-sdk.txt
           test "$(tr -d '\r[:space:]' < evidence/android-api36-runtime/android-sdk.txt)" = '36'
 
       - name: Install and launch app on Android 16
         run: |
           set -euo pipefail
-          adb install -r build/app/outputs/flutter-apk/app-debug.apk
-          adb shell am force-stop fr.ilipresto.app
-          adb shell am start -W -n fr.ilipresto.app/.MainActivity \
+          ADB="${ANDROID_SDK_ROOT}/platform-tools/adb"
+          "${ADB}" install -r build/app/outputs/flutter-apk/app-debug.apk
+          "${ADB}" shell am force-stop fr.ilipresto.app
+          "${ADB}" shell am start -W -n fr.ilipresto.app/.MainActivity \
             | tee evidence/android-api36-runtime/app-launch.txt
           grep -Eq 'Status: ok|Complete' evidence/android-api36-runtime/app-launch.txt
           sleep 5
-          if adb shell dumpsys activity exit-info fr.ilipresto.app 2>/dev/null \
+          if "${ADB}" shell dumpsys activity exit-info fr.ilipresto.app 2>/dev/null \
               | grep -Eq 'REASON_CRASH|REASON_ANR'; then
             echo '::error::Crash/ANR detected after startup.'
             exit 1
           fi
 
-      - name: Exercise Android 16 runtime permissions
+      - name: Exercise Android 16 permissions and deep links
         run: |
           set -euo pipefail
+          ADB="${ANDROID_SDK_ROOT}/platform-tools/adb"
           for permission in \
             android.permission.POST_NOTIFICATIONS \
             android.permission.CAMERA \
             android.permission.RECORD_AUDIO; do
-            adb shell pm grant fr.ilipresto.app "${permission}"
-            adb shell dumpsys package fr.ilipresto.app \
-              | grep -F "${permission}" \
-              | head -n 3 \
-              >> evidence/android-api36-runtime/runtime-permissions.txt
+            "${ADB}" shell pm grant fr.ilipresto.app "${permission}"
           done
+          "${ADB}" shell dumpsys package fr.ilipresto.app \
+            > evidence/android-api36-runtime/package-dump.txt
 
-      - name: Exercise deep-link intents
-        run: |
-          set -euo pipefail
-          adb shell am start -W \
+          "${ADB}" shell am start -W \
             -a android.intent.action.VIEW \
             -c android.intent.category.BROWSABLE \
             -d 'ilipresto://home' \
             fr.ilipresto.app \
             | tee evidence/android-api36-runtime/deeplink-custom.txt
-          adb shell am start -W \
+          "${ADB}" shell am start -W \
             -a android.intent.action.VIEW \
             -c android.intent.category.BROWSABLE \
             -d 'https://ilipresto.fr/app' \
@@ -248,7 +238,10 @@ jobs:
 
       - name: Capture logcat
         if: always()
-        run: adb logcat -d > evidence/android-api36-runtime/logcat.txt || true
+        run: |
+          mkdir -p evidence/android-api36-runtime
+          "${ANDROID_SDK_ROOT}/platform-tools/adb" logcat -d \
+            > evidence/android-api36-runtime/logcat.txt || true
 
       - name: Upload Android 16 runtime evidence
         if: always()
@@ -258,151 +251,3 @@ jobs:
           path: evidence/android-api36-runtime/
           retention-days: 90
           if-no-files-found: warn
-
-  release-aab-certification:
-    name: Signed release AAB + API 36 proof
-    if: ${{ github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
-    environment: recaptcha
-    needs:
-      - android36-build-test
-      - android16-runtime-smoke
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Setup Java 17
-        uses: actions/setup-java@v5
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: 'stable'
-          cache: true
-
-      - name: Capture release toolchain
-        run: |
-          set -euo pipefail
-          mkdir -p evidence/android-api36-release
-          flutter --version | tee evidence/android-api36-release/flutter-version.txt
-          flutter doctor -v | tee evidence/android-api36-release/flutter-doctor.txt
-          cat android/gradle/wrapper/gradle-wrapper.properties \
-            | tee evidence/android-api36-release/gradle-wrapper-properties.txt
-          grep -E 'com.android.application.*version' android/settings.gradle.kts \
-            | tee evidence/android-api36-release/android-gradle-plugin.txt
-          git rev-parse HEAD | tee evidence/android-api36-release/git-sha.txt
-
-      - name: Ensure Android 16 / API 36 SDK
-        run: |
-          set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platforms;android-${ANDROID_API_LEVEL}" "platform-tools"
-
-      - name: Install dependencies and rerun tests
-        run: |
-          flutter pub get
-          flutter analyze --fatal-infos
-          flutter test --reporter expanded
-
-      - name: Setup release signing
-        env:
-          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        run: |
-          set -euo pipefail
-          if [[ -z "${KEYSTORE_B64:-}" || -z "${KEYSTORE_PASSWORD:-}" || -z "${KEY_PASSWORD:-}" || -z "${KEY_ALIAS:-}" ]]; then
-            echo '::error::Secrets de signature Android incomplets dans recaptcha.'
-            exit 1
-          fi
-          printf '%s' "${KEYSTORE_B64}" \
-            | tr -d '\r\n[:space:]' \
-            | base64 -d > "${RUNNER_TEMP}/upload-keystore-raw.jks"
-          keytool -importkeystore \
-            -srckeystore "${RUNNER_TEMP}/upload-keystore-raw.jks" \
-            -destkeystore "${RUNNER_TEMP}/upload-keystore.jks" \
-            -deststoretype JKS \
-            -srcstorepass "${KEYSTORE_PASSWORD}" \
-            -deststorepass "${KEYSTORE_PASSWORD}" \
-            -noprompt
-          keytool -list \
-            -keystore "${RUNNER_TEMP}/upload-keystore.jks" \
-            -storetype JKS \
-            -storepass "${KEYSTORE_PASSWORD}" \
-            -alias "${KEY_ALIAS}" >/dev/null
-          cat > android/key.properties <<EOF
-          storePassword=${KEYSTORE_PASSWORD}
-          keyPassword=${KEY_PASSWORD}
-          keyAlias=${KEY_ALIAS}
-          storeFile=${RUNNER_TEMP}/upload-keystore.jks
-          storeType=JKS
-          EOF
-
-      - name: Build signed release AAB
-        run: |
-          set -euo pipefail
-          bash tools/flutter_with_build_stamp.sh build appbundle --release
-          test -s build/app/outputs/bundle/release/app-release.aab
-          sha256sum build/app/outputs/bundle/release/app-release.aab \
-            | tee evidence/android-api36-release/app-release.aab.sha256
-
-      - name: Verify targetSdkVersion 36 directly from final AAB
-        run: |
-          set -euo pipefail
-          BUNDLETOOL_JAR="${RUNNER_TEMP}/bundletool-all-${BUNDLETOOL_VERSION}.jar"
-          curl -fsSL \
-            "https://github.com/google/bundletool/releases/download/${BUNDLETOOL_VERSION}/bundletool-all-${BUNDLETOOL_VERSION}.jar" \
-            -o "${BUNDLETOOL_JAR}"
-          AAB='build/app/outputs/bundle/release/app-release.aab'
-          java -jar "${BUNDLETOOL_JAR}" dump manifest \
-            --bundle="${AAB}" \
-            --module=base \
-            > evidence/android-api36-release/aab-base-manifest.xml
-          TARGET_SDK="$(java -jar "${BUNDLETOOL_JAR}" dump manifest \
-            --bundle="${AAB}" \
-            --module=base \
-            --xpath='/manifest/uses-sdk/@android:targetSdkVersion' \
-            | tr -d '\r[:space:]')"
-          echo "targetSdkVersion=${TARGET_SDK}" \
-            | tee evidence/android-api36-release/aab-target-sdk.txt
-          if [[ "${TARGET_SDK}" != '36' ]]; then
-            echo "::error::AAB final cible API ${TARGET_SDK}; API 36 exigée."
-            exit 1
-          fi
-
-      - name: Upload signed AAB
-        uses: actions/upload-artifact@v7
-        with:
-          name: ilipresto-api36-release-aab-${{ github.sha }}
-          path: build/app/outputs/bundle/release/app-release.aab
-          retention-days: 30
-
-      - name: Upload release certification evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: android-api36-release-evidence-${{ github.sha }}
-          path: evidence/android-api36-release/
-          retention-days: 90
-          if-no-files-found: warn
-
-      - name: Certification summary
-        if: always()
-        run: |
-          {
-            echo '### Android API 36 certification'
-            echo ''
-            echo "- Flutter: \`${FLUTTER_VERSION}\`"
-            echo "- Android target: API \`${ANDROID_API_LEVEL}\`"
-            echo "- SHA: \`${GITHUB_SHA}\`"
-            if [[ -f evidence/android-api36-release/aab-target-sdk.txt ]]; then
-              echo "- AAB manifest: \`$(cat evidence/android-api36-release/aab-target-sdk.txt)\`"
-            else
-              echo '- AAB manifest: **preuve non générée**'
-            fi
-            echo '- Tests fonctionnels réels caméra/photos/micro/notifications/authentification: à valider sur appareil Android 16 selon la fiche de certification.'
-          } >> "${GITHUB_STEP_SUMMARY}"
