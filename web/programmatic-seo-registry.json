@@ -41,6 +41,14 @@
   ],
   "services": [
     {
+      "key": "restauration-extra",
+      "slug": "restauration-extra",
+      "serviceTitle": "Restauration et extras",
+      "serviceLower": "de restauration et d'extras",
+      "taxonomyValue": "Restauration / Extra",
+      "keywords": ["extra restauration", "service en salle", "aide en cuisine", "serveur extra", "renfort restauration"]
+    },
+    {
       "key": "bricolage",
       "slug": "bricolage",
       "serviceTitle": "Bricolage et petits travaux",
@@ -49,12 +57,52 @@
       "keywords": ["bricoleur", "petits travaux", "montage de meuble", "réparation", "travaux du quotidien"]
     },
     {
+      "key": "aide-a-domicile",
+      "slug": "aide-a-domicile",
+      "serviceTitle": "Aide à domicile",
+      "serviceLower": "d'aide à domicile",
+      "taxonomyValue": "Aide à domicile",
+      "keywords": ["aide à domicile", "aide du quotidien", "courses", "petits services à domicile", "accompagnement ponctuel"]
+    },
+    {
+      "key": "garde-enfants",
+      "slug": "garde-enfants",
+      "serviceTitle": "Garde d'enfants",
+      "serviceLower": "de garde d'enfants",
+      "taxonomyValue": "Garde d'enfants",
+      "keywords": ["garde d'enfants", "baby-sitting", "garde ponctuelle", "sortie d'école", "accompagnement enfant"]
+    },
+    {
+      "key": "evenementiel-dj",
+      "slug": "evenementiel-dj",
+      "serviceTitle": "Événementiel et DJ",
+      "serviceLower": "d'événementiel et de DJ",
+      "taxonomyValue": "Événementiel / DJ",
+      "keywords": ["dj", "animation", "événement", "installation événementielle", "renfort événementiel"]
+    },
+    {
+      "key": "cours-soutien",
+      "slug": "cours-soutien",
+      "serviceTitle": "Cours et soutien",
+      "serviceLower": "de cours et de soutien",
+      "taxonomyValue": "Cours & soutien",
+      "keywords": ["cours particuliers", "soutien scolaire", "aide aux devoirs", "initiation", "accompagnement pédagogique"]
+    },
+    {
       "key": "jardinage",
       "slug": "jardinage",
       "serviceTitle": "Jardinage",
       "serviceLower": "de jardinage",
       "taxonomyValue": "Jardinage",
       "keywords": ["jardinier", "entretien jardin", "tonte", "taille de haie", "débroussaillage"]
+    },
+    {
+      "key": "peinture",
+      "slug": "peinture",
+      "serviceTitle": "Peinture",
+      "serviceLower": "de peinture",
+      "taxonomyValue": "Peinture",
+      "keywords": ["peintre", "petits travaux de peinture", "retouches peinture", "murs", "rafraîchissement"]
     },
     {
       "key": "aide-demenagement",
