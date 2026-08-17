@@ -1,0 +1,188 @@
+name: Search Console indexation certification
+
+on:
+  schedule:
+    - cron: '12 10 * * *'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/search-console-indexation.yml'
+      - 'tools/seo/build_search_console_indexation_report.mjs'
+      - 'tools/seo/search_console_indexation_report.test.mjs'
+      - 'web/robots.txt'
+      - 'web/sitemap.xml'
+  workflow_dispatch:
+    inputs:
+      max_urls:
+        description: 'Nombre maximal d’URLs à inspecter (quota Search Console)'
+        required: false
+        default: '500'
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+  statuses: write
+
+concurrency:
+  group: search-console-indexation
+  cancel-in-progress: true
+
+jobs:
+  inspect-indexation:
+    environment: recaptcha
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Validate indexation reporter
+        run: node tools/seo/search_console_indexation_report.test.mjs
+
+      - name: Authenticate with Workload Identity Federation
+        id: google_auth
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_lifetime: 1800s
+          access_token_scopes: https://www.googleapis.com/auth/webmasters.readonly
+
+      - name: Inspect production sitemaps with Search Console URL Inspection API
+        id: inspection
+        env:
+          SEO_GOOGLE_ACCESS_TOKEN: ${{ steps.google_auth.outputs.access_token }}
+          SEO_GSC_SITE_URL: sc-domain:ilipresto.fr
+          SEO_INDEXATION_MAX_URLS: ${{ github.event_name == 'workflow_dispatch' && inputs.max_urls || '500' }}
+        run: |
+          node tools/seo/build_search_console_indexation_report.mjs \
+            --output=build/seo/search-console-indexation-report.json \
+            --markdown=build/seo/search-console-indexation-report.md
+
+      - name: Publish report summary
+        if: always()
+        run: |
+          if [ -f build/seo/search-console-indexation-report.md ]; then
+            cat build/seo/search-console-indexation-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf '# Certification d’indexation Google\n\nRapport indisponible.\n' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload indexation evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: search-console-indexation-${{ github.sha }}
+          path: build/seo/search-console-indexation-report.*
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Publish commit status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          node <<'NODE' > /tmp/indexation-status.json
+          const fs = require('fs');
+          const path = 'build/seo/search-console-indexation-report.json';
+          const report = fs.existsSync(path) ? JSON.parse(fs.readFileSync(path, 'utf8')) : null;
+          const available = report?.status === 'available';
+          const summary = report?.summary;
+          const description = available && summary
+            ? `${summary.indexed}/${summary.inspected} URL(s) indexée(s), ${summary.attention} à examiner`
+            : 'Rapport URL Inspection indisponible';
+          process.stdout.write(JSON.stringify({
+            state: available ? 'success' : 'error',
+            target_url: process.env.TARGET_URL,
+            description: description.slice(0, 140),
+            context: 'quality/search-console-indexation',
+          }));
+          NODE
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header 'Accept: application/vnd.github+json' \
+            --header 'X-GitHub-Api-Version: 2022-11-28' \
+            --data-binary @/tmp/indexation-status.json \
+            "https://api.github.com/repos/$REPOSITORY/statuses/$COMMIT_SHA"
+
+      - name: Open, update or close indexation review issue
+        if: always()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const title = '[SEO] Revue indexation Google';
+            const jsonPath = 'build/seo/search-console-indexation-report.json';
+            const markdownPath = 'build/seo/search-console-indexation-report.md';
+            const report = fs.existsSync(jsonPath)
+              ? JSON.parse(fs.readFileSync(jsonPath, 'utf8'))
+              : null;
+            const markdown = fs.existsSync(markdownPath)
+              ? fs.readFileSync(markdownPath, 'utf8')
+              : '# Certification d’indexation Google\n\nRapport indisponible.';
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const existing = issues.find((issue) => !issue.pull_request && issue.title === title);
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = `${markdown}\n---\nWorkflow : ${runUrl}\nSHA : ${context.sha}\n`;
+            const healthy = report?.status === 'available' && report?.summary?.attention === 0;
+            if (!healthy && existing) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+            } else if (!healthy) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+              });
+            } else if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body: `Toutes les URLs inspectées sont indexées : ${runUrl}`,
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                state: 'closed',
+              });
+            }
+
+      - name: Enforce indexation evidence availability
+        if: always()
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const path = 'build/seo/search-console-indexation-report.json';
+          if (!fs.existsSync(path)) process.exit(1);
+          const report = JSON.parse(fs.readFileSync(path, 'utf8'));
+          if (report.status !== 'available') process.exit(1);
+          if (report.summary.inspected < 1) process.exit(1);
+          if (report.summary.truncated) {
+            console.error('Le rapport est tronqué par SEO_INDEXATION_MAX_URLS.');
+            process.exit(1);
+          }
+          console.log(`Preuve d’indexation disponible pour ${report.summary.inspected} URL(s).`);
+          NODE
