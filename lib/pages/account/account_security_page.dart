@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/account_data_export_service.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/verification_status_tooltip.dart';
 import 'change_email_page.dart';
 import 'change_password_page.dart';
 import 'delete_account_page.dart';
@@ -67,6 +68,7 @@ class _AccountSecurityPageState extends State<AccountSecurityPage> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+    final phoneVerified = (user?.phoneNumber ?? '').isNotEmpty;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
@@ -100,16 +102,28 @@ class _AccountSecurityPageState extends State<AccountSecurityPage> {
             child: ListTile(
               leading: const Icon(Icons.phone_iphone_rounded),
               title: Text(
-                (user?.phoneNumber ?? '').isNotEmpty
-                    ? user!.phoneNumber!
-                    : 'Aucun numéro vérifié',
+                phoneVerified ? user!.phoneNumber! : 'Aucun numéro vérifié',
               ),
-              subtitle: Text(
-                (user?.phoneNumber ?? '').isNotEmpty
-                    ? 'Téléphone vérifié'
-                    : 'Vérifie ton numéro pour sécuriser ton compte',
-              ),
-              trailing: (user?.phoneNumber ?? '').isNotEmpty
+              subtitle: phoneVerified
+                  ? const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Téléphone vérifié'),
+                        SizedBox(width: 6),
+                        VerificationStatusTooltip(
+                          message: kPhoneVerificationDisclaimer,
+                          child: Icon(
+                            Icons.info_outline_rounded,
+                            size: 17,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      ],
+                    )
+                  : const Text(
+                      'Vérifie ton numéro pour sécuriser ton compte',
+                    ),
+              trailing: phoneVerified
                   ? const Icon(Icons.check_circle, color: Colors.green)
                   : const Icon(Icons.warning, color: Colors.orange),
               onTap: _openPhoneVerification,

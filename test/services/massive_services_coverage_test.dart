@@ -171,16 +171,22 @@ void main() {
         'postalCode': '97122',
         'city': 'Baie-Mahault',
         'nafCode': '6201Z',
-        'proStatus': 'verified',
+        'proStatus': 'verified_siret_leader_match',
+        'leaderDeclaredMatch': true,
+        'declaredLeaderFirstName': 'Marie',
+        'declaredLeaderLastName': 'Dupont',
       });
       final empty = ProSiretVerificationResult.fromMap(<String, dynamic>{});
 
       expect(complete.ok, isTrue);
       expect(complete.companyName, 'Entreprise Test');
       expect(complete.city, 'Baie-Mahault');
+      expect(complete.leaderDeclaredMatch, isTrue);
+      expect(complete.declaredLeaderFirstName, 'Marie');
       expect(empty.ok, isFalse);
       expect(empty.siret, isEmpty);
       expect(empty.proStatus, isEmpty);
+      expect(empty.leaderDeclaredMatch, isFalse);
     });
 
     test('rejette localement les SIRET invalides avant le réseau', () async {
@@ -190,11 +196,19 @@ void main() {
         throwsA(isA<Exception>()),
       );
       await expectLater(
-        service.verifySiret('123'),
+        service.verifySiret(
+          '123',
+          leaderFirstName: 'Marie',
+          leaderLastName: 'Dupont',
+        ),
         throwsA(isA<ProSiretException>()),
       );
       await expectLater(
-        service.verifySiret('12345678901234'),
+        service.verifySiret(
+          '12345678901234',
+          leaderFirstName: 'Marie',
+          leaderLastName: 'Dupont',
+        ),
         throwsA(isA<ProSiretException>()),
       );
       expect(const ProSiretException('erreur').toString(), 'erreur');

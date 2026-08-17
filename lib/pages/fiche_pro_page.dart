@@ -16,6 +16,7 @@ import '../services/user_profile_bootstrap_service.dart';
 import '../utils/friendly_snackbar.dart';
 import '../utils/offer_helpers.dart';
 import '../utils/profile_avatar_resolver.dart';
+import '../widgets/verification_status_tooltip.dart';
 import 'offers/offer_details_page.dart';
 
 const Color _kOrange = Color(0xFFFF6600);
@@ -833,11 +834,12 @@ class _FicheProPageState extends State<FicheProPage> {
                   Row(
                     children: [
                       if (_siretVerified) ...[
-                        _badge(
+                        const VerificationStatusBadge(
                           icon: Icons.verified_rounded,
                           label: 'SIRET vérifié',
                           color: _kBlue,
-                          bg: const Color(0xFFEBF5FB),
+                          backgroundColor: Color(0xFFEBF5FB),
+                          message: kSiretVerificationDisclaimer,
                         ),
                         const SizedBox(width: 10),
                       ],
@@ -887,36 +889,6 @@ class _FicheProPageState extends State<FicheProPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _badge({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required Color bg,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
       ),
     );
   }

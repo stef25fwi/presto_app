@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:presto_app/services/pro_siret_service.dart';
+import 'package:presto_app/widgets/verification_status_tooltip.dart';
 
 typedef ProSiretPreVerifier = Future<ProSiretVerificationResult> Function(
   String rawSiret,
@@ -144,8 +145,9 @@ class _ProSiretSignupSectionState extends State<ProSiretSignupSection> {
             const SizedBox(height: 8),
             _SiretMessage(
               icon: Icons.check_circle_outline_rounded,
+              tooltipMessage: kSiretVerificationDisclaimer,
               text: [
-                'Entreprise vérifiée',
+                'SIRET vérifié',
                 if (result.companyName.isNotEmpty) result.companyName,
                 if (result.city.isNotEmpty) result.city,
               ].join(' · '),
@@ -161,10 +163,12 @@ class _SiretMessage extends StatelessWidget {
   const _SiretMessage({
     required this.icon,
     required this.text,
+    this.tooltipMessage,
   });
 
   final IconData icon;
   final String? text;
+  final String? tooltipMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -174,7 +178,7 @@ class _SiretMessage extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return Row(
+    final content = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 18),
@@ -185,7 +189,19 @@ class _SiretMessage extends StatelessWidget {
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ),
+        if (tooltipMessage != null) ...[
+          const SizedBox(width: 6),
+          const Icon(Icons.info_outline_rounded, size: 17),
+        ],
       ],
+    );
+
+    final tooltip = tooltipMessage;
+    if (tooltip == null) return content;
+
+    return VerificationStatusTooltip(
+      message: tooltip,
+      child: content,
     );
   }
 }

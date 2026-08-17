@@ -5,6 +5,10 @@ import {FieldValue, getFirestore} from "firebase-admin/firestore";
 import * as https from "https";
 
 import {ENFORCE_APP_CHECK} from "../../config/env";
+import {
+  assertDeclaredLeaderNames,
+  matchDeclaredLeader,
+} from "./siretLeaderMatching";
 
 if (!getApps().length) {
   initializeApp();
@@ -12,6 +16,8 @@ if (!getApps().length) {
 
 const REGION = "europe-west1";
 const API_HOST = "recherche-entreprises.api.gouv.fr";
+const VERIFIED_STATUS = "verified_siret_leader_match";
+const VERIFIED_SOURCE = "api_recherche_entreprises_siret_leader_match";
 
 type AnyMap = Record<string, any>;
 
@@ -49,6 +55,20 @@ export const verifySiret = onCall(
       );
     }
 
+    let declaredLeader: {firstName: string; lastName: string};
+    try {
+      declaredLeader = assertDeclaredLeaderNames(
+        request.data?.leaderFirstName,
+        request.data?.leaderLastName
+      );
+    } catch (_) {
+      await logAttempt(uid, siret, "invalid_declared_leader_name");
+      throw new HttpsError(
+        "invalid-argument",
+        "Indiquez le nom et le prénom du dirigeant déclaré."
+      );
+    }
+
     await rateLimit(uid);
 
     const apiPath = `/search?q=${encodeURIComponent(siret)}&per_page=5`;
@@ -73,6 +93,20 @@ export const verifySiret = onCall(
       throw new HttpsError(
         "failed-precondition",
         "Cet établissement semble fermé ou inactif."
+      );
+    }
+
+    const leaderMatch = matchDeclaredLeader(
+      company,
+      declaredLeader.firstName,
+      declaredLeader.lastName
+    );
+
+    if (!leaderMatch.matched) {
+      await logAttempt(uid, siret, "declared_leader_mismatch");
+      throw new HttpsError(
+        "failed-precondition",
+        "Le nom et le prénom déclarés ne concordent pas avec un dirigeant personne physique associé à cette entreprise dans la source administrative consultée."
       );
     }
 
@@ -109,6 +143,9 @@ export const verifySiret = onCall(
 
     const db = getFirestore();
 
+    // Ne persister dans le profil que les éléments nécessaires à prouver
+    // le niveau de contrôle. Le nom/prénom du dirigeant déclaré sert à la
+    // comparaison en mémoire et n'est pas conservé dans pro_profiles.
     const proData = {
       uid,
       siret,
@@ -120,14 +157,17 @@ export const verifySiret = onCall(
       nafCode,
       establishmentActive: true,
       siretVerified: true,
-      proStatus: "verified_siret",
-      verifiedSource: "api_recherche_entreprises",
+      proStatus: VERIFIED_STATUS,
+      verifiedSource: VERIFIED_SOURCE,
       verifiedAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     };
 
     await db.collection("pro_profiles").doc(uid).set(proData, {merge: true});
 
+    // Conserver la compatibilité du document users sans y créer un nouveau
+    // signal renforcé : le statut autoritatif de concordance reste celui de
+    // pro_profiles, dont proStatus est protégé par les règles Firestore.
     await db.collection("users").doc(uid).set(
       {
         accountType: "pro",
@@ -138,8 +178,10 @@ export const verifySiret = onCall(
       {merge: true}
     );
 
-    await logAttempt(uid, siret, "verified");
+    await logAttempt(uid, siret, "verified_siret_declared_leader_match");
 
+    // Les données déclarées sont renvoyées à la requête courante afin
+    // d'expliquer le résultat sans les conserver durablement dans le profil.
     return {
       ok: true,
       siret,
@@ -149,7 +191,12 @@ export const verifySiret = onCall(
       postalCode,
       city,
       nafCode,
-      proStatus: "verified_siret",
+      proStatus: VERIFIED_STATUS,
+      leaderDeclaredMatch: true,
+      declaredLeaderFirstName: leaderMatch.declaredFirstName,
+      declaredLeaderLastName: leaderMatch.declaredLastName,
+      declaredLeaderRole: leaderMatch.role,
+      verificationLevel: "siret_declared_leader_match",
     };
   }
 );

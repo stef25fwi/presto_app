@@ -120,7 +120,7 @@ void main() {
     expect(requestedSiret, _verifiedSiret);
     expect(verified, same(success));
     expect(
-      find.text('Entreprise vérifiée · IliPresto Services · Les Abymes'),
+      find.text('SIRET vérifié · IliPresto Services · Les Abymes'),
       findsOneWidget,
     );
     expect(find.text('Vérifier mon SIRET'), findsOneWidget);
@@ -136,7 +136,7 @@ void main() {
     await tester.tap(find.text('Vérifier mon SIRET'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Entreprise vérifiée'), findsOneWidget);
+    expect(find.text('SIRET vérifié'), findsOneWidget);
     expect(find.byIcon(Icons.check_circle_outline_rounded), findsOneWidget);
   });
 

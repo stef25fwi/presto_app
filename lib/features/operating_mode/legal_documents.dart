@@ -55,6 +55,23 @@ Ilipresto est une plateforme numérique de publication et de consultation d’an
 ${state.mode.isCommercial ? 'La plateforme peut proposer des abonnements et services payants selon les conditions tarifaires affichées avant souscription.' : 'Pendant cette phase bêta, l’accès à la plateforme est gratuit. Aucun abonnement, paiement, commission ou moyen de paiement n’est traité par Ilipresto.'}
 ''',
       ),
+      const LegalDocumentSection(
+        title: 'Vérification du téléphone et du SIRET',
+        subtitle: 'Portée des contrôles et absence d’agrément par Ilipresto.',
+        content: '''
+VÉRIFICATIONS DE COMPTE — PORTÉE
+
+Dans le but de réduire les risques de fraude, d’usurpation d’identité et de faux profils, Ilipresto peut afficher des mentions telles que « téléphone vérifié » ou « SIRET vérifié ».
+
+« Téléphone vérifié » signifie uniquement qu’un numéro de téléphone a été rattaché au compte après validation du mécanisme de vérification par SMS. Cette vérification confirme l’accès au numéro au moment du contrôle. Elle ne constitue pas une vérification complète de l’identité civile, de la propriété de la ligne, des compétences, de la fiabilité, de la solvabilité ou du comportement futur de l’utilisateur.
+
+« SIRET vérifié » signifie uniquement que le numéro SIRET fourni a passé les contrôles techniques prévus par Ilipresto et a été retrouvé comme correspondant à un établissement actif dans la source administrative consultée au moment de la vérification. Ce contrôle ne permet pas, à lui seul, d’établir que le titulaire du compte est le représentant légal de l’entreprise, qu’il est autorisé à agir pour son compte, qu’il dispose de toutes les qualifications, assurances, autorisations ou garanties nécessaires, ni que l’entreprise ou le prestataire exécutera correctement une prestation.
+
+Ces mentions ne constituent ni un agrément, ni une certification, ni une recommandation, ni une labellisation, ni une garantie donnée par Ilipresto. Elles sont des indicateurs limités destinés à réduire certains risques sans les supprimer.
+
+Il appartient à chaque utilisateur d’effectuer les vérifications qu’il estime nécessaires avant toute mise en relation ou prestation, notamment concernant l’identité de son interlocuteur, son habilitation à représenter une entreprise, ses qualifications, assurances et autorisations lorsqu’elles sont requises.
+''',
+      ),
       LegalDocumentSection(
         title: 'Hébergement',
         subtitle: 'Prestataire chargé de l’hébergement technique.',
@@ -213,6 +230,23 @@ L’utilisateur fournit des informations exactes, protège ses identifiants et s
 Ilipresto peut limiter, suspendre ou supprimer un compte en cas de fraude, contenu illicite, comportement dangereux, atteinte à la sécurité ou violation répétée des CGU. Une mesure proportionnée est recherchée selon la gravité et l’urgence.
 
 L’utilisateur peut demander la suppression de son compte depuis son profil ou le support. Les conséquences sur les annonces, messages et données sont précisées dans la politique de confidentialité.
+''',
+      ),
+      const LegalDocumentSection(
+        title: 'Vérifications de compte et badges',
+        subtitle: 'Signification limitée de « téléphone vérifié » et « SIRET vérifié ».',
+        content: '''
+VÉRIFICATIONS DE COMPTE ET BADGES
+
+Afin de réduire certains risques de fraude, d’usurpation d’identité et de faux profils, Ilipresto peut proposer des contrôles techniques ou administratifs et afficher des mentions telles que « téléphone vérifié » ou « SIRET vérifié ».
+
+Le badge « téléphone vérifié » indique uniquement qu’un numéro a été rattaché au compte après réussite du mécanisme de vérification par SMS. Il ne prouve pas l’identité civile du titulaire du compte, la propriété juridique de la ligne, ni les compétences, la fiabilité, la solvabilité ou la qualité des prestations de l’utilisateur.
+
+Le badge « SIRET vérifié » indique uniquement que le SIRET fourni a passé les contrôles techniques prévus par Ilipresto et correspondait, au moment du contrôle, à un établissement identifié comme actif dans la source administrative consultée. Il ne prouve pas que le titulaire du compte est le représentant légal ou une personne autorisée à engager l’entreprise. Il ne certifie ni les qualifications, ni les assurances, ni les autorisations professionnelles, ni la qualité, la solvabilité, la réputation ou le comportement futur de l’entreprise ou du prestataire.
+
+Les badges et mentions de vérification ne constituent en aucun cas un agrément, une certification, une labellisation, une recommandation, une sélection ou une garantie d’Ilipresto. Ils ne remplacent pas les vérifications que chaque utilisateur doit effectuer avant de conclure ou d’exécuter une prestation.
+
+L’utilisateur s’engage à maintenir ses informations exactes et à ne pas présenter un badge Ilipresto comme une approbation de son identité, de son activité, de ses compétences ou de ses prestations. Ilipresto peut retirer ou suspendre une mention de vérification lorsqu’une information devient incohérente, obsolète, contestée ou lorsqu’un nouveau contrôle est nécessaire.
 ''',
       ),
       const LegalDocumentSection(

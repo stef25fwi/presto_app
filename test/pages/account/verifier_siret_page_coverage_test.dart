@@ -10,7 +10,8 @@ void main() {
     );
 
     expect(find.byType(Scaffold), findsOneWidget);
-    expect(find.text('Vérifier mon SIRET'), findsNWidgets(2));
+    expect(find.text('Vérifier mon SIRET'), findsOneWidget);
+    expect(find.text('Vérifier SIRET + dirigeant'), findsOneWidget);
     expect(find.byType(SingleChildScrollView), findsOneWidget);
     expect(find.byType(ProSiretVerificationCard), findsOneWidget);
   });
