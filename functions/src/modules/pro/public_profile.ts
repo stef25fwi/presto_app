@@ -8,6 +8,8 @@ import { buildPublicProfessionalProfileProjection } from "./public_profile_core"
 
 const PRIVATE_COLLECTION = "pro_profiles";
 const PUBLIC_COLLECTION = "public_pro_profiles";
+const CONSENT_COLLECTION = "public_profile_consents";
+const CONSENT_VERSION = "public-profile-v1-2026-08-17";
 
 export const setPublicProfessionalProfileVisibility = onCall(
   {
@@ -32,14 +34,28 @@ export const setPublicProfessionalProfileVisibility = onCall(
     const uid = request.auth.uid;
     const enabled = request.data.enabled as boolean;
     const privateRef = db.collection(PRIVATE_COLLECTION).doc(uid);
+    const consentRef = db.collection(CONSENT_COLLECTION).doc(uid);
+    const publicRef = db.collection(PUBLIC_COLLECTION).doc(uid);
     const snapshot = await privateRef.get();
 
     if (!snapshot.exists) {
-      if (!enabled) return { ok: true, enabled: false };
-      throw new HttpsError(
-        "failed-precondition",
-        "Votre profil professionnel doit être vérifié avant de pouvoir être rendu public.",
-      );
+      if (enabled) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Votre profil professionnel doit être vérifié avant de pouvoir être rendu public.",
+        );
+      }
+
+      await Promise.all([
+        consentRef.set({
+          enabled: false,
+          version: CONSENT_VERSION,
+          source: "authenticated_user_callable",
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true }),
+        publicRef.delete(),
+      ]);
+      return { ok: true, enabled: false };
     }
 
     if (enabled) {
@@ -55,14 +71,18 @@ export const setPublicProfessionalProfileVisibility = onCall(
       }
     }
 
-    await privateRef.set(
-      {
-        publicProfileEnabled: enabled,
-        publicProfileConsentUpdatedAt: FieldValue.serverTimestamp(),
-        publicProfileConsentSource: "authenticated_user_callable",
-      },
-      { merge: true },
-    );
+    const batch = db.batch();
+    batch.set(privateRef, {
+      publicProfileEnabled: enabled,
+      publicProfileConsentUpdatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    batch.set(consentRef, {
+      enabled,
+      version: CONSENT_VERSION,
+      source: "authenticated_user_callable",
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    await batch.commit();
 
     return { ok: true, enabled };
   },
@@ -78,6 +98,12 @@ export const syncPublicProfessionalProfile = onDocumentWritten(
     const after = event.data?.after;
 
     if (!after?.exists) {
+      await publicRef.delete();
+      return;
+    }
+
+    const consentSnapshot = await db.collection(CONSENT_COLLECTION).doc(uid).get();
+    if (!consentSnapshot.exists || consentSnapshot.data()?.enabled !== true) {
       await publicRef.delete();
       return;
     }
