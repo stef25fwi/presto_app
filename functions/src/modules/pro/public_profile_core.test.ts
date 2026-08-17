@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  PUBLIC_PROFILE_CONSENT_VERSION,
   buildPublicProfessionalProfileProjection,
+  canPublishPublicProfessionalProfile,
+  hasValidPublicProfileConsent,
   isEligibleForPublicProfessionalProfile,
 } from "./public_profile_core";
 
@@ -24,6 +27,12 @@ const verifiedPrivateProfile: Record<string, unknown> = {
   verifiedSource: "api_recherche_entreprises",
   stripeCustomerId: "cus_private",
   moderationNotes: "private moderation note",
+};
+
+const validServerConsent: Record<string, unknown> = {
+  enabled: true,
+  version: PUBLIC_PROFILE_CONSENT_VERSION,
+  source: "authenticated_user_callable",
 };
 
 test("professional profile is private by default", () => {
@@ -50,6 +59,21 @@ test("only a verified active professional can opt in", () => {
       isEligibleForPublicProfessionalProfile({ ...verifiedPrivateProfile, ...patch }),
       false,
     );
+  }
+});
+
+test("server-side consent is mandatory and versioned", () => {
+  assert.equal(hasValidPublicProfileConsent(validServerConsent), true);
+  assert.equal(canPublishPublicProfessionalProfile(verifiedPrivateProfile, validServerConsent), true);
+
+  for (const consent of [
+    undefined,
+    { enabled: false, version: PUBLIC_PROFILE_CONSENT_VERSION, source: "authenticated_user_callable" },
+    { enabled: true, version: "old-version", source: "authenticated_user_callable" },
+    { enabled: true, version: PUBLIC_PROFILE_CONSENT_VERSION, source: "client_write" },
+  ]) {
+    assert.equal(hasValidPublicProfileConsent(consent), false);
+    assert.equal(canPublishPublicProfessionalProfile(verifiedPrivateProfile, consent), false);
   }
 });
 
@@ -86,4 +110,5 @@ test("opting out removes eligibility immediately", () => {
     publicProfileEnabled: false,
   };
   assert.equal(buildPublicProfessionalProfileProjection(candidate), null);
+  assert.equal(canPublishPublicProfessionalProfile(candidate, validServerConsent), false);
 });
