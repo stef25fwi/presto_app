@@ -14,7 +14,9 @@ for (const token of [
   "observe('largest-contentful-paint'",
   "observe('layout-shift'",
   "observe('event'",
-  "durationThreshold: 40",
+  "durationThreshold: 16",
+  'scheduleInpFlush',
+  "sendMetric('INP', inpValue)",
   "navigator.globalPrivacyControl",
   "navigator.doNotTrack",
   "navigator.webdriver",
@@ -24,6 +26,7 @@ for (const token of [
 ]) {
   assert.ok(client.includes(token), `missing RUM contract token: ${token}`);
 }
+assert.ok(!client.includes('durationThreshold: 40'), 'INP ne doit plus exclure les interactions 16–39 ms');
 assert.doesNotMatch(client, /document\.cookie|userId|email/i);
 assert.match(client, /localStorage\.setItem\(optOutKey, '1'\)/);
 assert.match(client, /europe-west1-presto-app-74abe\.cloudfunctions\.net\/collectWebVitals/);
@@ -35,6 +38,8 @@ assert.match(backend, /windowDays: 28/);
 assert.match(backend, /Sec-GPC/);
 assert.match(backend, /DNT/);
 assert.match(backend, /Buffer\.isBuffer/);
+assert.match(backend, /pageViewId.*metric/s);
+assert.match(backend, /\.doc\(documentId\)\.set/);
 assert.match(core, /LCP: 2500/);
 assert.match(core, /INP: 200/);
 assert.match(core, /CLS: 0\.1/);
