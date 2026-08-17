@@ -47,8 +47,6 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
-          # Workload Identity Federation : aucune clé de service account
-          # stockée pour l'accès GCP (cf. deploy.yml).
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
@@ -81,8 +79,7 @@ jobs:
       - name: Ensure Android 16 / API 36 SDK
         run: |
           set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platforms;android-${ANDROID_API_LEVEL}" "platform-tools"
+          bash tools/android/ensure_api36_sdk.sh platform
           grep -Eq '^\s*compileSdk\s*=\s*36\s*$' android/app/build.gradle.kts
           grep -Eq '^\s*targetSdk\s*=\s*36\s*$' android/app/build.gradle.kts
 
@@ -120,10 +117,10 @@ jobs:
           fi
 
           keytool -importkeystore \
-            -srckeystore  "$RUNNER_TEMP/upload-keystore-raw.jks" \
+            -srckeystore "$RUNNER_TEMP/upload-keystore-raw.jks" \
             -destkeystore "$RUNNER_TEMP/upload-keystore.jks" \
             -deststoretype JKS \
-            -srcstorepass  "${KEYSTORE_PASSWORD}" \
+            -srcstorepass "${KEYSTORE_PASSWORD}" \
             -deststorepass "${KEYSTORE_PASSWORD}" \
             -noprompt
 
@@ -147,8 +144,6 @@ jobs:
         run: |
           set -euo pipefail
           VERSION_NAME=$(grep -E '^version:' pubspec.yaml | head -n1 | sed -E 's/^version:[[:space:]]*//' | cut -d'+' -f1)
-          # Le versionCode doit croître strictement à chaque envoi Play : le
-          # numéro de run GitHub est monotone.
           BUILD_NUMBER=${{ github.run_number }}
           echo "version_name=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
           echo "build_number=${BUILD_NUMBER}" >> "$GITHUB_OUTPUT"
