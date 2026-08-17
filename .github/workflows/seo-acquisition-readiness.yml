@@ -17,6 +17,10 @@ jobs:
           node-version: '22'
       - name: Validate national positioning
         run: node tools/quality/check_national_positioning.mjs
+      - name: Validate SEO cities against national geo source
+        run: node tools/quality/check_programmatic_geo_source.mjs
+      - name: Validate SEO services against app taxonomy
+        run: node tools/quality/check_programmatic_taxonomy_source.mjs
       - name: Generate programmatic local SEO pages
         run: node tools/seo/generate_programmatic_local_pages.mjs
       - name: Validate programmatic local SEO
