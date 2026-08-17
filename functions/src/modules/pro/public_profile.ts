@@ -4,12 +4,15 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 import { ENFORCE_APP_CHECK } from "../../config/env";
 import { db } from "../../core/firestore";
-import { buildPublicProfessionalProfileProjection } from "./public_profile_core";
+import {
+  PUBLIC_PROFILE_CONSENT_VERSION,
+  buildPublicProfessionalProfileProjection,
+  canPublishPublicProfessionalProfile,
+} from "./public_profile_core";
 
 const PRIVATE_COLLECTION = "pro_profiles";
 const PUBLIC_COLLECTION = "public_pro_profiles";
 const CONSENT_COLLECTION = "public_profile_consents";
-const CONSENT_VERSION = "public-profile-v1-2026-08-17";
 
 export const setPublicProfessionalProfileVisibility = onCall(
   {
@@ -49,7 +52,7 @@ export const setPublicProfessionalProfileVisibility = onCall(
       await Promise.all([
         consentRef.set({
           enabled: false,
-          version: CONSENT_VERSION,
+          version: PUBLIC_PROFILE_CONSENT_VERSION,
           source: "authenticated_user_callable",
           updatedAt: FieldValue.serverTimestamp(),
         }, { merge: true }),
@@ -78,7 +81,7 @@ export const setPublicProfessionalProfileVisibility = onCall(
     }, { merge: true });
     batch.set(consentRef, {
       enabled,
-      version: CONSENT_VERSION,
+      version: PUBLIC_PROFILE_CONSENT_VERSION,
       source: "authenticated_user_callable",
       updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
@@ -102,16 +105,18 @@ export const syncPublicProfessionalProfile = onDocumentWritten(
       return;
     }
 
+    const profile = (after.data() ?? {}) as Record<string, unknown>;
     const consentSnapshot = await db.collection(CONSENT_COLLECTION).doc(uid).get();
-    if (!consentSnapshot.exists || consentSnapshot.data()?.enabled !== true) {
+    const consent = consentSnapshot.exists
+      ? (consentSnapshot.data() ?? {}) as Record<string, unknown>
+      : undefined;
+
+    if (!canPublishPublicProfessionalProfile(profile, consent)) {
       await publicRef.delete();
       return;
     }
 
-    const projection = buildPublicProfessionalProfileProjection(
-      (after.data() ?? {}) as Record<string, unknown>,
-    );
-
+    const projection = buildPublicProfessionalProfileProjection(profile);
     if (!projection) {
       await publicRef.delete();
       return;
