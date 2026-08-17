@@ -111,7 +111,7 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          flutter test --coverage --reporter expanded 2>&1 | tee pr_validation_logs/flutter_test.log
+          flutter test --coverage --reporter compact 2>&1 | tee pr_validation_logs/flutter_test.log
 
       - name: Enforce repository quality gates
         id: quality_gate
