@@ -4,10 +4,12 @@ Ce document synthétise l'état des quatre axes demandés à partir des audits d
 produits cette semaine — [audit complet du 14/08](audit-complet-2026-08-14.md),
 [audit qualité Play Store du 15/08](audit-qualite-code-playstore-2026-08-15.md),
 [plan pré-prod du 15/08](pre-prod-readiness-plan-2026-08-15.md) et [audit
-performance/UI du 19/07](perf-ui-audit-2026-07-19.md) — complétés par des
-vérifications exécutées directement dans cette session (`npm audit`, gate de
-sécurité, recherche de secrets, en-têtes HTTP). Aucun nouveau correctif de
-code n'est appliqué ici : c'est un état des lieux, pas une intervention.
+performance/UI du 19/07](perf-ui-audit-2026-07-19.md) — complété par des
+vérifications exécutées directement en session (`npm audit`, gate de
+sécurité, recherche de secrets, en-têtes HTTP). La version initiale était un
+état des lieux sans intervention ; trois correctifs ciblés, à faible risque
+et documentés à l'endroit où ils s'appliquent (§1.2, §1.3, §3.2) ont été
+apportés depuis, dans le prolongement direct des constats de l'audit.
 
 **Limite méthodologique commune à tout ce document** : le SDK Flutter n'est
 pas installé dans cet environnement d'audit. `flutter analyze`,
@@ -20,10 +22,10 @@ restent couvertes par la CI GitHub Actions (`quality-baseline.yml`), verte au
 
 | Axe | État | Point le plus urgent |
 |---|---|---|
-| Performance | 🟡 mesures d'il y a 4 semaines, jamais reprises | Décodage JSON bloquant (2,2 Mio) sur le thread UI + bootstrap réseau séquentiel avant le premier rendu |
-| UI / UX | 🟡 socle sain, accessibilité inachevée | 5 des 8 contrôles d'accessibilité restent `pending` : navigation clavier, lecteur d'écran, responsive, cohérence des états, audit final |
-| Sécurité | 🟢 aucune faille active identifiée, dette documentaire | `owasp-review-complete`, `secrets-inventory-current` et `api-keys-restricted` toujours `pending` ; **1 vulnérabilité haute non corrigée à la racine du dépôt** (nouveau constat, voir §3.2) |
-| Transverse | 🟡 dette structurelle en résorption | 18 fichiers Dart/TS dépassent 1200 lignes ; `use_build_context_synchronously` reste désactivé faute d'une mesure fiable |
+| Performance | 🟡 mesures d'il y a 4 semaines ; 2 correctifs ciblés faits le 15/08 | Le rechargement de `cities_compact.json` à chaque montage du widget de publication (§1.3) et une partie du bootstrap séquentiel (§1.2) sont corrigés ; le format du JSON et App Check restent à traiter |
+| UI / UX | 🟡 socle sain, accessibilité inachevée | 5 des 8 contrôles restent `pending` (navigation clavier, lecteur d'écran, responsive, cohérence des états, audit final) ; **inventaire `GestureDetector` clos : 39 → 16, 14 défauts corrigés** (15 et 16/08, §2.2) ; responsive et passe appareil réel restent hors d'atteinte du code |
+| Sécurité | 🟢 **0 vulnérabilité**, dette documentaire quasi close | Les 16 modérées et la haute sont éliminées (15 et 16/08, §3.2 bis) sans downgrade. Revue OWASP et inventaire de secrets rédigés le 16/08 (§3.1) ; seul `api-keys-restricted` reste entièrement hors d'atteinte (console GCP) |
+| Transverse | 🟡 dette structurelle en résorption | 18 fichiers Dart/TS dépassent 1200 lignes ; `avoid_print` réactivée le 16/08 ; `use_build_context_synchronously` reste le seul point réellement bloqué par l'absence de SDK Flutter |
 
 ---
 
@@ -70,6 +72,19 @@ produit), cette seule chaîne peut consommer le budget de 2,5 s avant même le
 téléchargement du bundle. Seule une partie des services a été poussée après
 le premier rendu ; le cœur Firebase/AppCheck/RemoteConfig reste bloquant.
 
+**Correctif partiel appliqué le 15/08** (`lib/bootstrap/app_bootstrap.dart`) :
+Remote Config (+ l'activation réseau Firestore côté natif) et l'état
+d'authentification (persistence + `getRedirectResult`) sont deux chaînes
+réseau indépendantes qui s'exécutaient en série ; elles tournent désormais en
+parallèle via `Future.wait`. Cela ne supprime aucun aller-retour réseau mais
+transforme leur coût de « somme des deux latences » en « la plus longue des
+deux ». Init Firebase et App Check restent volontairement séquentiels et
+bloquants : App Check doit être actif avant tout appel Firestore/Storage
+pour éviter des lectures initiales rejetées par l'enforcement (voir §3), donc
+seule la partie sans risque de sécurité a été parallélisée. Non vérifié par
+`flutter analyze`/`flutter test` (SDK Flutter indisponible dans ce sandbox,
+voir limites en tête de document) : à confirmer par la CI.
+
 ### 1.3 Fluidité (jank)
 
 Signaux mesurés par analyse statique sur `lib/` (dernier comptage 19/07) :
@@ -86,21 +101,79 @@ directement depuis `city_postal_autocomplete_field.dart`, déclenché au
 premier focus du champ ville de la publication d'annonce — un des parcours
 les plus fréquentés de l'app.
 
+**Cause précise identifiée et corrigée le 15/08.** `CityPostalService`
+(dans ce même fichier) n'était pas un singleton : `_CityPostalAutocompleteFieldState`
+en créait une nouvelle instance à chaque montage du widget
+(`CityPostalService()` en initialiseur de champ `State`). Chaque fois qu'un
+utilisateur ouvrait — ou rouvrait — l'écran de publication, les 2,2 Mio de
+JSON étaient donc retéléchargés depuis le bundle puis redécodés sur le thread
+UI, alors que `CitySearch.instance` (le service équivalent utilisé ailleurs
+dans l'app) les avait déjà chargés une fois au démarrage. Corrigé en donnant
+à `CityPostalService` une instance partagée (`CityPostalService.instance`,
+même pattern que `CitySearch.instance`) réutilisée par le widget ; le
+constructeur public reste disponible pour les tests existants
+(`test/city_postal_service_test.dart`), qui n'ont pas eu besoin d'être
+modifiés. Effet attendu : le décodage ne se produit plus qu'une fois par
+session au lieu d'une fois par visite de l'écran de publication. Non mesuré
+en runtime (SDK Flutter indisponible dans ce sandbox) — à confirmer en CI ou
+sur un poste avec Flutter.
+
+Le classement « ≥ 3 chemins » ci-dessus recensait aussi `CitySearch`
+(`services/city_search.dart`, singleton, sain) et `CityRepoCompact`
+(`services/city_repo_compact.dart`) : ce dernier n'était **jamais instancié
+nulle part**. **Supprimé le 16/08**, avec le widget qui en dépendait
+(`city_postal_autocomplete_compact.dart`, lui-même référencé nulle part) —
+231 lignes formant une boucle morte fermée.
+
+Ce n'est pas qu'un nettoyage cosmétique : `CityRepoCompact` était la
+troisième implémentation du chargement de `cities_compact.json`, et la seule
+à ne **pas** avoir reçu le correctif singleton du §1.3. La laisser en place,
+c'était garder à disposition la version qui recharge 2,2 Mio à chaque usage —
+soit exactement le défaut qu'on venait de corriger, prêt à être réintroduit
+par quiconque aurait choisi cette classe. Il reste désormais deux chemins,
+tous deux mémoïsés.
+
 ### 1.4 Recommandations (par priorité)
 
-1. **P0** — décharger le décodage JSON volumineux (format compact ou
-   chargement paresseux/mémoïsé, jamais depuis un widget).
+1. ~~**P0** — décharger le décodage JSON volumineux~~ — **traité en partie le
+   15/08** : la cause de la duplication (rechargement à chaque montage du
+   widget de publication) est corrigée. Le format du fichier lui-même
+   (2,2 Mio en un seul bloc, décodé de façon synchrone) reste inchangé et
+   continuera de geler l'UI un instant au premier chargement de session ;
+   un format compact/indexé reste la suite logique si ce coût résiduel est
+   encore perçu après mesure.
 2. **P0** — ne garder bloquant avant `runApp()` que l'initialisation Firebase
    cœur ; paralléliser App Check, Remote Config, persistence et
-   `getRedirectResult` derrière le premier frame.
+   `getRedirectResult` derrière le premier frame. **Traité en partie le
+   15/08** (Remote Config et l'état d'authentification tournent désormais en
+   parallèle, voir §1.2) ; App Check reste bloquant par nécessité de
+   sécurité, donc le P0 n'est que partiellement résorbé.
 3. **P1** — re-mesurer le budget bundle avec un build à jour : la dernière
    mesure a un mois, et une mesure intermédiaire suggère un dépassement selon
    le budget appliqué à ce moment.
 4. **P1** — poursuivre la décomposition des pages géantes (voir §4), qui est
    le premier facteur de jank perçu.
-5. **P2** — exclure `.js.symbols`/`NOTICES` du déploiement, WebP pour les
-   logos, instrumenter LCP/INP réels (web-vitals déjà présent dans
+5. **P2** — exclure `.js.symbols` du déploiement — **fait le 16/08** :
+   `firebase.json` ignore désormais `**/*.js.symbols` et `**/*.wasm.symbols`
+   sur les deux cibles d'hébergement. Restent : WebP pour les logos,
+   instrumenter LCP/INP réels (web-vitals déjà présent dans
    `web/web-vitals-rum.js`, à vérifier qu'il remonte des données exploitées).
+
+   **Correction apportée à la recommandation d'origine** : l'audit du 19/07
+   proposait d'exclure aussi `assets/NOTICES` (1,44 Mio). À ne pas faire.
+   Ce fichier porte l'attribution des licences open-source embarquées par le
+   moteur Flutter (Skia, ICU…), dont plusieurs — BSD, MIT — **exigent** que
+   l'avis de copyright accompagne toute redistribution. Le retirer d'un
+   déploiement public échange 1,4 Mio sur un build de 67 Mio contre un risque
+   de conformité de licence réel : le compromis n'est pas favorable. Seuls les
+   symboles de debug, qui n'ont aucune fonction légale ni runtime, sont
+   exclus.
+
+   À noter : cette exclusion allège l'artefact **déployé**, mais pas la mesure
+   de `tools/check_web_bundle_size.mjs`, qui pèse le répertoire `build/web`
+   sur disque. Le budget affiché en CI ne bougera donc pas — ce qui est
+   cohérent, le budget mesurant la production du build et non ce qui est
+   servi.
 
 ---
 
@@ -124,10 +197,10 @@ Le registre `quality/accessibility_ux_readiness.json` (phase 13,
 
 | Contrôle | État | Ce qu'il manque concrètement |
 |---|---|---|
-| Navigation clavier et focus | `pending` | Parcours manuel clavier sur publication / messagerie / compte, non consigné |
-| Lecteur d'écran (TalkBack/VoiceOver) | `pending` | Validation sur appareil réel requise — l'émulateur ne suffit pas d'après le registre lui-même |
+| Navigation clavier et focus | `pending` | Parcours manuel clavier sur publication / messagerie / compte, non consigné. **Inventaire `GestureDetector` de `lib/` clos les 15 et 16/08** (`docs/evidence/ux/accessibility-audit.md` §3bis) : chaque occurrence examinée individuellement, 39 → 16. **14 défauts réels corrigés** (dont la barre de navigation du bas et un widget réutilisable `PrestoTapScale`), **1 doublon supprimé**, et le reste explicitement classé — 2 déjà accessibles ou intentionnellement exclus (geste caché, animation de pression), 2 nécessitant une vraie conception d'accessibilité (drag continu) plutôt qu'une conversion mécanique, le solde étant des motifs déjà vérifiés hors périmètre (scrim, swipe) |
+| Lecteur d'écran (TalkBack/VoiceOver) | `pending` | Validation sur appareil réel requise — l'émulateur ne suffit pas d'après le registre lui-même. Les correctifs ci-dessus réduisent la surface de défauts qu'une telle validation trouverait, sans s'y substituer |
 | Responsive 320–1440 px + texte à 200 % | `pending` | Matrice `docs/evidence/ux/responsive-matrix.md` non renseignée |
-| Cohérence des états loading/empty/error | `pending` | Revue écran par écran non faite |
+| Cohérence des états loading/empty/error | `pending` | Revue écran par écran non faite. **Revue partielle faite le 15/08** (`docs/evidence/ux/accessibility-audit.md` §7bis) : 4 des 9 parcours principaux (messagerie, compte, publication, consultation d'offres) examinés, comportement cohérent constaté sur cet échantillon, aucun correctif nécessaire |
 | Audit accessibilité final | `pending` | Bloqué par construction tant que les 4 précédents ne sont pas clos |
 
 Ce chantier correspond au **point 2 sur 18** du programme séquentiel
@@ -156,37 +229,99 @@ défaut.
 
 ### 3.1 Contrôles vérifiés dans cette session
 
-`node tools/quality/check_security_controls.mjs` → **5/9 `verified`, 4
-`pending`, 0 échec de gate** :
+`node tools/quality/check_security_controls.mjs` → **6/9 `verified`, 3
+`pending`, 0 échec de gate** (5/9 avant le correctif de dépendances du 16/08,
+§3.2) :
 
 - ✅ App Check appliqué sur Firestore, Storage et 83/83 callables Cloud
   Functions (politique fail-closed en production).
 - ✅ Aucun déploiement de preview ne peut cibler le projet de production.
 - ✅ CodeQL actif sur chaque PR et sur `main`.
+- ✅ `dependency-audit-clean` — 0 vulnérabilité sur les deux périmètres du
+  dépôt depuis le 16/08 (§3.2), preuve dans
+  `docs/evidence/security/dependency-audit.md`.
 - ⏳ `api-keys-restricted`, `secrets-inventory-current`, `owasp-review-complete`
-  restent `pending` : ce sont des livrables de preuve à produire (console
-  GCP, inventaire, revue documentée), pas des failles techniques connues.
+  restent `pending`. **Correction du 16/08** : une première version de cette
+  section affirmait qu'aucun des trois n'était instruisible depuis une
+  session de code — c'était trop pessimiste pour deux d'entre eux.
+  - `owasp-review-complete` : revue réelle rédigée
+    (`docs/evidence/security/owasp-review.md`), couvrant le périmètre minimal
+    exigé (callables, règles Firestore *et* Storage, webhooks, en-têtes) avec
+    un constat et une décision par catégorie. Reste `pending` pour un écart
+    littéral assumé : un volet (CSP `unsafe-inline`) est reporté sans
+    échéance faute d'un porteur identifié, alors que l'énoncé du contrôle
+    exige un report *avec* échéance — décision humaine, pas une lecture de
+    code de plus.
+  - `secrets-inventory-current` : inventaire amorcé
+    (`docs/evidence/security/secrets-inventory.md`), 32 secrets recensés par
+    recherche exhaustive dans le code (10 Cloud Functions, 22 GitHub
+    Actions). Reste `pending` : propriétaire et date de rotation, exigés par
+    le contrôle, ne figurent dans aucun fichier du dépôt.
+  - `api-keys-restricted` reste seul entièrement hors d'atteinte : la
+    vérification se fait exclusivement en console GCP.
 
-### 3.2 Dépendances — un écart entre `functions/` et la racine (constat nouveau)
+### 3.2 Dépendances — écart entre `functions/` et la racine, corrigé le 15/08
 
-Le correctif `brace-expansion` du 14–15/08 a été appliqué **uniquement dans
-`functions/`** :
+Le correctif `brace-expansion` du 14–15/08 avait été appliqué **uniquement
+dans `functions/`**, laissant la racine du dépôt (qui déclare
+`@google-cloud/speech`, `@google-cloud/vision`, `firebase-admin`,
+`firebase-functions`, `openai` en dépendances directes, utilisées par les
+scripts `bin/` et `tools/`) avec la même vulnérabilité haute non traitée :
 
-| Périmètre | `npm audit` | Sévérité haute |
+| Périmètre | `npm audit` avant | `npm audit` après (15/08) |
 |---|---|---|
-| `functions/` | 7 modérées, **0 haute** | corrigé le 15/08 |
-| racine du dépôt (`package-lock.json`) | 9 modérées, **1 haute** (`brace-expansion`) | **toujours présent** |
+| `functions/` | 7 modérées, 0 haute | inchangé |
+| racine du dépôt (`package-lock.json`) | 9 modérées, **1 haute** (`brace-expansion`) | **9 modérées, 0 haute** |
 
-`docs/DEPENDENCY_AUDIT.md` ne documente que le périmètre `functions/` : la
-racine du dépôt (qui déclare `@google-cloud/speech`, `@google-cloud/vision`,
-`firebase-admin`, `firebase-functions`, `openai` en dépendances directes,
-utilisées par les scripts `bin/` et `tools/`) n'a pas de rapport équivalent
-et porte toujours la vulnérabilité haute. `npm audit fix` (sans `--force`)
-n'a pas pu être vérifié comme suffisant depuis ce sandbox (pas de
-`node_modules` installé à la racine), mais le même correctif non cassant
-appliqué à `functions/` est a priori transposable puisque la chaîne de
-dépendance (`uuid` → `gaxios`/`teeny-request` → `@google-cloud/*` →
-`firebase-admin`) est identique.
+**Première correction (15/08)** par `npm audit fix` (sans `--force`) à la
+racine : la vulnérabilité haute disparaît, `firebase-admin` reste en 13.10.0.
+Restaient alors 9 modérées à la racine et 7 dans `functions/`.
+
+### 3.2 bis — Les 16 modérées éliminées le 16/08, sans downgrade
+
+Les 16 entrées restantes n'étaient **pas 16 problèmes** : elles remontaient
+toutes à une cause racine unique, **`uuid@9.0.1`**
+([GHSA-w5hq-g745-h8pq](https://github.com/advisories/GHSA-w5hq-g745-h8pq)).
+Les huit autres noms (`gaxios`, `google-gax`, `teeny-request`,
+`retry-request`, `@google-cloud/storage`, `@google-cloud/firestore`,
+`firebase-admin`, `firebase-functions`) n'en étaient que la propagation
+transitive.
+
+Les audits des 14 et 15/08 s'étaient arrêtés sur le constat que la seule
+correction proposée par npm — `audit fix --force`, qui downgrade
+`firebase-admin` de 13/14 vers 10.3.0 — était inacceptable. C'était juste,
+mais la conclusion « non corrigeable sans étude d'impact » ne l'était pas :
+un **`overrides` npm sur `uuid`** traite la cause sans toucher à
+`firebase-admin`. Le mécanisme était d'ailleurs déjà en usage dans ce dépôt,
+`functions/package.json` portant déjà un `overrides` sur `@grpc/grpc-js`.
+
+| Périmètre | Avant | Après (16/08) |
+|---|---|---|
+| racine | 9 modérées | **0 vulnérabilité** |
+| `functions/` | 7 modérées | **0 vulnérabilité** |
+
+Vérifications conduites avant de basculer le contrôle :
+
+- `firebase-admin` **inchangé** — 13.10.0 à la racine, 14.2.0 dans
+  `functions/` : aucun downgrade ;
+- `uuid` résolu en 11.1.1 en **copie unique**, aucun `uuid` imbriqué —
+  l'override s'applique bien à tout l'arbre ;
+- les SDK consommateurs n'appellent que **`uuid.v4()`**
+  (`gaxios/build/src/gaxios.js` l. 417, `teeny-request` l. 135, `google-gax`
+  l. 108), dont la signature est identique entre v9 et v11 ;
+- **308/308 tests `functions/` passent**, compilation `tsc` incluse.
+
+**Portée réelle, à ne pas surestimer** : `v4` n'est pas visée par l'avis de
+sécurité, qui porte sur `v3`/`v5`/`v6` avec un paramètre `buf`. Dans ce
+projet précis, l'exposition était donc vraisemblablement nulle. Le gain n'est
+pas la fermeture d'une brèche exploitée mais la disparition d'un bruit
+permanent qui, tant qu'il occupait le rapport, rendait invisible toute
+vulnérabilité réellement sérieuse qui s'y serait ajoutée.
+
+`docs/DEPENDENCY_AUDIT.md` a été régénéré avec la logique exacte du workflow
+`dependency-audit-report.yml` et rapporte 0 partout. Il ne couvre toujours que
+le périmètre `functions/` : produire son équivalent racine reste souhaitable
+(§3.5).
 
 Aucun secret en dur détecté (`sk_live_`, `sk_test_`, clés privées, clés AWS) :
 les seules occurrences sont dans `functions/lib/modules/billing/stripe_mode.js`
@@ -217,14 +352,20 @@ Rien de nouveau à signaler ici.
 
 ### 3.5 Recommandations
 
-1. **P1** — appliquer à la racine du dépôt le même traitement
-   `brace-expansion` que dans `functions/` (§3.2), et étendre
-   `docs/DEPENDENCY_AUDIT.md` ou créer son équivalent pour la racine, sans
-   quoi cet écart peut se reproduire silencieusement.
-2. **P2** — les trois contrôles `pending` de sécurité (§3.1) sont des
+1. ~~**P1** — appliquer à la racine du dépôt le même traitement
+   `brace-expansion` que dans `functions/`~~ — **fait le 15/08**, puis
+   ~~éliminer les 16 modérées restantes~~ — **fait le 16/08** via l'override
+   `uuid` (§3.2 bis). Les deux périmètres sont à 0 vulnérabilité.
+2. **P2** — étendre `docs/DEPENDENCY_AUDIT.md` au périmètre racine (il ne
+   couvre que `functions/`), pour qu'un écart entre les deux ne puisse plus
+   passer inaperçu à la prochaine vulnérabilité publiée. C'est ce décalage de
+   couverture qui avait laissé la haute `brace-expansion` invisible côté
+   racine pendant que `functions/` était déclaré sain.
+3. **P2** — les trois contrôles `pending` de sécurité (§3.1) sont des
    livrables de preuve, pas des correctifs de code : à traiter par
-   attestation datée dans `docs/evidence/security/`.
-3. **P2** — documenter explicitement l'acceptation de `'unsafe-inline'` dans
+   attestation datée dans `docs/evidence/security/`. Aucun n'est instruisible
+   sans accès console GCP ou décision humaine.
+4. **P2** — documenter explicitement l'acceptation de `'unsafe-inline'` dans
    la CSP (raison, portée, compensation) plutôt que de la laisser implicite.
 
 ---
@@ -241,9 +382,14 @@ Rien de nouveau à signaler ici.
   du 14/08 pour le correctif STT).
 - **316 appels `debugPrint`** dans `lib/` : neutralisés en release depuis le
   15/08 par un point de contrôle unique (`lib/bootstrap/release_logging.dart`),
-  vérifié présent dans cette session. La règle analyzer `avoid_print` reste
-  cependant désactivée (`analysis_options.yaml:26`) : rien n'empêche la
-  réintroduction d'un `print` brut non neutralisé demain.
+  vérifié présent dans cette session. La règle `avoid_print` a été
+  **réactivée le 16/08**, ce qui verrouille le correctif : un `print` brut
+  réintroduit dans `lib/` fera désormais échouer `flutter analyze
+  --fatal-infos`. Les 2 seuls `print` bruts qui subsistaient
+  (`lib/widgets/ad_banner.dart`, déjà gardés par `kDebugMode`) sont passés à
+  `debugPrint`. La règle est désactivée par `analysis_options.yaml` imbriqués
+  dans `bin/`, `tools/` et `test/`, où les 61 `print` restants sont légitimes
+  — sortie standard des scripts CLI, et code de test jamais livré.
 - **`use_build_context_synchronously` toujours désactivé** dans
   `analysis_options.yaml`. Trois tentatives de mesure par détecteur maison
   ont donné trois résultats contradictoires (116, 61, puis 0 occurrence) ; la
@@ -251,21 +397,136 @@ Rien de nouveau à signaler ici.
   source fiable) n'est pas exécutable depuis un environnement sans SDK
   Flutter. Cela reste donc une classe de bugs de plantage potentiels non
   quantifiée à ce jour.
+- **`functions/lib/` est du build output versionné, et il est périmé**
+  (constat nouveau du 16/08). Le répertoire compte 428 fichiers suivis par
+  git, mais lancer `npm --prefix functions run build` produit une centaine de
+  fichiers modifiés et treize non suivis : le compilé de `web_vitals`,
+  `inbound_contact`, `seo/` et `firebase_admin_compat` existe en source
+  (`functions/src/`) sans avoir jamais été committé, et `lib/index.js` ne les
+  exporte donc pas dans la version versionnée.
+
+  **Sans effet sur la production** : `scripts/deploy_all.sh` exécute
+  `npm --prefix functions run build` (l. 35) avant `firebase deploy`, et le
+  script `npm test` reconstruit également. Ce qui est déployé est donc
+  toujours recompilé depuis `src/`, jamais le `lib/` du dépôt.
+
+  L'enjeu est la lisibilité : tant que `lib/` est suivi mais dérive, tout
+  `npm test` local salit l'arbre de travail avec une centaine de fichiers
+  générés, ce qui noie les vraies modifications dans les revues. Deux issues
+  cohérentes, l'une comme l'autre défendable, mais qui relèvent d'une décision
+  d'équipe et non d'une branche d'audit : soit régénérer `lib/` en CI pour
+  qu'il reste fidèle, soit l'ajouter à `.gitignore` puisque rien ne le
+  consomme tel quel. **L'état actuel — suivi mais non maintenu — est le seul
+  qui n'ait aucun avantage.**
 
 ---
+
+## Ce que « 10/10 » demanderait réellement (mesuré le 16/08)
+
+Deux choses très différentes se cachent derrière ce chiffre, et les confondre
+mène à des conclusions fausses.
+
+### 1. Les gates automatiques : déjà tous verts
+
+27 contrôles exécutables ont été lancés dans cette session. **24 passent.**
+Les 3 restants n'échouent pas sur un défaut du dépôt :
+
+| Gate | Cause de l'échec local | Réalité |
+|---|---|---|
+| `check_firebase_staging_readiness` | `missing-project-id`, `missing-staging-token` | Secrets d'environnement absents du sandbox |
+| `check_live_structured_data` | Réseau | Interroge le site de production, inaccessible ici |
+| `check_programmatic_local_seo` | `ENOENT: web/sitemap-local.xml` | **Faux positif de ma part** : l'artefact est généré. Après `node tools/seo/generate_programmatic_local_pages.mjs`, le gate passe (« 36 pages validées »). Les workflows `deploy.yml` et `seo-acquisition-readiness.yml` exécutent toujours le générateur juste avant le contrôle |
+
+**Aucun gate n'est cassé.** Sur le plan automatisable, le dépôt est déjà au
+vert.
+
+### 2. Les attestations : 36/157 (23 %)
+
+Ce ne sont pas des échecs, ce sont des **déclarations humaines non encore
+posées**. Répartition par registre :
+
+| Registre | Vérifiés | Ce qui bloque |
+|---|---:|---|
+| `seo-monitoring-readiness` | 12/12 | — |
+| `product-readiness` | 5/5 | — |
+| `security-controls` | 6/9 | Console GCP (clés API) ; revue OWASP et inventaire de secrets rédigés le 16/08, il ne manque plus que des faits organisationnels (propriétaire, dates, échéance) |
+| `ai-readiness` | 7/15 | Historique de runs, corpus |
+| `accessibility_ux_readiness` | 3/8 | **Appareil réel** (TalkBack/VoiceOver), passes manuelles |
+| `mobile_readiness` | 0/8 | **Play Console**, dont un test fermé de 12 testeurs sur 14 jours |
+| `stripe-readiness` | 0/7 | Statut `implemented`, pas `verified` — voir la note ci-dessous |
+| autres registres | le solde | Console, décisions humaines, ou périmètre à définir |
+
+### 3. Le piège de vocabulaire
+
+Les registres n'emploient pas le même vocabulaire de statut : les gates
+acceptent `verified`, `implemented`, `complete`, `pending`, `blocked` et
+`in_progress` selon le registre. `stripe-readiness` affiche ainsi 7
+`implemented` et 0 `verified` — ce qui se lit « 0/7 » ou « 7/7 » suivant la
+convention retenue. **Tout total agrégé sur les 157 contrôles est donc
+ambigu**, et c'est une raison de plus de ne pas piloter par ce chiffre.
+
+### 4. Pourquoi 157/157 est structurellement impossible
+
+`quality/18-point-completion.json` porte ces règles :
+
+```json
+"singleActivePoint": true,
+"laterPointsMustRemainBlocked": true
+```
+
+et `tools/quality/check_18_point_completion.mjs` (l. 123-125) **échoue** si un
+point postérieur au point actif n'est pas `blocked` :
+
+> `Le point N doit rester blocked tant que le point M n'est pas verified.`
+
+Les 16 points `blocked` sont donc l'état **normal et exigé** d'un programme
+séquentiel arrêté au point 2 sur 18. Les basculer pour afficher 18/18 ne
+serait pas seulement malhonnête : **cela ferait échouer le gate**. Le dépôt
+s'est explicitement outillé pour rendre ce raccourci impossible.
+
+### 5. Le chemin réel vers un pré-prod sans réserve
+
+**Mise à jour du 16/08** : deux des cinq étapes ci-dessous ont maintenant un
+brouillon réel plutôt qu'une page blanche. Aucune ne peut être *terminée*
+depuis une session de code — mais deux sont passées de « à écrire » à « à
+compléter », ce qui change la nature du travail restant.
+
+1. **Lancer le test fermé Play** (12 testeurs, 14 jours) — seul délai
+   incompressible, à démarrer en premier ;
+2. **Une passe accessibilité sur appareil** avec TalkBack et VoiceOver ;
+3. **Un relevé en console GCP** pour les restrictions de clés API
+   (`docs/evidence/security/api-key-restrictions.md`, encore à créer) et des
+   dashboards de surveillance — seuls volets encore entièrement hors
+   d'atteinte du code ;
+4. ~~**Une revue OWASP**~~ — **rédigée le 16/08**
+   (`docs/evidence/security/owasp-review.md`), dix catégories avec constat et
+   décision. Reste : assigner une échéance au seul volet reporté
+   (`unsafe-inline` dans la CSP) ;
+5. ~~**Un inventaire des secrets**~~ — **amorcé le 16/08**
+   (`docs/evidence/security/secrets-inventory.md`), 32 secrets recensés.
+   Reste : renseigner propriétaire et date de rotation pour chaque ligne,
+   deux colonnes qu'aucun fichier du dépôt ne porte ;
+6. **Dérouler les 18 points** dans l'ordre, en partant du point 2.
 
 ## Priorités consolidées
 
 | # | Action | Axe | Effort |
 |---|---|---|---|
-| 1 | Décharger le décodage JSON (`cities_compact.json`, fiches parcours) du thread UI | Perf | moyen |
-| 2 | Paralléliser le bootstrap réseau avant `runApp()` | Perf | moyen |
-| 3 | Corriger `brace-expansion` à la racine du dépôt (même correctif que `functions/`) | Sécurité | faible |
-| 4 | Dérouler les contrôles d'accessibilité restants (clavier, lecteur d'écran, responsive, états) | UI/UX | élevé (nécessite du test manuel/appareil) |
+| 1 | Décharger le décodage JSON (`cities_compact.json`, fiches parcours) du thread UI | Perf | **partiel, fait le 15/08** — cause de duplication corrigée (§1.3) ; format compact/indexé encore à faire |
+| 2 | Paralléliser le bootstrap réseau avant `runApp()` | Perf | **partiel, fait le 15/08** — Remote Config + état auth en parallèle (§1.2) ; App Check reste bloquant par nécessité |
+| 3 | ~~Corriger `brace-expansion`, puis les 16 modérées restantes~~ | Sécurité | **fait les 15 et 16/08** — 0 vulnérabilité sur les deux périmètres (§3.2 bis) |
+| 4 | ~~Dérouler les contrôles d'accessibilité restants (clavier, lecteur d'écran, responsive, états)~~ | UI/UX | **inventaire clavier/lecteur d'écran clos les 15 et 16/08** — 14 défauts corrigés + 1 doublon supprimé, 39→16 `GestureDetector`, revue des états sur 4/9 parcours (§2.2) ; le clavier/lecteur d'écran sur appareil réel et la matrice responsive restent hors d'atteinte du code, élevé |
 | 5 | Ré-exécuter une mesure de bundle et de runtime à jour (le dernier chiffre a un mois) | Perf | faible (CI existante) |
-| 6 | Réactiver `use_build_context_synchronously` à partir d'une sortie réelle de `flutter analyze` | Transverse | moyen |
-| 7 | Réactiver `avoid_print` pour verrouiller le correctif de journalisation | Sécurité/Transverse | faible |
-| 8 | Produire les livrables de preuve sécurité restants (clés API, inventaire secrets, revue OWASP) | Sécurité | moyen (documentaire) |
+| 6 | Réactiver `use_build_context_synchronously` à partir d'une sortie réelle de `flutter analyze` | Transverse | moyen — **reste ouvert**, seul point que le SDK absent empêche réellement de traiter ici |
+| 7 | ~~Réactiver `avoid_print`~~ | Sécurité/Transverse | **fait le 16/08** (§4) |
+| 8 | ~~Produire les livrables de preuve sécurité restants~~ | Sécurité | **partiel, fait le 16/08** — revue OWASP (§3.1) et inventaire de secrets rédigés ; il ne manque plus que propriétaire/dates/échéance, des faits organisationnels absents du dépôt. `api-keys-restricted` seul reste entièrement hors d'atteinte (console GCP) |
+| 9 | ~~Exclure les `.js.symbols` du déploiement~~ | Perf | **fait le 16/08** — `NOTICES` volontairement conservé (attribution de licences, §1.4) |
+| 10 | ~~Trancher le statut de `functions/lib/`~~ | Transverse | **fait le 16/08** — retiré du suivi git (`.gitignore`) : `firebase.json` porte un hook `predeploy` qui le reconstruit à chaque déploiement, aligné sur `/build/` déjà ignoré |
+| 11 | ~~Supprimer le code mort `CityRepoCompact` + widget associé~~ | Perf/Propreté | **fait le 16/08** — 231 lignes, dont la 3e copie non mémoïsée du chargement JSON (§1.3) |
+| 12 | ~~Rendre accessible le slide du carrousel hero~~ | UI/UX | **fait le 16/08** — paire slide + icône traitée ensemble (`accessibility-audit.md` §3bis) |
+| 13 | ~~Ignorer les artefacts générés par les gates~~ | Propreté | **fait le 16/08** — `mobile-readiness-report.json` et pages SEO générées ; l'arbre reste propre après régénération complète |
+| 14 | Compléter propriétaire/date de rotation dans l'inventaire de secrets | Sécurité | faible, mais **hors d'atteinte du code** — console GitHub/GCP |
+| 15 | Assigner une échéance au report de `'unsafe-inline'` (CSP) dans la revue OWASP | Sécurité | faible — **décision humaine**, pas une lecture de code |
 
 ## Sources
 

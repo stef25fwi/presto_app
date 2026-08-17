@@ -9,6 +9,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -36,7 +37,9 @@ import '../../utils/local_audio_preview_source_io.dart'
     if (dart.library.js_interop) '../../utils/local_audio_preview_source_web.dart';
 import '../../utils/open_attachment_file_web.dart'
     if (dart.library.io) '../../utils/open_attachment_file_io.dart';
+import '../../widgets/conversation_banner.dart';
 import '../../widgets/offer_network_image.dart';
+import '../../widgets/presto_tap_target.dart';
 import 'package:presto_app/services/auth_guard.dart';
 import 'package:presto_app/utils/profile_avatar_resolver.dart';
 import '../../utils/recording_path_web.dart'
@@ -45,6 +48,8 @@ import '../../utils/temp_file_helper_web.dart'
     if (dart.library.io) '../../utils/temp_file_helper_io.dart';
 import 'package:presto_app/widgets/deleted_user_profile.dart';
 import 'package:presto_app/pages/fiche_pro_page.dart';
+
+export '../../widgets/conversation_banner.dart' show ConversationBanner;
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -979,7 +984,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Widget _buildThreadAppBarTitle() {
-    return GestureDetector(
+    return PrestoTapTarget(
+      semanticLabel: 'Voir le profil de $headerDisplayName',
       onTap: _openOtherParticipantProfile,
       child: Row(
         children: [
@@ -3060,8 +3066,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           Positioned(
             top: -6,
             right: -6,
-            child: GestureDetector(
-              onTap: onDelete,
+            child: PrestoTapTarget(
+              semanticLabel: isDeleting
+                  ? 'Suppression de la pièce jointe en cours'
+                  : 'Supprimer la pièce jointe',
+              shape: const CircleBorder(),
+              onTap: isDeleting ? null : onDelete,
               child: Container(
                 width: 28,
                 height: 28,
@@ -3101,7 +3111,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           ? attachment.url
           : attachment.thumbnailUrl;
       return buildDeleteOverlay(
-        GestureDetector(
+        PrestoTapTarget(
+          semanticLabel: 'Voir la photo en plein écran',
           onTap: () => showGeneralDialog<void>(
             context: context,
             barrierDismissible: true,
@@ -3483,21 +3494,31 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       ),
     );
 
-    return GestureDetector(
-      onLongPress: onLongPress,
-      child: Align(
-        alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-        child: isMine
-            ? bubbleContent
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  buildOtherParticipantMessageAvatar(),
-                  const SizedBox(width: 4),
-                  Flexible(child: bubbleContent),
-                ],
-              ),
+    // Appui long sans équivalent clavier garanti : exposé aussi en action
+    // sémantique discrète (menu contextuel du message).
+    return Semantics(
+      customSemanticsActions: onLongPress == null
+          ? const <CustomSemanticsAction, VoidCallback>{}
+          : <CustomSemanticsAction, VoidCallback>{
+              const CustomSemanticsAction(label: 'Actions du message'):
+                  () => onLongPress(),
+            },
+      child: GestureDetector(
+        onLongPress: onLongPress,
+        child: Align(
+          alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+          child: isMine
+              ? bubbleContent
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    buildOtherParticipantMessageAvatar(),
+                    const SizedBox(width: 4),
+                    Flexible(child: bubbleContent),
+                  ],
+                ),
+        ),
       ),
     );
   }
@@ -4540,47 +4561,6 @@ enum _ConversationThreadAction {
   adminUnblock,
   delete,
   report,
-}
-
-class ConversationBanner extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String message;
-
-  const ConversationBanner({
-    super.key,
-    required this.icon,
-    required this.color,
-    required this.message,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: color.withValues(alpha: 0.20)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              message,
-              style: kPrestoMetaTextStyle.copyWith(
-                color: color,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class ConversationPatternBackground extends StatelessWidget {

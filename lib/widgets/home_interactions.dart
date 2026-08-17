@@ -35,13 +35,18 @@ class PrestoTapScale extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTap: onTap,
-      child: AnimatedScale(
-        scale: 1.0,
-        duration: const Duration(milliseconds: 120),
-        child: child,
+    // Widget réutilisable : InkWell fournit gratuitement le focus clavier,
+    // l'activation Entrée/Espace et la sémantique bouton à chaque usage,
+    // sans qu'un appelant ait à y penser individuellement.
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: onTap,
+        child: AnimatedScale(
+          scale: 1.0,
+          duration: const Duration(milliseconds: 120),
+          child: child,
+        ),
       ),
     );
   }

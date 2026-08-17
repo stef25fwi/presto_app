@@ -57,6 +57,10 @@ class CityEntry {
 }
 
 class CityPostalService {
+  /// Instance partagée : `cities_compact.json` (2,2 Mio) ne doit être
+  /// téléchargé/décodé qu'une seule fois par session, pas à chaque montage.
+  static final CityPostalService instance = CityPostalService();
+
   List<CityEntry>? _all;
 
   Future<void> init() async {
@@ -167,7 +171,7 @@ class CityPostalAutocompleteField extends StatefulWidget {
 
 class _CityPostalAutocompleteFieldState
     extends State<CityPostalAutocompleteField> {
-  final CityPostalService _localService = CityPostalService();
+  final CityPostalService _localService = CityPostalService.instance;
   final GeoApiGouvService _geoService = GeoApiGouvService();
 
   Timer? _debounce;
@@ -324,10 +328,8 @@ class _CityPostalAutocompleteFieldState
       final officialCity = selected.name.trim();
       if (officialCity.isEmpty) return;
 
-      // N'auto-remplir la ville depuis le CP que si :
-      // - le champ ville est vide, OU
-      // - la ville a été choisie via l'autocomplete (pas saisie manuellement).
-      // Cela évite d'écraser une correction manuelle de l'utilisateur.
+      // N'auto-remplir la ville que si le champ est vide ou n'a pas été
+      // saisi manuellement, pour ne pas écraser une correction utilisateur.
       final currentCity = widget.cityController.text.trim();
       final canOverwriteCity = currentCity.isEmpty || !_cityEnteredManually;
 
@@ -405,10 +407,8 @@ class _CityPostalAutocompleteFieldState
   Future<void> _applySelection(CityEntry c) async {
     await _localService.init();
 
-    // Résoudre vers l'entrée locale correspondante pour garantir que le nom
-    // stocké dans le contrôleur correspond au document seedé en Firestore.
-    // Exemple : geo.api.gouv renvoie "Paris 1er Arrondissement" mais le seed
-    // utilise "PARIS 01" → cityId "75001_paris-01" (seul document existant).
+    // Résoudre vers l'entrée locale pour garantir que le nom stocké dans le
+    // contrôleur correspond au document seedé en Firestore.
     final primaryCp = c.cps.isNotEmpty ? c.cps.first : '';
     final resolved =
         _localService.findByPostalCode(primaryCp, dept: c.dept) ?? c;

@@ -115,3 +115,22 @@ android/app/build/
 
 # Corpus IA synthétique régénéré par npm --prefix functions run ai:eval:media
 functions/evals/media/
+
+# Artefacts régénérés par les gates qualité et le générateur SEO.
+# Sans ces lignes, toute exécution locale de `node tools/quality/check_*.mjs`
+# ou du générateur salit l'arbre de travail avec des fichiers non suivis,
+# alors que la CI les reproduit systématiquement avant de les valider
+# (voir l'étape « Generate programmatic local SEO pages » de deploy.yml).
+/mobile-readiness-report.json
+/web/sitemap-local.xml
+/web/missions/
+/web/services/
+
+# Build output des Cloud Functions (tsc). firebase.json porte un hook
+# `predeploy` (npm --prefix "$RESOURCE_DIR" run build) qui reconstruit lib/
+# à chaque `firebase deploy --only functions`, CI ou local : rien ne consomme
+# jamais la version commitée. La conserver en historique ne faisait que
+# dériver silencieusement de src/ (13 fichiers compilés manquants constatés
+# le 16/08) et salir les revues d'une centaine de fichiers générés à chaque
+# `npm test`. Alignée sur /build/ (équivalent Flutter web), déjà ignoré.
+/functions/lib/

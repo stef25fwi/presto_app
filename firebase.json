@@ -30,7 +30,9 @@
       "ignore": [
         "firebase.json",
         "**/.*",
-        "**/node_modules/**"
+        "**/node_modules/**",
+        "**/*.js.symbols",
+        "**/*.wasm.symbols"
       ],
       "headers": [
         {
@@ -382,7 +384,9 @@
       "ignore": [
         "firebase.json",
         "**/.*",
-        "**/node_modules/**"
+        "**/node_modules/**",
+        "**/*.js.symbols",
+        "**/*.wasm.symbols"
       ],
       "headers": [
         {

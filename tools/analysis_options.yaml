@@ -1,0 +1,11 @@
+# Outillage de développement exécuté à la main : la sortie standard est
+# l'interface de sortie prévue, `print` y est donc l'appel correct.
+#
+# La règle `avoid_print` reste active sur `lib/`, où un `print` non neutralisé
+# écrirait dans logcat en production — c'est là qu'est l'enjeu de conformité,
+# voir docs/audit/audit-qualite-code-playstore-2026-08-15.md §1.
+include: ../analysis_options.yaml
+
+linter:
+  rules:
+    avoid_print: false

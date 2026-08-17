@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
 
 import '../models/hero_slide.dart';
+import 'hero_media_fallbacks.dart';
+import 'presto_tap_target.dart';
 
 double _responsiveHeroHeightForWidth(double width) {
   final factor = width < 360 ? 0.62 : (width < 700 ? 0.54 : 0.38);
@@ -358,7 +360,10 @@ class _MuteToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return PrestoTapTarget(
+      toggled: isMuted,
+      semanticLabel: isMuted ? 'Activer le son' : 'Couper le son',
+      shape: const CircleBorder(),
       onTap: onToggle,
       child: Container(
         width: 30,
@@ -471,20 +476,20 @@ class _HeroMediaSlideViewState extends State<_HeroMediaSlideView> {
         height: double.infinity,
         alignment: widget.slide.focalAlignment,
         filterQuality: FilterQuality.high,
-        errorBuilder: (_, __, ___) => const _HeroMediaErrorFallback(),
+        errorBuilder: (_, __, ___) => const HeroMediaErrorFallback(),
         frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
           if (wasSynchronouslyLoaded || frame != null) return child;
-          return const _HeroMediaLoadingFallback();
+          return const HeroMediaLoadingFallback();
         },
       );
     }
 
     final controller = _videoController;
     if (_hasVideoError) {
-      return const _HeroMediaErrorFallback();
+      return const HeroMediaErrorFallback();
     }
     if (controller == null || !controller.value.isInitialized) {
-      return const _HeroMediaLoadingFallback();
+      return const HeroMediaLoadingFallback();
     }
 
     return SizedBox.expand(
@@ -497,43 +502,6 @@ class _HeroMediaSlideViewState extends State<_HeroMediaSlideView> {
           height: controller.value.size.height,
           child: VideoPlayer(controller),
         ),
-      ),
-    );
-  }
-}
-
-class _HeroMediaLoadingFallback extends StatelessWidget {
-  const _HeroMediaLoadingFallback();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.transparent,
-      alignment: Alignment.center,
-      child: const SizedBox(
-        width: 24,
-        height: 24,
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          color: Color(0xFF1A73E8),
-        ),
-      ),
-    );
-  }
-}
-
-class _HeroMediaErrorFallback extends StatelessWidget {
-  const _HeroMediaErrorFallback();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFFF6600),
-      alignment: Alignment.center,
-      child: const Icon(
-        Icons.image_not_supported_outlined,
-        color: Colors.white,
-        size: 34,
       ),
     );
   }

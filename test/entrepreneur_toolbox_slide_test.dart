@@ -45,10 +45,10 @@ void main() {
     expect(find.byType(PrestoInfoIconAnimated), findsNothing);
     expect(observer.pushCount, 1);
 
-    final rootGesture = tester.widget<GestureDetector>(
+    final rootGesture = tester.widget<InkWell>(
       find.ancestor(
         of: find.text("Boite a outils de l'entrepreneur"),
-        matching: find.byType(GestureDetector),
+        matching: find.byType(InkWell),
       ).first,
     );
     expect(rootGesture.onTap, isNotNull);

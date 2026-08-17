@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
 import '../app/typography_settings.dart';
 import '../constants.dart';
+import '../widgets/presto_info_pill.dart';
+import '../widgets/presto_tap_target.dart';
 
 const _prestoBlue = Color(0xFF1A73E8);
 const _prestoOrange = Color(0xFFFF6600);
@@ -258,12 +261,12 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
             spacing: 10,
             runSpacing: 10,
             children: [
-              _buildInfoPill('Police', typographySettings.fontFamily),
-              _buildInfoPill(
+              PrestoInfoPill('Police', typographySettings.fontFamily),
+              PrestoInfoPill(
                 'Taille',
                 '${(typographySettings.scale * 100).round()}%',
               ),
-              _buildInfoPill(
+              PrestoInfoPill(
                 'Graisse',
                 _weightLabel(typographySettings.fontWeightDelta),
               ),
@@ -333,32 +336,6 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildInfoPill(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFD7DEE8)),
-      ),
-      child: RichText(
-        text: TextSpan(
-          style: const TextStyle(color: Color(0xFF0F172A), fontSize: 12),
-          children: [
-            TextSpan(
-              text: '$label: ',
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-            TextSpan(
-              text: value,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -547,7 +524,8 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
               hintText: '🔍 Rechercher une police...',
               prefixIcon: const Icon(Icons.search_rounded, size: 18),
               suffixIcon: _searchController.text.isNotEmpty
-                  ? GestureDetector(
+                  ? PrestoTapTarget(
+                      semanticLabel: 'Effacer la recherche',
                       onTap: () {
                         _searchController.clear();
                         setState(() {});
@@ -590,44 +568,53 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
                 final isSelected = _selectedFont == font;
                 final isDefault = font == 'Inter';
 
+                void deleteFont() {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Supprimer la police ?'),
+                      content: Text(
+                        'Êtes-vous sûr de vouloir supprimer "$font" ?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Annuler'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            _removeFont(font);
+                          },
+                          child: const Text('Supprimer',
+                              style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
                 return Tooltip(
                   message: isDefault
                       ? 'Police par défaut'
                       : 'Cliquer pour sélectionner',
-                  child: GestureDetector(
+                  child: PrestoTapTarget(
+                    selected: isSelected,
+                    borderRadius: BorderRadius.circular(20),
+                    customSemanticsActions: isDefault
+                        ? null
+                        : <CustomSemanticsAction, VoidCallback>{
+                            const CustomSemanticsAction(
+                              label: 'Supprimer la police',
+                            ): deleteFont,
+                          },
                     onTap: () {
                       setState(() => _selectedFont = font);
                       _updateIsModified();
                       _showSnackbar(
                           '✅ Police "$font" sélectionnée', Colors.blue);
                     },
-                    onLongPress: !isDefault
-                        ? () {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: const Text('Supprimer la police ?'),
-                                content: Text(
-                                  'Êtes-vous sûr de vouloir supprimer "$font" ?',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx),
-                                    child: const Text('Annuler'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(ctx);
-                                      _removeFont(font);
-                                    },
-                                    child: const Text('Supprimer',
-                                        style: TextStyle(color: Colors.red)),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-                        : null,
+                    onLongPress: !isDefault ? deleteFont : null,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import 'fiche_pro_form_widgets.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -16,6 +17,7 @@ import '../services/user_profile_bootstrap_service.dart';
 import '../utils/friendly_snackbar.dart';
 import '../utils/offer_helpers.dart';
 import '../utils/profile_avatar_resolver.dart';
+import '../widgets/presto_save_footer_button.dart';
 import 'offers/offer_details_page.dart';
 
 const Color _kOrange = Color(0xFFFF6600);
@@ -922,38 +924,10 @@ class _FicheProPageState extends State<FicheProPage> {
   }
 
   Widget _buildSaveButton() {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: SizedBox(
-          height: 54,
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _kOrange,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-              elevation: 0,
-            ),
-            onPressed: _isSaving ? null : _save,
-            icon: _isSaving
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Icon(Icons.save_rounded),
-            label: Text(
-              _isSaving ? 'Enregistrement…' : 'Enregistrer ma fiche',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-            ),
-          ),
-        ),
-      ),
+    return PrestoSaveFooterButton(
+      isSaving: _isSaving,
+      onSave: _save,
+      label: 'Enregistrer ma fiche',
     );
   }
 
@@ -1203,7 +1177,19 @@ class _FicheProPageState extends State<FicheProPage> {
                                       const SizedBox(width: 8),
                                   itemBuilder: (ctx, i) {
                                     final url = _realisations[i];
-                                    return GestureDetector(
+                                    // Appui long : aussi exposé en action
+                                    // sémantique discrète (pas d'équivalent
+                                    // clavier garanti).
+                                    return Semantics(
+                                      customSemanticsActions: !widget.isOwner
+                                          ? null
+                                          : <CustomSemanticsAction,
+                                              VoidCallback>{
+                                              const CustomSemanticsAction(
+                                                label: 'Supprimer la photo',
+                                              ): () => _deleteRealisation(url),
+                                            },
+                                      child: GestureDetector(
                                       onLongPress: widget.isOwner
                                           ? () => _deleteRealisation(url)
                                           : null,
@@ -1217,6 +1203,7 @@ class _FicheProPageState extends State<FicheProPage> {
                                           fit: BoxFit.cover,
                                         ),
                                       ),
+                                    ),
                                     );
                                   },
                                 ),

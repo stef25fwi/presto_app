@@ -68,10 +68,17 @@ class _HomeBottomNavItemState extends State<HomeBottomNavItem>
     final String? badgeLabel =
         widget.badgeCount <= 0 ? null : widget.badgeCount.toString();
 
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTap: widget.onTap,
-      child: Padding(
+    return Semantics(
+      button: true,
+      selected: widget.selected,
+      label: badgeLabel == null
+          ? widget.label
+          : '${widget.label}, $badgeLabel non lus',
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: widget.onTap,
+          child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: SizedBox(
           height: _iconSlotHeight + 3 + _labelSlotHeight,
@@ -175,6 +182,8 @@ class _HomeBottomNavItemState extends State<HomeBottomNavItem>
               ),
             ],
           ),
+        ),
+      ),
         ),
       ),
     );

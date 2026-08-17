@@ -1,7 +1,7 @@
 import 'dart:async' as async;
 
 import 'package:flutter/foundation.dart'
-    show kDebugMode, kIsWeb, kReleaseMode, defaultTargetPlatform;
+    show kDebugMode, kIsWeb, kReleaseMode, debugPrint, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:presto_app/widgets/ad_config.dart';
@@ -140,7 +140,7 @@ class _AdBannerState extends State<AdBanner> {
         },
         onAdFailedToLoad: (ad, _) => ad.dispose(),
         onAdOpened: (_) {
-          if (kDebugMode) print('Ad opened');
+          if (kDebugMode) debugPrint('Ad opened');
         },
         onAdClosed: (ad) => ad.dispose(),
       ),
@@ -148,7 +148,7 @@ class _AdBannerState extends State<AdBanner> {
     try {
       await ad.load();
     } catch (error) {
-      if (kDebugMode) print('Ad load error: $error');
+      if (kDebugMode) debugPrint('Ad load error: $error');
     }
   }
 
