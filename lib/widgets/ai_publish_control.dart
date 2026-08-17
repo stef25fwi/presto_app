@@ -228,9 +228,17 @@ class _MethodTabButton extends StatelessWidget {
     final foreground =
         alwaysSelected || selected ? Colors.white : const Color(0xFF111827);
 
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: AnimatedOpacity(
+    return Semantics(
+      button: true,
+      selected: selected,
+      enabled: enabled,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: enabled ? onTap : null,
+          child: AnimatedOpacity(
         opacity: enabled ? 1 : 0.72,
         duration: const Duration(milliseconds: 180),
         child: AnimatedContainer(
@@ -291,6 +299,8 @@ class _MethodTabButton extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
           ),
         ),
       ),
@@ -385,11 +395,23 @@ class _VocalModeCard extends StatelessWidget {
               const SizedBox(height: 16),
               CompositedTransformTarget(
                 link: micAnchorLink,
-                child: GestureDetector(
-                  onTap: _isAnalyzing
-                      ? null
-                      : (_isRecording ? onStopRecording : onStartRecording),
-                  child: AnimatedContainer(
+                child: Semantics(
+                  button: true,
+                  enabled: !_isAnalyzing,
+                  label: _isRecording
+                      ? 'Arrêter l\'enregistrement'
+                      : (_isAnalyzing
+                          ? 'Analyse de l\'enregistrement en cours'
+                          : 'Démarrer l\'enregistrement vocal'),
+                  child: Material(
+                    color: Colors.transparent,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: _isAnalyzing
+                          ? null
+                          : (_isRecording ? onStopRecording : onStartRecording),
+                      child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     width: 68,
                     height: 68,
@@ -415,6 +437,8 @@ class _VocalModeCard extends StatelessWidget {
                       _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
                       color: Colors.white,
                       size: 32,
+                    ),
+                  ),
                     ),
                   ),
                 ),
@@ -488,7 +512,11 @@ class AiWritingButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: "Remplir les champs avec l'IA",
-      child: GestureDetector(
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
@@ -541,6 +569,7 @@ class AiWritingButton extends StatelessWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

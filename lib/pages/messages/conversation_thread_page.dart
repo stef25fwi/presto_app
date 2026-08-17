@@ -979,9 +979,18 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Widget _buildThreadAppBarTitle() {
-    return GestureDetector(
-      onTap: _openOtherParticipantProfile,
-      child: Row(
+    // Semantics + InkWell (plutôt qu'un GestureDetector nu) : ouvert sur
+    // chaque conversation, ce titre d'AppBar devient atteignable au clavier
+    // et annoncé une seule fois par son nom, au lieu de deux Text lus
+    // séparément sans rôle — voir docs/design/design-system.md.
+    return Semantics(
+      button: true,
+      label: 'Voir le profil de $headerDisplayName',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _openOtherParticipantProfile,
+          child: Row(
         children: [
           CircleAvatar(
             radius: 18,
@@ -1036,6 +1045,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             ),
           ),
         ],
+          ),
+        ),
       ),
     );
   }
@@ -3060,35 +3071,46 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           Positioned(
             top: -6,
             right: -6,
-            child: GestureDetector(
-              onTap: onDelete,
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: isDeleting ? Colors.grey : Colors.red,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: isDeleting
-                    ? const Padding(
-                        padding: EdgeInsets.all(6),
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+            child: Semantics(
+              button: true,
+              label: isDeleting
+                  ? 'Suppression de la pièce jointe en cours'
+                  : 'Supprimer la pièce jointe',
+              child: Material(
+                color: Colors.transparent,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  onTap: isDeleting ? null : onDelete,
+                  customBorder: const CircleBorder(),
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: isDeleting ? Colors.grey : Colors.red,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
-                      )
-                    : const Icon(
-                        Icons.delete_rounded,
-                        color: Colors.white,
-                        size: 16,
-                      ),
+                      ],
+                    ),
+                    child: isDeleting
+                        ? const Padding(
+                            padding: EdgeInsets.all(6),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.delete_rounded,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -3101,7 +3123,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           ? attachment.url
           : attachment.thumbnailUrl;
       return buildDeleteOverlay(
-        GestureDetector(
+        Semantics(
+          button: true,
+          label: 'Voir la photo en plein écran',
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
           onTap: () => showGeneralDialog<void>(
             context: context,
             barrierDismissible: true,
@@ -3204,6 +3231,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             ),
           ),
         ),
+            ),
+          ),
       );
     }
 
@@ -3483,21 +3512,34 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       ),
     );
 
-    return GestureDetector(
-      onLongPress: onLongPress,
-      child: Align(
-        alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-        child: isMine
-            ? bubbleContent
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  buildOtherParticipantMessageAvatar(),
-                  const SizedBox(width: 4),
-                  Flexible(child: bubbleContent),
-                ],
-              ),
+    // Un appui long n'a pas d'équivalent clavier ni de geste garanti chez
+    // tous les lecteurs d'écran. `CustomSemanticsAction` expose la même
+    // action (menu contextuel du message) comme une action discrète et
+    // annoncée, sans changer le geste tactile existant — c'est le mécanisme
+    // que Flutter prévoit précisément pour ce cas.
+    return Semantics(
+      customSemanticsActions: onLongPress == null
+          ? const <CustomSemanticsAction, VoidCallback>{}
+          : <CustomSemanticsAction, VoidCallback>{
+              const CustomSemanticsAction(label: 'Actions du message'):
+                  () => onLongPress(),
+            },
+      child: GestureDetector(
+        onLongPress: onLongPress,
+        child: Align(
+          alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+          child: isMine
+              ? bubbleContent
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    buildOtherParticipantMessageAvatar(),
+                    const SizedBox(width: 4),
+                    Flexible(child: bubbleContent),
+                  ],
+                ),
+        ),
       ),
     );
   }

@@ -3197,12 +3197,19 @@ class _AdvertiserContactCard extends StatelessWidget {
           ),
           child: Column(
             children: [
-              GestureDetector(
-                onTap: () => _openProfile(context),
-                child: _AdvertiserHeaderLine(
-                  advertiserName: data.advertiserName,
-                  verified: data.verified,
-                  compact: compact,
+              Semantics(
+                button: true,
+                label: 'Voir le profil de ${data.advertiserName}',
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => _openProfile(context),
+                    child: _AdvertiserHeaderLine(
+                      advertiserName: data.advertiserName,
+                      verified: data.verified,
+                      compact: compact,
+                    ),
+                  ),
                 ),
               ),
               _AdvertiserMetaLine(
@@ -3909,22 +3916,28 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
               Flexible(
                 child: Align(
                   alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: canRequestReveal ? _handlePhoneVisibility : null,
-                    behavior: HitTestBehavior.opaque,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        displayedValue,
-                        maxLines: 1,
-                        softWrap: false,
-                        textAlign: TextAlign.right,
-                        style: TextStyle(
-                          color: navy,
-                          fontSize: widget.compact ? 15 : 16,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.15,
+                  child: Semantics(
+                    button: canRequestReveal,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap:
+                            canRequestReveal ? _handlePhoneVisibility : null,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            displayedValue,
+                            maxLines: 1,
+                            softWrap: false,
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              color: navy,
+                              fontSize: widget.compact ? 15 : 16,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.15,
+                            ),
+                          ),
                         ),
                       ),
                     ),

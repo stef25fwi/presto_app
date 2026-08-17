@@ -15,8 +15,8 @@ Ce document distingue les fondations techniques déjà démontrées des validati
 |---|---|---|---|
 | Design system centralisé | Fondation complète | Tokens, thème, documentation, tests | Vérifiable après CI |
 | Contrastes WCAG AA | Couples officiels testés | Calcul automatisé et couples documentés | Vérifiable après CI |
-| Navigation clavier et focus | Fondation partielle + 1 correctif ponctuel (15/08) | Traversée Tab sur composants standards ; `home_page.dart` §3bis | Reste ouvert |
-| Lecteur d’écran et sémantique | Présence ponctuelle + 1 correctif ponctuel (15/08) | Plusieurs widgets utilisent `Semantics` ; `home_page.dart` §3bis | Reste ouvert |
+| Navigation clavier et focus | Fondation partielle + 10 correctifs ciblés (15 et 16/08) | Traversée Tab sur composants standards ; §3bis, 6 écrans passés en revue | Reste ouvert |
+| Lecteur d’écran et sémantique | Présence ponctuelle + 10 correctifs ciblés (15 et 16/08) | Plusieurs widgets utilisent `Semantics` ; §3bis | Reste ouvert |
 | Cibles tactiles | Fondation globale 48 px | Thèmes boutons, icônes et listes + tests | Vérifiable après CI |
 | Responsive et texte agrandi | Fondation partielle | Breakpoints + test générique 320 px / 200 % | Reste ouvert |
 | États loading, empty et error | Revue partielle (4/9 parcours, 15/08) | §7bis : messagerie, compte, publication, consultation d'offres | Reste ouvert |
@@ -151,7 +151,7 @@ double annonce. Le correctif traite la paire :
 - l'icône conserve son tap (confort à la souris) mais passe sous
   `ExcludeSemantics` → plus de doublon dans l'arbre d'accessibilité.
 
-### Occurrences restantes (pistes non traitées)
+### Occurrences dans `home_page.dart` non retenues comme défauts
 
 | Ligne | Rôle | Estimation |
 |---:|---|---|
@@ -159,16 +159,66 @@ double annonce. Le correctif traite la paire :
 | ~1188 | Swipe horizontal du carrousel hero (`onHorizontalDragEnd`) | **Hors périmètre de la règle** : c'est un geste de défilement, pas une action `onTap`. Des indicateurs de pagination existent déjà |
 | ~1595 | Appui long de diagnostic (`_seedSampleOffers`) | Outil de développement, non destiné à l'utilisateur final |
 
-`lib/` compte désormais **37 `GestureDetector`** répartis sur 21 fichiers
-(39 avant les deux correctifs). Les 32 hors `home_page.dart`
-(`conversation_thread_page.dart` ×4, `ai_publish_control.dart` ×3,
-`admin/ad_placeholder_images_admin_page.dart` ×4, `offer_details_page.dart`
-×2, `account_page.dart` ×2, `admin_typography_page.dart` ×2,
-`hero_media_slider.dart` ×2, et 13 fichiers à 1 occurrence) n'ont pas été
-examinées. Elles restent une piste de travail pour la suite du §3, pas un
-constat — et l'enseignement des deux corrections faites est qu'il faut
-regarder la **paire parent/enfant** avant de conclure, un `GestureDetector`
-isolé ne disant rien de son contexte.
+### Passe étendue — 8 défauts supplémentaires corrigés le 16/08
+
+Poursuite systématique de la revue sur les fichiers qui restaient comme
+pistes. Six écrans examinés en entier (pas seulement les occurrences
+trouvées par grep), avec vérification d'équilibrage de parenthèses sur
+chaque fichier entier (comparé à sa version `HEAD` avant modification, pas
+seulement sur l'extrait modifié) avant de committer.
+
+| Fichier | Constat | Correctif |
+|---|---|---|
+| `conversation_thread_page.dart` — titre d'AppBar | Nom + avatar du contact, ouvrant son profil, sans sémantique ni clavier. Ouvert sur **chaque** conversation | `Semantics(button, label: nom)` + `Material`/`InkWell` |
+| `conversation_thread_page.dart` — bouton supprimer pièce jointe | Icône 28 px sans rôle ni clavier ; le tap restait actif pendant la suppression en cours | `Semantics(button, label)` + `InkWell` ; `onTap` désormais désactivé (`null`) tant que `isDeleting` — corrige au passage un double-tap possible |
+| `conversation_thread_page.dart` — aperçu photo plein écran | Ouverture d'un visualiseur d'image sans rôle ni clavier | `Semantics(button, label: 'Voir la photo en plein écran')` + `InkWell` |
+| `conversation_thread_page.dart` — bulle de message (appui long) | Menu contextuel (copier/supprimer/réagir) accessible uniquement par appui long, sans équivalent clavier ni lecteur d'écran garanti | `CustomSemanticsAction` exposant la même action comme action discrète annoncée — le geste tactile reste inchangé, c'est le mécanisme prévu par Flutter pour ce cas précis |
+| `offer_details_page.dart` — en-tête annonceur | Nom de l'annonceur, tap ouvrant son profil, sans rôle ni clavier | `Semantics(button, label)` + `Material`/`InkWell` |
+| `offer_details_page.dart` — révéler le téléphone | CTA de contact principal de la fiche, désactivé conditionnellement (`canRequestReveal`) mais sans état accessible correspondant | `Semantics(button: canRequestReveal)` + `InkWell` (même garde sur `onTap`, donc même état pour tous les utilisateurs) |
+| `ai_publish_control.dart` — sélecteur de mode (Texte+IA / IA vocale) | Bascule d'onglet sans rôle ni état `selected` exposé | `Semantics(button, selected, enabled, label)` + `InkWell` |
+| `ai_publish_control.dart` — bouton microphone | Le contrôle le plus sollicité du flux micro-IA (démarrer/arrêter l'enregistrement), sans rôle ni libellé d'état | `Semantics(button, enabled: !_isAnalyzing, label)` reflétant l'état (« Démarrer… » / « Arrêter… » / « Analyse en cours ») + `InkWell` |
+| `ai_publish_control.dart` — bouton « Remplir avec l'IA » | `Tooltip` déjà présent (label lu par les lecteurs d'écran via sa sémantique intégrée) mais pas de focus clavier | `InkWell` ajouté sous le `Tooltip` existant, sans dupliquer son libellé |
+| `fiche_pro_page.dart` — suppression d'une photo de réalisation (appui long) | Même défaut que la bulle de message : action réservée au propriétaire, accessible seulement par appui long | `CustomSemanticsAction`, gardée par `widget.isOwner` |
+| `toolbox_je_me_lance_page.dart` — sélecteur de région | Champ de type « picker » (« Choisir votre région... ») sans rôle ni clavier | `Semantics(button, label)` reflétant la région choisie ou son absence + `InkWell` |
+
+**Un doublon trouvé et supprimé, pas corrigé** : `conversations_list_page.dart`,
+avatar de conversation. Même défaut que la carte du carrousel d'accueil (§3
+ci-dessus) — la ligne entière est déjà un `Material`/`InkWell` qui ouvre la
+même conversation (`openConversation()`), et l'avatar portait un second
+`GestureDetector` appelant exactement le même callback, sans retour visuel
+ni ajout fonctionnel. Retiré plutôt que rendu accessible en double : il n'y
+avait rien à rendre accessible, l'avatar répond déjà au tap via l'`InkWell`
+ambiant de la ligne. Confirme le motif déjà observé sur la carte du
+carrousel — un `GestureDetector` isolé ne se lit jamais sans vérifier s'il
+duplique un geste déjà géré par un parent.
+
+`account_page.dart` (2 occurrences) et `consult_offers_page.dart`/
+`publish_offer_page.dart` réexaminés : confirmé motif « fermer le clavier au
+tap en dehors », hors périmètre de la règle — aucun correctif.
+
+### Bilan chiffré
+
+`lib/` compte désormais **27 `GestureDetector`**, contre 39 au 15/08 (37
+après la première passe) : 8 convertis en `Semantics`+`InkWell`, 2 conservés
+en `GestureDetector` mais dotés d'un `CustomSemanticsAction`, 1 supprimé
+comme doublon. Fichiers encore non examinés : `admin/ad_placeholder_images_admin_page.dart`
+(×4, hors périmètre « parcours principal utilisateur »), `hero_media_slider.dart`
+(×2), `admin_typography_page.dart` (×2), et 9 fichiers à 1 occurrence
+(`typography_floating_panel.dart`, `premium_info_button.dart`,
+`offline_banner.dart`, `home_interactions.dart`, `home_bottom_nav_item.dart`,
+`entrepreneur_toolbox_slide.dart`, `publish_offer_page.dart` — le second,
+hors du scrim déjà vérifié —, `public_prelaunch_page.dart`,
+`admin_hero_slides_page.dart`). Ce sont désormais des pages secondaires ou
+d'administration, pas des parcours principaux — la priorité de cette revue
+a délibérément suivi le trafic (accueil, messagerie, publication,
+consultation, Je me lance) plutôt que l'ordre alphabétique.
+
+**Non vérifié en runtime** pour l'ensemble de cette passe (SDK Flutter
+indisponible dans ce sandbox) : chaque fichier a été revérifié par
+équilibrage de parenthèses/accolades/crochets contre sa version `HEAD`
+avant modification, et les tests existants référençant ces widgets ont été
+relus pour écarter un risque de rupture (aucun ne cible `find.byType(GestureDetector)`
+sur les zones modifiées). La confirmation définitive reste la CI.
 
 ## 4. Lecteur d’écran et sémantique
 

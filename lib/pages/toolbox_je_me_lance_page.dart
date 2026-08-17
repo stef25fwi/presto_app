@@ -2596,7 +2596,16 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             "Ta région personnalise les aides, les contacts et ton plan d'action.",
           ),
           const SizedBox(height: 14),
-          GestureDetector(
+          Semantics(
+            button: true,
+            label: _region.isNotEmpty
+                ? 'Région : $_region. Modifier'
+                : 'Choisir votre région',
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(14),
+              child: InkWell(
+            borderRadius: BorderRadius.circular(14),
             onTap: () => _showRegionPicker(regions),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
@@ -2631,6 +2640,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                   ),
                   Icon(Icons.expand_more, color: Colors.grey.shade600),
                 ],
+              ),
+            ),
               ),
             ),
           ),

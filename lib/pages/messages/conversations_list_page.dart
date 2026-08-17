@@ -2018,25 +2018,29 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
                                                 children: [
-                                                  GestureDetector(
-                                                    onTap: () => unawaited(
-                                                      openConversation(),
+                                                  // Pas de GestureDetector
+                                                  // ici : la ligne entière
+                                                  // est déjà un InkWell qui
+                                                  // ouvre la même
+                                                  // conversation (l. ~1978).
+                                                  // Un second onTap sur
+                                                  // l'avatar dupliquait le
+                                                  // même geste sans retour
+                                                  // visuel — voir
+                                                  // docs/evidence/ux/accessibility-audit.md §3bis.
+                                                  _ConversationAvatar(
+                                                    title: title,
+                                                    userId: otherParticipantId,
+                                                    enableUserLookup:
+                                                        _isAdminViewer,
+                                                    fallbackColor:
+                                                        _avatarColorForKey(
+                                                      otherParticipantId
+                                                              .isNotEmpty
+                                                          ? otherParticipantId
+                                                          : conversation.id,
                                                     ),
-                                                    child: _ConversationAvatar(
-                                                      title: title,
-                                                      userId:
-                                                          otherParticipantId,
-                                                      enableUserLookup:
-                                                          _isAdminViewer,
-                                                      fallbackColor:
-                                                          _avatarColorForKey(
-                                                        otherParticipantId
-                                                                .isNotEmpty
-                                                            ? otherParticipantId
-                                                            : conversation.id,
-                                                      ),
-                                                      unreadCount: unreadCount,
-                                                    ),
+                                                    unreadCount: unreadCount,
                                                   ),
                                                   const SizedBox(width: 12),
                                                   Expanded(

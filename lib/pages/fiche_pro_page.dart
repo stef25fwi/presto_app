@@ -1203,7 +1203,22 @@ class _FicheProPageState extends State<FicheProPage> {
                                       const SizedBox(width: 8),
                                   itemBuilder: (ctx, i) {
                                     final url = _realisations[i];
-                                    return GestureDetector(
+                                    // CustomSemanticsAction expose la
+                                    // suppression comme une action discrète
+                                    // pour les lecteurs d'écran : l'appui
+                                    // long n'a pas d'équivalent clavier ni
+                                    // de geste garanti partout.
+                                    return Semantics(
+                                      customSemanticsActions: !widget.isOwner
+                                          ? const <CustomSemanticsAction,
+                                              VoidCallback>{}
+                                          : <CustomSemanticsAction,
+                                              VoidCallback>{
+                                              const CustomSemanticsAction(
+                                                label: 'Supprimer la photo',
+                                              ): () => _deleteRealisation(url),
+                                            },
+                                      child: GestureDetector(
                                       onLongPress: widget.isOwner
                                           ? () => _deleteRealisation(url)
                                           : null,
@@ -1217,6 +1232,7 @@ class _FicheProPageState extends State<FicheProPage> {
                                           fit: BoxFit.cover,
                                         ),
                                       ),
+                                    ),
                                     );
                                   },
                                 ),
