@@ -27,6 +27,8 @@ jobs:
         run: node tools/quality/check_programmatic_local_seo.mjs
       - name: Test positive local SEO activation
         run: node tools/seo/programmatic_local_activation_contract.test.mjs
+      - name: Test multi-postal local SEO rendering
+        run: node tools/seo/programmatic_multi_postal_contract.test.mjs
       - name: Validate production signal collector
         run: node tools/quality/check_programmatic_signal_collector.mjs
       - name: Validate public marketplace SEO
