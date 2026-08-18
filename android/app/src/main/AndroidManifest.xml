@@ -18,12 +18,8 @@
         <meta-data
             android:name="firebase_analytics_collection_enabled"
             android:value="false"/>
-        <!-- Delay Google Mobile Ads app measurement until AdsConsentService
-             initializes the SDK after iliprestō marketing consent + UMP. -->
-        <meta-data
-            android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT"
-            android:value="true"/>
-        <!-- Google Mobile Ads App ID -->
+        <!-- Google Mobile Ads App ID. AdsConsentService controls UMP and does
+             not initialize Mobile Ads until ad requests are allowed. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-1792076968124623~9761142816"/>
