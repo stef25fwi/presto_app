@@ -8,6 +8,7 @@ import '../constants.dart';
 import '../features/operating_mode/app_operating_mode.dart';
 import '../features/operating_mode/legal_documents.dart';
 import '../platform/public_prelaunch_shell.dart';
+import '../services/ads_consent_service.dart';
 import '../services/public_landing_config_service.dart';
 
 class LegalInfoPage extends StatefulWidget {
@@ -140,6 +141,9 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
         builder: (context, snapshot) {
           final state = snapshot.data ?? AppOperatingModeState.defaults();
           final sections = _sections(state, effectiveTab);
+          final showAdsPrivacyOptions = effectiveTab == 1 && !kIsWeb;
+          final extraItems = showAdsPrivacyOptions ? 2 : 1;
+
           return SafeArea(
             top: false,
             child: Column(
@@ -153,12 +157,19 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
                 Expanded(
                   child: ListView.separated(
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 28),
-                    itemCount: sections.length + 1,
+                    itemCount: sections.length + extraItems,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
-                      if (index == sections.length) {
+                      if (showAdsPrivacyOptions && index == sections.length) {
+                        return const _AdsPrivacyOptionsCard();
+                      }
+
+                      final contactIndex =
+                          sections.length + (showAdsPrivacyOptions ? 1 : 0);
+                      if (index == contactIndex) {
                         return _ContactCard(email: state.publisher.email);
                       }
+
                       final section = sections[index];
                       return _SectionCard(
                         section: section,
@@ -374,6 +385,110 @@ class _SectionCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AdsPrivacyOptionsCard extends StatefulWidget {
+  const _AdsPrivacyOptionsCard();
+
+  @override
+  State<_AdsPrivacyOptionsCard> createState() =>
+      _AdsPrivacyOptionsCardState();
+}
+
+class _AdsPrivacyOptionsCardState extends State<_AdsPrivacyOptionsCard> {
+  bool _opening = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(AdsConsentService.instance.refreshPrivacyState());
+  }
+
+  Future<void> _openPrivacyOptions() async {
+    if (_opening) return;
+    setState(() => _opening = true);
+    final shown = await AdsConsentService.instance.showPrivacyOptions();
+    if (!mounted) return;
+    setState(() => _opening = false);
+
+    if (!shown) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Aucun formulaire publicitaire Google supplémentaire n’est requis pour votre configuration actuelle.',
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: AdsConsentService.instance,
+      builder: (context, _) {
+        final required = AdsConsentService.instance.privacyOptionsRequired;
+        return Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: _LegalInfoPageState._border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Row(
+                  children: [
+                    Icon(
+                      Icons.privacy_tip_outlined,
+                      color: _LegalInfoPageState._orange,
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Préférences publicitaires Google',
+                        style: TextStyle(
+                          color: _LegalInfoPageState._text,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  required
+                      ? 'Google UMP demande qu’un accès aux options de confidentialité reste disponible.'
+                      : 'Vous pouvez vérifier ou modifier les options Google UMP lorsqu’un formulaire est requis dans votre région.',
+                  style: const TextStyle(
+                    color: _LegalInfoPageState._muted,
+                    fontSize: 12.5,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _opening ? null : _openPrivacyOptions,
+                  icon: _opening
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.tune_rounded),
+                  label: const Text('Gérer mes choix publicitaires'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
