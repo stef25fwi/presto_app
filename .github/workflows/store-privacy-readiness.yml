@@ -1,0 +1,61 @@
+name: Store privacy readiness
+
+on:
+  pull_request:
+    paths:
+      - 'lib/services/ads_consent_service.dart'
+      - 'lib/services/cookie_consent_service.dart'
+      - 'lib/widgets/ad_banner.dart'
+      - 'lib/pages/legal_info_page.dart'
+      - 'lib/features/operating_mode/legal_documents.dart'
+      - 'ios/Runner/Info.plist'
+      - 'pubspec.yaml'
+      - 'web/confidentialite/**'
+      - 'web/suppression-compte/**'
+      - 'docs/privacy/**'
+      - 'docs/deployment/playstore-declarations.md'
+      - 'docs/deployment/appstore-privacy-declarations.md'
+      - 'quality/store_privacy_readiness.json'
+      - 'quality/rgpd_readiness.json'
+      - 'tools/quality/check_store_privacy_readiness.mjs'
+      - '.github/workflows/store-privacy-readiness.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'lib/services/ads_consent_service.dart'
+      - 'lib/services/cookie_consent_service.dart'
+      - 'lib/widgets/ad_banner.dart'
+      - 'lib/pages/legal_info_page.dart'
+      - 'lib/features/operating_mode/legal_documents.dart'
+      - 'ios/Runner/Info.plist'
+      - 'pubspec.yaml'
+      - 'web/confidentialite/**'
+      - 'web/suppression-compte/**'
+      - 'docs/privacy/**'
+      - 'docs/deployment/playstore-declarations.md'
+      - 'docs/deployment/appstore-privacy-declarations.md'
+      - 'quality/store_privacy_readiness.json'
+      - 'quality/rgpd_readiness.json'
+      - 'tools/quality/check_store_privacy_readiness.mjs'
+      - '.github/workflows/store-privacy-readiness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  store-privacy-readiness:
+    name: Data Safety + App Privacy 10/10
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate Store privacy evidence
+        run: node tools/quality/check_store_privacy_readiness.mjs
