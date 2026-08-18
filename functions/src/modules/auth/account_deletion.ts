@@ -214,6 +214,13 @@ async function deleteConversationMessages(
   return commitDeletes(byPath.values());
 }
 
+function objectMap(value: unknown): Record<string, unknown> {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+  return { ...(value as Record<string, unknown>) };
+}
+
 async function anonymizeConversations(uid: string): Promise<{
   updated: number;
   deletedMessages: number;
@@ -229,11 +236,21 @@ async function anonymizeConversations(uid: string): Promise<{
 
     const data = (doc.data() ?? {}) as Record<string, unknown>;
     const lastSenderId = String(data.lastSenderId ?? data.last_sender_id ?? "").trim();
+    const participantNames = objectMap(data.participantNames);
+    const participantNamesSnake = objectMap(data.participant_names);
+    const deletedBy = objectMap(data.deletedBy);
+    const deletedBySnake = objectMap(data.deleted_by);
+
+    participantNames[uid] = DELETED_USER_LABEL;
+    participantNamesSnake[uid] = DELETED_USER_LABEL;
+    deletedBy[uid] = true;
+    deletedBySnake[uid] = true;
+
     const patch: Record<string, unknown> = {
-      [`participantNames.${uid}`]: DELETED_USER_LABEL,
-      [`participant_names.${uid}`]: DELETED_USER_LABEL,
-      [`deletedBy.${uid}`]: true,
-      [`deleted_by.${uid}`]: true,
+      participantNames,
+      participant_names: participantNamesSnake,
+      deletedBy,
+      deleted_by: deletedBySnake,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       updated_at: admin.firestore.FieldValue.serverTimestamp(),
     };
