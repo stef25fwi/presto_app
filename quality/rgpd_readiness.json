@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "phase": 10,
   "name": "RGPD et cycle de vie des données",
   "controls": [
@@ -7,7 +7,12 @@
       "id": "privacy-notice",
       "title": "Information utilisateur et politique de confidentialité",
       "status": "implemented",
-      "evidence": ["lib/pages/privacy_policy_page.dart"]
+      "evidence": [
+        "lib/features/operating_mode/legal_documents.dart",
+        "lib/pages/legal_info_page.dart",
+        "web/confidentialite/index.html",
+        "docs/privacy/STORE_DATA_INVENTORY.md"
+      ]
     },
     {
       "id": "data-export",
@@ -19,13 +24,17 @@
       "id": "account-deletion",
       "title": "Suppression de compte et orchestration serveur",
       "status": "pending",
-      "evidence": []
+      "evidence": [
+        "web/suppression-compte/index.html"
+      ]
     },
     {
       "id": "retention-policy",
       "title": "Politique de conservation par collection",
       "status": "pending",
-      "evidence": []
+      "evidence": [
+        "docs/privacy/STORE_DATA_INVENTORY.md"
+      ]
     },
     {
       "id": "deletion-audit",
@@ -36,8 +45,12 @@
     {
       "id": "processor-register",
       "title": "Registre des sous-traitants et transferts",
-      "status": "pending",
-      "evidence": []
+      "status": "implemented",
+      "evidence": [
+        "docs/privacy/PROCESSOR_REGISTER.md",
+        "docs/deployment/playstore-declarations.md",
+        "docs/deployment/appstore-privacy-declarations.md"
+      ]
     },
     {
       "id": "rgpd-e2e",
