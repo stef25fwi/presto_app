@@ -199,6 +199,10 @@ jobs:
           AVDMANAGER="$(find "${ANDROID_SDK_ROOT}/cmdline-tools" -type f -name avdmanager -print -quit)"
           EMULATOR="${ANDROID_SDK_ROOT}/emulator/emulator"
           ADB="${ANDROID_SDK_ROOT}/platform-tools/adb"
+          AVD_HOME="${RUNNER_TEMP}/ilipresto-android-avd"
+          mkdir -p "${AVD_HOME}"
+          export ANDROID_AVD_HOME="${AVD_HOME}"
+
           test -x "${AVDMANAGER}"
           test -x "${EMULATOR}"
           test -x "${ADB}"
@@ -206,6 +210,9 @@ jobs:
           {
             echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT}"
             echo "ANDROID_API_LEVEL=${ANDROID_API_LEVEL}"
+            echo "ANDROID_AVD_HOME=${ANDROID_AVD_HOME}"
+            echo "HOME=${HOME}"
+            echo "XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-}"
             uname -a
             ls -l /dev/kvm 2>&1 || true
           } | tee evidence/android-api36-runtime/runner-environment.txt
@@ -220,8 +227,20 @@ jobs:
             --name ilipresto-api36 \
             --package "system-images;android-${ANDROID_API_LEVEL};google_apis;x86_64" \
             --device pixel_7
+
           "${AVDMANAGER}" list avd \
             | tee evidence/android-api36-runtime/avd-list.txt
+          "${EMULATOR}" -list-avds \
+            | tee evidence/android-api36-runtime/emulator-avd-list.txt
+          find "${ANDROID_AVD_HOME}" -maxdepth 2 -type f -printf '%P\n' \
+            | sort \
+            | tee evidence/android-api36-runtime/avd-files.txt
+
+          if ! grep -Fxq 'ilipresto-api36' \
+              evidence/android-api36-runtime/emulator-avd-list.txt; then
+            echo '::error::AVD ilipresto-api36 is not visible to the emulator.'
+            exit 1
+          fi
 
           "${ADB}" kill-server || true
           "${ADB}" start-server
@@ -232,6 +251,7 @@ jobs:
             -no-audio \
             -no-boot-anim \
             -no-snapshot \
+            -no-metrics \
             -accel auto \
             -gpu swiftshader_indirect \
             > evidence/android-api36-runtime/emulator.log 2>&1 &
