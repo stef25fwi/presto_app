@@ -87,7 +87,8 @@ void main() {
     )));
 
     expect(find.text('Mot de passe'), findsNothing);
-    expect(find.textContaining('Compte Google ou Apple'), findsOneWidget);
+    expect(find.textContaining('une réauthentification peut s’ouvrir'),
+        findsOneWidget);
 
     await _enterConfirmation(tester);
     await tester.tap(find.text('Supprimer définitivement'));
