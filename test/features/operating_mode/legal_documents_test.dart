@@ -60,4 +60,37 @@ void main() {
     expect(text, contains('Stripe'));
     expect(text, contains('commercial-v1'));
   });
+
+  test('la politique couvre les données et SDK déclarés aux Stores', () {
+    final text = LegalDocumentCatalog.privacy(
+      stateFor(AppOperatingMode.freeBeta),
+    ).map((section) => section.content).join('\n');
+
+    for (final marker in <String>[
+      'SIRET',
+      'Firebase App Check',
+      'Play Integrity',
+      'reCAPTCHA Enterprise',
+      'Firebase AI',
+      'Google Mobile Ads/AdMob',
+      'Google Sign-In',
+      'Facebook Login',
+      'Sign in with Apple',
+      'App Tracking Transparency',
+      'https://ilipresto.fr/confidentialite',
+      'https://ilipresto.fr/suppression-compte',
+    ]) {
+      expect(text, contains(marker), reason: 'marqueur Store manquant: $marker');
+    }
+  });
+
+  test('la vérification téléphone/SIRET ne vaut pas approbation', () {
+    final text = LegalDocumentCatalog.privacy(
+      stateFor(AppOperatingMode.freeBeta),
+    ).map((section) => section.content).join('\n');
+
+    expect(text, contains('ne constitue ni une approbation'));
+    expect(text, contains('ni une certification'));
+    expect(text, contains('ni une garantie d’Ilipresto'));
+  });
 }

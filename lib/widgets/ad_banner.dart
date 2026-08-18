@@ -1,5 +1,3 @@
-import 'dart:async' as async;
-
 import 'package:flutter/foundation.dart'
     show kDebugMode, kIsWeb, kReleaseMode, debugPrint, defaultTargetPlatform;
 import 'package:flutter/material.dart';
@@ -7,6 +5,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:presto_app/widgets/ad_config.dart';
 import 'package:presto_app/widgets/managed_ad_placeholder_ticker.dart';
 
+import '../services/ads_consent_service.dart';
 import '../services/cookie_consent_service.dart';
 
 typedef AdPlaceholderBuilder = Widget Function({
@@ -42,43 +41,9 @@ class AdBanner extends StatefulWidget {
 }
 
 class _AdBannerState extends State<AdBanner> {
-  static bool _initialized = false;
   BannerAd? _bannerAd;
   bool _isLoaded = false;
   bool _isLoading = false;
-
-  static Future<void> _ensureInitialized() async {
-    if (_initialized) return;
-    try {
-      final consentCompleter = async.Completer<void>();
-      ConsentInformation.instance.requestConsentInfoUpdate(
-        ConsentRequestParameters(),
-        () async {
-          if (await ConsentInformation.instance.isConsentFormAvailable()) {
-            ConsentForm.loadAndShowConsentFormIfRequired((formError) {
-              if (kDebugMode && formError != null) {
-                debugPrint('[AdMob] UMP form error: ${formError.message}');
-              }
-              consentCompleter.complete();
-            });
-          } else {
-            consentCompleter.complete();
-          }
-        },
-        (requestError) {
-          if (kDebugMode) {
-            debugPrint('[AdMob] UMP request error: ${requestError.message}');
-          }
-          consentCompleter.complete();
-        },
-      );
-      await consentCompleter.future;
-      await MobileAds.instance.initialize();
-      _initialized = true;
-    } catch (error) {
-      if (kDebugMode) debugPrint('[AdMob] init error: $error');
-    }
-  }
 
   String get _adUnitId {
     if (kIsWeb) return AdConfig.unsupportedAdUnitId;
@@ -102,20 +67,33 @@ class _AdBannerState extends State<AdBanner> {
       _maybeLoad();
       return;
     }
-    if (_bannerAd == null) return;
+    _disposeAd();
+  }
+
+  void _disposeAd() {
     _bannerAd?.dispose();
     _bannerAd = null;
     _isLoaded = false;
     _isLoading = false;
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   Future<void> _maybeLoad() async {
     if (!widget.enabled || kIsWeb) return;
     if (!CookieConsentService.instance.canUseMarketing) return;
     if (_isLoaded || _isLoading) return;
+
     _isLoading = true;
     try {
+      final canRequestAds =
+          await AdsConsentService.instance.initializeForAds();
+      if (!canRequestAds) {
+        if (kDebugMode) {
+          debugPrint('[AdMob] ad request blocked by UMP consent state');
+        }
+        return;
+      }
+      if (!mounted || !CookieConsentService.instance.canUseMarketing) return;
       await _load();
     } finally {
       _isLoading = false;
@@ -123,32 +101,42 @@ class _AdBannerState extends State<AdBanner> {
   }
 
   Future<void> _load() async {
-    await _ensureInitialized();
     final id = _adUnitId;
     if (id == AdConfig.unsupportedAdUnitId) return;
+
     final ad = BannerAd(
       size: AdSize.banner,
       adUnitId: id,
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
-          if (!mounted) return;
+          if (!mounted || !CookieConsentService.instance.canUseMarketing) {
+            ad.dispose();
+            return;
+          }
           setState(() {
             _bannerAd = ad as BannerAd;
             _isLoaded = true;
           });
         },
-        onAdFailedToLoad: (ad, _) => ad.dispose(),
+        onAdFailedToLoad: (ad, error) {
+          if (kDebugMode) {
+            debugPrint('[AdMob] load failed: ${error.message}');
+          }
+          ad.dispose();
+        },
         onAdOpened: (_) {
-          if (kDebugMode) debugPrint('Ad opened');
+          if (kDebugMode) debugPrint('[AdMob] ad opened');
         },
         onAdClosed: (ad) => ad.dispose(),
       ),
     );
+
     try {
       await ad.load();
     } catch (error) {
-      if (kDebugMode) debugPrint('Ad load error: $error');
+      if (kDebugMode) debugPrint('[AdMob] load exception: $error');
+      ad.dispose();
     }
   }
 

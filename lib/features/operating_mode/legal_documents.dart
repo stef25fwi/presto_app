@@ -101,16 +101,22 @@ Responsable du traitement
 ${state.mode.isCommercial ? '${p.companyName} ${p.legalForm}'.trim() : p.publisherName}
 Adresse : ${p.postalAddress}
 Contact : ${p.email}
+Politique publique : https://ilipresto.fr/confidentialite
 
 Données susceptibles d’être traitées
-• compte : adresse e-mail, téléphone, pseudonyme, nom et prénom lorsque renseignés ;
-• profil : photo, zone géographique, préférences et informations professionnelles ;
-• annonces : titre, description, catégorie, budget indicatif, localisation, photos et documents ;
+• compte et identité : adresse e-mail, téléphone, pseudonyme, nom et prénom lorsque renseignés, identifiant utilisateur Firebase et fournisseur de connexion choisi ;
+• informations professionnelles : SIRET et informations nécessaires à sa vérification lorsque le parcours professionnel est utilisé ;
+• profil : photo, ville, code postal ou zone géographique, préférences et informations professionnelles ;
+• annonces et avis : titre, description, catégorie, budget indicatif, localisation, photos, documents et contenus générés par l’utilisateur ;
 • échanges : messages, notes audio, pièces jointes, participants et horodatages ;
-• sécurité : adresse IP, journaux techniques, appareil, version de l’application et signaux antifraude ;
+• fonctions IA : textes, images, audio ou autres contenus volontairement soumis à une assistance IA ;
+• sécurité et appareil : adresse IP, identifiants techniques ou d’installation, version de l’application, système, signaux Firebase App Check, Play Integrity ou reCAPTCHA Enterprise et journaux antifraude ;
 • notifications : jetons techniques et préférences ;
 • support, signalements, modération, export et suppression de compte ;
-• données d’usage et mesure d’audience lorsque la base légale requise est disponible.
+• mesure et diagnostic : interactions Analytics lorsque la collecte est autorisée, journaux Crashlytics et données Firebase Performance ;
+• publicité : lorsque la publicité est activée et autorisée, Google Mobile Ads/AdMob peut traiter notamment adresse IP, localisation approximative, identifiants d’appareil ou publicitaires disponibles, interactions publicitaires, données publicitaires, diagnostics et performances.
+
+Une vérification de numéro de téléphone ou de SIRET vise à réduire certains risques de fausse identité ou d’usurpation. Elle ne constitue ni une approbation, ni une certification, ni une garantie d’Ilipresto sur l’utilisateur, l’entreprise, ses compétences ou la qualité d’une prestation.
 
 ${state.mode.isCommercial ? 'Lorsqu’un utilisateur souscrit, des références limitées de transaction, de statut et d’abonnement peuvent être conservées. Les coordonnées bancaires complètes sont traitées par le prestataire de paiement et ne sont pas enregistrées par Ilipresto.' : 'Aucun paiement, abonnement ou moyen de paiement n’est traité par Ilipresto pendant la bêta gratuite. Aucune donnée bancaire n’est demandée pour accéder au service.'}
 ''',
@@ -123,48 +129,79 @@ FINALITÉS ET BASES LÉGALES
 
 Les données sont traitées afin de :
 • créer, authentifier et sécuriser les comptes ;
-• publier, afficher, rechercher et modérer les annonces ;
-• permettre la messagerie et les notifications ;
+• publier, afficher, rechercher et modérer les annonces et avis ;
+• permettre la messagerie, les notifications et la mise en relation ;
+• vérifier un téléphone ou un SIRET lorsque la fonction est utilisée ;
+• fournir les fonctions d’assistance par IA expressément déclenchées par l’utilisateur ;
 • traiter les demandes de support, d’accès, d’export et de suppression ;
-• prévenir la fraude, les abus et les atteintes à la sécurité ;
-• améliorer le service et mesurer son utilisation dans le respect des règles relatives aux traceurs ;
+• prévenir la fraude, les robots, les abus et les atteintes à la sécurité ;
+• améliorer le service, mesurer son utilisation et diagnostiquer les incidents ;
+• afficher et mesurer la publicité uniquement dans le respect des choix de consentement applicables ;
 • répondre aux obligations légales et aux demandes valides des autorités.
 
-Les bases légales utilisées selon les traitements sont l’exécution des CGU, les mesures précontractuelles, le consentement, l’intérêt légitime de sécurité et d’amélioration du service, et les obligations légales.
+Les bases légales utilisées selon les traitements sont l’exécution des CGU ou des mesures demandées par l’utilisateur, le consentement, l’intérêt légitime de sécurité et d’amélioration du service, et les obligations légales.
 
-Les traceurs non strictement nécessaires ne doivent être déposés qu’après recueil du consentement lorsqu’il est requis. Le refus n’empêche pas l’accès aux fonctions essentielles.
+Les traceurs et traitements non strictement nécessaires ne doivent être activés qu’après le recueil du choix requis. Le refus de l’analytics ou du marketing n’empêche pas l’accès aux fonctions essentielles.
+''',
+      ),
+      const LegalDocumentSection(
+        title: 'IA et contenus transmis',
+        subtitle: 'Traitement des textes, images et données envoyés aux fonctions IA.',
+        content: '''
+ASSISTANCE PAR IA
+
+Certaines fonctions d’Ilipresto peuvent utiliser Firebase AI/Google pour aider à préparer ou compléter un contenu demandé par l’utilisateur. Lorsque l’utilisateur déclenche volontairement une telle fonction, les informations nécessaires à la génération — par exemple texte, image ou audio selon la fonction — peuvent être transmises au service IA pour produire la réponse.
+
+Il est recommandé de ne pas inclure de secret, mot de passe, donnée bancaire ou donnée personnelle de tiers inutile dans un contenu soumis à l’IA. Les contenus ne sont pas transmis à une fonction IA du seul fait qu’ils existent dans le compte : la transmission doit correspondre à la fonction effectivement utilisée.
+''',
+      ),
+      const LegalDocumentSection(
+        title: 'Analytics, publicité et suivi iOS',
+        subtitle: 'Consentement, Google UMP et App Tracking Transparency.',
+        content: '''
+ANALYTICS, PUBLICITÉ ET SUIVI
+
+Firebase Analytics n’est activé que lorsque le choix applicable autorise la mesure d’audience.
+
+Google Mobile Ads/AdMob est piloté par les choix marketing de l’utilisateur et par Google User Messaging Platform (UMP). Une requête publicitaire ne doit être envoyée qu’après que l’état UMP permet les demandes d’annonces.
+
+Sur iOS, lorsqu’une utilisation de l’identifiant publicitaire relève du suivi au sens d’Apple, l’accès à l’IDFA est soumis à App Tracking Transparency. Le refus de cette autorisation ne bloque pas les fonctions essentielles d’Ilipresto. La diffusion publicitaire peut alors être limitée selon la configuration autorisée par Google et Apple.
+
+L’utilisateur peut modifier les choix qui dépendent du consentement depuis les réglages de confidentialité disponibles dans le service et, lorsque Google UMP l’exige, depuis son formulaire d’options de confidentialité.
 ''',
       ),
       const LegalDocumentSection(
         title: 'Durées de conservation',
-        subtitle: 'Durées définies sans valeurs provisoires.',
+        subtitle: 'Durées définies par catégorie et nécessité.',
         content: '''
 DURÉES DE CONSERVATION
 
 • compte et profil : pendant la durée d’activité du compte, puis suppression ou anonymisation dans un délai maximal de 90 jours après validation de la demande, sauf obligation de conservation ;
 • annonces actives : pendant leur publication ; annonces supprimées ou expirées : 12 mois maximum pour la sécurité, la preuve et la gestion des litiges, puis suppression ou anonymisation ;
 • messages et pièces jointes : pendant la vie du compte et 24 mois maximum après la dernière activité de la conversation, sauf signalement, litige ou obligation légale ;
-• journaux techniques et de sécurité : 90 jours, sauf incident nécessitant une conservation prolongée et documentée ;
+• journaux techniques et de sécurité gérés par Ilipresto : objectif de 90 jours, sauf incident nécessitant une conservation prolongée et documentée ;
 • demandes de support et signalements : 3 ans à compter de leur clôture ;
 • preuve d’acceptation des documents juridiques : pendant la relation puis 5 ans à compter de sa fin ;
 • données de facturation en version commerciale : durée légale comptable applicable.
 
-À l’issue de ces durées, les données sont supprimées ou rendues anonymes de manière irréversible.
+Les journaux et données techniques gérés directement par un prestataire peuvent suivre les paramètres et durées propres au service concerné. Ces durées sont revues dans le registre des prestataires. À l’issue des durées applicables, les données sont supprimées ou rendues anonymes de manière irréversible lorsqu’aucune conservation n’est requise.
 ''',
       ),
       LegalDocumentSection(
         title: 'Prestataires et transferts',
-        subtitle: 'Firebase, e-mail, analytics et paiement selon le mode.',
+        subtitle: 'Firebase, publicité, authentification et e-mail.',
         content: '''
 PRESTATAIRES ET TRANSFERTS
 
-Les données peuvent être traitées par des prestataires strictement nécessaires :
-• Google/Firebase : authentification, base de données, stockage, fonctions, hébergement et notifications ;
+Les données peuvent être traitées, selon les fonctions utilisées, par :
+• Google/Firebase : Auth, Firestore, Storage, Cloud Functions, Messaging, Remote Config, Analytics, Crashlytics, Performance, App Check et Firebase AI ;
+• Google Mobile Ads/AdMob et User Messaging Platform : publicité, mesure publicitaire et gestion des messages de consentement ;
+• Google Sign-In, Facebook Login et Sign in with Apple : authentification choisie par l’utilisateur ;
+• reCAPTCHA Enterprise et services d’intégrité associés : sécurité et prévention des abus ;
 • prestataire d’e-mail : messages transactionnels et support ;
-• outils de mesure d’audience activés dans le respect du consentement applicable ;
 ${state.mode.isCommercial ? '• Stripe : création et gestion des abonnements et paiements lorsque l’utilisateur choisit une offre payante.' : '• aucun prestataire de paiement n’est sollicité pour l’accès à la bêta gratuite.'}
 
-Certains prestataires peuvent traiter des données hors de l’Espace économique européen. Dans ce cas, l’éditeur s’appuie sur les mécanismes juridiques proposés par le prestataire et limite les données transmises au strict nécessaire.
+Certains prestataires peuvent traiter des données hors de l’Espace économique européen. Dans ce cas, l’éditeur s’appuie sur les mécanismes juridiques applicables proposés par le prestataire et limite les données transmises au strict nécessaire.
 ''',
       ),
       LegalDocumentSection(
@@ -176,6 +213,8 @@ VOS DROITS
 Vous pouvez demander l’accès, la rectification, l’effacement, la limitation, l’opposition et, lorsque les conditions sont réunies, la portabilité de vos données. Vous pouvez retirer votre consentement à tout moment pour les traitements qui en dépendent.
 
 Les demandes peuvent être créées depuis Mon profil ou envoyées à ${p.email}. Une vérification d’identité proportionnée peut être demandée en cas de doute raisonnable.
+
+La procédure publique de suppression est disponible sur https://ilipresto.fr/suppression-compte.
 
 Une réponse est apportée dans le délai légal applicable. Vous pouvez également déposer une réclamation auprès de la CNIL.
 ''',

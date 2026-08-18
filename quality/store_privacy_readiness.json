@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "name": "Google Data Safety + Apple App Privacy",
+  "updated_at": "2026-08-18",
+  "repository_score_target": 10,
+  "controls": [
+    {
+      "id": "data-inventory",
+      "title": "Inventaire exhaustif des données",
+      "status": "implemented",
+      "evidence": ["docs/privacy/STORE_DATA_INVENTORY.md"]
+    },
+    {
+      "id": "google-data-safety",
+      "title": "Matrice Google Play Data Safety",
+      "status": "implemented",
+      "evidence": ["docs/deployment/playstore-declarations.md"]
+    },
+    {
+      "id": "apple-app-privacy",
+      "title": "Matrice Apple App Privacy",
+      "status": "implemented",
+      "evidence": ["docs/deployment/appstore-privacy-declarations.md"]
+    },
+    {
+      "id": "public-privacy-policy",
+      "title": "Politique de confidentialité publique sans authentification Flutter",
+      "status": "implemented",
+      "evidence": ["web/confidentialite/index.html", "lib/features/operating_mode/legal_documents.dart"]
+    },
+    {
+      "id": "public-account-deletion",
+      "title": "Page publique de suppression de compte",
+      "status": "implemented",
+      "evidence": ["web/suppression-compte/index.html"]
+    },
+    {
+      "id": "processor-register",
+      "title": "Registre des SDK et prestataires",
+      "status": "implemented",
+      "evidence": ["docs/privacy/PROCESSOR_REGISTER.md"]
+    },
+    {
+      "id": "analytics-consent-gate",
+      "title": "Firebase Analytics désactivé par défaut puis piloté par le consentement",
+      "status": "implemented",
+      "evidence": ["android/app/src/main/AndroidManifest.xml", "ios/Runner/Info.plist", "lib/services/cookie_consent_service.dart"]
+    },
+    {
+      "id": "admob-ump-gate",
+      "title": "Mesure Ads retardée, UMP actualisé au lancement et AdMob bloqué tant que les requêtes ne sont pas autorisées",
+      "status": "implemented",
+      "evidence": ["android/app/src/main/AndroidManifest.xml", "ios/Runner/Info.plist", "lib/bootstrap/app_bootstrap.dart", "lib/services/ads_consent_service.dart", "lib/widgets/ad_banner.dart"]
+    },
+    {
+      "id": "ump-privacy-options",
+      "title": "Point d'accès UMP visible uniquement lorsque Google l'exige",
+      "status": "implemented",
+      "evidence": ["lib/services/ads_consent_service.dart", "lib/pages/legal_info_page.dart", "lib/widgets/ads_privacy_options_card.dart"]
+    },
+    {
+      "id": "ios-tracking-disclosure",
+      "title": "Cadre ATT/IDFA documenté et chaîne iOS déclarée",
+      "status": "implemented",
+      "evidence": ["ios/Runner/Info.plist", "docs/deployment/appstore-privacy-declarations.md"]
+    }
+  ],
+  "external_release_actions": [
+    {
+      "id": "admob-gdpr-message",
+      "status": "external_required",
+      "owner": "AdMob console",
+      "description": "Publier/valider le message GDPR UMP pour les régions concernées."
+    },
+    {
+      "id": "admob-idfa-message",
+      "status": "external_required",
+      "owner": "AdMob console",
+      "description": "Publier/valider le message IDFA/ATT si la configuration publicitaire iOS utilise le tracking autorisé."
+    },
+    {
+      "id": "play-console-submit",
+      "status": "external_required",
+      "owner": "Google Play Console",
+      "description": "Saisir et enregistrer la déclaration Data Safety depuis la matrice certifiée."
+    },
+    {
+      "id": "app-store-connect-submit",
+      "status": "external_required",
+      "owner": "App Store Connect",
+      "description": "Saisir et enregistrer App Privacy depuis la matrice certifiée."
+    },
+    {
+      "id": "ios-archive-privacy-report",
+      "status": "external_required",
+      "owner": "Archive iOS finale",
+      "description": "Contrôler les privacy manifests et Required Reason APIs de l'archive réellement soumise."
+    },
+    {
+      "id": "live-private-window-smoke",
+      "status": "external_required",
+      "owner": "Production Hosting",
+      "description": "Après déploiement, tester /confidentialite et /suppression-compte en navigation privée sans session."
+    }
+  ]
+}

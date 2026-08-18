@@ -47,6 +47,14 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<!-- Privacy by default: Firebase Analytics starts disabled on a first
+	     install until CookieConsentService applies the user's stored choice. -->
+	<key>FIREBASE_ANALYTICS_COLLECTION_ENABLED</key>
+	<false/>
+	<!-- Delay Google Mobile Ads app measurement until AdsConsentService
+	     initializes the SDK after iliprestō marketing consent + Google UMP. -->
+	<key>GADDelayAppMeasurementInit</key>
+	<true/>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-1792076968124623~3798369694</string>
 	<key>NSCameraUsageDescription</key>

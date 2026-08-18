@@ -12,7 +12,14 @@
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
         android:fullBackupContent="false">
-        <!-- Google Mobile Ads App ID -->
+        <!-- Privacy by default: avoid first-launch Analytics events before the
+             stored consent choice has been applied by Flutter. A persisted
+             setAnalyticsCollectionEnabled choice takes precedence later. -->
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false"/>
+        <!-- Google Mobile Ads App ID. AdsConsentService controls UMP and does
+             not initialize Mobile Ads until ad requests are allowed. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-1792076968124623~9761142816"/>

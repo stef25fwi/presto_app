@@ -9,6 +9,7 @@ import '../features/operating_mode/app_operating_mode.dart';
 import '../features/operating_mode/legal_documents.dart';
 import '../platform/public_prelaunch_shell.dart';
 import '../services/public_landing_config_service.dart';
+import '../widgets/ads_privacy_options_card.dart';
 
 class LegalInfoPage extends StatefulWidget {
   const LegalInfoPage({
@@ -140,6 +141,9 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
         builder: (context, snapshot) {
           final state = snapshot.data ?? AppOperatingModeState.defaults();
           final sections = _sections(state, effectiveTab);
+          final showAdsPrivacyOptions = effectiveTab == 1 && !kIsWeb;
+          final extraItems = showAdsPrivacyOptions ? 2 : 1;
+
           return SafeArea(
             top: false,
             child: Column(
@@ -153,12 +157,19 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
                 Expanded(
                   child: ListView.separated(
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 28),
-                    itemCount: sections.length + 1,
+                    itemCount: sections.length + extraItems,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
-                      if (index == sections.length) {
+                      if (showAdsPrivacyOptions && index == sections.length) {
+                        return const AdsPrivacyOptionsCard();
+                      }
+
+                      final contactIndex =
+                          sections.length + (showAdsPrivacyOptions ? 1 : 0);
+                      if (index == contactIndex) {
                         return _ContactCard(email: state.publisher.email);
                       }
+
                       final section = sections[index];
                       return _SectionCard(
                         section: section,
