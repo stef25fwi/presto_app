@@ -133,6 +133,21 @@ requireMarkers('web/suppression-compte/index.html', [
   '/confidentialite',
 ]);
 
+requireMarkers('android/app/src/main/AndroidManifest.xml', [
+  'firebase_analytics_collection_enabled',
+  'com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT',
+  'com.google.android.gms.ads.APPLICATION_ID',
+]);
+
+requireMarkers('ios/Runner/Info.plist', [
+  '<key>FIREBASE_ANALYTICS_COLLECTION_ENABLED</key>',
+  '<key>GADDelayAppMeasurementInit</key>',
+  '<key>GADApplicationIdentifier</key>',
+  '<key>NSUserTrackingUsageDescription</key>',
+  '<key>NSCameraUsageDescription</key>',
+  '<key>NSMicrophoneUsageDescription</key>',
+]);
+
 requireMarkers('lib/services/cookie_consent_service.dart', [
   'setAnalyticsCollectionEnabled',
   'analyticsAllowed',
@@ -183,13 +198,6 @@ requireMarkers('lib/features/operating_mode/legal_documents.dart', [
   'Google Mobile Ads/AdMob',
   'App Tracking Transparency',
   'https://ilipresto.fr/suppression-compte',
-]);
-
-requireMarkers('ios/Runner/Info.plist', [
-  '<key>GADApplicationIdentifier</key>',
-  '<key>NSUserTrackingUsageDescription</key>',
-  '<key>NSCameraUsageDescription</key>',
-  '<key>NSMicrophoneUsageDescription</key>',
 ]);
 
 const rgpdRaw = read('quality/rgpd_readiness.json');
