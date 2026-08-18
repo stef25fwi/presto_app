@@ -56,7 +56,7 @@
       "id": "ump-privacy-options",
       "title": "Point d'accès UMP visible uniquement lorsque Google l'exige",
       "status": "implemented",
-      "evidence": ["lib/services/ads_consent_service.dart", "lib/pages/legal_info_page.dart"]
+      "evidence": ["lib/services/ads_consent_service.dart", "lib/pages/legal_info_page.dart", "lib/widgets/ads_privacy_options_card.dart"]
     },
     {
       "id": "ios-tracking-disclosure",
