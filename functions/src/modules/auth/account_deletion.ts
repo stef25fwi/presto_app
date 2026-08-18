@@ -15,6 +15,16 @@ const DELETED_MESSAGE_LABEL = "Message supprimé";
 type DocumentReference = FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData>;
 type ConversationDocument = FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>;
 
+export interface AccountDeletionResult {
+  ok: true;
+  deletedDocuments: number;
+  deletedUserTreeDocuments: number;
+  anonymizedConversations: number;
+  deletedMessages: number;
+  archivedListings: number;
+  deletedFiles: number;
+}
+
 function requireRecentAuthenticatedUid(request: {
   auth?: { uid?: string; token?: Record<string, unknown> };
 }): string {
@@ -289,6 +299,69 @@ async function deleteUserStorage(uid: string): Promise<number> {
   return deletedFiles;
 }
 
+export async function executeAccountDeletion(uid: string): Promise<AccountDeletionResult> {
+  const normalizedUid = uid.trim();
+  if (!normalizedUid) {
+    throw new HttpsError("invalid-argument", "uid is required");
+  }
+
+  const userRef = db.collection("users").doc(normalizedUid);
+  const userSnapshot = await userRef.get();
+  const userData = userSnapshot.data() || {};
+  const subscriptionId = String(
+    userData.stripeSubscriptionId || userData.stripe_subscription_id || "",
+  ).trim();
+
+  await userRef.set(
+    {
+      accountStatus: "deletion_processing",
+      deletionRequestedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  await cancelStripeSubscription(subscriptionId);
+
+  const [deletedDocuments, conversationCleanup, archivedListings] =
+    await Promise.all([
+      deleteUserOwnedDocuments(normalizedUid),
+      anonymizeConversations(normalizedUid),
+      archiveUserListings(normalizedUid),
+    ]);
+
+  const deletedFiles = await deleteUserStorage(normalizedUid);
+
+  // Efface aussi toutes les sous-collections du profil utilisateur
+  // (notamment rateLimits/phoneVerification) avant de supprimer le document.
+  const deletedUserTreeDocuments = await deleteDocumentTree(userRef);
+
+  try {
+    await admin.auth().revokeRefreshTokens(normalizedUid);
+    await admin.auth().deleteUser(normalizedUid);
+  } catch (error) {
+    const code = String((error as { code?: string }).code || "");
+    if (code !== "auth/user-not-found") throw error;
+  }
+
+  const result: AccountDeletionResult = {
+    ok: true,
+    deletedDocuments,
+    deletedUserTreeDocuments,
+    anonymizedConversations: conversationCleanup.updated,
+    deletedMessages: conversationCleanup.deletedMessages,
+    archivedListings,
+    deletedFiles,
+  };
+
+  logger.info("ACCOUNT_DELETION_COMPLETED", {
+    uid: normalizedUid,
+    ...result,
+    stripeSubscriptionCanceled: Boolean(subscriptionId),
+  });
+
+  return result;
+}
+
 export const requestAccountDeletion = onCall(
   {
     region: PROJECT_REGION,
@@ -300,63 +373,6 @@ export const requestAccountDeletion = onCall(
   },
   async (request) => {
     const uid = requireRecentAuthenticatedUid(request);
-    const userRef = db.collection("users").doc(uid);
-    const userSnapshot = await userRef.get();
-    const userData = userSnapshot.data() || {};
-    const subscriptionId = String(
-      userData.stripeSubscriptionId || userData.stripe_subscription_id || "",
-    ).trim();
-
-    await userRef.set(
-      {
-        accountStatus: "deletion_processing",
-        deletionRequestedAt: admin.firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
-
-    await cancelStripeSubscription(subscriptionId);
-
-    const [deletedDocuments, conversationCleanup, archivedListings] =
-      await Promise.all([
-        deleteUserOwnedDocuments(uid),
-        anonymizeConversations(uid),
-        archiveUserListings(uid),
-      ]);
-
-    const deletedFiles = await deleteUserStorage(uid);
-
-    // Efface aussi toutes les sous-collections du profil utilisateur
-    // (notamment rateLimits/phoneVerification) avant de supprimer le document.
-    const deletedUserTreeDocuments = await deleteDocumentTree(userRef);
-
-    try {
-      await admin.auth().revokeRefreshTokens(uid);
-      await admin.auth().deleteUser(uid);
-    } catch (error) {
-      const code = String((error as { code?: string }).code || "");
-      if (code !== "auth/user-not-found") throw error;
-    }
-
-    logger.info("ACCOUNT_DELETION_COMPLETED", {
-      uid,
-      deletedDocuments,
-      deletedUserTreeDocuments,
-      anonymizedConversations: conversationCleanup.updated,
-      deletedMessages: conversationCleanup.deletedMessages,
-      archivedListings,
-      deletedFiles,
-      stripeSubscriptionCanceled: Boolean(subscriptionId),
-    });
-
-    return {
-      ok: true,
-      deletedDocuments,
-      deletedUserTreeDocuments,
-      anonymizedConversations: conversationCleanup.updated,
-      deletedMessages: conversationCleanup.deletedMessages,
-      archivedListings,
-      deletedFiles,
-    };
+    return executeAccountDeletion(uid);
   },
 );
