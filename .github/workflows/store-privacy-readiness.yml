@@ -3,6 +3,8 @@ name: Store privacy readiness
 on:
   pull_request:
     paths:
+      - 'android/app/src/main/AndroidManifest.xml'
+      - 'ios/Runner/Info.plist'
       - 'lib/bootstrap/app_bootstrap.dart'
       - 'lib/services/ads_consent_service.dart'
       - 'lib/services/cookie_consent_service.dart'
@@ -10,7 +12,6 @@ on:
       - 'lib/widgets/ads_privacy_options_card.dart'
       - 'lib/pages/legal_info_page.dart'
       - 'lib/features/operating_mode/legal_documents.dart'
-      - 'ios/Runner/Info.plist'
       - 'pubspec.yaml'
       - 'web/confidentialite/**'
       - 'web/suppression-compte/**'
@@ -24,6 +25,8 @@ on:
   push:
     branches: [main]
     paths:
+      - 'android/app/src/main/AndroidManifest.xml'
+      - 'ios/Runner/Info.plist'
       - 'lib/bootstrap/app_bootstrap.dart'
       - 'lib/services/ads_consent_service.dart'
       - 'lib/services/cookie_consent_service.dart'
@@ -31,7 +34,6 @@ on:
       - 'lib/widgets/ads_privacy_options_card.dart'
       - 'lib/pages/legal_info_page.dart'
       - 'lib/features/operating_mode/legal_documents.dart'
-      - 'ios/Runner/Info.plist'
       - 'pubspec.yaml'
       - 'web/confidentialite/**'
       - 'web/suppression-compte/**'
