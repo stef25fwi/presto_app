@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -134,6 +135,24 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
     return AuthService.instance.deleteCurrentAccount(password: password);
   }
 
+  Future<void> _resetLocalAnalyticsAfterDeletion() async {
+    // Les tests injectés ne disposent pas d'une application Firebase réelle.
+    if (widget.deleteAccountAction != null) return;
+
+    try {
+      final analytics = FirebaseAnalytics.instance;
+      // Défense en profondeur pour une éventuelle ancienne version ayant défini
+      // un User-ID : le dissocier explicitement avant de réinitialiser l'instance.
+      await analytics.setUserId(id: null);
+      await analytics.resetAnalyticsData();
+    } catch (error) {
+      // L'effacement du compte serveur est déjà terminé : un échec local
+      // d'Analytics ne doit jamais faire croire à l'utilisateur que son compte
+      // existe encore. Il est donc journalisé sans annuler la suppression.
+      debugPrint('[AccountDeletion] Analytics reset failed: $error');
+    }
+  }
+
   @override
   void dispose() {
     _passwordCtrl.dispose();
@@ -151,6 +170,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
       await _runDeleteAccount(
         password: _usesPasswordProvider ? _passwordCtrl.text : null,
       );
+      await _resetLocalAnalyticsAfterDeletion();
 
       if (!mounted) return;
       Navigator.of(context).popUntil((route) => route.isFirst);
