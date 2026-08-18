@@ -42,15 +42,15 @@
     },
     {
       "id": "analytics-consent-gate",
-      "title": "Firebase Analytics piloté par le consentement",
+      "title": "Firebase Analytics désactivé par défaut puis piloté par le consentement",
       "status": "implemented",
-      "evidence": ["lib/services/cookie_consent_service.dart"]
+      "evidence": ["android/app/src/main/AndroidManifest.xml", "ios/Runner/Info.plist", "lib/services/cookie_consent_service.dart"]
     },
     {
       "id": "admob-ump-gate",
-      "title": "UMP actualisé au lancement et AdMob bloqué tant que les requêtes ne sont pas autorisées",
+      "title": "Mesure Ads retardée, UMP actualisé au lancement et AdMob bloqué tant que les requêtes ne sont pas autorisées",
       "status": "implemented",
-      "evidence": ["lib/bootstrap/app_bootstrap.dart", "lib/services/ads_consent_service.dart", "lib/widgets/ad_banner.dart"]
+      "evidence": ["android/app/src/main/AndroidManifest.xml", "ios/Runner/Info.plist", "lib/bootstrap/app_bootstrap.dart", "lib/services/ads_consent_service.dart", "lib/widgets/ad_banner.dart"]
     },
     {
       "id": "ump-privacy-options",
