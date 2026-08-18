@@ -120,16 +120,31 @@ jobs:
 
           printf '%s' "$KEYSTORE_B64" \
             | tr -d '\r\n[:space:]' \
-            | base64 --decode > "$RUNNER_TEMP/upload-keystore.jks"
+            | base64 --decode > "$RUNNER_TEMP/upload-keystore-source"
 
-          KEYSTORE_SIZE="$(stat -c%s "$RUNNER_TEMP/upload-keystore.jks" 2>/dev/null || echo 0)"
+          KEYSTORE_SIZE="$(stat -c%s "$RUNNER_TEMP/upload-keystore-source" 2>/dev/null || echo 0)"
           if (( KEYSTORE_SIZE < 100 )); then
             echo "❌ Keystore invalide ou vide (${KEYSTORE_SIZE} octets)."
             exit 1
           fi
 
+          # Ne régénère jamais la clé : on importe le même alias/certificat dans
+          # un JKS temporaire canonique, que la sauvegarde source soit JKS ou PKCS12.
+          keytool -importkeystore \
+            -srckeystore "$RUNNER_TEMP/upload-keystore-source" \
+            -destkeystore "$RUNNER_TEMP/upload-keystore.jks" \
+            -srcstorepass "$KEYSTORE_PASSWORD" \
+            -deststorepass "$KEYSTORE_PASSWORD" \
+            -srcalias "$KEY_ALIAS" \
+            -destalias "$KEY_ALIAS" \
+            -srckeypass "$KEY_PASSWORD" \
+            -destkeypass "$KEY_PASSWORD" \
+            -deststoretype JKS \
+            -noprompt >/dev/null
+
           keytool -list \
             -keystore "$RUNNER_TEMP/upload-keystore.jks" \
+            -storetype JKS \
             -storepass "$KEYSTORE_PASSWORD" \
             -alias "$KEY_ALIAS" >/dev/null
 
@@ -141,8 +156,10 @@ jobs:
           storeType=JKS
           EOF
 
-          chmod 600 android/key.properties "$RUNNER_TEMP/upload-keystore.jks"
-          echo "✅ Upload keystore chargé depuis Google Secret Manager."
+          chmod 600 android/key.properties \
+            "$RUNNER_TEMP/upload-keystore-source" \
+            "$RUNNER_TEMP/upload-keystore.jks"
+          echo "✅ Clé d'upload existante chargée depuis Google Secret Manager."
 
       - name: Build signed App Bundle
         run: |
