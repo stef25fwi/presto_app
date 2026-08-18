@@ -143,7 +143,6 @@ requireMarkers('web/suppression-compte/index.html', [
 
 requireMarkers('android/app/src/main/AndroidManifest.xml', [
   'firebase_analytics_collection_enabled',
-  'com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT',
   'com.google.android.gms.ads.APPLICATION_ID',
 ]);
 requirePattern(
@@ -151,15 +150,12 @@ requirePattern(
   /android:name="firebase_analytics_collection_enabled"\s+android:value="false"\s*\/>/,
   'firebase_analytics_collection_enabled must be false by default',
 );
-requirePattern(
-  'android/app/src/main/AndroidManifest.xml',
-  /android:name="com\.google\.android\.gms\.ads\.DELAY_APP_MEASUREMENT_INIT"\s+android:value="true"\s*\/>/,
-  'DELAY_APP_MEASUREMENT_INIT must be true until consent-gated ad initialization',
-);
+forbidMarkers('android/app/src/main/AndroidManifest.xml', [
+  'com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT',
+]);
 
 requireMarkers('ios/Runner/Info.plist', [
   '<key>FIREBASE_ANALYTICS_COLLECTION_ENABLED</key>',
-  '<key>GADDelayAppMeasurementInit</key>',
   '<key>GADApplicationIdentifier</key>',
   '<key>NSUserTrackingUsageDescription</key>',
   '<key>NSCameraUsageDescription</key>',
@@ -169,11 +165,6 @@ requirePattern(
   'ios/Runner/Info.plist',
   /<key>FIREBASE_ANALYTICS_COLLECTION_ENABLED<\/key>\s*<false\s*\/>/,
   'FIREBASE_ANALYTICS_COLLECTION_ENABLED must be false by default',
-);
-requirePattern(
-  'ios/Runner/Info.plist',
-  /<key>GADDelayAppMeasurementInit<\/key>\s*<true\s*\/>/,
-  'GADDelayAppMeasurementInit must be true until consent-gated ad initialization',
 );
 
 requireMarkers('lib/services/cookie_consent_service.dart', [
