@@ -103,6 +103,9 @@ jobs:
       - name: Validate every public page
         run: node tools/quality/check_public_page_seo.mjs
 
+      - name: Validate production smoke contract
+        run: node tools/quality/check_production_smoke_contract.mjs
+
       - name: Install Functions dependencies
         run: npm --prefix functions ci
 
@@ -248,9 +251,32 @@ jobs:
         run: |
           set -euo pipefail
 
-          curl --fail --silent --show-error \
-            --retry 6 --retry-delay 5 --retry-all-errors \
-            https://ilipresto.fr/manifest.json >/dev/null
+          fetch_url() {
+            curl --fail --silent --show-error \
+              --retry 6 --retry-delay 5 --retry-all-errors "$1"
+          }
+
+          assert_contains() {
+            local haystack="$1"
+            local needle="$2"
+            local label="$3"
+            if [[ "$haystack" != *"$needle"* ]]; then
+              echo "❌ $label — contenu attendu absent: $needle"
+              return 1
+            fi
+          }
+
+          assert_not_contains() {
+            local haystack="$1"
+            local needle="$2"
+            local label="$3"
+            if [[ "$haystack" == *"$needle"* ]]; then
+              echo "❌ $label — contenu interdit détecté: $needle"
+              return 1
+            fi
+          }
+
+          fetch_url https://ilipresto.fr/manifest.json >/dev/null
 
           public_urls=(
             https://ilipresto.fr/
@@ -264,54 +290,38 @@ jobs:
           )
 
           for url in "${public_urls[@]}"; do
-            page="$(curl --fail --silent --show-error \
-              --retry 6 --retry-delay 5 --retry-all-errors "$url")"
-            echo "$page" | grep -q '<title>'
-            echo "$page" | grep -q 'rel="canonical"'
+            page="$(fetch_url "$url")"
+            assert_contains "$page" '<title>' "$url title"
+            assert_contains "$page" 'rel="canonical"' "$url canonical"
           done
 
           for slug in guadeloupe martinique guyane; do
-            page="$(curl --fail --silent --show-error \
-              --retry 6 --retry-delay 5 --retry-all-errors \
-              "https://ilipresto.fr/$slug")"
-            echo "$page" | grep -q "<link rel=\"canonical\" href=\"https://ilipresto.fr/$slug\">"
-            echo "$page" | grep -q '<h1>'
-            echo "$page" | grep -q 'aria-label="Fil d’Ariane"'
+            page="$(fetch_url "https://ilipresto.fr/$slug")"
+            assert_contains "$page" "<link rel=\"canonical\" href=\"https://ilipresto.fr/$slug\">" "$slug canonical"
+            assert_contains "$page" '<h1>' "$slug h1"
+            assert_contains "$page" 'aria-label="Fil d’Ariane"' "$slug breadcrumb"
           done
 
-          local_page="$(curl --fail --silent --show-error \
-            --retry 6 --retry-delay 5 --retry-all-errors \
-            https://ilipresto.fr/services/jardinage/les-abymes/)"
-          echo "$local_page" | grep -q '<link rel="canonical" href="https://ilipresto.fr/services/jardinage/les-abymes/">'
-          echo "$local_page" | grep -q '<meta name="robots" content="'
-          if echo "$local_page" | grep -q 'JobPosting'; then
-            echo '❌ JobPosting détecté sur une page locale de service.'
-            exit 1
-          fi
+          local_page="$(fetch_url https://ilipresto.fr/services/jardinage/les-abymes/)"
+          assert_contains "$local_page" '<link rel="canonical" href="https://ilipresto.fr/services/jardinage/les-abymes/">' 'page locale canonical'
+          assert_contains "$local_page" '<meta name="robots" content="' 'page locale robots'
+          assert_not_contains "$local_page" 'JobPosting' 'page locale service'
 
-          legal_registry="$(curl --fail --silent --show-error \
-            --retry 6 --retry-delay 5 --retry-all-errors \
-            https://ilipresto.fr/public-route-seo.js)"
+          legal_registry="$(fetch_url https://ilipresto.fr/public-route-seo.js)"
           for route in /mentions-legales /confidentialite /cgu /suppression-compte; do
-            echo "$legal_registry" | grep -q "'$route'"
+            assert_contains "$legal_registry" "'$route'" "registre juridique $route"
           done
 
-          sitemap="$(curl --fail --silent --show-error \
-            --retry 6 --retry-delay 5 --retry-all-errors \
-            https://ilipresto.fr/sitemap.xml)"
+          sitemap="$(fetch_url https://ilipresto.fr/sitemap.xml)"
           for route in /guadeloupe /martinique /guyane /mentions-legales /confidentialite /cgu /suppression-compte; do
-            echo "$sitemap" | grep -q "<loc>https://ilipresto.fr$route</loc>"
+            assert_contains "$sitemap" "<loc>https://ilipresto.fr$route</loc>" "sitemap principal $route"
           done
 
-          local_sitemap="$(curl --fail --silent --show-error \
-            --retry 6 --retry-delay 5 --retry-all-errors \
-            https://ilipresto.fr/sitemap-local.xml)"
-          echo "$local_sitemap" | grep -q '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+          local_sitemap="$(fetch_url https://ilipresto.fr/sitemap-local.xml)"
+          assert_contains "$local_sitemap" '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' 'sitemap local urlset'
 
-          listings_sitemap="$(curl --fail --silent --show-error \
-            --retry 6 --retry-delay 5 --retry-all-errors \
-            https://ilipresto.fr/sitemap-annonces.xml)"
-          echo "$listings_sitemap" | grep -q '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+          listings_sitemap="$(fetch_url https://ilipresto.fr/sitemap-annonces.xml)"
+          assert_contains "$listings_sitemap" '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' 'sitemap annonces urlset'
 
           missing_listing_status="$(curl --silent --show-error \
             --retry 3 --retry-delay 2 --retry-all-errors \
@@ -319,22 +329,21 @@ jobs:
             --write-out '%{http_code}' \
             https://ilipresto.fr/annonces/seo-missing-000000/)"
           test "$missing_listing_status" = "404"
-          grep -q 'noindex,follow' /tmp/ilipresto-missing-listing.html
+          grep -Fq 'noindex,follow' /tmp/ilipresto-missing-listing.html
 
-          first_listing_url="$(echo "$listings_sitemap" \
-            | grep -o 'https://ilipresto.fr/annonces/[^<]*' \
-            | head -n 1 || true)"
-          if [ -n "$first_listing_url" ]; then
-            listing_page="$(curl --fail --silent --show-error \
-              --retry 6 --retry-delay 5 --retry-all-errors \
-              "$first_listing_url")"
-            echo "$listing_page" | grep -q "<link rel=\"canonical\" href=\"$first_listing_url\">"
-            echo "$listing_page" | grep -q '<meta name="robots" content="index,follow'
-            if echo "$listing_page" | grep -q 'JobPosting'; then
-              echo '❌ JobPosting détecté sur une annonce publique.'
-              exit 1
-            fi
+          first_listing_url=''
+          if [[ "$listings_sitemap" =~ https://ilipresto\.fr/annonces/[^\<]+ ]]; then
+            first_listing_url="${BASH_REMATCH[0]}"
           fi
+
+          if [ -n "$first_listing_url" ]; then
+            listing_page="$(fetch_url "$first_listing_url")"
+            assert_contains "$listing_page" "<link rel=\"canonical\" href=\"$first_listing_url\">" 'annonce canonical'
+            assert_contains "$listing_page" '<meta name="robots" content="index,follow' 'annonce robots indexable'
+            assert_not_contains "$listing_page" 'JobPosting' 'annonce publique'
+          fi
+
+          echo '✅ Smoke production validé sans pipeline grep -q vulnérable à SIGPIPE.'
 
       - name: Publish deployment summary
         if: always()

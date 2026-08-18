@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs/promises';
+import './quality/check_production_smoke_contract.mjs';
 
 const checks = [
   {
