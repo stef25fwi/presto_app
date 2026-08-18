@@ -38,6 +38,14 @@ function forbidMarkers(relativePath, markers) {
   }
 }
 
+function requirePattern(relativePath, pattern, description) {
+  const content = read(relativePath);
+  if (!content) return;
+  if (!pattern.test(content)) {
+    failures.push(`${relativePath}: ${description}`);
+  }
+}
+
 const readinessPath = 'quality/store_privacy_readiness.json';
 const readinessRaw = read(readinessPath);
 if (readinessRaw) {
@@ -138,6 +146,16 @@ requireMarkers('android/app/src/main/AndroidManifest.xml', [
   'com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT',
   'com.google.android.gms.ads.APPLICATION_ID',
 ]);
+requirePattern(
+  'android/app/src/main/AndroidManifest.xml',
+  /android:name="firebase_analytics_collection_enabled"\s+android:value="false"\s*\/>/,
+  'firebase_analytics_collection_enabled must be false by default',
+);
+requirePattern(
+  'android/app/src/main/AndroidManifest.xml',
+  /android:name="com\.google\.android\.gms\.ads\.DELAY_APP_MEASUREMENT_INIT"\s+android:value="true"\s*\/>/,
+  'DELAY_APP_MEASUREMENT_INIT must be true until consent-gated ad initialization',
+);
 
 requireMarkers('ios/Runner/Info.plist', [
   '<key>FIREBASE_ANALYTICS_COLLECTION_ENABLED</key>',
@@ -147,6 +165,16 @@ requireMarkers('ios/Runner/Info.plist', [
   '<key>NSCameraUsageDescription</key>',
   '<key>NSMicrophoneUsageDescription</key>',
 ]);
+requirePattern(
+  'ios/Runner/Info.plist',
+  /<key>FIREBASE_ANALYTICS_COLLECTION_ENABLED<\/key>\s*<false\s*\/>/,
+  'FIREBASE_ANALYTICS_COLLECTION_ENABLED must be false by default',
+);
+requirePattern(
+  'ios/Runner/Info.plist',
+  /<key>GADDelayAppMeasurementInit<\/key>\s*<true\s*\/>/,
+  'GADDelayAppMeasurementInit must be true until consent-gated ad initialization',
+);
 
 requireMarkers('lib/services/cookie_consent_service.dart', [
   'setAnalyticsCollectionEnabled',
