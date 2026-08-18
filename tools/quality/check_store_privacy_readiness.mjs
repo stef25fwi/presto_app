@@ -18,14 +18,14 @@ function read(relativePath) {
 function requireMarkers(relativePath, markers) {
   const content = read(relativePath);
   if (!content) return;
+  let valid = true;
   for (const marker of markers) {
     if (!content.includes(marker)) {
+      valid = false;
       failures.push(`${relativePath}: missing marker ${JSON.stringify(marker)}`);
     }
   }
-  if (!markers.some((marker) => !content.includes(marker))) {
-    passes.push(relativePath);
-  }
+  if (valid) passes.push(relativePath);
 }
 
 function forbidMarkers(relativePath, markers) {
@@ -140,6 +140,11 @@ requireMarkers('lib/services/cookie_consent_service.dart', [
   'applyGoogleConsentMode',
 ]);
 
+requireMarkers('lib/bootstrap/app_bootstrap.dart', [
+  'if (!kIsWeb)',
+  'AdsConsentService.instance.refreshPrivacyState()',
+]);
+
 requireMarkers('lib/services/ads_consent_service.dart', [
   'requestConsentInfoUpdate',
   'loadAndShowConsentFormIfRequired',
@@ -163,6 +168,7 @@ requireMarkers('lib/pages/legal_info_page.dart', [
   'Préférences publicitaires Google',
   'AdsConsentService.instance.showPrivacyOptions()',
   'AdsConsentService.instance.refreshPrivacyState()',
+  'if (!required) return const SizedBox.shrink();',
 ]);
 
 requireMarkers('lib/features/operating_mode/legal_documents.dart', [
