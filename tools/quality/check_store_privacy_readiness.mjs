@@ -165,6 +165,11 @@ forbidMarkers('lib/widgets/ad_banner.dart', [
 ]);
 
 requireMarkers('lib/pages/legal_info_page.dart', [
+  "import '../widgets/ads_privacy_options_card.dart';",
+  'const AdsPrivacyOptionsCard()',
+]);
+
+requireMarkers('lib/widgets/ads_privacy_options_card.dart', [
   'Préférences publicitaires Google',
   'AdsConsentService.instance.showPrivacyOptions()',
   'AdsConsentService.instance.refreshPrivacyState()',
