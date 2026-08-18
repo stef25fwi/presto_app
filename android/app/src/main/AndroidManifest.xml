@@ -12,6 +12,17 @@
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
         android:fullBackupContent="false">
+        <!-- Privacy by default: avoid first-launch Analytics events before the
+             stored consent choice has been applied by Flutter. A persisted
+             setAnalyticsCollectionEnabled choice takes precedence later. -->
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false"/>
+        <!-- Delay Google Mobile Ads app measurement until AdsConsentService
+             initializes the SDK after iliprestō marketing consent + UMP. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT"
+            android:value="true"/>
         <!-- Google Mobile Ads App ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
