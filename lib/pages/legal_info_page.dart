@@ -417,7 +417,7 @@ class _AdsPrivacyOptionsCardState extends State<_AdsPrivacyOptionsCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Aucun formulaire publicitaire Google supplémentaire n’est requis pour votre configuration actuelle.',
+            'Les options publicitaires Google ne sont plus requises pour votre configuration actuelle.',
           ),
         ),
       );
@@ -430,6 +430,8 @@ class _AdsPrivacyOptionsCardState extends State<_AdsPrivacyOptionsCard> {
       listenable: AdsConsentService.instance,
       builder: (context, _) {
         final required = AdsConsentService.instance.privacyOptionsRequired;
+        if (!required) return const SizedBox.shrink();
+
         return Material(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
@@ -462,11 +464,9 @@ class _AdsPrivacyOptionsCardState extends State<_AdsPrivacyOptionsCard> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  required
-                      ? 'Google UMP demande qu’un accès aux options de confidentialité reste disponible.'
-                      : 'Vous pouvez vérifier ou modifier les options Google UMP lorsqu’un formulaire est requis dans votre région.',
-                  style: const TextStyle(
+                const Text(
+                  'Google UMP demande qu’un accès aux options de confidentialité reste disponible.',
+                  style: TextStyle(
                     color: _LegalInfoPageState._muted,
                     fontSize: 12.5,
                     height: 1.35,
