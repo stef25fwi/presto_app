@@ -127,6 +127,7 @@ jobs:
     name: Android 16 emulator smoke
     runs-on: ubuntu-latest
     needs: android36-build-test
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
 
@@ -152,6 +153,7 @@ jobs:
           flutter build apk --debug
 
       - name: Boot Android 16 emulator
+        timeout-minutes: 10
         run: |
           set -euo pipefail
           mkdir -p evidence/android-api36-runtime
@@ -162,33 +164,95 @@ jobs:
           test -x "${EMULATOR}"
           test -x "${ADB}"
 
+          {
+            echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT}"
+            echo "ANDROID_API_LEVEL=${ANDROID_API_LEVEL}"
+            uname -a
+            ls -l /dev/kvm 2>&1 || true
+          } | tee evidence/android-api36-runtime/runner-environment.txt
+          "${EMULATOR}" -version 2>&1 \
+            | tee evidence/android-api36-runtime/emulator-version.txt
+          "${ADB}" version 2>&1 \
+            | tee evidence/android-api36-runtime/adb-version.txt
+
           sudo chmod 666 /dev/kvm || true
           echo no | "${AVDMANAGER}" create avd \
             --force \
             --name ilipresto-api36 \
             --package "system-images;android-${ANDROID_API_LEVEL};google_apis;x86_64" \
             --device pixel_7
+          "${AVDMANAGER}" list avd \
+            | tee evidence/android-api36-runtime/avd-list.txt
 
-          nohup "${EMULATOR}" \
+          "${ADB}" kill-server || true
+          "${ADB}" start-server
+
+          "${EMULATOR}" \
             -avd ilipresto-api36 \
             -no-window \
             -no-audio \
             -no-boot-anim \
             -no-snapshot \
+            -accel auto \
             -gpu swiftshader_indirect \
             > evidence/android-api36-runtime/emulator.log 2>&1 &
+          EMULATOR_PID=$!
+          echo "${EMULATOR_PID}" | tee evidence/android-api36-runtime/emulator-pid.txt
 
-          "${ADB}" wait-for-device
-          for i in {1..60}; do
-            if [[ "$("${ADB}" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == '1' ]]; then
+          SERIAL=''
+          for i in {1..90}; do
+            if ! kill -0 "${EMULATOR_PID}" 2>/dev/null; then
+              echo '::error::Android emulator process exited before ADB became ready.'
+              cat evidence/android-api36-runtime/emulator.log || true
+              exit 1
+            fi
+
+            "${ADB}" devices -l > evidence/android-api36-runtime/adb-devices.txt || true
+            SERIAL="$(awk '/^emulator-[0-9]+[[:space:]]+device([[:space:]]|$)/ {print $1; exit}' evidence/android-api36-runtime/adb-devices.txt)"
+            if [[ -n "${SERIAL}" ]]; then
               break
             fi
-            sleep 5
+            sleep 2
           done
-          test "$("${ADB}" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = '1'
-          "${ADB}" shell getprop ro.build.version.release \
+
+          if [[ -z "${SERIAL}" ]]; then
+            echo '::error::Android emulator did not become an ADB device within 180 seconds.'
+            cat evidence/android-api36-runtime/adb-devices.txt || true
+            cat evidence/android-api36-runtime/emulator.log || true
+            kill "${EMULATOR_PID}" 2>/dev/null || true
+            exit 1
+          fi
+          echo "${SERIAL}" | tee evidence/android-api36-runtime/adb-serial.txt
+
+          BOOT_COMPLETED=''
+          for i in {1..100}; do
+            if ! kill -0 "${EMULATOR_PID}" 2>/dev/null; then
+              echo '::error::Android emulator process exited during boot.'
+              cat evidence/android-api36-runtime/emulator.log || true
+              exit 1
+            fi
+
+            BOOT_COMPLETED="$("${ADB}" -s "${SERIAL}" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r[:space:]' || true)"
+            echo "attempt=${i} boot_completed=${BOOT_COMPLETED}" \
+              > evidence/android-api36-runtime/boot-status.txt
+            if [[ "${BOOT_COMPLETED}" == '1' ]]; then
+              break
+            fi
+            sleep 3
+          done
+
+          if [[ "${BOOT_COMPLETED}" != '1' ]]; then
+            echo '::error::Android 16 emulator did not finish booting within 300 seconds.'
+            "${ADB}" -s "${SERIAL}" shell getprop \
+              > evidence/android-api36-runtime/getprop.txt 2>&1 || true
+            cat evidence/android-api36-runtime/emulator.log || true
+            exit 1
+          fi
+
+          "${ADB}" -s "${SERIAL}" shell input keyevent 82 || true
+          "${ADB}" -s "${SERIAL}" shell getprop ro.build.version.release \
             | tee evidence/android-api36-runtime/android-release.txt
-          "${ADB}" shell getprop ro.build.version.sdk \
+          "${ADB}" -s "${SERIAL}" shell getprop ro.build.version.sdk \
             | tee evidence/android-api36-runtime/android-sdk.txt
           test "$(tr -d '\r[:space:]' < evidence/android-api36-runtime/android-sdk.txt)" = '36'
 
@@ -196,13 +260,14 @@ jobs:
         run: |
           set -euo pipefail
           ADB="${ANDROID_SDK_ROOT}/platform-tools/adb"
-          "${ADB}" install -r build/app/outputs/flutter-apk/app-debug.apk
-          "${ADB}" shell am force-stop fr.ilipresto.app
-          "${ADB}" shell am start -W -n fr.ilipresto.app/.MainActivity \
+          SERIAL="$(cat evidence/android-api36-runtime/adb-serial.txt)"
+          "${ADB}" -s "${SERIAL}" install -r build/app/outputs/flutter-apk/app-debug.apk
+          "${ADB}" -s "${SERIAL}" shell am force-stop fr.ilipresto.app
+          "${ADB}" -s "${SERIAL}" shell am start -W -n fr.ilipresto.app/.MainActivity \
             | tee evidence/android-api36-runtime/app-launch.txt
           grep -Eq 'Status: ok|Complete' evidence/android-api36-runtime/app-launch.txt
           sleep 5
-          if "${ADB}" shell dumpsys activity exit-info fr.ilipresto.app 2>/dev/null \
+          if "${ADB}" -s "${SERIAL}" shell dumpsys activity exit-info fr.ilipresto.app 2>/dev/null \
               | grep -Eq 'REASON_CRASH|REASON_ANR'; then
             echo '::error::Crash/ANR detected after startup.'
             exit 1
@@ -212,22 +277,23 @@ jobs:
         run: |
           set -euo pipefail
           ADB="${ANDROID_SDK_ROOT}/platform-tools/adb"
+          SERIAL="$(cat evidence/android-api36-runtime/adb-serial.txt)"
           for permission in \
             android.permission.POST_NOTIFICATIONS \
             android.permission.CAMERA \
             android.permission.RECORD_AUDIO; do
-            "${ADB}" shell pm grant fr.ilipresto.app "${permission}"
+            "${ADB}" -s "${SERIAL}" shell pm grant fr.ilipresto.app "${permission}"
           done
-          "${ADB}" shell dumpsys package fr.ilipresto.app \
+          "${ADB}" -s "${SERIAL}" shell dumpsys package fr.ilipresto.app \
             > evidence/android-api36-runtime/package-dump.txt
 
-          "${ADB}" shell am start -W \
+          "${ADB}" -s "${SERIAL}" shell am start -W \
             -a android.intent.action.VIEW \
             -c android.intent.category.BROWSABLE \
             -d 'ilipresto://home' \
             fr.ilipresto.app \
             | tee evidence/android-api36-runtime/deeplink-custom.txt
-          "${ADB}" shell am start -W \
+          "${ADB}" -s "${SERIAL}" shell am start -W \
             -a android.intent.action.VIEW \
             -c android.intent.category.BROWSABLE \
             -d 'https://ilipresto.fr/app' \
@@ -240,8 +306,16 @@ jobs:
         if: always()
         run: |
           mkdir -p evidence/android-api36-runtime
-          "${ANDROID_SDK_ROOT}/platform-tools/adb" logcat -d \
-            > evidence/android-api36-runtime/logcat.txt || true
+          ADB="${ANDROID_SDK_ROOT}/platform-tools/adb"
+          if [[ -f evidence/android-api36-runtime/adb-serial.txt ]]; then
+            SERIAL="$(cat evidence/android-api36-runtime/adb-serial.txt)"
+            "${ADB}" -s "${SERIAL}" logcat -d \
+              > evidence/android-api36-runtime/logcat.txt 2>&1 || true
+          else
+            "${ADB}" devices -l \
+              > evidence/android-api36-runtime/adb-devices-final.txt 2>&1 || true
+          fi
+          pkill -f "emulator.*ilipresto-api36" || true
 
       - name: Upload Android 16 runtime evidence
         if: always()
