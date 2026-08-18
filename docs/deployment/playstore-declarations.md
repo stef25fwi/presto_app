@@ -1,125 +1,135 @@
-# Déclarations Play Console — brouillon à valider
+# Google Play — Data Safety et déclarations confidentialité
 
-Réponses préparées à partir de l'inventaire du code au 1er août 2026
-(commit `e5ddc88`). **Ce document n'est pas une déclaration valide en soi** :
-il sert de base à la saisie dans Play Console, qui reste un acte de
-l'éditeur. Toute réponse marquée « à confirmer » exige une décision humaine.
+Dernière révision : **18 août 2026**  
+Application : **iliprestō**  
+Package Android : `fr.ilipresto.app`
 
-Références : `docs/deployment/playstore-launch-checklist.md` (sections 4 et 5).
+Ce document est la source de saisie pour la section **Sécurité des données / Data Safety** de Google Play. Il doit être relu à chaque changement de SDK, de finalité ou de configuration publicitaire.
 
----
+Références internes :
 
-## 1. Sécurité des données (*Data safety*)
+- `docs/privacy/STORE_DATA_INVENTORY.md`
+- `docs/privacy/PROCESSOR_REGISTER.md`
+- `docs/deployment/appstore-privacy-declarations.md`
+- politique publique : `https://ilipresto.fr/confidentialite`
+- suppression de compte : `https://ilipresto.fr/suppression-compte`
 
-### Cadre général
+## 1. Réponses globales Data Safety
 
-| Question | Réponse | Fondement dans le code |
+| Question Play Console | Réponse iliprestō | Justification |
 |---|---|---|
-| Les données sont-elles chiffrées en transit ? | **Oui** | Firebase (HTTPS/TLS) pour tous les appels ; HSTS sur le domaine (`firebase.json`) |
-| L'utilisateur peut-il demander la suppression de ses données ? | **Oui** | `lib/pages/account/delete_account_page.dart` + page publique `/suppression-compte` |
-| Les données sont-elles partagées avec des tiers ? | **Oui** (Google : Firebase, AdMob) | dépendances `firebase_*`, `google_mobile_ads` |
-| Application destinée aux enfants ? | **Non** — à confirmer avec le public cible retenu | messagerie ouverte entre adultes |
+| L’application collecte-t-elle ou partage-t-elle des données utilisateur ? | **Oui** | compte, contenus, sécurité, analytics et publicité |
+| Les données sont-elles chiffrées en transit ? | **Oui** | trafic applicatif vers Firebase/Google et autres services via HTTPS/TLS |
+| L’utilisateur peut-il demander la suppression de ses données ? | **Oui** | suppression depuis l’app + page publique `/suppression-compte` |
+| Politique de confidentialité publique ? | **Oui** | `/confidentialite`, page statique sans authentification |
+| L’application contient-elle de la publicité ? | **Oui** | Google Mobile Ads / AdMob lorsque le consentement applicable l’autorise |
+| Publicité demandée avant consentement UMP ? | **Non** | `AdsConsentService` exige `ConsentInformation.canRequestAds()` avant initialisation/requête |
+| Application destinée aux enfants ? | **Non** | positionnement grand public / mise en relation et messagerie ; ne pas sélectionner Families sans nouvelle revue |
 
-### Types de données à déclarer
+## 2. Matrice de données à déclarer
 
-| Catégorie | Type | Collecté | Partagé | Finalité | Obligatoire | Source |
-|---|---|---|---|---|---|---|
-| Informations personnelles | Nom / pseudo | Oui | Non | Fonctionnalité, compte | Oui | `displayName` (`user_profile_save_payload.dart`) |
-| Informations personnelles | Adresse e-mail | Oui | Non | Fonctionnalité, compte | Oui | `firebase_auth` |
-| Informations personnelles | Numéro de téléphone | Oui | Non | Mise en relation | Non | `phone` (`user_profile_save_payload.dart`) |
-| Localisation | Localisation approximative | Oui | Non | Fonctionnalité | Non | **ville et code postal saisis par l'utilisateur**, aucun capteur : aucun plugin de géolocalisation dans `pubspec.yaml` |
-| Messages | Messages dans l'application | Oui | Non | Fonctionnalité | Oui | messagerie Firestore |
-| Photos et vidéos | Photos | Oui | Non | Fonctionnalité (annonces, avatar) | Non | `image_picker`, `firebase_storage` |
-| Fichiers audio | Enregistrements vocaux | Oui | Non | Fonctionnalité | Non | `record`, `just_audio` |
-| Fichiers et documents | Documents | Oui | Non | Fonctionnalité | Non | `file_picker`, export `pdf` |
-| Identifiants | Identifiant utilisateur | Oui | Oui | Analytics, publicité | Oui | Firebase UID, Analytics |
-| Identifiants | **Identifiant publicitaire** | Oui | Oui | Publicité | Non | `google_mobile_ads` fusionne la permission `com.google.android.gms.permission.AD_ID` |
-| Activité dans l'app | Interactions | Oui | Oui | Analytics | Non | `firebase_analytics` |
-| Activité dans l'app | Recherches | Oui | Non | Fonctionnalité, analytics | Non | recherche d'annonces |
-| Performances | Plantages | Oui | Oui | Diagnostic | Non | `firebase_crashlytics` |
-| Performances | Diagnostics | Oui | Oui | Diagnostic | Non | `firebase_performance` |
+La colonne **Partagé** suit la définition Google Play. Les traitements réalisés pour le compte d’iliprestō par un prestataire peuvent relever de l’exception « service provider » ; les données utilisées par un réseau publicitaire pour ses propres finalités publicitaires doivent être déclarées comme partagées lorsque la définition Play l’exige.
 
-> **Point de vigilance.** Déclarer « localisation approximative » comme
-> *saisie par l'utilisateur* et non comme *collectée par l'appareil* : la
-> déclaration inverse déclencherait une demande de justification que le code
-> ne peut pas appuyer.
+| Catégorie Play | Type de donnée | Collectée | Partagée | Obligatoire ? | Finalités à sélectionner |
+|---|---|---:|---:|---|---|
+| Informations personnelles | Nom / pseudonyme | Oui | Non* | Compte : oui ; nom réel : facultatif | Fonctionnement de l’app, gestion du compte |
+| Informations personnelles | Adresse e-mail | Oui | Non* | Oui pour compte e-mail ; fournisseur social selon choix | Fonctionnement de l’app, gestion du compte, sécurité |
+| Informations personnelles | Numéro de téléphone | Oui | Non* | Facultatif selon parcours | Fonctionnement de l’app, gestion du compte, prévention de la fraude |
+| Informations personnelles | Autres informations personnelles | Oui | Non* | Facultatif | **SIRET** et informations professionnelles, fonctionnement, prévention de la fraude |
+| Localisation | Localisation approximative | Oui | Oui via publicité lorsque applicable | Facultatif | Fonctionnement (ville/CP), publicité, analytics, sécurité selon SDK |
+| Photos et vidéos | Photos | Oui | Non* | Facultatif | Fonctionnement de l’app, contenu utilisateur, modération |
+| Photos et vidéos | Vidéos | Selon fonction active | Non* | Facultatif | Fonctionnement de l’app |
+| Fichiers audio | Voix / notes audio | Oui | Non* | Facultatif | Fonctionnement de l’app, messagerie, fonctions IA si déclenchées |
+| Fichiers et documents | Fichiers / documents | Oui | Non* | Facultatif | Fonctionnement de l’app, annonces, messagerie |
+| Messages | Messages dans l’application | Oui | Non* | Fonction de messagerie | Fonctionnement de l’app, sécurité, modération |
+| Activité dans l’app | Interactions avec l’app | Oui si consentement requis obtenu | Oui via SDK publicitaire lorsque applicable | Facultatif | Analytics, fonctionnement, publicité |
+| Activité dans l’app | Recherches dans l’application | Oui | Non* | Facultatif | Fonctionnement de l’app, analytics si activé |
+| Activité dans l’app | Autre contenu généré par l’utilisateur | Oui | Non* | Selon usage | Annonces, avis et contenus soumis à l’IA : fonctionnement/modération |
+| Informations et performances de l’app | Journaux de plantage | Oui | Oui/exception prestataire selon qualification Play | Automatique Crashlytics | Analytics/diagnostic, fonctionnement |
+| Informations et performances de l’app | Diagnostics | Oui | Oui/exception prestataire selon qualification Play | Automatique selon SDK | Diagnostic, sécurité, fonctionnement |
+| Informations et performances de l’app | Autres données de performance | Oui | Oui/exception prestataire selon qualification Play | Automatique Firebase Performance/Ads | Analytics/diagnostic, publicité selon SDK |
+| Identifiants de l’appareil ou autres | Identifiant utilisateur | Oui | Non* | Oui | Fonctionnement, compte, sécurité, analytics selon consentement |
+| Identifiants de l’appareil ou autres | Identifiant d’appareil / installation | Oui | Oui via SDK publicitaire lorsque applicable | Automatique selon SDK | Analytics, publicité, prévention de la fraude |
+| Identifiants de l’appareil ou autres | Identifiant publicitaire Android | Oui lorsque disponible/autorisé | Oui | Facultatif / SDK Ads | Publicité, analytics publicitaire, prévention de la fraude |
 
-> **Contenus soumis à l'IA.** `firebase_ai` transmet à Google des textes et
-> images fournis par l'utilisateur pour l'assistance à la publication. À
-> refléter dans la politique de confidentialité et dans la section
-> « partage » si le traitement n'est pas strictement éphémère — **à
-> confirmer** avec la configuration Firebase AI retenue.
+`*` : les transferts à Firebase/Google agissant comme prestataire doivent être qualifiés au regard de la définition Play et des conditions contractuelles en vigueur. Ils ne doivent pas être automatiquement assimilés à du « partage » si l’exception service provider s’applique. En revanche, les usages propres à la publicité tierce ne doivent pas être masqués par cette exception.
 
-## 2. Permissions sensibles
+## 3. SDK et données à intégrer dans la déclaration
 
-| Permission | Déclarée dans | Usage réel | À fournir |
-|---|---|---|---|
-| `RECORD_AUDIO` | `AndroidManifest.xml` | messages vocaux (`record`) | Divulgation proéminente avant la première demande + explication dans la fiche |
-| `CAMERA` | `AndroidManifest.xml` | photos d'annonce et avatar (`image_picker`) | Idem |
-| `POST_NOTIFICATIONS` | `AndroidManifest.xml` | notifications de messages | Demandé au runtime (`lib/services/notification_service.dart:297`) — conforme |
-| `INTERNET`, `WAKE_LOCK` | `AndroidManifest.xml` | réseau et réception push | Aucune déclaration requise |
-| `AD_ID` (fusionnée) | `google_mobile_ads` | publicité | **Doit apparaître dans Sécurité des données** (cf. tableau ci-dessus) |
+### Firebase Authentication / connexions sociales
 
-Aucune permission de localisation, de contacts, de SMS ni de stockage
-externe étendu n'est demandée — à conserver tel quel, ce sont les
-déclarations les plus coûteuses à justifier.
+À couvrir : e-mail, téléphone, nom/pseudonyme, UID Firebase, fournisseur de connexion, adresse IP et informations techniques nécessaires à l’authentification et à la sécurité. Les connexions Google, Facebook et Apple transmettent également les éléments autorisés par l’utilisateur à ces fournisseurs.
 
-## 3. Classification du contenu (questionnaire IARC)
+### Firestore / Storage / Functions / Messaging
 
-Éléments à déclarer, tirés du fonctionnement réel :
+À couvrir : profil, annonces, messages, avis, pièces jointes, photos, documents, audio, jetons de notification et métadonnées techniques nécessaires au fonctionnement.
 
-- **Interaction entre utilisateurs : oui.** Messagerie directe entre
-  utilisateurs (`lib/pages/messages/`).
-- **Partage de contenu généré par les utilisateurs : oui.** Annonces, photos,
-  messages vocaux.
-- **Partage de localisation entre utilisateurs : oui, approximative.** La
-  ville et le code postal d'une annonce sont visibles publiquement.
-- **Achats intégrés : non** en mode *free beta* — voir la réserve Play Billing
-  ci-dessous.
-- **Violence, contenu sexuel, jeux d'argent, substances : non.**
-- **Publicité : oui**, bannières AdMob.
+### Firebase Analytics
 
-Dispositifs de modération à signaler dans le questionnaire (tous présents) :
-signalement d'annonce (`lib/pages/offers/offer_details_page.dart`),
-signalement de conversation et blocage d'utilisateur
-(`lib/pages/messages/conversation_thread_page.dart`), console de modération
-admin (`lib/admin/messaging/`).
+Collecte activée uniquement selon les choix applicables enregistrés par `CookieConsentService`. Déclarer les interactions, identifiants techniques et usages d’analytics effectivement envoyés lorsque la collecte est activée.
 
-## 4. Contenu de l'application
+### Crashlytics et Performance
 
-| Section Play Console | Valeur | État |
+Déclarer journaux de crash, diagnostics, métadonnées d’appareil et performances conformément aux disclosures Firebase correspondant aux versions embarquées.
+
+### Firebase App Check / reCAPTCHA Enterprise / Play Integrity
+
+Déclarer les identifiants et signaux techniques de sécurité/intégrité transmis pour prévenir les abus et protéger les services backend. Ces données ne servent pas à « approuver » un utilisateur.
+
+### Firebase AI
+
+Les textes, images, audio ou autres contenus qu’un utilisateur soumet volontairement à une fonction IA peuvent être transmis à Google/Firebase afin de produire la réponse demandée. Ces contenus restent classés selon leur nature (texte/contenu utilisateur, photo, audio) et leur finalité principale est le fonctionnement de l’app.
+
+### Google Mobile Ads / AdMob + UMP
+
+À couvrir au minimum selon la configuration active et les disclosures Google :
+
+- adresse IP et localisation approximative susceptible d’en être déduite ;
+- identifiant d’appareil / identifiant publicitaire disponible ;
+- interactions publicitaires et données publicitaires ;
+- diagnostics, crashs et performances du SDK ;
+- interactions produit utilisées pour la publicité et la mesure.
+
+Le code iliprestō impose deux verrous :
+
+1. consentement marketing applicatif ;
+2. `ConsentInformation.canRequestAds() == true` côté Google UMP.
+
+Aucune bannière AdMob ne doit être chargée si l’un de ces verrous échoue.
+
+## 4. Permissions Android sensibles
+
+| Permission / capacité | Usage | Exigence |
 |---|---|---|
-| Politique de confidentialité | `https://ilipresto.fr/confidentialite` | route publique en place |
-| Conditions d'utilisation | `https://ilipresto.fr/cgu` | route publique en place |
-| Mentions légales | `https://ilipresto.fr/mentions-legales` | route publique en place |
-| Suppression du compte | `https://ilipresto.fr/suppression-compte` | route publique en place |
-| Contient des annonces | **Oui** | à cocher |
-| Accès à l'application | compte de démonstration à fournir | **à créer** |
-| Application financière | Non | à confirmer |
-| Application de santé | Non | à confirmer |
+| `CAMERA` | photo d’annonce / profil | demande contextuelle et explication claire |
+| `RECORD_AUDIO` | note vocale / fonction vocale | demande contextuelle et explication claire |
+| `POST_NOTIFICATIONS` | notifications | demande runtime |
+| `AD_ID` | publicité Google lorsque disponible | déclaration Data Safety et conformité Ads |
+| Localisation appareil | **Non demandée pour le parcours de base** | conserver l’absence de permission GPS tant qu’elle n’est pas nécessaire |
+| Contacts / SMS | **Non demandés** | ne pas ajouter sans nouvelle revue privacy |
 
-> **Compte de démonstration.** L'application est intégralement derrière
-> authentification. Sans identifiants de test dans *Accès à l'application*, le
-> reviewer ne voit rien et le rejet est quasi systématique. Prévoir un compte
-> dédié, avec des annonces et une conversation déjà peuplées, et le mentionner
-> dans les instructions.
+## 5. URLs à saisir dans Play Console
 
-## 5. Réserve Play Billing
+- Politique de confidentialité : `https://ilipresto.fr/confidentialite`
+- Suppression de compte : `https://ilipresto.fr/suppression-compte`
+- CGU : `https://ilipresto.fr/cgu`
+- Mentions légales : `https://ilipresto.fr/mentions-legales`
 
-Le checkout Stripe est neutralisé hors mode commercial
-(`lib/features/subscriptions/subscription_action_placeholders.dart:78`), donc
-la déclaration « pas d'achats intégrés » est exacte **aujourd'hui**.
+Les deux premières disposent désormais d’une représentation Web statique, afin de rester lisibles sans connexion au compte et indépendamment du mode pré-lancement Flutter.
 
-Le jour où le mode commercial est activé, un abonnement souscrit depuis
-l'application Android via Stripe enfreint la règle Play Billing dès lors
-qu'il ouvre des fonctionnalités numériques. Deux issues : passer par Play
-Billing, ou réserver le parcours d'abonnement au web en le gardant derrière
-`kIsWeb`. À trancher **avant** le basculement, pas après.
+## 6. Contrôle avant soumission
 
-## 6. Test fermé préalable
+Avant de cliquer sur **Enregistrer / Envoyer** dans Play Console :
 
-Un compte développeur personnel créé après novembre 2023 doit réunir
-**12 testeurs pendant 14 jours continus** en test fermé avant de pouvoir
-demander l'accès à la production. C'est le délai le plus long de toute la
-préparation : à lancer dès que la piste interne est saine, sans attendre que
-le reste de la checklist soit fini.
+- générer l’AAB de release réellement destiné au Store ;
+- vérifier les SDK effectivement présents dans l’artefact final ;
+- relire les disclosures des versions exactes de Firebase et Google Mobile Ads ;
+- tester `/confidentialite` et `/suppression-compte` depuis un navigateur privé non authentifié ;
+- comparer ligne à ligne la matrice ci-dessus avec la politique publique ;
+- ne déclarer aucune donnée comme « non collectée » si un SDK de l’artefact la transmet ;
+- archiver une capture/PDF de la déclaration Play finale avec le numéro de version soumis.
+
+## 7. État
+
+**Code et documentation : prêts pour saisie Store après CI verte.**  
+**Action externe obligatoire :** la déclaration finale doit être saisie et validée dans Play Console par le titulaire du compte développeur. Toute modification future de SDK, publicité, IA ou finalité impose une nouvelle revue de ce fichier.
