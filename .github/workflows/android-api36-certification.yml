@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: android-api36-${{ github.ref }}
+  group: android-api36-v2-${{ github.ref }}
   cancel-in-progress: true
 
 env:
