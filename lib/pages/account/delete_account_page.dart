@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/auth_error_mapper.dart';
@@ -33,14 +34,98 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
   bool _loading = false;
   bool _hidePassword = true;
 
+  User? get _currentUser => FirebaseAuth.instance.currentUser;
+
+  bool _hasProvider(String providerId) {
+    return _currentUser?.providerData
+            .any((provider) => provider.providerId == providerId) ==
+        true;
+  }
+
   bool get _usesPasswordProvider {
     final override = widget.usesPasswordProviderOverride;
     if (override != null) return override;
+    return _hasProvider('password');
+  }
 
-    final user = FirebaseAuth.instance.currentUser;
-    return user?.providerData
-            .any((provider) => provider.providerId == 'password') ==
-        true;
+  String get _federatedProviderLabel {
+    final labels = <String>[];
+    if (_hasProvider('google.com')) labels.add('Google');
+    if (_hasProvider('apple.com')) labels.add('Apple');
+    if (_hasProvider('facebook.com')) labels.add('Facebook');
+    return labels.isEmpty ? 'votre fournisseur de connexion' : labels.join(', ');
+  }
+
+  Future<UserCredential> _reauthenticateWithProvider(
+    AuthProvider provider,
+  ) async {
+    final user = _currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'not-authenticated',
+        message: 'Utilisateur non connecté.',
+      );
+    }
+
+    if (kIsWeb) {
+      return user.reauthenticateWithPopup(provider);
+    }
+    return user.reauthenticateWithProvider(provider);
+  }
+
+  Future<void> _prepareFederatedDeletion() async {
+    // Les tests peuvent injecter l'action de suppression sans Firebase réel.
+    if (widget.deleteAccountAction != null) return;
+
+    final user = _currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'not-authenticated',
+        message: 'Utilisateur non connecté.',
+      );
+    }
+
+    // Apple exige une révocation du jeton lors de la suppression du compte.
+    // Firebase ne conserve pas le jeton Apple : on réauthentifie donc l'utilisateur
+    // pour obtenir un nouveau code d'autorisation, puis on le révoque avant de
+    // déclencher l'effacement serveur.
+    if (_hasProvider('apple.com')) {
+      final credential = await _reauthenticateWithProvider(AppleAuthProvider());
+      final authorizationCode =
+          credential.additionalUserInfo?.authorizationCode?.trim() ?? '';
+      if (authorizationCode.isEmpty) {
+        throw FirebaseAuthException(
+          code: 'apple-token-revocation-failed',
+          message:
+              'La révocation Apple n’a pas pu être préparée. Reconnecte-toi avec Apple puis réessaie.',
+        );
+      }
+      await FirebaseAuth.instance
+          .revokeTokenWithAuthorizationCode(authorizationCode);
+      return;
+    }
+
+    final lastSignIn = user.metadata.lastSignInTime;
+    final isRecent = lastSignIn != null &&
+        DateTime.now().difference(lastSignIn) <= const Duration(minutes: 10);
+    if (isRecent || _usesPasswordProvider) return;
+
+    // Pour Google/Facebook, une reconnexion interactive évite d'envoyer
+    // l'utilisateur ailleurs puis de lui demander de revenir manuellement.
+    if (_hasProvider('google.com')) {
+      await _reauthenticateWithProvider(GoogleAuthProvider());
+      return;
+    }
+    if (_hasProvider('facebook.com')) {
+      await _reauthenticateWithProvider(FacebookAuthProvider());
+      return;
+    }
+
+    throw FirebaseAuthException(
+      code: 'requires-recent-login',
+      message:
+          'Reconnecte-toi avec ton fournisseur de connexion avant de supprimer le compte.',
+    );
   }
 
   Future<void> _runDeleteAccount({String? password}) {
@@ -62,6 +147,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
     setState(() => _loading = true);
 
     try {
+      await _prepareFederatedDeletion();
       await _runDeleteAccount(
         password: _usesPasswordProvider ? _passwordCtrl.text : null,
       );
@@ -81,6 +167,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
   @override
   Widget build(BuildContext context) {
     final usesPasswordProvider = _usesPasswordProvider;
+    final federatedProviderLabel = _federatedProviderLabel;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
@@ -99,7 +186,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
           child: ListView(
             children: [
               const Text(
-                'Cette action est définitive. Ton abonnement sera annulé, tes données privées seront supprimées et ton profil sera anonymisé dans les conversations conservées.',
+                'Cette action est définitive. Ton abonnement sera annulé, tes données privées seront supprimées et les données conservées uniquement pour une obligation légale, la sécurité ou un litige seront limitées et anonymisées autant que possible.',
                 style: TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.w700,
@@ -134,15 +221,19 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                   },
                 ),
                 const SizedBox(height: 12),
-              ] else ...[
-                const Card(
+              ],
+              if (!usesPasswordProvider ||
+                  _hasProvider('apple.com') ||
+                  _hasProvider('google.com') ||
+                  _hasProvider('facebook.com')) ...[
+                Card(
                   elevation: 0,
-                  color: Color(0xFFFFF3EA),
+                  color: const Color(0xFFFFF3EA),
                   child: Padding(
-                    padding: EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(14),
                     child: Text(
-                      'Compte Google ou Apple : pour ta sécurité, la suppression est autorisée uniquement après une connexion récente. Reconnecte-toi puis reviens ici si un message te le demande.',
-                      style: TextStyle(height: 1.35),
+                      'Connexion $federatedProviderLabel : une réauthentification peut s’ouvrir automatiquement pour confirmer ton identité. Pour Apple, le jeton de connexion est également révoqué avant la suppression.',
+                      style: const TextStyle(height: 1.35),
                     ),
                   ),
                 ),
