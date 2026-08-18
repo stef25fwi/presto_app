@@ -6,6 +6,7 @@ on:
       - "functions/src/modules/auth/account_deletion.ts"
       - "functions/src/modules/auth/account_deletion_cleanup.ts"
       - "functions/scripts/account_deletion_e2e.cjs"
+      - "firebase.account-deletion.json"
       - "lib/pages/account/account_security_page.dart"
       - "lib/pages/account/delete_account_page.dart"
       - "lib/pages/legal/account_deletion_info_page.dart"
@@ -36,7 +37,7 @@ jobs:
           cache: npm
           cache-dependency-path: functions/package-lock.json
 
-      - name: Setup Java for Firestore emulator
+      - name: Setup Java for Firebase emulators
         uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -52,6 +53,6 @@ jobs:
         run: >-
           npx --yes firebase-tools@15.23.0 emulators:exec
           --project demo-ilipresto-account-deletion
-          --config ../firebase.json
+          --config ../firebase.account-deletion.json
           --only auth,firestore,storage
           "node scripts/account_deletion_e2e.cjs"
