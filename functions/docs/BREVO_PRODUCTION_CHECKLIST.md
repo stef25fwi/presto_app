@@ -52,3 +52,14 @@ node scripts/brevo_webhook_smoke_test.mjs \
 - No provider factory fallback ambiguity in production config.
 - At least one real transactional email sent and tracked end-to-end.
 - Alerting in place for webhook signature failure spikes.
+
+## 6) ChatGPT ↔ Brevo MCP
+
+- Use the official Brevo remote MCP endpoint: `https://mcp.brevo.com/v1/brevo/mcp`.
+- Generate a dedicated MCP token in Brevo; never reuse or expose `BREVO_API_KEY`.
+- Never store `BREVO_MCP_TOKEN` in Git, Flutter, Firebase Hosting, logs or tickets.
+- Keep the application email path `Firebase Functions → Brevo API` independent from the administration path `ChatGPT → Brevo MCP`.
+- Prefer read-only audits first: senders, domains, transaction events, templates and webhooks.
+- Require explicit confirmation for sensitive write actions such as sends, bulk contact changes, domains, senders or webhooks.
+- Follow `docs/production/CHATGPT_BREVO_MCP.md` for setup and validation.
+- As of 23 August 2026, full custom MCP activation in ChatGPT requires Business, Enterprise or Edu; Plus cannot import this custom MCP app.
