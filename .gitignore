@@ -134,3 +134,11 @@ functions/evals/media/
 # le 16/08) et salir les revues d'une centaine de fichiers générés à chaque
 # `npm test`. Alignée sur /build/ (équivalent Flutter web), déjà ignoré.
 /functions/lib/
+
+# Credentials locaux de connecteurs MCP — ne jamais versionner
+.mcp.json
+.mcp.local.json
+mcp.json
+mcp.local.json
+*brevo*mcp*token*
+*brevo*mcp*secret*
