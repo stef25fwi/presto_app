@@ -9,6 +9,32 @@ import { resolvePreferenceDecision } from "../preferences/resolver";
 import { getCompatTemplateMeta, listCompatMissingRequiredVariables } from "../templates/compat_registry";
 import { sha256 } from "../../../utils/hash";
 
+/** Les suppressions sont indexées sur l'adresse normalisée en minuscules. */
+export function normalizeSuppressionKey(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+export function isActiveSuppression(data: FirebaseFirestore.DocumentData | undefined): boolean {
+  return data?.active === true;
+}
+
+async function findActiveSuppression(
+  suppressionKey: string,
+): Promise<FirebaseFirestore.DocumentData | null> {
+  const doc = await db.collection(COLLECTIONS.emailSuppressions).doc(suppressionKey).get();
+  const data = doc.data();
+  if (doc.exists && isActiveSuppression(data)) return data ?? null;
+
+  // Repli sur les documents historiques dont l'identifiant n'est pas l'adresse.
+  const snap = await db
+    .collection(COLLECTIONS.emailSuppressions)
+    .where("email", "==", suppressionKey)
+    .where("active", "==", true)
+    .limit(1)
+    .get();
+  return snap.docs[0]?.data() ?? null;
+}
+
 export async function enqueueEmailJobsFromEvent(event: DomainEventPayload): Promise<void> {
   const enrichedEvent = await enrichEventPayload(event);
   const template = mapEventToTemplate(enrichedEvent.event_name);
@@ -30,18 +56,16 @@ export async function enqueueEmailJobsFromEvent(event: DomainEventPayload): Prom
     return;
   }
 
-  // Vérification liste de suppression (hard bounce / plainte)
-  const suppressionSnap = await db
-    .collection(COLLECTIONS.emailSuppressions)
-    .where("email", "==", recipientEmail)
-    .where("active", "==", true)
-    .limit(1)
-    .get();
-  if (!suppressionSnap.empty) {
+  // Vérification liste de suppression (hard bounce / plainte). Le webhook
+  // fournisseur écrit toujours une adresse normalisée : interroger la casse
+  // brute laisserait repartir des envois vers une adresse déjà supprimée.
+  const suppressionKey = normalizeSuppressionKey(recipientEmail);
+  const suppression = await findActiveSuppression(suppressionKey);
+  if (suppression) {
     logger.info("email_enqueue_skipped_suppressed", {
       eventId: enrichedEvent.event_id,
-      email: recipientEmail,
-      reason: suppressionSnap.docs[0]?.data()?.reason ?? "suppressed",
+      email: suppressionKey,
+      reason: suppression.reason ?? "suppressed",
     });
     return;
   }

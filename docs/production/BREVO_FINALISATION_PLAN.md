@@ -36,6 +36,62 @@ La configuration Brevo d’iliprestō peut être déclarée **100 %** uniquement
 
 ---
 
+# 1 bis. État constaté le 25 août 2026
+
+Relevé effectué depuis l'API Brevo (lecture seule) et depuis deux résolveurs DNS publics indépendants (`1.1.1.1` et `8.8.8.8`). Ce relevé est un instantané : il doit être refait par `quality/brevo-production` avant toute déclaration de conformité.
+
+## Ce qui est en place
+
+- Compte Brevo de production actif : organisation `ilipresto`, plan **Starter payant**, 5 000 crédits d'envoi sur la période du 22 août au 22 septembre 2026.
+- Relais SMTP transactionnel activé (`smtp-relay.brevo.com:587`).
+- `GET /v3/account` répond correctement avec la clé de production.
+- `_dmarc.ilipresto.fr` existe et publie `v=DMARC1; p=quarantine;`.
+
+## Blocages P0 confirmés
+
+| # | Constat vérifié | Conséquence | Section |
+|---|---|---|---|
+| 1 | **Aucun enregistrement SPF** sur `ilipresto.fr` (seuls `google-site-verification` et `hosting-site` sont publiés) | Aucun envoi ne peut aligner SPF | 4.2 |
+| 2 | **Aucun enregistrement DKIM** publié (ni `mail._domainkey`, ni `brevo._domainkey`, ni `brevo-code`) | Le domaine ne peut pas être authentifié chez Brevo | 4.3 |
+| 3 | **DMARC `p=quarantine` sans SPF ni DKIM alignés**, et sans `rua` | Tout email partant aujourd'hui est mis en quarantaine ou en spam, et aucun rapport n'est reçu pour le constater | 4.4 |
+| 4 | **Aucun expéditeur sur `ilipresto.fr`** : le seul sender du compte est `sahai.stephane@gmail.com` | `noreply@ilipresto.fr` n'existe pas ; un sender personnel de test est actif en production | 5 |
+| 5 | **MX inbound cassé** : `inbound.ilipresto.fr` pointe vers `inbound1.sendinblue.com.ilipresto.fr` (point final absent chez LWS) et le second MX manque | `contact@ilipresto.fr` ne peut pas être reçu | 9.1 |
+
+Constat annexe : le compte ne contient qu'un template Brevo, `Nouveau template`, inactif, sujet `test`, avec le contenu de démonstration Brevo (`Your order is coming soon`, `contact@company.com`). Les templates transactionnels iliprestō sont rendus côté code (`functions/src/modules/email/templates/definitions/`) : ce template de démonstration doit être supprimé pour lever toute ambiguïté.
+
+## Correctifs DNS à publier chez LWS
+
+Les valeurs DKIM exactes sont fournies par Brevo lors de l'ajout du domaine (`Expéditeurs et domaines` → `Domaines` → `Authentifier`) : les publier telles quelles, sans les reconstruire à la main.
+
+```text
+# SPF — un seul enregistrement TXT v=spf1 sur le domaine racine
+ilipresto.fr.            TXT    "v=spf1 include:spf.brevo.com -all"
+
+# DKIM — valeurs exactes affichées par Brevo (ne pas inventer les sélecteurs)
+<sélecteur>._domainkey.ilipresto.fr.   TXT    "<valeur fournie par Brevo>"
+brevo-code.ilipresto.fr.               TXT    "<code de vérification Brevo>"
+
+# DMARC — conserver p=quarantine seulement une fois SPF et DKIM alignés,
+# et ajouter une boîte de rapports réellement surveillée
+_dmarc.ilipresto.fr.     TXT    "v=DMARC1; p=none; rua=mailto:dmarc@ilipresto.fr; pct=100"
+
+# Inbound — noter le point final, absent aujourd'hui côté LWS
+inbound.ilipresto.fr.    MX 10  inbound1.sendinblue.com.
+inbound.ilipresto.fr.    MX 20  inbound2.sendinblue.com.
+```
+
+- [ ] Publier le SPF Brevo.
+- [ ] Publier les enregistrements DKIM fournis par Brevo.
+- [ ] Ajouter `rua` sur le DMARC et repasser temporairement en `p=none` le temps d'aligner SPF et DKIM.
+- [ ] Corriger les deux MX de `inbound.ilipresto.fr` avec le point final.
+- [ ] Créer `noreply@ilipresto.fr` dans Brevo et désactiver le sender `sahai.stephane@gmail.com`.
+- [ ] Supprimer le template de démonstration `Nouveau template`.
+- [ ] Rejouer `quality/brevo-production` et vérifier que `BREVO_SENDER_DNS_RESULT` remonte `ok:true`.
+
+> Une fois SPF et DKIM alignés et vérifiés sur au moins une semaine de trafic réel, durcir DMARC : `p=none` → `p=quarantine` → `p=reject`. Le durcissement se pilote avec la variable `DMARC_MINIMUM_POLICY` du workflow de certification.
+
+---
+
 # 2. Éléments déjà implémentés dans le dépôt
 
 Ces éléments existent déjà dans le code et constituent la base de production. Ils ne dispensent pas des vérifications externes Brevo/DNS/Firebase décrites plus bas.
@@ -150,6 +206,21 @@ couvre déjà :
 - rotation des secrets ;
 - reprise après incident.
 
+## 2.5 Certification DNS, seuils et hygiène des destinataires
+
+Ajoutés au dépôt pour que ces contrôles ne dépendent plus d'une vérification manuelle :
+
+| Contrôle | Script | Commande locale |
+|---|---|---|
+| SPF/DKIM/DMARC réellement publiés sur le DNS public | `functions/scripts/check_brevo_sender_dns.mjs` | `npm --prefix functions run brevo:dns:sender` |
+| MX inbound Brevo | `functions/scripts/check_brevo_inbound_dns.mjs` | `npm --prefix functions run brevo:dns:inbound` |
+| Seuils de délivrabilité sur 30 jours | `functions/scripts/brevo_deliverability_report.mjs` | `npm --prefix functions run brevo:deliverability` |
+| Cohérence bloqués Brevo ↔ `email_suppressions` et absence de boucle d'envoi | `functions/scripts/brevo_suppression_hygiene.mjs` | `npm --prefix functions run brevo:suppressions` |
+
+Les règles évaluées sont testées unitairement (`functions/src/modules/email/certification/`) et les quatre scripts sont branchés dans `quality/brevo-production`, avec archivage des rapports JSON dans l'artifact de certification.
+
+Le contrôle DNS interroge le DNS public, pas le statut auto-déclaré par Brevo : il détecte un enregistrement supprimé, dupliqué, ou publié avec une valeur divergente. Sans `BREVO_API_KEY`, DKIM n'est pas vérifiable ; utiliser `--skip-dkim` pour un contrôle local partiel qui, par construction, ne certifie pas le domaine.
+
 ---
 
 # 3. Travaux restant à certifier dans le compte Brevo
@@ -166,6 +237,8 @@ couvre déjà :
 ### Critère de sortie
 
 - [ ] Le compte accepte un appel `GET /v3/account` avec la clé de production.
+
+> Le relevé du 25 août 2026 (section 1 bis) confirme un compte Brevo actif, plan Starter payant et relais SMTP activé, mais il a été obtenu via le connecteur MCP : il ne prouve pas que la clé stockée dans Secret Manager est la même. Cette case reste à cocher par `quality/brevo-production`, qui interroge `/v3/account` avec la credential de production.
 
 ---
 
@@ -220,6 +293,21 @@ PASS domain.dns_records
 PASS domain.dmarc
 ```
 
+et le contrôle DNS public :
+
+```bash
+npm --prefix functions run brevo:dns:sender
+```
+
+doit retourner :
+
+```text
+SPF   PASS v=spf1 include:spf.brevo.com -all
+DKIM  PASS
+DMARC PASS
+BREVO_SENDER_DNS_RESULT={"ok":true,...}
+```
+
 ---
 
 # 5. Expéditeur et Reply-To
@@ -231,10 +319,10 @@ From: iliprestō <noreply@ilipresto.fr>
 Reply-To: contact@ilipresto.fr
 ```
 
-- [ ] `noreply@ilipresto.fr` existe dans Brevo.
+- [ ] `noreply@ilipresto.fr` existe dans Brevo. — **absent au 25 août 2026** (section 1 bis).
 - [ ] Le sender est actif.
 - [ ] Le sender utilise le domaine authentifié `ilipresto.fr`.
-- [ ] Aucun sender de test ne reste sélectionné en production.
+- [ ] Aucun sender de test ne reste sélectionné en production. — **`sahai.stephane@gmail.com` est aujourd'hui le seul sender du compte** (section 1 bis).
 - [ ] Tous les emails transactionnels utilisent `contact@ilipresto.fr` comme Reply-To lorsqu’une réponse utilisateur est pertinente.
 - [ ] Le nom visible est cohérent : `iliprestō`.
 
@@ -377,6 +465,8 @@ contact@inbound.ilipresto.fr
 - [ ] La délégation DNS est réellement propagée publiquement.
 - [ ] `check_brevo_inbound_dns.mjs` est vert.
 
+> **Anomalie constatée le 25 août 2026.** `inbound.ilipresto.fr` publie un unique MX `inbound1.sendinblue.com.ilipresto.fr` : le point final a été omis dans l'interface LWS, qui a donc suffixé le domaine. La cible n'existe pas et aucun email ne peut être reçu. Le second MX (`inbound2.sendinblue.com`) est également absent. Republier les deux enregistrements **avec** le point final terminal.
+
 ## 9.2 Routage de la boîte publique
 
 - [ ] Vérifier comment `contact@ilipresto.fr` est géré chez LWS / fournisseur mail.
@@ -488,8 +578,24 @@ Pour chaque template :
 
 ## Seuils
 
-- [ ] Définir des seuils internes d’alerte pour bounce et complaint.
-- [ ] Définir le comportement lorsqu’un seuil est dépassé.
+Seuils internes définis dans `functions/src/modules/email/certification/deliverability.ts`, source unique partagée par l'alerting runtime (`syncEmailAnalytics`) et par la certification CI :
+
+| Métrique | Seuil | Sens |
+|---|---|---|
+| Volume minimal évalué | 50 envois | En dessous, les taux ne sont pas appliqués (l'échantillon est seulement reporté) |
+| Taux de livraison | ≥ 95 % | Sous ce niveau, la certification échoue |
+| Hard bounce | ≤ 2 % | |
+| Soft bounce | ≤ 5 % | |
+| Bounce total | ≤ 5 % | |
+| Bloqués | ≤ 2 % | |
+| Plaintes spam | ≤ 0,1 % | Marge volontaire sous les 0,3 % sanctionnés par Gmail et Yahoo |
+| Adresses invalides | ≤ 1 % | |
+| Différés | ≤ 10 % | |
+
+Chaque seuil est surchargeable par variable d'environnement (`BREVO_MAX_HARD_BOUNCE_RATE`, `BREVO_MAX_COMPLAINT_RATE`, …) pour un ajustement temporaire documenté, sans modification de code.
+
+- [x] Définir des seuils internes d’alerte pour bounce et complaint.
+- [x] Définir le comportement lorsqu’un seuil est dépassé : `quality/brevo-production` échoue et le rapport `quality/brevo-deliverability.json` nomme la ou les métriques en cause.
 - [ ] Documenter la suspension automatique ou manuelle des flux non essentiels en cas d’incident.
 
 ---
@@ -506,8 +612,12 @@ email_suppressions
 - [ ] Vérifier le traitement des plaintes spam.
 - [ ] Vérifier le traitement des adresses invalides.
 - [ ] Vérifier les règles de réactivation éventuelle.
-- [ ] Empêcher les boucles d’envoi vers une adresse déjà supprimée.
+- [x] Empêcher les boucles d’envoi vers une adresse déjà supprimée.
 - [ ] Vérifier les règles RGPD applicables aux données conservées dans les logs/suppressions.
+
+> **Correctif appliqué.** Le webhook fournisseur écrit la suppression sur l'adresse normalisée en minuscules, alors que l'enqueue interrogeait la liste avec la casse brute de l'événement : un destinataire enregistré sous une autre casse (`User@Gmail.com`) continuait à recevoir des emails malgré un hard bounce ou une plainte. L'enqueue et `suppressRecipient` normalisent désormais la clé de la même façon, avec repli sur les documents historiques.
+
+Le script `brevo_suppression_hygiene.mjs` certifie en continu trois points : chaque contact bloqué chez Brevo pour un motif bloquant possède une suppression active en base, aucune suppression n'est restée inactive alors que Brevo bloque l'adresse, et aucun envoi n'est parti après la date de suppression.
 
 ---
 
@@ -720,12 +830,14 @@ Après certification complète :
 
 - [ ] Valider `BREVO_API_KEY`.
 - [ ] Valider `BREVO_WEBHOOK_SECRET`.
-- [ ] Finaliser SPF/DKIM/DMARC.
+- [ ] Publier le SPF Brevo (aucun SPF n'existe aujourd'hui, cf. 1 bis).
+- [ ] Publier les DKIM Brevo (aucun DKIM n'existe aujourd'hui, cf. 1 bis).
+- [ ] Ajouter `rua` au DMARC et aligner la politique sur la phase en cours.
 - [ ] Authentifier `ilipresto.fr`.
-- [ ] Activer `noreply@ilipresto.fr`.
+- [ ] Activer `noreply@ilipresto.fr` et retirer le sender de test `sahai.stephane@gmail.com`.
 - [ ] Certifier le webhook transactionnel.
 - [ ] Réussir l’E2E sortant.
-- [ ] Finaliser `inbound.ilipresto.fr`.
+- [ ] Corriger les MX de `inbound.ilipresto.fr` (point final manquant, second MX absent, cf. 1 bis).
 - [ ] Réussir l’E2E entrant sur `contact@ilipresto.fr`.
 
 ## P1 — qualité production
@@ -760,9 +872,10 @@ Après certification complète :
 | Compte Brevo | API `/v3/account` valide | ⬜ |
 | Domaine | `ilipresto.fr` vérifié | ⬜ |
 | Domaine | `ilipresto.fr` authentifié | ⬜ |
-| DNS | SPF valide | ⬜ |
-| DNS | DKIM valide | ⬜ |
-| DNS | DMARC valide | ⬜ |
+| DNS | SPF valide (publié, unique, Brevo autorisé) | ⬜ |
+| DNS | DKIM valide (publié et conforme aux valeurs Brevo) | ⬜ |
+| DNS | DMARC valide (syntaxe, politique, `rua` surveillée) | ⬜ |
+| DNS | `BREVO_SENDER_DNS_RESULT` à `ok:true` | ⬜ |
 | Sender | `noreply@ilipresto.fr` actif | ⬜ |
 | Reply-To | `contact@ilipresto.fr` | ⬜ |
 | Secret | `BREVO_API_KEY` valide | ⬜ |
@@ -777,6 +890,9 @@ Après certification complète :
 | Admin | accès limité admin/superadmin | ⬜ |
 | Délivrabilité | Gmail validé | ⬜ |
 | Délivrabilité | Outlook validé | ⬜ |
+| Délivrabilité | Seuils internes respectés sur 30 jours | ⬜ |
+| Hygiène | Bloqués Brevo couverts par `email_suppressions` | ⬜ |
+| Hygiène | Aucun envoi après suppression | ⬜ |
 | Observabilité | logs + suppressions + alertes | ⬜ |
 | CI | `quality/brevo-production = success` | ⬜ |
 | Preuves | artifact E2E archivé | ⬜ |
