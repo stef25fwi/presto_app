@@ -209,7 +209,21 @@ jobs:
             --timeout-ms 180000 \
             --output quality/brevo-production-certification.json
 
+      - name: Certify public sender DNS (SPF/DKIM/DMARC)
+        if: always()
+        env:
+          DMARC_MONITORED_MAILBOXES: contact@ilipresto.fr,dmarc@ilipresto.fr
+          DMARC_MINIMUM_POLICY: none
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p quality
+          node functions/scripts/check_brevo_sender_dns.mjs \
+            --domain ilipresto.fr \
+            --output quality/brevo-sender-dns.json 2>&1 | tee quality/brevo-sender-dns.log
+
       - name: Certify contact@ilipresto.fr inbound routing end-to-end
+        if: always()
         env:
           GOOGLE_CLOUD_PROJECT: presto-app-74abe
           GCLOUD_PROJECT: presto-app-74abe
@@ -218,6 +232,30 @@ jobs:
         run: |
           set -o pipefail
           node functions/scripts/brevo_inbound_contact_e2e.mjs 2>&1 | tee quality/brevo-inbound-e2e.log
+
+      - name: Enforce deliverability thresholds
+        if: always()
+        env:
+          BREVO_DELIVERABILITY_DAYS: '30'
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p quality
+          node functions/scripts/brevo_deliverability_report.mjs \
+            --output quality/brevo-deliverability.json 2>&1 | tee quality/brevo-deliverability.log
+
+      - name: Certify recipient suppression hygiene
+        if: always()
+        env:
+          GOOGLE_CLOUD_PROJECT: presto-app-74abe
+          GCLOUD_PROJECT: presto-app-74abe
+          BREVO_SUPPRESSION_DAYS: '90'
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p quality
+          node functions/scripts/brevo_suppression_hygiene.mjs \
+            --output quality/brevo-suppression-hygiene.json 2>&1 | tee quality/brevo-suppression-hygiene.log
 
       - name: Archive certification evidence
         if: always()
@@ -229,6 +267,12 @@ jobs:
             quality/brevo-runtime-canary.log
             quality/brevo-inbound-dns.log
             quality/brevo-inbound-e2e.log
+            quality/brevo-sender-dns.json
+            quality/brevo-sender-dns.log
+            quality/brevo-deliverability.json
+            quality/brevo-deliverability.log
+            quality/brevo-suppression-hygiene.json
+            quality/brevo-suppression-hygiene.log
           if-no-files-found: warn
           retention-days: 90
 
@@ -253,6 +297,15 @@ jobs:
             fi
             if [ -f quality/brevo-inbound-dns.log ]; then
               grep 'BREVO_INBOUND_DNS_RESULT=' quality/brevo-inbound-dns.log | tail -1 | sed 's/^/- DNS inbound : `/' | sed 's/$/`/' || true
+            fi
+            if [ -f quality/brevo-sender-dns.log ]; then
+              grep 'BREVO_SENDER_DNS_RESULT=' quality/brevo-sender-dns.log | tail -1 | sed 's/^/- DNS expéditeur : `/' | sed 's/$/`/' || true
+            fi
+            if [ -f quality/brevo-deliverability.log ]; then
+              grep 'BREVO_DELIVERABILITY_RESULT=' quality/brevo-deliverability.log | tail -1 | sed 's/^/- Délivrabilité : `/' | sed 's/$/`/' || true
+            fi
+            if [ -f quality/brevo-suppression-hygiene.log ]; then
+              grep 'BREVO_SUPPRESSION_HYGIENE_RESULT=' quality/brevo-suppression-hygiene.log | tail -1 | sed 's/^/- Hygiène suppressions : `/' | sed 's/$/`/' || true
             fi
             if [ -f quality/brevo-inbound-e2e.log ]; then
               grep 'BREVO_INBOUND_E2E_RESULT=' quality/brevo-inbound-e2e.log | tail -1 | sed 's/^/- Inbound E2E : `/' | sed 's/$/`/' || true

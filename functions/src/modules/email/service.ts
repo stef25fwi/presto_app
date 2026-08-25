@@ -40,9 +40,12 @@ export async function sendDigestEmail(jobId: string): Promise<void> {
 }
 
 export async function suppressRecipient(email: string, reason: string): Promise<void> {
-  await db.collection(COLLECTIONS.emailSuppressions).doc(email).set(
+  // Même clé de normalisation que le webhook fournisseur et que l'enqueue,
+  // sans quoi une suppression manuelle laisserait passer les envois suivants.
+  const normalized = email.trim().toLowerCase();
+  await db.collection(COLLECTIONS.emailSuppressions).doc(normalized).set(
     {
-      email,
+      email: normalized,
       reason,
       source: "system",
       active: true,
