@@ -44,18 +44,21 @@ Relevé effectué depuis l'API Brevo (lecture seule) et depuis deux résolveurs 
 
 - Compte Brevo de production actif : organisation `ilipresto`, plan **Starter payant**, 5 000 crédits d'envoi sur la période du 22 août au 22 septembre 2026.
 - Relais SMTP transactionnel activé (`smtp-relay.brevo.com:587`).
-- `GET /v3/account` répond correctement avec la clé de production.
+- `GET /v3/account` répond correctement via le connecteur MCP Brevo de claude.ai (authentification OAuth propre au connecteur, **distincte** de la clé API de production — voir le blocage #0 ci-dessous, où cette dernière échoue).
 - `_dmarc.ilipresto.fr` existe et publie `v=DMARC1; p=quarantine;`.
 
 ## Blocages P0 confirmés
 
 | # | Constat vérifié | Conséquence | Section |
 |---|---|---|---|
+| 0 | **La clé `BREVO_API_KEY` de Secret Manager est rejetée par Brevo (HTTP 401)**, tout comme l'ancienne `EMAIL_PROVIDER_API_KEY`. Le canari envoyé par le runtime Firebase déployé n'obtient aucun accusé de réception avant expiration (90 s). Preuve : run `quality/brevo-production` [#54](https://github.com/stef25fwi/presto_app/actions/runs/32893628913), 25 août 2026 20:11 UTC. | **L'envoi transactionnel réel est cassé en production dès aujourd'hui** — pas seulement « pas encore certifié ». Aucune réparation automatique (`--repair`) n'a jamais pu s'exécuter : elle échoue avant le premier appel d'écriture. Ce blocage est antérieur à tous les autres : rien d'autre ne peut être vérifié tant qu'il n'est pas levé. | 6 |
 | 1 | **Aucun enregistrement SPF** sur `ilipresto.fr` (seuls `google-site-verification` et `hosting-site` sont publiés) | Aucun envoi ne peut aligner SPF | 4.2 |
 | 2 | **Aucun enregistrement DKIM** publié (ni `mail._domainkey`, ni `brevo._domainkey`, ni `brevo-code`) | Le domaine ne peut pas être authentifié chez Brevo | 4.3 |
 | 3 | **DMARC `p=quarantine` sans SPF ni DKIM alignés**, et sans `rua` | Tout email partant aujourd'hui est mis en quarantaine ou en spam, et aucun rapport n'est reçu pour le constater | 4.4 |
 | 4 | **Aucun expéditeur sur `ilipresto.fr`** : le seul sender du compte est `sahai.stephane@gmail.com` | `noreply@ilipresto.fr` n'existe pas ; un sender personnel de test est actif en production | 5 |
 | 5 | **MX inbound cassé** : `inbound.ilipresto.fr` pointe vers `inbound1.sendinblue.com.ilipresto.fr` (point final absent chez LWS) et le second MX manque | `contact@ilipresto.fr` ne peut pas être reçu | 9.1 |
+
+> **Ordre de traitement imposé par le blocage #0.** Publier une nouvelle clé API Brevo dans Secret Manager (`BREVO_API_KEY`) avant toute autre action. Sans clé valide, `check_brevo_sender_dns.mjs` ne peut même pas récupérer les valeurs DKIM attendues (`source: unavailable` dans le run #54), et `brevo_deliverability_report.mjs`/`brevo_suppression_hygiene.mjs` échouent immédiatement. Générer la clé dans Brevo (`Paramètres du compte` → `Clés API` → `Générer une nouvelle clé API v3`), la stocker avec `gcloud secrets versions add BREVO_API_KEY --project=presto-app-74abe --data-file=-`, puis rejouer `quality/brevo-production`.
 
 Constat annexe : le compte ne contient qu'un template Brevo, `Nouveau template`, inactif, sujet `test`, avec le contenu de démonstration Brevo (`Your order is coming soon`, `contact@company.com`). Les templates transactionnels iliprestō sont rendus côté code (`functions/src/modules/email/templates/definitions/`) : ce template de démonstration doit être supprimé pour lever toute ambiguïté.
 
@@ -828,7 +831,7 @@ Après certification complète :
 
 ## P0 — bloquants production
 
-- [ ] Valider `BREVO_API_KEY`.
+- [ ] **Remplacer `BREVO_API_KEY`** : la clé actuelle en Secret Manager est rejetée par Brevo en HTTP 401 (run [#54](https://github.com/stef25fwi/presto_app/actions/runs/32893628913), cf. 1 bis) — bloquant absolu, à traiter avant tout le reste de cette liste.
 - [ ] Valider `BREVO_WEBHOOK_SECRET`.
 - [ ] Publier le SPF Brevo (aucun SPF n'existe aujourd'hui, cf. 1 bis).
 - [ ] Publier les DKIM Brevo (aucun DKIM n'existe aujourd'hui, cf. 1 bis).
