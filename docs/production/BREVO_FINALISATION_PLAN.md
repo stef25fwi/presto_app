@@ -157,6 +157,15 @@ Relevé effectué depuis l'API Brevo (lecture seule) et depuis deux résolveurs 
 > - **Portée corrigée : le pipeline fonctionne pour tout événement produit avec un `recipient_user_id`** — et tous les producteurs de code applicatif (`support/triggers.ts`, `auth/`, `billing/`, `listings/`, `messaging/`, `marketing/`, `moderation/`, `legal/`) renseignent bien ce champ. Seuls les événements sans utilisateur (canari, et tout futur envoi transactionnel anonyme légitime — cas explicitement supporté par `resolvePreferenceDecision` via `mandatory_without_user`) faisaient planter le déclencheur. La formulation précédente (« aucun email transactionnel n'est enqueué en production ») était donc trop large : c'est un sous-cas, mais un sous-cas réel et vicieux puisqu'il masquait aussi tout diagnostic par canari.
 > - Correctif appliqué : omettre le champ `recipient_user_id` du document plutôt que d'y assigner `undefined`, cohérent avec le reste du code qui le relit déjà en `|| null` (`worker.ts`, `webhooks/handler.ts`). Build + suite de tests (341/341) verts après correctif.
 > - Prochaine étape : merger sur `main`, laisser le déploiement automatique pousser le correctif, puis rejouer `quality/brevo-production` pour confirmer que le canari obtient enfin `jobs_created` puis un envoi accepté par Brevo.
+>
+> **✅ Confirmé en production (26 août 2026, run [#68](https://github.com/stef25fwi/presto_app/actions/runs/32961822720), ~11h09 UTC), après merge ([#1416](https://github.com/stef25fwi/presto_app/pull/1416)) et déploiement automatique des Functions ([run #2428](https://github.com/stef25fwi/presto_app/actions/runs/32960048650), déploiement Functions réussi malgré l'échec non lié du smoke `/confidentialite`) :**
+> ```text
+> Canari runtime créé: evt_brevo_runtime_canary_1787742568739_5f7846d4
+> BREVO_RUNTIME_CANARY_RESULT={"ok":true,"eventStatus":"jobs_created","jobStatus":"sent",
+>   "provider":"brevo","providerMessageId":"<202608261109.34643480536@smtp-relay.mailin.fr>",
+>   "logStatuses":["sent"]}
+> ```
+> Le pipeline complet fonctionne de bout en bout : `email_events` → `enqueueEmailJobsFromEventTrigger` → `email_jobs` → `processEmailJobTrigger` → envoi accepté par Brevo. **Premier canari runtime vert de toute la campagne de certification.** Ce blocage est définitivement résolu ; seuls les blocages DNS (SPF/DKIM, MX inbound — hors de portée d'une session sans accès au registrar) restent ouverts pour atteindre les 100 %.
 
 Constat annexe : le compte ne contient qu'un template Brevo, `Nouveau template`, inactif, sujet `test`, avec le contenu de démonstration Brevo (`Your order is coming soon`, `contact@company.com`). Les templates transactionnels iliprestō sont rendus côté code (`functions/src/modules/email/templates/definitions/`) : ce template de démonstration doit être supprimé pour lever toute ambiguïté.
 
