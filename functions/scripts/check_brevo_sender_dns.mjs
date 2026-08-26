@@ -49,7 +49,10 @@ if (customServers.length > 0) resolver.setServers(customServers);
 
 function fqdn(host) {
   const normalized = String(host || "").trim().replace(/\.$/, "").toLowerCase();
-  if (normalized.length === 0) return domain;
+  // "@" est la convention de zone DNS pour l'apex du domaine (utilisée par
+  // l'API Brevo pour son enregistrement brevo-code) : sans ce cas, elle est
+  // concaténée telle quelle et produit un nom de requête invalide.
+  if (normalized.length === 0 || normalized === "@") return domain;
   return normalized.endsWith(domain) ? normalized : `${normalized}.${domain}`;
 }
 
