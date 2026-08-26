@@ -234,6 +234,49 @@ Deux précisions vérifiées plutôt que supposées :
 
 Le script demande maintenant l'authentification à chaque run tant qu'elle n'est pas acquise : une fois ces trois enregistrements publiés, la certification se débloquera seule au run suivant, sans intervention supplémentaire.
 
+## 26 août 2026, ~13h25 UTC — DNS inbound publié : audit Brevo 12/12, deux points restants bien identifiés
+
+Les trois enregistrements ont été publiés chez LWS et résolvent correctement (vérification DNS directe, sans concaténation cette fois). Brevo confirme : `{"domain_name":"inbound.ilipresto.fr","message":"Domain has been authenticated successfully."}`, ses quatre `dns_records` passent à `status: true`, et le webhook inbound est enfin créé — `Webhook inbound Brevo conforme id=2153991 domain=inbound.ilipresto.fr auth=bearer`.
+
+**L'audit `brevo_production_audit.mjs` est désormais intégralement vert (run [#93](https://github.com/stef25fwi/presto_app/actions/runs/32974197307)) :**
+
+```text
+PASS domain.verified      PASS domain.authenticated  PASS domain.dns_records  PASS domain.dmarc
+PASS sender.exists        PASS sender.active
+PASS webhook.exists       PASS webhook.single        PASS webhook.auth_bearer PASS webhook.events
+PASS e2e.provider_accepted PASS e2e.webhook_delivery
+```
+
+`domain.dns_records` a été débloqué par un correctif de notre propre contrôle, pas par une action DNS ([#1429](https://github.com/stef25fwi/presto_app/pull/1429)) : Brevo renvoie `"dkim_record": null` pour l'ancien DKIM TXT unique remplacé par la paire de CNAME, et le `.every()` sur toute la map comptait ce `null` comme non satisfait — l'assertion était **impossible à passer quelle que soit la configuration réelle**. Vérifié sur la charge utile exacte du run #92 (ancienne logique `false`, nouvelle `true`).
+
+### Point restant 1 — routage entrant `contact@ilipresto.fr` (action utilisateur, hors DNS)
+
+```text
+Mail E2E accepté par Brevo: <202608261320.26400728601@smtp-relay.mailin.fr>
+Aucun mail E2E reçu dans adminInboundEmails avant expiration du délai.
+```
+
+Le MX de `ilipresto.fr` pointe vers `mail.ilipresto.fr` (boîte LWS) ; Brevo ne reçoit que ce qui est adressé à `*@inbound.ilipresto.fr`. Il manque donc, dans l'espace **mail** de LWS (et non la zone DNS), une **copie/redirection** `contact@ilipresto.fr` → `contact@inbound.ilipresto.fr`. Une copie plutôt qu'une redirection pure permet de continuer à lire ces messages dans la boîte LWS en plus du widget admin.
+
+### Point restant 2 — seuil de délivrabilité, à arbitrer
+
+L'échantillon vient de franchir les 50 envois, ce qui déclenche l'évaluation des seuils (en dessous, ils ne sont pas appliqués faute de significativité) :
+
+```text
+Envois acceptés: 52
+Livraison: 90.385% | hard 0.000% | soft 0.000% | bloqués 0.000% | plaintes 0.000% | invalides 0.000% | différés 0.000%
+BREVO_DELIVERABILITY_RESULT={"ok":false,"evaluated":true,"sample":52,"violations":["delivery"]}
+```
+
+Analyse avant toute conclusion — **l'écart est un reliquat figé, pas des envois en vol** : entre les runs #92 et #93, les acceptés passent de 49 à 52 et les livrés de 44 à 47, l'écart restant exactement à **5**. Les 3 nouveaux envois ont donc tous été livrés (3/3), et ce sont 5 messages anciens qui n'ont jamais reçu d'événement terminal — ni livraison, ni rebond, ni blocage, ni plainte (toutes ces catégories sont à 0,000 %).
+
+Deux constats en découlent :
+
+- La configuration actuelle délivre correctement ; le taux de 90,4 % mesure une fenêtre de 30 jours **majoritairement composée de nos propres envois de test**, dont beaucoup émis alors que SPF/DKIM n'étaient pas publiés et que le domaine n'était pas authentifié. Il n'est pas représentatif de la production à venir.
+- Le seuil n'a délibérément **pas** été abaissé pour faire passer le contrôle au vert : ce serait neutraliser la garde qualité au moment précis où elle commence à mesurer quelque chose.
+
+Trois options, à arbitrer : laisser le gate rouge le temps que les envois conformes s'accumulent et que les 5 anciens sortent de la fenêtre glissante (il se corrigera seul, sans action) ; réduire la fenêtre d'évaluation ; ou exclure le trafic de certification de l'échantillon. La première est retenue par défaut, faute de raison d'affaiblir le contrôle.
+
 Constat annexe : le compte ne contient qu'un template Brevo, `Nouveau template`, inactif, sujet `test`, avec le contenu de démonstration Brevo (`Your order is coming soon`, `contact@company.com`). Les templates transactionnels iliprestō sont rendus côté code (`functions/src/modules/email/templates/definitions/`) : ce template de démonstration doit être supprimé pour lever toute ambiguïté.
 
 ## Correctifs DNS à publier chez LWS
