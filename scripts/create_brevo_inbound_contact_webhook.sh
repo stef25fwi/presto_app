@@ -37,11 +37,12 @@ PY
 CREATE_PAYLOAD="${PAYLOADS[0]:-}"
 UPDATE_PAYLOAD="${PAYLOADS[1]:-}"
 
-# L'API webhook inbound exige que le domaine existe déjà côté Brevo
-# ("Domain is not found or is inactive" sinon, observé en production le
-# 26 août 2026). Contrairement au domaine d'envoi, un domaine inbound n'a
-# besoin d'aucune authentification SPF/DKIM : juste d'exister comme
-# ressource domaine, sa légitimité étant portée par le MX inbound.
+# L'API webhook inbound exige que le domaine existe déjà côté Brevo ET soit
+# authentifié ("Domain is not found or is inactive" sinon, observé en
+# production le 26 août 2026 : le domaine existait mais `authenticated`
+# valait encore `false`). Contrairement à ce qu'on pourrait attendre d'un
+# domaine purement récepteur, Brevo exige la même authentification DKIM
+# qu'un domaine d'envoi — le MX seul ne suffit pas.
 DOMAIN_CHECK_FILE="$(mktemp)"
 DOMAIN_CHECK_HTTP_CODE="$(curl --silent --show-error \
   --output "$DOMAIN_CHECK_FILE" \
@@ -80,6 +81,48 @@ fi
 # Diagnostic : "Domain is not found or is inactive" côté webhook inbound
 # reste opaque sans voir verified/authenticated/dns_records du domaine.
 echo "État du domaine $DOMAIN côté Brevo : $DOMAIN_CHECK_BODY"
+
+export DOMAIN_CHECK_BODY
+INBOUND_DOMAIN_READY="$(python3 - <<'PY'
+import json, os
+data = json.loads(os.environ["DOMAIN_CHECK_BODY"])
+print("true" if data.get("authenticated") is True else "false")
+PY
+)"
+
+if [ "$INBOUND_DOMAIN_READY" != "true" ]; then
+  # Comme pour le domaine d'envoi : redemander l'authentification à chaque
+  # run tant qu'elle n'est pas acquise, pour que la publication DNS faite
+  # entre deux runs soit prise en compte sans intervention supplémentaire.
+  AUTH_RESPONSE_FILE="$(mktemp)"
+  AUTH_HTTP_CODE="$(curl --silent --show-error \
+    --output "$AUTH_RESPONSE_FILE" \
+    --write-out '%{http_code}' \
+    -X PUT "https://api.brevo.com/v3/senders/domains/$DOMAIN/authenticate" \
+    -H "accept: application/json" \
+    -H "api-key: $BREVO_API_KEY")"
+  AUTH_BODY="$(cat "$AUTH_RESPONSE_FILE")"
+  rm -f "$AUTH_RESPONSE_FILE"
+  if [ "$AUTH_HTTP_CODE" -ge 200 ] && [ "$AUTH_HTTP_CODE" -lt 300 ]; then
+    echo "Réauthentification du domaine $DOMAIN demandée : $AUTH_BODY"
+  else
+    echo "Domaine $DOMAIN pas encore authentifiable côté Brevo (HTTP $AUTH_HTTP_CODE): $AUTH_BODY"
+  fi
+  # Le nom d'hôte exact que Brevo attend pour ces enregistrements (relatif
+  # à quelle zone ?) n'est pas certain depuis ce seul appel API : afficher
+  # les champs bruts plutôt que de deviner une FQDN, et vérifier la valeur
+  # exacte dans le tableau de bord Brevo (Domaines > inbound.ilipresto.fr)
+  # avant publication chez le registrar.
+  echo "Enregistrements DNS non satisfaits pour $DOMAIN (champs bruts Brevo, à confirmer dans son tableau de bord) :"
+  python3 - <<'PY'
+import json, os
+data = json.loads(os.environ["DOMAIN_CHECK_BODY"])
+for key, record in (data.get("dns_records") or {}).items():
+    if not record or record.get("status") is True:
+        continue
+    print(f"  [{key}] type={record.get('type')} host_name={record.get('host_name')} value={record.get('value')}")
+PY
+fi
 
 # `--fail-with-body` sous `set -e` interrompt le script avant qu'il puisse
 # afficher le corps de la réponse : capturer statut et corps séparément pour
