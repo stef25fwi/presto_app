@@ -286,6 +286,11 @@ jobs:
         if: always()
         env:
           BREVO_DELIVERABILITY_DAYS: '30'
+          # Exclut le trafic de certification (canari runtime, E2E de repair)
+          # de l'échantillon : worker.ts tague tout envoi réel "production" et
+          # tout envoi issu du canari "production-certification" (voir
+          # EmailJob.is_certification dans queue/enqueue.ts).
+          BREVO_DELIVERABILITY_TAG: 'production'
         shell: bash
         run: |
           set -o pipefail
