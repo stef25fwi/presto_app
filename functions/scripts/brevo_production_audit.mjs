@@ -61,10 +61,22 @@ function check(name, ok, details = {}) {
   return { name, ok: Boolean(ok), details };
 }
 
+/**
+ * Brevo renvoie une entrée `null` pour les enregistrements qui ne s'appliquent
+ * pas au domaine — typiquement `dkim_record`, l'ancien DKIM TXT unique,
+ * remplacé par la paire de CNAME `dkim1Record`/`dkim2Record`. Compter ces
+ * `null` comme « non satisfaits » rendrait le contrôle impossible à passer,
+ * même domaine entièrement authentifié : ne juger que les enregistrements
+ * réellement exigés par Brevo.
+ */
+function presentDnsRecords(domainConfig) {
+  return Object.entries(domainConfig?.dns_records || {})
+    .filter(([, record]) => record && typeof record === "object");
+}
+
 function allDnsRecordsReady(domainConfig) {
-  const records = domainConfig?.dns_records || {};
-  const values = Object.values(records);
-  return values.length >= 2 && values.every((record) => record?.status === true);
+  const records = presentDnsRecords(domainConfig);
+  return records.length >= 2 && records.every(([, record]) => record.status === true);
 }
 
 async function ensureDomain(domain, apiKey, repairActions) {
@@ -190,14 +202,14 @@ async function main() {
 
   const dnsRecords = domainConfig.dns_records || {};
   const dnsStatuses = Object.fromEntries(
-    Object.entries(dnsRecords).map(([key, value]) => [key, Boolean(value?.status)]),
+    presentDnsRecords(domainConfig).map(([key, value]) => [key, Boolean(value.status)]),
   );
   checks.push(check("domain.verified", domainConfig.verified === true, { domain }));
   checks.push(check("domain.authenticated", domainConfig.authenticated === true, { domain }));
   checks.push(check(
     "domain.dns_records",
-    Object.keys(dnsStatuses).length >= 2 && Object.values(dnsStatuses).every(Boolean),
-    { dnsStatuses },
+    allDnsRecordsReady(domainConfig),
+    { dnsStatuses, skippedNullRecords: Object.keys(dnsRecords).length - Object.keys(dnsStatuses).length },
   ));
   checks.push(check(
     "domain.dmarc",
