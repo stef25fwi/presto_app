@@ -115,7 +115,12 @@ export async function enqueueEmailJobsFromEvent(event: DomainEventPayload): Prom
   const job: EmailJob = {
     job_id: jobId,
     event_id: enrichedEvent.event_id,
-    recipient_user_id: recipientUserId,
+    // Firestore refuse `undefined` sans `ignoreUndefinedProperties` : omettre
+    // le champ plutôt que d'y assigner `recipientUserId` quand l'événement
+    // n'a pas d'utilisateur (envoi transactionnel anonyme, canari de
+    // certification), sous peine de faire planter le déclencheur d'enqueue
+    // avant même la mise à jour de statut de `email_events`.
+    ...(recipientUserId ? { recipient_user_id: recipientUserId } : {}),
     recipient_email: recipientEmail,
     channel,
     template_code: template,
