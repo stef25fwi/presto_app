@@ -50,8 +50,17 @@ LIST_HTTP_CODE="$(curl --silent --show-error \
 WEBHOOKS="$(cat "$LIST_RESPONSE_FILE")"
 rm -f "$LIST_RESPONSE_FILE"
 if [ "$LIST_HTTP_CODE" -lt 200 ] || [ "$LIST_HTTP_CODE" -ge 300 ]; then
-  echo "Brevo GET /webhooks?type=inbound a échoué HTTP $LIST_HTTP_CODE: $WEBHOOKS" >&2
-  exit 22
+  # Observé en production (26 août 2026) : tant qu'aucun webhook "inbound"
+  # n'existe encore sur le compte, Brevo répond 400 document_not_found sur
+  # ce filtre au lieu d'une liste vide — ce n'est pas une erreur, juste
+  # l'absence de webhook à mettre à jour. Toute autre erreur reste fatale.
+  if [ "$LIST_HTTP_CODE" = "400" ] && printf '%s' "$WEBHOOKS" | grep -q '"code":"document_not_found"'; then
+    echo "Aucun webhook inbound existant côté Brevo (document_not_found) ; création."
+    WEBHOOKS='{"webhooks":[]}'
+  else
+    echo "Brevo GET /webhooks?type=inbound a échoué HTTP $LIST_HTTP_CODE: $WEBHOOKS" >&2
+    exit 22
+  fi
 fi
 
 export WEBHOOKS
