@@ -95,6 +95,17 @@ Relevé effectué depuis l'API Brevo (lecture seule) et depuis deux résolveurs 
 > **✅ Cloud Functions redéployées (26 août 2026, ~01h50 UTC).** Déclenché sur `main` avec `deploy_functions=true` : run [#2426](https://github.com/stef25fwi/presto_app/actions/runs/32919245891). `Deploy Functions with exit 130 retry` réussit — les ~80 fonctions, dont `handleEmailProviderWebhook` et `handleInboundContactEmailWebhook`, sont mises à jour, ainsi que l'hébergement et les règles Firestore. Le runtime déployé résout donc désormais `BREVO_API_KEY` et `BREVO_WEBHOOK_SECRET` à leur version `latest`. Le job est marqué en échec globalement, mais uniquement à cause d'un test de fumée **sans rapport avec Brevo** : `https://ilipresto.fr/confidentialite` ne renvoie pas de balise `<title>` — anomalie pré-existante sur une page publique, à traiter séparément, non bloquante pour ce chantier.
 >
 > Prochaine étape : rejouer `quality/brevo-production` pour vérifier si le canari runtime (`BREVO_RUNTIME_CANARY_RESULT`) et l'authentification Bearer du webhook (`brevo_webhook_smoke_test.mjs`) passent enfin avec les secrets à jour côté runtime.
+>
+> **❌ Hypothèse « secret figé au déploiement » invalidée (26 août 2026, run [#62](https://github.com/stef25fwi/presto_app/actions/runs/32921957460), ~02h19 UTC).** Rejoué 20 minutes après un redéploiement réussi des Cloud Functions — les deux symptômes sont **strictement identiques** à avant le redéploiement :
+> ```text
+> BREVO_RUNTIME_CANARY_RESULT={"ok":false,...,"errorCode":"runtime_canary_timeout"}
+> [KO] event=delivered auth=bearer status=401 {"ok":false,"error":"invalid webhook authentication"}
+> ```
+> Le code utilise `defineSecret()` (Firebase Functions v2, `functions/src/config/env.ts`), qui résout normalement `latest` au moment du déploiement — la version 10 du secret, validée fonctionnelle par ailleurs, était déjà la version `latest` bien avant ce déploiement. La logique de vérification Bearer (`functions/src/modules/email/providers/brevo_provider.ts`) a été relue et semble correcte. **Deux causes restent ouvertes, à départager en inspectant directement la configuration de la fonction déployée** (accès `gcloud`/Console GCP requis, non disponible depuis cette session) :
+> - le déploiement n'a en réalité pas rebindé le secret vers la version 10 (vérifier `Cloud Functions` → `handleEmailProviderWebhook` (europe-west1) → Variables/Secrets → version référencée de `BREVO_WEBHOOK_SECRET`) ;
+> - le canari runtime et le webhook échouent pour une raison indépendante des secrets — un bug dans le pipeline d'envoi lui-même, à investiguer via Cloud Logging sur l'exécution réelle de la fonction pendant un test.
+>
+> Tant que cette version n'est pas confirmée en Console, ne pas relancer une nouvelle rotation de clé ou un nouveau redéploiement à l'aveugle : ça reproduirait le même résultat sans nouvelle information.
 
 Constat annexe : le compte ne contient qu'un template Brevo, `Nouveau template`, inactif, sujet `test`, avec le contenu de démonstration Brevo (`Your order is coming soon`, `contact@company.com`). Les templates transactionnels iliprestō sont rendus côté code (`functions/src/modules/email/templates/definitions/`) : ce template de démonstration doit être supprimé pour lever toute ambiguïté.
 
