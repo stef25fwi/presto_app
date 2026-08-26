@@ -197,6 +197,43 @@ Un écart mineur et non bloquant persiste : `domain.dns_records` (le statut inte
 
 **Seul point DNS restant, actionnable et précis** : `inbound.ilipresto.fr` n'a que `inbound1.sendinblue.com` en MX ; Brevo exige aussi `inbound2.sendinblue.com` (`MX Brevo inbound manquants : inbound2.sendinblue.com`). Une fois ce second MX ajouté chez LWS, `webhook.inbound` (actuellement HTTP 400), la vérification MX inbound et l'E2E entrant devraient tous passer.
 
+## 26 août 2026, ~13h10 UTC — MX inbound complété ; le domaine inbound exige sa propre authentification DKIM
+
+Le second MX a été publié : `BREVO_INBOUND_DNS_RESULT={"ok":true,...}` et l'étape « Verify Brevo inbound MX delegation » passe désormais au vert. Le webhook inbound continuait pourtant d'échouer en HTTP 400.
+
+Trois correctifs successifs de l'outillage ont été nécessaires pour faire apparaître la cause réelle, chacun masquant le suivant :
+
+1. **L'erreur était avalée** ([#1423](https://github.com/stef25fwi/presto_app/pull/1423)) : `curl --fail-with-body` sous `set -e` interrompait le script au moment même où il capturait la réponse — le corps JSON de Brevo n'était jamais affiché. Chaque appel capture désormais code HTTP et corps séparément.
+2. **`document_not_found` traité comme fatal** ([#1424](https://github.com/stef25fwi/presto_app/pull/1424)) : `GET /v3/webhooks?type=inbound` répond HTTP 400 `{"code":"document_not_found"}` tant qu'aucun webhook inbound n'existe, au lieu d'une liste vide. Le script n'atteignait donc jamais l'étape de création.
+3. **Le domaine inbound n'existait pas comme ressource Brevo** ([#1425](https://github.com/stef25fwi/presto_app/pull/1425)) : `POST /webhooks` répondait `{"code":"invalid_parameter","message":"Domain is not found or is inactive"}`. `inbound.ilipresto.fr` a été créé via `POST /senders/domains`.
+
+**Cause racine finale (run [#89](https://github.com/stef25fwi/presto_app/actions/runs/32972113542))** : le domaine inbound existe et persiste, mais reste `verified:false, authenticated:false`. Brevo le dit explicitement lorsqu'on lui demande l'authentification :
+
+```text
+PUT /senders/domains/inbound.ilipresto.fr/authenticate -> HTTP 400
+{"code":"bad_request","message":"The domain cannot be authenticated. Check your domain
+ DNS panel and ensure Brevo code, DKIM record and DMARC record are added correctly."}
+```
+
+**Un domaine inbound exige donc la même authentification DKIM qu'un domaine d'envoi — le MX seul ne suffit pas.** L'hypothèse inverse, retenue plus haut dans ce document et dans un commentaire du script, était fausse ; elle est corrigée dans les deux endroits ([#1427](https://github.com/stef25fwi/presto_app/pull/1427)).
+
+### Enregistrements à publier chez LWS (zone `ilipresto.fr`)
+
+| Type | Nom | Valeur |
+|---|---|---|
+| TXT | `inbound` | `brevo-code:0888eee9599ca505c7c41d8d82042b05` |
+| CNAME | `brevo1._domainkey.inbound` | `b1.inbound-ilipresto-fr.dkim.brevo.com.` |
+| CNAME | `brevo2._domainkey.inbound` | `b2.inbound-ilipresto-fr.dkim.brevo.com.` |
+
+Deux précisions vérifiées plutôt que supposées :
+
+- **Les DKIM inbound vont bien sous `.inbound`, pas à la racine.** L'API Brevo renvoie `host_name: "brevo1._domainkey"` sans le suffixe `inbound`, ce qui prête à confusion (ses champs `brevo_code` et `dmarc_record` sont, eux, exprimés relativement à `ilipresto.fr` : `inbound` et `_dmarc.inbound`). Mais `brevo1._domainkey.ilipresto.fr` est **déjà occupé** par le DKIM du domaine d'envoi, avec une valeur différente (`b1.ilipresto-fr.dkim.brevo.com` contre `b1.inbound-ilipresto-fr.dkim.brevo.com`) : deux CNAME distincts sur un même nom étant impossibles, les enregistrements inbound ne peuvent aller que sous `brevo1._domainkey.inbound.ilipresto.fr`. Vérifié par résolution DNS le 26 août 2026.
+- **Le `_dmarc.inbound` n'est pas à publier.** Brevo le rapporte déjà `status: true` alors que `_dmarc.inbound.ilipresto.fr` n'existe pas en DNS : la politique DMARC de `ilipresto.fr` couvre le sous-domaine par héritage. Aucune action.
+
+⚠️ **Point final obligatoire sur les CNAME** — c'est exactement l'erreur qui avait cassé le MX inbound (`inbound1.sendinblue.com.ilipresto.fr`). L'interface LWS concatène le domaine si la valeur ne se termine pas par un point.
+
+Le script demande maintenant l'authentification à chaque run tant qu'elle n'est pas acquise : une fois ces trois enregistrements publiés, la certification se débloquera seule au run suivant, sans intervention supplémentaire.
+
 Constat annexe : le compte ne contient qu'un template Brevo, `Nouveau template`, inactif, sujet `test`, avec le contenu de démonstration Brevo (`Your order is coming soon`, `contact@company.com`). Les templates transactionnels iliprestō sont rendus côté code (`functions/src/modules/email/templates/definitions/`) : ce template de démonstration doit être supprimé pour lever toute ambiguïté.
 
 ## Correctifs DNS à publier chez LWS
