@@ -167,6 +167,22 @@ Relevé effectué depuis l'API Brevo (lecture seule) et depuis deux résolveurs 
 > ```
 > Le pipeline complet fonctionne de bout en bout : `email_events` → `enqueueEmailJobsFromEventTrigger` → `email_jobs` → `processEmailJobTrigger` → envoi accepté par Brevo. **Premier canari runtime vert de toute la campagne de certification.** Ce blocage est définitivement résolu ; seuls les blocages DNS (SPF/DKIM, MX inbound — hors de portée d'une session sans accès au registrar) restent ouverts pour atteindre les 100 %.
 
+## 26 août 2026, ~11h30 UTC — DKIM publié (CNAME), avancée réelle confirmée, deux points DNS précis restants
+
+L'utilisateur a publié chez LWS deux enregistrements CNAME `brevo1._domainkey`/`brevo2._domainkey` (méthode de délégation DKIM par CNAME, plus récente que la méthode par TXT plat que les scripts de certification supposaient à l'origine). Vérification :
+
+- **Un vrai bug a été trouvé et corrigé au passage** : `check_brevo_sender_dns.mjs` plantait (`queryTxt EBADNAME @.ilipresto.fr`) au lieu de rapporter un résultat, car l'API Brevo renvoie maintenant un `host_name` égal à `"@"` (convention de zone DNS pour l'apex) pour son enregistrement `brevo-code`, non reconnu par `fqdn()`. Corrigé et vérifié en conditions réelles (run [#70](https://github.com/stef25fwi/presto_app/actions/runs/32963426963)). Bonne nouvelle indépendante : le script gérait déjà correctement la résolution DKIM par CNAME (il interroge dynamiquement les enregistrements attendus renvoyés par l'API Brevo, TXT ou CNAME).
+- **Avancée réelle confirmée par `brevo_production_audit.mjs`** : `domain.verified` ✅, `domain.authenticated` ✅, `sender.exists`/`sender.active` ✅ (`noreply@ilipresto.fr`), tous les contrôles webhook ✅, et surtout **`e2e.provider_accepted` ✅ et `e2e.webhook_delivery` ✅** — un envoi réel est accepté par Brevo et son accusé de réception est confirmé par webhook jusqu'à Firestore. C'est la première certification E2E complètement verte de ce module.
+- **Confirmé par `check_brevo_sender_dns.mjs`** (une fois corrigé) : `DKIM PASS (3 enregistrements, source brevo_api)` — les CNAME sont bien reconnus et correspondent aux valeurs attendues par Brevo.
+
+Trois points DNS précis restent ouverts, tous chez le registrar (hors de portée d'une session sans accès à LWS) :
+
+1. **SPF toujours absent** — `SPF FAIL (absent)`. Aucun enregistrement TXT `v=spf1 include:spf.brevo.com ...` sur `ilipresto.fr`. Cause aussi l'échec de `domain.dns_records` côté Brevo (qui exige que tous ses enregistrements DNS attendus, y compris SPF, soient à `status: true`).
+2. **DMARC publié mais `rua` non surveillé par iliprestō** — `_dmarc.ilipresto.fr` = `v=DMARC1; p=quarantine; rua=mailto:rua@dmarc.brevo.com`. Ce `rua` est syntaxiquement valide mais pointe uniquement vers la boîte de Brevo, pas vers une adresse qu'iliprestō peut lire (`contact@ilipresto.fr` ou `dmarc@ilipresto.fr`, la liste attendue par la politique de certification). **Action attendue : ajouter une deuxième adresse `rua`**, par exemple `rua=mailto:rua@dmarc.brevo.com,mailto:contact@ilipresto.fr` (DMARC accepte plusieurs destinataires séparés par une virgule) — pas besoin de retirer celle de Brevo.
+3. **MX inbound toujours cassé** — `inbound.ilipresto.fr` MX pointe vers `inbound1.sendinblue.com.ilipresto.fr` (point final manquant chez LWS, provoquant la concaténation du domaine). Bloque `webhook.inbound` (HTTP 400) et `inbound E2E`.
+
+Une routine horaire (`trig_01SBabkoFdGXWacF9NMPwxzd`) surveille la publication SPF et relancera automatiquement la certification dès qu'elle apparaîtra.
+
 Constat annexe : le compte ne contient qu'un template Brevo, `Nouveau template`, inactif, sujet `test`, avec le contenu de démonstration Brevo (`Your order is coming soon`, `contact@company.com`). Les templates transactionnels iliprestō sont rendus côté code (`functions/src/modules/email/templates/definitions/`) : ce template de démonstration doit être supprimé pour lever toute ambiguïté.
 
 ## Correctifs DNS à publier chez LWS
