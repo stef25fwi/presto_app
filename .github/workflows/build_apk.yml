@@ -1,41 +1,31 @@
-name: Build APK Android (arm64)
+name: Build signed Android AAB (Google Play)
 
 on:
   workflow_dispatch:
+    inputs:
+      build_number:
+        description: 'Android versionCode (vide = numéro du run GitHub)'
+        required: false
+        type: string
 
 permissions:
   contents: read
   id-token: write
 
+concurrency:
+  group: google-play-aab-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  build-apk:
+  build-aab:
+    # Conserve l'environnement déjà utilisé par le workflow mobile pour WIF.
+    # Le matériel de signature Android n'est plus lu depuis GitHub Secrets :
+    # il vient exclusivement de Google Secret Manager.
     environment: recaptcha
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v7
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v3
-        with:
-          # Workload Identity Federation : aucune clé de service account
-          # stockée. Le jeton OIDC GitHub est échangé contre un jeton GCP
-          # de courte durée (permission id-token: write requise).
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-
-      - name: Enable Flutter web
-        run: flutter config --enable-web
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Analyze Flutter
-        run: flutter analyze --fatal-infos
 
       - name: Setup Java 17
         uses: actions/setup-java@v5
@@ -43,65 +33,121 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup signing
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - id: android-signing
+        name: Read Android signing material from Secret Manager
+        uses: google-github-actions/get-secretmanager-secrets@v3
+        with:
+          secrets: |-
+            keystore_b64:presto-app-74abe/android-upload-keystore-b64
+            keystore_password:presto-app-74abe/android-upload-keystore-password
+            key_password:presto-app-74abe/android-upload-key-password
+            key_alias:presto-app-74abe/android-upload-key-alias
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze Flutter
+        run: flutter analyze --fatal-infos
+
+      - name: Resolve certified app version
         env:
-          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          REQUESTED_BUILD_NUMBER: ${{ inputs.build_number }}
         run: |
-          # Diagnostic secrets
-          echo "KEYSTORE_PASSWORD length: ${#KEYSTORE_PASSWORD}"
-          echo "KEY_PASSWORD length: ${#KEY_PASSWORD}"
-          echo "KEY_ALIAS: ${KEY_ALIAS}"
-          echo "KEYSTORE_B64 length: ${#KEYSTORE_B64}"
-          if [[ -z "${KEYSTORE_PASSWORD}" ]]; then
-            echo "❌ KEYSTORE_PASSWORD vide — secret non configuré dans l'environnement recaptcha"
-            exit 1
+          set -euo pipefail
+
+          VERSION_LINE="$(grep -E '^version:' pubspec.yaml | head -n 1 | sed -E 's/^version:[[:space:]]*//')"
+          APP_VERSION="${VERSION_LINE%%+*}"
+          BUILD_NUMBER="${REQUESTED_BUILD_NUMBER:-}"
+
+          if [[ -z "$BUILD_NUMBER" ]]; then
+            BUILD_NUMBER="$GITHUB_RUN_NUMBER"
           fi
-          if [[ "${#KEYSTORE_PASSWORD}" -lt 6 ]]; then
-            echo "❌ KEYSTORE_PASSWORD trop court (${#KEYSTORE_PASSWORD} chars < 6)"
+
+          if ! [[ "$BUILD_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+            echo "❌ build_number doit être un entier strictement positif. Reçu: '$BUILD_NUMBER'"
             exit 1
           fi
 
-          # 1. Décode le keystore brut
-          printf "%s" "$KEYSTORE_B64" \
+          if (( BUILD_NUMBER > 2100000000 )); then
+            echo "❌ build_number dépasse la limite Android de sécurité retenue (2 100 000 000)."
+            exit 1
+          fi
+
+          SHORT_SHA="$(git rev-parse --short=12 HEAD)"
+          FULL_SHA="$(git rev-parse HEAD)"
+          ARTIFACT_NAME="ilipresto_${APP_VERSION}+${BUILD_NUMBER}_${SHORT_SHA}"
+
+          {
+            echo "APP_VERSION=$APP_VERSION"
+            echo "APP_BUILD_NUMBER=$BUILD_NUMBER"
+            echo "APP_BUILD_NUMBER_OVERRIDE=$BUILD_NUMBER"
+            echo "SOURCE_SHA=$FULL_SHA"
+            echo "SOURCE_SHORT_SHA=$SHORT_SHA"
+            echo "ARTIFACT_NAME=$ARTIFACT_NAME"
+          } >> "$GITHUB_ENV"
+
+          echo "✅ Version certifiée: ${APP_VERSION}+${BUILD_NUMBER}"
+          echo "✅ Source SHA: ${FULL_SHA}"
+
+      - name: Prepare upload keystore
+        env:
+          KEYSTORE_B64: ${{ steps.android-signing.outputs.keystore_b64 }}
+          KEYSTORE_PASSWORD: ${{ steps.android-signing.outputs.keystore_password }}
+          KEY_PASSWORD: ${{ steps.android-signing.outputs.key_password }}
+          KEY_ALIAS: ${{ steps.android-signing.outputs.key_alias }}
+        run: |
+          set -euo pipefail
+
+          for required_var in KEYSTORE_B64 KEYSTORE_PASSWORD KEY_PASSWORD KEY_ALIAS; do
+            if [[ -z "${!required_var:-}" ]]; then
+              echo "❌ Secret Manager n'a pas fourni $required_var."
+              exit 1
+            fi
+          done
+
+          printf '%s' "$KEYSTORE_B64" \
             | tr -d '\r\n[:space:]' \
-            | base64 -d > "$RUNNER_TEMP/upload-keystore-raw.jks"
-          SIZE=$(stat -c%s "$RUNNER_TEMP/upload-keystore-raw.jks" 2>/dev/null || echo 0)
-          if [[ "$SIZE" -lt 100 ]]; then
-            echo "❌ Keystore trop petit (${SIZE} octets) — KEYSTORE_B64 vide ou invalide"
+            | base64 --decode > "$RUNNER_TEMP/upload-keystore-source"
+
+          KEYSTORE_SIZE="$(stat -c%s "$RUNNER_TEMP/upload-keystore-source" 2>/dev/null || echo 0)"
+          if (( KEYSTORE_SIZE < 100 )); then
+            echo "❌ Keystore invalide ou vide (${KEYSTORE_SIZE} octets)."
             exit 1
           fi
-          MAGIC=$(xxd -l 4 -p "$RUNNER_TEMP/upload-keystore-raw.jks" | tr '[:upper:]' '[:lower:]')
-          echo "📦 Keystore brut : ${SIZE} octets, magic=${MAGIC}"
 
-          # 2. Convertit en JKS quel que soit le format source
-          echo "🔄 Conversion en JKS..."
+          # Ne régénère jamais la clé : on importe le même alias/certificat dans
+          # un JKS temporaire canonique, que la sauvegarde source soit JKS ou PKCS12.
           keytool -importkeystore \
-            -srckeystore  "$RUNNER_TEMP/upload-keystore-raw.jks" \
+            -srckeystore "$RUNNER_TEMP/upload-keystore-source" \
             -destkeystore "$RUNNER_TEMP/upload-keystore.jks" \
+            -srcstorepass "$KEYSTORE_PASSWORD" \
+            -deststorepass "$KEYSTORE_PASSWORD" \
+            -srcalias "$KEY_ALIAS" \
+            -destalias "$KEY_ALIAS" \
+            -srckeypass "$KEY_PASSWORD" \
+            -destkeypass "$KEY_PASSWORD" \
             -deststoretype JKS \
-            -srcstorepass  "${KEYSTORE_PASSWORD}" \
-            -deststorepass "${KEYSTORE_PASSWORD}" \
-            -noprompt 2>&1
-          if [[ $? -ne 0 ]]; then
-            echo "❌ Conversion JKS échouée. Regénère le keystore avec : bash android/generate_keystore.sh"
-            exit 1
-          fi
-          NEW_MAGIC=$(xxd -l 4 -p "$RUNNER_TEMP/upload-keystore.jks" | tr '[:upper:]' '[:lower:]')
-          echo "✅ Keystore JKS prêt (magic=${NEW_MAGIC})"
+            -noprompt >/dev/null
 
-          # 3. Vérifie l'alias
           keytool -list \
             -keystore "$RUNNER_TEMP/upload-keystore.jks" \
             -storetype JKS \
-            -storepass "${KEYSTORE_PASSWORD}" \
-            -alias "${KEY_ALIAS}" \
-            -v 2>&1 | head -10
-          echo "✅ Alias ${KEY_ALIAS} vérifié"
+            -storepass "$KEYSTORE_PASSWORD" \
+            -alias "$KEY_ALIAS" >/dev/null
 
-          # 4. Écrit key.properties
           cat > android/key.properties <<EOF
           storePassword=${KEYSTORE_PASSWORD}
           keyPassword=${KEY_PASSWORD}
@@ -109,18 +155,126 @@ jobs:
           storeFile=$RUNNER_TEMP/upload-keystore.jks
           storeType=JKS
           EOF
-          echo "✅ key.properties écrit (storeType=JKS)"
 
-      - name: Build APK arm64 release
+          chmod 600 android/key.properties \
+            "$RUNNER_TEMP/upload-keystore-source" \
+            "$RUNNER_TEMP/upload-keystore.jks"
+          echo "✅ Clé d'upload existante chargée depuis Google Secret Manager."
+
+      - name: Build signed App Bundle
         run: |
-          STAMP=$(date -u +%Y%m%d_%H%M%S)
-          SHA=$(git rev-parse --short=8 HEAD)
-          APK_NAME="ilipresto_arm64_release_${STAMP}_${SHA}"
-          echo "APK_NAME=${APK_NAME}" >> "$GITHUB_ENV"
-          bash tools/flutter_with_build_stamp.sh build apk \
+          set -euo pipefail
+          bash tools/flutter_with_build_stamp.sh build appbundle \
             --release \
-            --target-platform android-arm64 \
-            --split-per-abi
+            --build-name="$APP_VERSION" \
+            --build-number="$APP_BUILD_NUMBER"
+
+      - name: Verify AAB signature and Firebase upload fingerprint
+        env:
+          KEYSTORE_PASSWORD: ${{ steps.android-signing.outputs.keystore_password }}
+          KEY_ALIAS: ${{ steps.android-signing.outputs.key_alias }}
+        run: |
+          set -euo pipefail
+          export LANG=C
+
+          AAB_PATH="$(find build/app/outputs/bundle/release -maxdepth 1 -type f -name '*.aab' -print -quit)"
+          if [[ -z "$AAB_PATH" || ! -f "$AAB_PATH" ]]; then
+            echo "❌ Aucun .aab trouvé dans build/app/outputs/bundle/release."
+            exit 1
+          fi
+
+          # jarsigner valide la signature JAR du bundle. keytool ci-dessous
+          # vérifie ensuite que le certificat embarqué est exactement celui de
+          # la clé d'upload utilisée pour ce build.
+          jarsigner -verify -verbose -certs "$AAB_PATH" > "$RUNNER_TEMP/jarsigner.txt" 2>&1
+
+          UPLOAD_SHA1="$(keytool -list -v \
+            -keystore "$RUNNER_TEMP/upload-keystore.jks" \
+            -storepass "$KEYSTORE_PASSWORD" \
+            -alias "$KEY_ALIAS" \
+            | sed -n 's/^[[:space:]]*SHA1:[[:space:]]*//p' | head -n 1)"
+          UPLOAD_SHA256="$(keytool -list -v \
+            -keystore "$RUNNER_TEMP/upload-keystore.jks" \
+            -storepass "$KEYSTORE_PASSWORD" \
+            -alias "$KEY_ALIAS" \
+            | sed -n 's/^[[:space:]]*SHA256:[[:space:]]*//p' | head -n 1)"
+
+          BUNDLE_SHA1="$(keytool -printcert -jarfile "$AAB_PATH" \
+            | sed -n 's/^[[:space:]]*SHA1:[[:space:]]*//p' | head -n 1)"
+          BUNDLE_SHA256="$(keytool -printcert -jarfile "$AAB_PATH" \
+            | sed -n 's/^[[:space:]]*SHA256:[[:space:]]*//p' | head -n 1)"
+
+          if [[ -z "$UPLOAD_SHA256" || -z "$BUNDLE_SHA256" ]]; then
+            echo "❌ Impossible de lire les empreintes de signature."
+            cat "$RUNNER_TEMP/jarsigner.txt"
+            exit 1
+          fi
+
+          if [[ "$UPLOAD_SHA256" != "$BUNDLE_SHA256" ]]; then
+            echo "❌ Le AAB n'est pas signé par le certificat d'upload attendu."
+            echo "Upload SHA-256 : $UPLOAD_SHA256"
+            echo "Bundle SHA-256 : $BUNDLE_SHA256"
+            exit 1
+          fi
+
+          UPLOAD_SHA1_HEX="$(printf '%s' "$UPLOAD_SHA1" | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          FIREBASE_MATCHES="$(jq -r \
+            --arg package 'fr.ilipresto.app' \
+            --arg cert "$UPLOAD_SHA1_HEX" \
+            '[.client[]
+              | select(.client_info.android_client_info.package_name == $package)
+              | .oauth_client[]?
+              | select(.client_type == 1)
+              | select((.android_info.certificate_hash | ascii_downcase) == $cert)
+            ] | length' android/app/google-services.json)"
+
+          if [[ "$FIREBASE_MATCHES" != "1" ]]; then
+            echo "❌ SHA-1 upload absent de google-services.json pour fr.ilipresto.app."
+            echo "   SHA-1 à enregistrer dans Firebase: $UPLOAD_SHA1"
+            echo "   SHA-256 à enregistrer dans Firebase: $UPLOAD_SHA256"
+            exit 1
+          fi
+
+          mkdir -p dist
+          cp "$AAB_PATH" dist/app-release.aab
+          keytool -exportcert -rfc \
+            -keystore "$RUNNER_TEMP/upload-keystore.jks" \
+            -storepass "$KEYSTORE_PASSWORD" \
+            -alias "$KEY_ALIAS" \
+            -file dist/upload_certificate.pem >/dev/null
+
+          AAB_SHA256="$(sha256sum dist/app-release.aab | awk '{print $1}')"
+
+          cat > dist/release-certification.txt <<EOF
+          packageName=fr.ilipresto.app
+          versionName=${APP_VERSION}
+          versionCode=${APP_BUILD_NUMBER}
+          sourceSha=${SOURCE_SHA}
+          aabFile=app-release.aab
+          aabSha256=${AAB_SHA256}
+          uploadCertificateSha1=${UPLOAD_SHA1}
+          uploadCertificateSha256=${UPLOAD_SHA256}
+          firebaseUploadSha1Registered=true
+          playAppSigningCertificate=TO_BE_RECORDED_AFTER_FIRST_INTERNAL_UPLOAD
+          EOF
+
+          {
+            echo "## Google Play AAB certification"
+            echo ""
+            echo "| Champ | Valeur |"
+            echo "|---|---|"
+            echo "| Package | \`fr.ilipresto.app\` |"
+            echo "| Version | \`${APP_VERSION}+${APP_BUILD_NUMBER}\` |"
+            echo "| Source SHA | \`${SOURCE_SHA}\` |"
+            echo "| AAB SHA-256 | \`${AAB_SHA256}\` |"
+            echo "| Upload cert SHA-1 | \`${UPLOAD_SHA1}\` |"
+            echo "| Upload cert SHA-256 | \`${UPLOAD_SHA256}\` |"
+            echo "| Firebase upload SHA-1 | ✅ enregistré |"
+            echo "| Play App Signing cert | ⏳ à relever après le premier upload Internal testing |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "✅ app-release.aab signé et certifié avec la clé d'upload."
+          echo "✅ SHA-1 upload présent dans Firebase pour fr.ilipresto.app."
 
       - name: Upload Gradle logs on failure
         if: failure()
@@ -133,16 +287,13 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-      - name: Rename APK
-        run: |
-          mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
-            "dist/${APK_NAME}.apk"
-          echo "✅ APK : dist/${APK_NAME}.apk"
-
-      - name: Upload APK artifact
+      - name: Upload certified Google Play bundle
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ env.APK_NAME }}
-          path: dist/${{ env.APK_NAME }}.apk
+          name: ${{ env.ARTIFACT_NAME }}
+          path: |
+            dist/app-release.aab
+            dist/release-certification.txt
+            dist/upload_certificate.pem
           retention-days: 30
+          if-no-files-found: error
