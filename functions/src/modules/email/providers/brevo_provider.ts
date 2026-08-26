@@ -2,10 +2,16 @@ import { createHash, createHmac, timingSafeEqual } from "crypto";
 import { EmailProvider, NormalizedWebhookEvent, ProviderSendInput, ProviderSendResult } from "./email_provider.interface";
 
 export class BrevoProvider implements EmailProvider {
-  constructor(
-    private readonly apiKey: string,
-    private readonly webhookSecret: string,
-  ) {}
+  private readonly apiKey: string;
+  private readonly webhookSecret: string;
+
+  constructor(apiKey: string, webhookSecret: string) {
+    // Les jetons entrants sont comparés après `trim()` : conserver ici une
+    // valeur non normalisée rendrait toute vérification faussement négative si
+    // le secret stocké porte un espace ou un saut de ligne final.
+    this.apiKey = String(apiKey || "").trim();
+    this.webhookSecret = String(webhookSecret || "").trim();
+  }
 
   name(): string {
     return "brevo";

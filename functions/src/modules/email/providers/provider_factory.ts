@@ -13,12 +13,24 @@ function hasValue(value: string): boolean {
   return String(value || "").trim().length > 0;
 }
 
+/**
+ * Les secrets arrivent de Secret Manager via `process.env`, qui conserve les
+ * espaces et sauts de ligne de la valeur stockée. Un secret créé avec un `\n`
+ * final — cas courant d'un `echo` sans `-n` ou d'un collage en console — ferait
+ * échouer toute comparaison stricte avec la même valeur lue ailleurs, et
+ * produirait un en-tête HTTP invalide côté envoi. Normaliser ici, au seul point
+ * d'entrée des secrets dans le runtime.
+ */
+function readSecret(value: string): string {
+  return String(value || "").trim();
+}
+
 export function createEmailProvider(): EmailProvider {
   const providerName = String(getProviderName() || "resend").toLowerCase();
-  const brevoApiKey = BREVO_API_KEY.value();
-  const brevoWebhookSecret = BREVO_WEBHOOK_SECRET.value();
-  const resendApiKey = EMAIL_PROVIDER_API_KEY.value();
-  const resendWebhookSecret = EMAIL_PROVIDER_WEBHOOK_SECRET.value();
+  const brevoApiKey = readSecret(BREVO_API_KEY.value());
+  const brevoWebhookSecret = readSecret(BREVO_WEBHOOK_SECRET.value());
+  const resendApiKey = readSecret(EMAIL_PROVIDER_API_KEY.value());
+  const resendWebhookSecret = readSecret(EMAIL_PROVIDER_WEBHOOK_SECRET.value());
 
   const hasBrevoConfig = hasValue(brevoApiKey) && hasValue(brevoWebhookSecret);
   const hasResendConfig = hasValue(resendApiKey) && hasValue(resendWebhookSecret);

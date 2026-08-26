@@ -43,6 +43,27 @@ test("BrevoProvider verifies official Bearer webhook authentication", () => {
   );
 });
 
+test("BrevoProvider authentifie malgré un saut de ligne final dans le secret stocké", () => {
+  const secret = "brevo_webhook_secret";
+  // Secret Manager restitue la valeur telle qu'elle a été écrite : un `echo`
+  // sans `-n` ou un collage en console y laisse un saut de ligne, que
+  // `process.env` conserve alors que l'appelant envoie le jeton nettoyé.
+  const provider = new BrevoProvider("api_key\n", `${secret}\n`);
+
+  assert.equal(
+    provider.verifyWebhookSignature({ authorization: `Bearer ${secret}` }, "{}"),
+    true,
+  );
+  assert.equal(
+    provider.verifyWebhookSignature({ "x-ilipresto-webhook-secret": secret }, "{}"),
+    true,
+  );
+  assert.equal(
+    provider.verifyWebhookSignature({ authorization: "Bearer invalid" }, "{}"),
+    false,
+  );
+});
+
 test("BrevoProvider accepts configured custom webhook secret header", () => {
   const secret = "brevo_webhook_secret";
   const provider = new BrevoProvider("api_key", secret);
