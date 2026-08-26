@@ -266,20 +266,25 @@ export function assessDmarc(
   const parseReportList = (value: string | undefined, tag: "rua" | "ruf"): string[] => {
     if (!value) return [];
     const entries = value.split(",").map((item) => item.trim()).filter((item) => item.length > 0);
+    const validMailboxes: string[] = [];
     for (const entry of entries) {
       if (!/^mailto:[^@\s]+@[^@\s]+$/i.test(entry.replace(/!\d+[kmgt]?$/i, ""))) {
         issues.push(`dmarc_${tag}_invalid`);
         continue;
       }
       const mailbox = normalizeMailbox(entry);
-      if (monitored.length > 0 && !monitored.includes(mailbox)) {
-        issues.push(`dmarc_${tag}_unmonitored`);
-      }
+      validMailboxes.push(mailbox);
       if (mailboxDomain(mailbox) !== domain.toLowerCase()) {
         // Une boîte hors domaine exige un enregistrement d'autorisation
         // `<domaine>._report._dmarc.<hôte>` côté destinataire.
         warnings.push(`dmarc_${tag}_external_domain`);
       }
+    }
+    // Plusieurs destinataires sont autorisés par le RFC (ex. garder celui de
+    // Brevo tout en ajoutant le sien) : n'exiger qu'un seul destinataire
+    // surveillé parmi la liste, pas que tous le soient.
+    if (monitored.length > 0 && validMailboxes.length > 0 && !validMailboxes.some((mailbox) => monitored.includes(mailbox))) {
+      issues.push(`dmarc_${tag}_unmonitored`);
     }
     return entries;
   };

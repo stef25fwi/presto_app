@@ -103,6 +103,17 @@ test("assessDmarc refuse une boîte de rapports non surveillée", () => {
   assert.ok(dmarc.warnings.includes("dmarc_rua_external_domain"));
 });
 
+test("assessDmarc accepte un rua mixte tant qu'une boîte surveillée y figure", () => {
+  const dmarc = assessDmarc(
+    [["v=DMARC1; p=quarantine; rua=mailto:rua@dmarc.brevo.com,mailto:contact@ilipresto.fr"]],
+    "ilipresto.fr",
+    { monitoredMailboxes: ["contact@ilipresto.fr", "dmarc@ilipresto.fr"] },
+  );
+
+  assert.equal(dmarc.ok, true);
+  assert.equal(dmarc.issues.includes("dmarc_rua_unmonitored"), false);
+});
+
 test("assessDmarc tolère la limite de taille sur une adresse rua", () => {
   const dmarc = assessDmarc(
     [["v=DMARC1; p=reject; rua=mailto:dmarc@ilipresto.fr!10m"]],
