@@ -183,6 +183,20 @@ Trois points DNS précis restent ouverts, tous chez le registrar (hors de porté
 
 Une routine horaire (`trig_01SBabkoFdGXWacF9NMPwxzd`) surveille la publication SPF et relancera automatiquement la certification dès qu'elle apparaîtra.
 
+## 26 août 2026, ~12h20 UTC — SPF publié, DMARC `rua` corrigé : DNS d'envoi 100 % certifié, un seul point DNS restant (inbound)
+
+L'utilisateur a publié le SPF et ajouté `contact@ilipresto.fr` au `rua` DMARC. Trois bugs réels de certification ont été trouvés et corrigés en conditions live pendant cette vérification (tous mergés : [#1418](https://github.com/stef25fwi/presto_app/pull/1418), [#1420](https://github.com/stef25fwi/presto_app/pull/1420), [#1421](https://github.com/stef25fwi/presto_app/pull/1421)) :
+
+1. `check_brevo_sender_dns.mjs` plantait sur l'hôte `"@"` renvoyé par l'API Brevo (corrigé, cf. plus haut).
+2. `assessDmarc` exigeait que **tous** les destinataires `rua` soient surveillés au lieu d'**au moins un** — rejetait donc `rua=...brevo.com,...ilipresto.fr` alors que la boîte iliprestō y figurait bien. Test de régression ajouté.
+3. `ensureDomain()` ne redemandait l'authentification à Brevo que si `authenticated` était encore faux ; comme ce flag était déjà vrai depuis une validation DKIM antérieure au SPF, Brevo n'était jamais sollicité pour revérifier le DNS une fois le SPF publié. Corrigé pour redemander tant que `dns_records` n'est pas tous prêts.
+
+**Résultat (run [#76](https://github.com/stef25fwi/presto_app/actions/runs/32967542578))** : `BREVO_SENDER_DNS_RESULT={"ok":true,"spf":true,"dkim":true,"dmarc":true,"issues":[]}` — **SPF, DKIM et DMARC sont intégralement certifiés en DNS public**, avec une vérification indépendante (résolution DNS directe, pas seulement le statut auto-déclaré Brevo).
+
+Un écart mineur et non bloquant persiste : `domain.dns_records` (le statut interne de Brevo, pas notre certification DNS) reste à `FAIL` malgré une réauthentification demandée avec succès (`REPAIR domain_authentication_requested`, `Successfully authenticated`) — vraisemblablement un délai de repropagation asynchrone côté Brevo après le PUT `/authenticate`, pas une anomalie DNS réelle. À revérifier au prochain run sans action supplémentaire attendue.
+
+**Seul point DNS restant, actionnable et précis** : `inbound.ilipresto.fr` n'a que `inbound1.sendinblue.com` en MX ; Brevo exige aussi `inbound2.sendinblue.com` (`MX Brevo inbound manquants : inbound2.sendinblue.com`). Une fois ce second MX ajouté chez LWS, `webhook.inbound` (actuellement HTTP 400), la vérification MX inbound et l'E2E entrant devraient tous passer.
+
 Constat annexe : le compte ne contient qu'un template Brevo, `Nouveau template`, inactif, sujet `test`, avec le contenu de démonstration Brevo (`Your order is coming soon`, `contact@company.com`). Les templates transactionnels iliprestō sont rendus côté code (`functions/src/modules/email/templates/definitions/`) : ce template de démonstration doit être supprimé pour lever toute ambiguïté.
 
 ## Correctifs DNS à publier chez LWS
