@@ -128,6 +128,19 @@ Relevé effectué depuis l'API Brevo (lecture seule) et depuis deux résolveurs 
 > - `enrichEventPayload` est best-effort et ne peut pas interrompre le flux.
 >
 > L'analyse statique a atteint sa limite. Le canari lisait déjà le statut de l'événement mais le **jetait** en cas de timeout : il rapporte désormais `eventStatus`, `ignoreReason` et `missingRequiredVariables`, ce qui transformera le prochain timeout en diagnostic exploitable — `created` désignera un déclencheur qui n'a jamais tourné, `ignored` livrera le motif exact du renoncement, `jobs_created` un job créé mais introuvable par la requête.
+>
+> **🔴 Diagnostic obtenu (26 août 2026, run [#65](https://github.com/stef25fwi/presto_app/actions/runs/32925619138), ~03h15 UTC) — le déclencheur d'entrée du pipeline email ne se déclenche pas.** Le canari instrumenté rapporte :
+> ```text
+> BREVO_RUNTIME_CANARY_RESULT={"ok":false,"eventStatus":"created","ignoreReason":null,
+>   "missingRequiredVariables":null,"jobStatus":null,"errorCode":"runtime_canary_timeout","logStatuses":[]}
+> ```
+> Le document `email_events` est bien écrit (`Canari runtime créé: evt_...` au même run) et reste à `status: "created"` — la valeur posée par le canari — pendant les 90 secondes d'attente. Or `enqueueEmailJobsFromEvent` écrit `jobs_created` en cas de succès et `ignored` en cas de renoncement sur variables manquantes. Un statut resté à `created` signifie donc : soit le déclencheur n'a jamais tourné, soit il a abandonné à une sortie silencieuse. **Toutes les sorties silencieuses ont été écartées par lecture du code** (mapping du template, `getCompatTemplateMeta` — le registre compat inclut bien `...legacyTemplateRegistry` donc le template legacy est trouvé —, présence du destinataire, liste de suppression vide, préférences autorisant le canal transactionnel).
+>
+> **Conclusion : `enqueueEmailJobsFromEventTrigger` ne s'exécute pas sur la création d'un document `email_events`.** Élément discriminant : le webhook `handleEmailProviderWebhook`, déclencheur **HTTP** de la même base de code et du même déploiement, répond correctement (200 sur les 4 événements du smoke test). La différence porte donc sur le type de déclencheur — Firestore/Eventarc — et non sur le code applicatif, les secrets ou la configuration du module.
+>
+> **Portée : aucun email transactionnel n'est enqueué en production**, pas seulement le canari — tout le pipeline dépend de ce déclencheur d'entrée.
+>
+> Vérification suivante, hors de portée d'une session sans accès `gcloud`/Console : consulter Cloud Logging pour `enqueueEmailJobsFromEventTrigger` (europe-west1) et déterminer s'il enregistre la moindre exécution ou erreur lors de l'écriture d'un document `email_events`, puis vérifier l'état de son déclencheur Eventarc.
 
 Constat annexe : le compte ne contient qu'un template Brevo, `Nouveau template`, inactif, sujet `test`, avec le contenu de démonstration Brevo (`Your order is coming soon`, `contact@company.com`). Les templates transactionnels iliprestō sont rendus côté code (`functions/src/modules/email/templates/definitions/`) : ce template de démonstration doit être supprimé pour lever toute ambiguïté.
 
