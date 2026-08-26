@@ -303,6 +303,19 @@ L'écart reste rigoureusement constant à 5 pendant que le volume progresse de 4
 
 Conséquence arithmétique directe, avec 5 messages figés dans la fenêtre : le taux atteint 95 % dès que `(N−5)/N ≥ 0,95`, soit **N ≥ 100 envois** dans la fenêtre glissante de 30 jours (55 aujourd'hui). Le contrôle repassera donc au vert de lui-même sous l'effet du trafic réel de production, ou plus tôt si les 5 messages concernés sortent de la fenêtre. **Aucune action n'est requise et le seuil n'a pas été abaissé** : l'affaiblir reviendrait à neutraliser la garde qualité au moment précis où elle devient significative.
 
+### 26 août 2026, ~14h20 UTC — exclusion du trafic de certification de l'échantillon (déployé)
+
+À la demande explicite de l'utilisateur, une option plus propre que l'attente passive a été implémentée plutôt que de laisser le seuil rouge se corriger seul avec le temps : exclure le trafic de certification de la mesure, au lieu de le laisser diluer le signal.
+
+Cause du bruit : le canari runtime (`brevo_runtime_canary.mjs`) traverse le pipeline réel (`enqueueEmailJobsFromEventTrigger` → `worker.ts`), avec les mêmes `template_code`/`channel` qu'un envoi de production — donc les mêmes tags Brevo. Rien ne le distinguait du trafic réel dans l'échantillon de délivrabilité, ce qui explique les 5 messages sans événement terminal figés dans les runs #92/#93/#95 (probablement des canaris envoyés avant que le domaine ne soit authentifié).
+
+Correctif ([#1432](https://github.com/stef25fwi/presto_app/pull/1432)) :
+- `enqueue.ts` marque `is_certification: true` sur le job quand l'événement source vient du canari (`source_collection: "brevo_certification_canary"`).
+- `worker.ts` tague désormais chaque envoi `"production"` (trafic réel) ou `"production-certification"` (canari) — cohérent avec le tag déjà utilisé par l'E2E direct de `brevo_production_audit.mjs`.
+- Le workflow de certification filtre le rapport de délivrabilité sur `tag=production`.
+
+**Déployé** (run [#2444](https://github.com/stef25fwi/presto_app/actions/runs/32976828847), déploiement Functions réussi malgré l'échec non lié du smoke `/confidentialite`). Effet uniquement sur les envois futurs : l'historique déjà tagué sans distinction reste inchangé et continuera de sortir naturellement de la fenêtre glissante de 30 jours. Aucune relance immédiate de la certification n'apporterait d'information nouvelle — l'effet ne sera mesurable qu'avec l'accumulation de trafic réel taggé `production`.
+
 Constat annexe : le compte ne contient qu'un template Brevo, `Nouveau template`, inactif, sujet `test`, avec le contenu de démonstration Brevo (`Your order is coming soon`, `contact@company.com`). Les templates transactionnels iliprestō sont rendus côté code (`functions/src/modules/email/templates/definitions/`) : ce template de démonstration doit être supprimé pour lever toute ambiguïté.
 
 ## Correctifs DNS à publier chez LWS
