@@ -49,6 +49,7 @@ DOMAIN_CHECK_HTTP_CODE="$(curl --silent --show-error \
   -H "accept: application/json" \
   -H "api-key: $BREVO_API_KEY" \
   "https://api.brevo.com/v3/senders/domains/$DOMAIN")"
+DOMAIN_CHECK_BODY="$(cat "$DOMAIN_CHECK_FILE")"
 rm -f "$DOMAIN_CHECK_FILE"
 if [ "$DOMAIN_CHECK_HTTP_CODE" = "404" ]; then
   echo "Domaine $DOMAIN absent côté Brevo ; création."
@@ -67,6 +68,8 @@ if [ "$DOMAIN_CHECK_HTTP_CODE" = "404" ]; then
     echo "Brevo POST /senders/domains ($DOMAIN) a échoué HTTP $CREATE_DOMAIN_HTTP_CODE: $CREATE_DOMAIN_BODY" >&2
     exit 22
   fi
+  echo "Réponse de création : $CREATE_DOMAIN_BODY"
+  DOMAIN_CHECK_BODY="$CREATE_DOMAIN_BODY"
   echo "Domaine $DOMAIN créé côté Brevo."
 elif [ "$DOMAIN_CHECK_HTTP_CODE" -lt 200 ] || [ "$DOMAIN_CHECK_HTTP_CODE" -ge 300 ]; then
   echo "Brevo GET /senders/domains/$DOMAIN a échoué HTTP $DOMAIN_CHECK_HTTP_CODE" >&2
@@ -74,6 +77,9 @@ elif [ "$DOMAIN_CHECK_HTTP_CODE" -lt 200 ] || [ "$DOMAIN_CHECK_HTTP_CODE" -ge 30
 else
   echo "Domaine $DOMAIN déjà présent côté Brevo."
 fi
+# Diagnostic : "Domain is not found or is inactive" côté webhook inbound
+# reste opaque sans voir verified/authenticated/dns_records du domaine.
+echo "État du domaine $DOMAIN côté Brevo : $DOMAIN_CHECK_BODY"
 
 # `--fail-with-body` sous `set -e` interrompt le script avant qu'il puisse
 # afficher le corps de la réponse : capturer statut et corps séparément pour
