@@ -91,6 +91,10 @@ Relevé effectué depuis l'API Brevo (lecture seule) et depuis deux résolveurs 
 > - Confirmé une seconde fois : `BREVO_DELIVERABILITY_RESULT={"ok":true,"evaluated":false,"sample":2,"warnings":["sample_below_threshold"]}` et `BREVO_SUPPRESSION_HYGIENE_RESULT={"ok":true,"missing":0,"inactive":0,"postSuppressionSends":0}`.
 >
 > **Le redéploiement des Cloud Functions n'est donc plus une simple recommandation de confort : c'est un P0**, nécessaire pour que `BREVO_API_KEY` (envoi) et `BREVO_WEBHOOK_SECRET` (réception des accusés) soient tous deux à jour en production. Un workflow `workflow_dispatch`-déclenchable existe déjà : `.github/workflows/deploy.yml` (« Validate and Deploy Firebase »).
+>
+> **✅ Cloud Functions redéployées (26 août 2026, ~01h50 UTC).** Déclenché sur `main` avec `deploy_functions=true` : run [#2426](https://github.com/stef25fwi/presto_app/actions/runs/32919245891). `Deploy Functions with exit 130 retry` réussit — les ~80 fonctions, dont `handleEmailProviderWebhook` et `handleInboundContactEmailWebhook`, sont mises à jour, ainsi que l'hébergement et les règles Firestore. Le runtime déployé résout donc désormais `BREVO_API_KEY` et `BREVO_WEBHOOK_SECRET` à leur version `latest`. Le job est marqué en échec globalement, mais uniquement à cause d'un test de fumée **sans rapport avec Brevo** : `https://ilipresto.fr/confidentialite` ne renvoie pas de balise `<title>` — anomalie pré-existante sur une page publique, à traiter séparément, non bloquante pour ce chantier.
+>
+> Prochaine étape : rejouer `quality/brevo-production` pour vérifier si le canari runtime (`BREVO_RUNTIME_CANARY_RESULT`) et l'authentification Bearer du webhook (`brevo_webhook_smoke_test.mjs`) passent enfin avec les secrets à jour côté runtime.
 
 Constat annexe : le compte ne contient qu'un template Brevo, `Nouveau template`, inactif, sujet `test`, avec le contenu de démonstration Brevo (`Your order is coming soon`, `contact@company.com`). Les templates transactionnels iliprestō sont rendus côté code (`functions/src/modules/email/templates/definitions/`) : ce template de démonstration doit être supprimé pour lever toute ambiguïté.
 
