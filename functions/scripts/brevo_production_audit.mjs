@@ -81,12 +81,23 @@ async function ensureDomain(domain, apiKey, repairActions) {
     config = await brevoRequest(`/senders/domains/${encodeURIComponent(domain)}`, apiKey);
   }
 
-  if (config.authenticated !== true && allDnsRecordsReady(config)) {
-    await brevoRequest(`/senders/domains/${encodeURIComponent(domain)}/authenticate`, apiKey, {
-      method: "PUT",
-    });
-    repairActions.push("domain_authentication_requested");
-    config = await brevoRequest(`/senders/domains/${encodeURIComponent(domain)}`, apiKey);
+  // Brevo ne réinterroge pas le DNS de lui-même : sans cet appel explicite,
+  // un enregistrement publié après une première authentification (ex. SPF
+  // ajouté après coup, alors que `authenticated` est déjà vrai depuis une
+  // validation DKIM antérieure) ne serait jamais revérifié.
+  if (!allDnsRecordsReady(config)) {
+    try {
+      await brevoRequest(`/senders/domains/${encodeURIComponent(domain)}/authenticate`, apiKey, {
+        method: "PUT",
+      });
+      repairActions.push("domain_authentication_requested");
+      config = await brevoRequest(`/senders/domains/${encodeURIComponent(domain)}`, apiKey);
+    } catch (error) {
+      // Le DNS n'est peut-être pas encore complètement prêt côté Brevo ;
+      // laisser les contrôles domain.* rapporter l'état réel plutôt que de
+      // faire échouer tout l'audit sur cette tentative de réparation.
+      repairActions.push(`domain_authentication_retry_failed:${error?.status ?? "unknown"}`);
+    }
   }
 
   return config;
