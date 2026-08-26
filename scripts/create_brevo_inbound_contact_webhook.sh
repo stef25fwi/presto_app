@@ -37,10 +37,22 @@ PY
 CREATE_PAYLOAD="${PAYLOADS[0]:-}"
 UPDATE_PAYLOAD="${PAYLOADS[1]:-}"
 
-WEBHOOKS="$(curl --fail-with-body --silent --show-error \
+# `--fail-with-body` sous `set -e` interrompt le script avant qu'il puisse
+# afficher le corps de la réponse : capturer statut et corps séparément pour
+# ne plus jamais perdre le message d'erreur réel de Brevo.
+LIST_RESPONSE_FILE="$(mktemp)"
+LIST_HTTP_CODE="$(curl --silent --show-error \
+  --output "$LIST_RESPONSE_FILE" \
+  --write-out '%{http_code}' \
   -H "accept: application/json" \
   -H "api-key: $BREVO_API_KEY" \
   "https://api.brevo.com/v3/webhooks?type=inbound")"
+WEBHOOKS="$(cat "$LIST_RESPONSE_FILE")"
+rm -f "$LIST_RESPONSE_FILE"
+if [ "$LIST_HTTP_CODE" -lt 200 ] || [ "$LIST_HTTP_CODE" -ge 300 ]; then
+  echo "Brevo GET /webhooks?type=inbound a échoué HTTP $LIST_HTTP_CODE: $WEBHOOKS" >&2
+  exit 22
+fi
 
 export WEBHOOKS
 WEBHOOK_ID="$(python3 - <<'PY'
@@ -57,20 +69,38 @@ PY
 
 if [ -n "$WEBHOOK_ID" ]; then
   echo "Mise à jour du webhook inbound Brevo id=$WEBHOOK_ID"
-  curl --fail-with-body --silent --show-error \
+  PUT_RESPONSE_FILE="$(mktemp)"
+  PUT_HTTP_CODE="$(curl --silent --show-error \
+    --output "$PUT_RESPONSE_FILE" \
+    --write-out '%{http_code}' \
     -X PUT "https://api.brevo.com/v3/webhooks/$WEBHOOK_ID" \
     -H "accept: application/json" \
     -H "api-key: $BREVO_API_KEY" \
     -H "Content-Type: application/json" \
-    --data "$UPDATE_PAYLOAD" >/dev/null
+    --data "$UPDATE_PAYLOAD")"
+  PUT_BODY="$(cat "$PUT_RESPONSE_FILE")"
+  rm -f "$PUT_RESPONSE_FILE"
+  if [ "$PUT_HTTP_CODE" -lt 200 ] || [ "$PUT_HTTP_CODE" -ge 300 ]; then
+    echo "Brevo PUT /webhooks/$WEBHOOK_ID a échoué HTTP $PUT_HTTP_CODE: $PUT_BODY" >&2
+    exit 22
+  fi
 else
   echo "Création du webhook inbound Brevo pour $DOMAIN"
-  CREATED="$(curl --fail-with-body --silent --show-error \
+  CREATE_RESPONSE_FILE="$(mktemp)"
+  CREATE_HTTP_CODE="$(curl --silent --show-error \
+    --output "$CREATE_RESPONSE_FILE" \
+    --write-out '%{http_code}' \
     -X POST "https://api.brevo.com/v3/webhooks" \
     -H "accept: application/json" \
     -H "api-key: $BREVO_API_KEY" \
     -H "Content-Type: application/json" \
     --data "$CREATE_PAYLOAD")"
+  CREATED="$(cat "$CREATE_RESPONSE_FILE")"
+  rm -f "$CREATE_RESPONSE_FILE"
+  if [ "$CREATE_HTTP_CODE" -lt 200 ] || [ "$CREATE_HTTP_CODE" -ge 300 ]; then
+    echo "Brevo POST /webhooks (inbound) a échoué HTTP $CREATE_HTTP_CODE: $CREATED" >&2
+    exit 22
+  fi
   export CREATED
   WEBHOOK_ID="$(python3 - <<'PY'
 import json, os
