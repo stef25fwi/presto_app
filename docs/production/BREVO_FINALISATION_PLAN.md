@@ -106,6 +106,28 @@ Relevé effectué depuis l'API Brevo (lecture seule) et depuis deux résolveurs 
 > - le canari runtime et le webhook échouent pour une raison indépendante des secrets — un bug dans le pipeline d'envoi lui-même, à investiguer via Cloud Logging sur l'exécution réelle de la fonction pendant un test.
 >
 > Tant que cette version n'est pas confirmée en Console, ne pas relancer une nouvelle rotation de clé ou un nouveau redéploiement à l'aveugle : ça reproduirait le même résultat sans nouvelle information.
+>
+> **✅ Webhook transactionnel réparé — cause racine : un caractère parasite dans le secret stocké (26 août 2026, run [#64](https://github.com/stef25fwi/presto_app/actions/runs/32924892582), ~03h04 UTC).** L'inspection du code a révélé une asymétrie de normalisation dans `brevo_provider.ts` : `verifyWebhookSignature` comparait `bearerMatch[1].trim()` au secret stocké **tel quel**, et `constantTimeEqual` renvoie `false` dès que les longueurs diffèrent. Les secrets arrivent de Secret Manager via `process.env`, qui conserve la valeur exacte stockée : un secret créé avec un saut de ligne final — cas courant d'un `echo` sans `-n` ou d'un collage en console — porte ce `\n` côté runtime, alors que la CI lit le même secret via `$(gcloud secrets versions access latest)`, où la substitution de commande bash supprime les sauts de ligne finaux. Chaque comparaison échouait donc, quel que soit le nombre de redéploiements — ce qui explique exactement pourquoi le redéploiement du run #62 n'avait rien changé.
+>
+> Après normalisation des secrets à leur point d'entrée (`provider_factory`) et suppression de l'asymétrie dans `BrevoProvider`, déployées en production (run deploy [#2427](https://github.com/stef25fwi/presto_app/actions/runs/32923396773), `Deploy Functions` = success) :
+> ```text
+> [OK] event=delivered   auth=bearer status=200
+> [OK] event=opened      auth=bearer status=200
+> [OK] event=click       auth=bearer status=200
+> [OK] event=soft_bounce auth=bearer status=200
+> Smoke test passed: 4 valid events accepted and security probes rejected.
+> ```
+> **Les accusés de livraison, bounces et plaintes envoyés par Brevo sont donc de nouveau acceptés par la production.** Le test de régression ajouté échoue sans le correctif et passe avec (vérifié explicitement).
+>
+> **⚠️ Le canari runtime reste en échec, et c'est un problème distinct.** `BREVO_RUNTIME_CANARY_RESULT` rapporte toujours `runtime_canary_timeout` avec `jobStatus: null` et `logStatuses: []` : **aucun `email_jobs` n'est jamais créé**. Or l'étape qui crée le job (`enqueueEmailJobsFromEvent`) ne touche à aucune credential Brevo — ce n'est donc pas un problème de secret. Toutes les sorties anticipées de l'enqueue ont été écartées par lecture du code :
+> - `mapEventToTemplate("support.ticket.created")` renvoie bien `tpl_transactional_support_ticket_created_v1` ;
+> - le template existe dans le registre legacy, avec `channel: transactionnel` ;
+> - les variables requises (`firstName`, `ticketNumber`, `ticketSubject`) sont toutes fournies par le canari ;
+> - `resolvePreferenceDecision(undefined, "transactionnel")` autorise (`mandatory_without_user`) ;
+> - la liste de suppression est vide (`Suppressions actives Firestore : 0` au même run) ;
+> - `enrichEventPayload` est best-effort et ne peut pas interrompre le flux.
+>
+> L'analyse statique a atteint sa limite. Le canari lisait déjà le statut de l'événement mais le **jetait** en cas de timeout : il rapporte désormais `eventStatus`, `ignoreReason` et `missingRequiredVariables`, ce qui transformera le prochain timeout en diagnostic exploitable — `created` désignera un déclencheur qui n'a jamais tourné, `ignored` livrera le motif exact du renoncement, `jobs_created` un job créé mais introuvable par la requête.
 
 Constat annexe : le compte ne contient qu'un template Brevo, `Nouveau template`, inactif, sujet `test`, avec le contenu de démonstration Brevo (`Your order is coming soon`, `contact@company.com`). Les templates transactionnels iliprestō sont rendus côté code (`functions/src/modules/email/templates/definitions/`) : ce template de démonstration doit être supprimé pour lever toute ambiguïté.
 
