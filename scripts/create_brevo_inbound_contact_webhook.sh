@@ -37,6 +37,44 @@ PY
 CREATE_PAYLOAD="${PAYLOADS[0]:-}"
 UPDATE_PAYLOAD="${PAYLOADS[1]:-}"
 
+# L'API webhook inbound exige que le domaine existe déjà côté Brevo
+# ("Domain is not found or is inactive" sinon, observé en production le
+# 26 août 2026). Contrairement au domaine d'envoi, un domaine inbound n'a
+# besoin d'aucune authentification SPF/DKIM : juste d'exister comme
+# ressource domaine, sa légitimité étant portée par le MX inbound.
+DOMAIN_CHECK_FILE="$(mktemp)"
+DOMAIN_CHECK_HTTP_CODE="$(curl --silent --show-error \
+  --output "$DOMAIN_CHECK_FILE" \
+  --write-out '%{http_code}' \
+  -H "accept: application/json" \
+  -H "api-key: $BREVO_API_KEY" \
+  "https://api.brevo.com/v3/senders/domains/$DOMAIN")"
+rm -f "$DOMAIN_CHECK_FILE"
+if [ "$DOMAIN_CHECK_HTTP_CODE" = "404" ]; then
+  echo "Domaine $DOMAIN absent côté Brevo ; création."
+  CREATE_DOMAIN_FILE="$(mktemp)"
+  CREATE_DOMAIN_HTTP_CODE="$(curl --silent --show-error \
+    --output "$CREATE_DOMAIN_FILE" \
+    --write-out '%{http_code}' \
+    -X POST "https://api.brevo.com/v3/senders/domains" \
+    -H "accept: application/json" \
+    -H "api-key: $BREVO_API_KEY" \
+    -H "Content-Type: application/json" \
+    --data "$(python3 -c 'import json, os; print(json.dumps({"name": os.environ["DOMAIN"]}))')")"
+  CREATE_DOMAIN_BODY="$(cat "$CREATE_DOMAIN_FILE")"
+  rm -f "$CREATE_DOMAIN_FILE"
+  if [ "$CREATE_DOMAIN_HTTP_CODE" -lt 200 ] || [ "$CREATE_DOMAIN_HTTP_CODE" -ge 300 ]; then
+    echo "Brevo POST /senders/domains ($DOMAIN) a échoué HTTP $CREATE_DOMAIN_HTTP_CODE: $CREATE_DOMAIN_BODY" >&2
+    exit 22
+  fi
+  echo "Domaine $DOMAIN créé côté Brevo."
+elif [ "$DOMAIN_CHECK_HTTP_CODE" -lt 200 ] || [ "$DOMAIN_CHECK_HTTP_CODE" -ge 300 ]; then
+  echo "Brevo GET /senders/domains/$DOMAIN a échoué HTTP $DOMAIN_CHECK_HTTP_CODE" >&2
+  exit 22
+else
+  echo "Domaine $DOMAIN déjà présent côté Brevo."
+fi
+
 # `--fail-with-body` sous `set -e` interrompt le script avant qu'il puisse
 # afficher le corps de la réponse : capturer statut et corps séparément pour
 # ne plus jamais perdre le message d'erreur réel de Brevo.
