@@ -111,6 +111,8 @@ export interface EmailJob {
   event_id: string;
   recipient_user_id?: string;
   recipient_email: string;
+  /** Origine canari de certification (voir queue/enqueue.ts) : exclut ce job des mesures de délivrabilité production. */
+  is_certification?: boolean;
   channel: Channel;
   template_code: string;
   template_version: number;

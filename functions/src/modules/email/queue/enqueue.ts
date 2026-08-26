@@ -121,6 +121,11 @@ export async function enqueueEmailJobsFromEvent(event: DomainEventPayload): Prom
     // certification), sous peine de faire planter le déclencheur d'enqueue
     // avant même la mise à jour de statut de `email_events`.
     ...(recipientUserId ? { recipient_user_id: recipientUserId } : {}),
+    // Marque les envois issus du canari de certification (brevo_runtime_canary.mjs,
+    // source_collection: "brevo_certification_canary") pour que le worker les
+    // taggue distinctement chez Brevo et qu'ils n'entrent pas dans l'échantillon
+    // de délivrabilité de production (functions/scripts/brevo_deliverability_report.mjs).
+    ...(enrichedEvent.source_collection === "brevo_certification_canary" ? { is_certification: true } : {}),
     recipient_email: recipientEmail,
     channel,
     template_code: template,

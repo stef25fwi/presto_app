@@ -115,7 +115,11 @@ export async function processEmailJob(jobId: string): Promise<void> {
       subject,
       html,
       text,
-      tags: [job.template_code, job.channel],
+      // Le tag "production"/"production-certification" permet à
+      // brevo_deliverability_report.mjs de ne mesurer que le trafic réel :
+      // sans lui, le canari de certification (même pipeline, mêmes
+      // job.template_code/channel qu'un envoi réel) fausserait l'échantillon.
+      tags: [job.template_code, job.channel, job.is_certification ? "production-certification" : "production"],
       metadata: {
         job_id: job.job_id,
         event_id: job.event_id,
