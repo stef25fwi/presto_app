@@ -69,6 +69,20 @@ Relevé effectué depuis l'API Brevo (lecture seule) et depuis deux résolveurs 
 > **Quatrième échec identique, hypothèse « mauvaise valeur » écartée (26 août 2026, ~00h30 UTC).** La version 9 contenait en réalité le blob base64 brut transmis par l'utilisateur, pas la clé décodée : une version 10 a été créée avec la valeur `xkeysib-...` correctement décodée (format vérifié : préfixe `xkeysib-` + 64 caractères hexadécimaux + suffixe alphanumérique, conforme au standard Brevo). Le run `quality/brevo-production` [#58](https://github.com/stef25fwi/presto_app/actions/runs/32915227998) échoue encore avec exactement la même erreur HTTP 401. **Quatre échecs consécutifs avec trois valeurs de clé distinctes, toutes au bon format, écartent l'hypothèse d'une clé individuelle invalide.** Le dénominateur commun devient le compte Brevo ou l'environnement d'appel, pas la clé. Deux pistes à vérifier avant tout nouvel essai :
 > - `Sécurité` → `Adresses IP autorisées` dans Brevo, même si le bandeau affichait le blocage global désactivé lors du premier relevé (section 1 bis) ;
 > - une alerte de sécurité ou un blocage anti-abus Brevo déclenché par les tentatives d'authentification répétées depuis les IPs des runners GitHub Actions, indépendant de la clé utilisée.
+>
+> **✅ Blocage #0 résolu (26 août 2026, ~00h55 UTC) — cause confirmée : restriction IP.** Le bandeau `SMTP et API` était repassé sur « adresses IP non autorisées bloquées » entre le relevé initial et ces essais (probablement activé par inadvertance via le bouton du bandeau). Une fois cette restriction désactivée dans Brevo (`Sécurité` → `Adresses IP autorisées`), le run `quality/brevo-production` [#59](https://github.com/stef25fwi/presto_app/actions/runs/32916691618) obtient enfin :
+> ```text
+> Credential Brevo validée via /v3/account : BREVO_API_KEY.
+> ```
+> et un envoi transactionnel réel est accepté par Brevo (`brevo_inbound_contact_e2e.mjs`) :
+> ```text
+> Mail E2E accepté par Brevo: <202608260053.45409989385@smtp-relay.mailin.fr>
+> ```
+> `BREVO_DELIVERABILITY_RESULT={"ok":true,"evaluated":false,"sample":1,"warnings":["sample_below_threshold"]}` et `BREVO_SUPPRESSION_HYGIENE_RESULT={"ok":true,"missing":0,"inactive":0,"postSuppressionSends":0}` passent également.
+>
+> **Deux constats supplémentaires issus de ce run :**
+> - **Le canari via le runtime Firebase déployé échoue toujours par timeout**, alors que l'appel direct à l'API Brevo réussit. Cause probable : les Cloud Functions v2 résolvent en général leur secret Secret Manager à une **version figée au moment du déploiement**, pas à `latest`. Le runtime déployé référence donc très probablement encore une ancienne version (1 à 9, toutes invalidées côté Brevo), même si la version 10 est maintenant correcte. **Un redéploiement des Cloud Functions est nécessaire** pour que la production réelle (pas seulement les scripts de certification) envoie des emails.
+> - **L'étape de réparation automatique (`--repair`, création du sender `noreply@ilipresto.fr` et authentification du domaine) n'a pas encore pu s'exécuter** : elle était enchaînée après la création du webhook inbound dans le workflow, qui a échoué en HTTP 400 (le domaine entrant `inbound.ilipresto.fr` n'existe pas encore comme objet Brevo, cf. section 9.1), ce qui a fait sauter les étapes suivantes faute de `if: always()`. Corrigé dans le workflow (chaque étape de certification tourne désormais indépendamment) ; un nouveau run exécutera enfin la réparation domaine/sender.
 
 Constat annexe : le compte ne contient qu'un template Brevo, `Nouveau template`, inactif, sujet `test`, avec le contenu de démonstration Brevo (`Your order is coming soon`, `contact@company.com`). Les templates transactionnels iliprestō sont rendus côté code (`functions/src/modules/email/templates/definitions/`) : ce template de démonstration doit être supprimé pour lever toute ambiguïté.
 
@@ -841,7 +855,7 @@ Après certification complète :
 
 ## P0 — bloquants production
 
-- [ ] **Remplacer `BREVO_API_KEY`** : la clé actuelle en Secret Manager est rejetée par Brevo en HTTP 401 (run [#54](https://github.com/stef25fwi/presto_app/actions/runs/32893628913), cf. 1 bis) — bloquant absolu, à traiter avant tout le reste de cette liste.
+- [x] **`BREVO_API_KEY` valide.** Cause du HTTP 401 identifiée : restriction d'adresses IP autorisées activée côté compte Brevo, désactivée le 26 août 2026 — `Credential Brevo validée via /v3/account` confirmé au run [#59](https://github.com/stef25fwi/presto_app/actions/runs/32916691618). ⚠️ Le runtime Firebase déployé, lui, envoie encore avec une version de secret figée au déploiement : **redéployer les Cloud Functions** avant de considérer l'envoi de production réellement opérationnel (cf. 1 bis).
 - [ ] Valider `BREVO_WEBHOOK_SECRET`.
 - [ ] Publier le SPF Brevo (aucun SPF n'existe aujourd'hui, cf. 1 bis).
 - [ ] Publier les DKIM Brevo (aucun DKIM n'existe aujourd'hui, cf. 1 bis).
@@ -882,7 +896,7 @@ Après certification complète :
 
 | Domaine | Critère | Statut |
 |---|---|---|
-| Compte Brevo | API `/v3/account` valide | ⬜ |
+| Compte Brevo | API `/v3/account` valide | ✅ (run #59, 26/08/2026) |
 | Domaine | `ilipresto.fr` vérifié | ⬜ |
 | Domaine | `ilipresto.fr` authentifié | ⬜ |
 | DNS | SPF valide (publié, unique, Brevo autorisé) | ⬜ |
@@ -891,7 +905,7 @@ Après certification complète :
 | DNS | `BREVO_SENDER_DNS_RESULT` à `ok:true` | ⬜ |
 | Sender | `noreply@ilipresto.fr` actif | ⬜ |
 | Reply-To | `contact@ilipresto.fr` | ⬜ |
-| Secret | `BREVO_API_KEY` valide | ⬜ |
+| Secret | `BREVO_API_KEY` valide (côté API directe ; runtime Firebase à redéployer) | ✅⚠️ (run #59) |
 | Secret | `BREVO_WEBHOOK_SECRET` valide | ⬜ |
 | Webhook | transactionnel unique + Bearer | ⬜ |
 | Webhook | événements complets | ⬜ |

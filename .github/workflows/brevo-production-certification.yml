@@ -175,18 +175,22 @@ jobs:
           echo "Credential Brevo validée via /v3/account : $valid_source."
 
       - name: Ensure Brevo transactional webhook configuration
+        if: always()
         run: bash scripts/create_brevo_webhook.sh
 
       - name: Ensure Brevo inbound contact webhook configuration
+        if: always()
         run: bash scripts/create_brevo_inbound_contact_webhook.sh
 
       - name: Verify secured production webhook
+        if: always()
         run: |
           node functions/scripts/brevo_webhook_smoke_test.mjs \
             --url "$WEBHOOK_URL" \
             --secret "$BREVO_WEBHOOK_SECRET"
 
       - name: Verify Brevo inbound MX delegation
+        if: always()
         shell: bash
         run: |
           set -o pipefail
@@ -194,6 +198,7 @@ jobs:
           node functions/scripts/check_brevo_inbound_dns.mjs 2>&1 | tee quality/brevo-inbound-dns.log
 
       - name: Repair and certify Brevo domain, sender, webhook and real delivery
+        if: always()
         env:
           GOOGLE_CLOUD_PROJECT: presto-app-74abe
           GCLOUD_PROJECT: presto-app-74abe
