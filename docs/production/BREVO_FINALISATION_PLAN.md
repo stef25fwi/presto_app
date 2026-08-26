@@ -277,6 +277,32 @@ Deux constats en découlent :
 
 Trois options, à arbitrer : laisser le gate rouge le temps que les envois conformes s'accumulent et que les 5 anciens sortent de la fenêtre glissante (il se corrigera seul, sans action) ; réduire la fenêtre d'évaluation ; ou exclure le trafic de certification de l'échantillon. La première est retenue par défaut, faute de raison d'affaiblir le contrôle.
 
+## 26 août 2026, ~13h50 UTC — routage entrant certifié : tout est vert sauf le seuil de délivrabilité
+
+La copie `contact@ilipresto.fr` → `contact@inbound.ilipresto.fr` a été mise en place côté messagerie LWS. Le trajet complet est certifié de bout en bout au run [#95](https://github.com/stef25fwi/presto_app/actions/runs/32976001708) :
+
+```text
+BREVO_INBOUND_E2E_RESULT={"ok":true,"subject":"[ilipresto inbound e2e 6566fd1f5e69]",
+  "documentId":"inbound_49980a036fc2fdb03f39f586011245bef38565fa","mailbox":"contact@ilipresto.fr",
+  "messageId":"<202608261345.32258201326@smtp-relay.mailin.fr>"}
+```
+
+Soit : envoi Brevo → boîte LWS `contact@ilipresto.fr` → copie → MX Brevo inbound → webhook `handleInboundContactEmailWebhook` → document Firestore `adminInboundEmails`. **Le pipeline entrant fonctionne réellement en production**, il n'est plus seulement configuré.
+
+### État final : une seule étape rouge, et sa cause est mesurée
+
+Toutes les étapes de `quality/brevo-production` passent, à l'exception de « Enforce deliverability thresholds ». Trois mesures successives confirment définitivement la nature de l'écart :
+
+| Run | Acceptés | Livrés | Sans événement |
+|---|---|---|---|
+| #92 | 49 | 44 | **5** |
+| #93 | 52 | 47 | **5** |
+| #95 | 55 | 50 | **5** |
+
+L'écart reste rigoureusement constant à 5 pendant que le volume progresse de 49 à 55 : **tous les envois récents sont livrés (6/6)**, et il s'agit de 5 messages anciens définitivement sans événement terminal — rebonds, blocages, plaintes et différés étant tous à 0,000 %.
+
+Conséquence arithmétique directe, avec 5 messages figés dans la fenêtre : le taux atteint 95 % dès que `(N−5)/N ≥ 0,95`, soit **N ≥ 100 envois** dans la fenêtre glissante de 30 jours (55 aujourd'hui). Le contrôle repassera donc au vert de lui-même sous l'effet du trafic réel de production, ou plus tôt si les 5 messages concernés sortent de la fenêtre. **Aucune action n'est requise et le seuil n'a pas été abaissé** : l'affaiblir reviendrait à neutraliser la garde qualité au moment précis où elle devient significative.
+
 Constat annexe : le compte ne contient qu'un template Brevo, `Nouveau template`, inactif, sujet `test`, avec le contenu de démonstration Brevo (`Your order is coming soon`, `contact@company.com`). Les templates transactionnels iliprestō sont rendus côté code (`functions/src/modules/email/templates/definitions/`) : ce template de démonstration doit être supprimé pour lever toute ambiguïté.
 
 ## Correctifs DNS à publier chez LWS
