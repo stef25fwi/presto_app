@@ -106,6 +106,57 @@ Relevé effectué depuis l'API Brevo (lecture seule) et depuis deux résolveurs 
 > - le canari runtime et le webhook échouent pour une raison indépendante des secrets — un bug dans le pipeline d'envoi lui-même, à investiguer via Cloud Logging sur l'exécution réelle de la fonction pendant un test.
 >
 > Tant que cette version n'est pas confirmée en Console, ne pas relancer une nouvelle rotation de clé ou un nouveau redéploiement à l'aveugle : ça reproduirait le même résultat sans nouvelle information.
+>
+> **✅ Webhook transactionnel réparé — cause racine : un caractère parasite dans le secret stocké (26 août 2026, run [#64](https://github.com/stef25fwi/presto_app/actions/runs/32924892582), ~03h04 UTC).** L'inspection du code a révélé une asymétrie de normalisation dans `brevo_provider.ts` : `verifyWebhookSignature` comparait `bearerMatch[1].trim()` au secret stocké **tel quel**, et `constantTimeEqual` renvoie `false` dès que les longueurs diffèrent. Les secrets arrivent de Secret Manager via `process.env`, qui conserve la valeur exacte stockée : un secret créé avec un saut de ligne final — cas courant d'un `echo` sans `-n` ou d'un collage en console — porte ce `\n` côté runtime, alors que la CI lit le même secret via `$(gcloud secrets versions access latest)`, où la substitution de commande bash supprime les sauts de ligne finaux. Chaque comparaison échouait donc, quel que soit le nombre de redéploiements — ce qui explique exactement pourquoi le redéploiement du run #62 n'avait rien changé.
+>
+> Après normalisation des secrets à leur point d'entrée (`provider_factory`) et suppression de l'asymétrie dans `BrevoProvider`, déployées en production (run deploy [#2427](https://github.com/stef25fwi/presto_app/actions/runs/32923396773), `Deploy Functions` = success) :
+> ```text
+> [OK] event=delivered   auth=bearer status=200
+> [OK] event=opened      auth=bearer status=200
+> [OK] event=click       auth=bearer status=200
+> [OK] event=soft_bounce auth=bearer status=200
+> Smoke test passed: 4 valid events accepted and security probes rejected.
+> ```
+> **Les accusés de livraison, bounces et plaintes envoyés par Brevo sont donc de nouveau acceptés par la production.** Le test de régression ajouté échoue sans le correctif et passe avec (vérifié explicitement).
+>
+> **⚠️ Le canari runtime reste en échec, et c'est un problème distinct.** `BREVO_RUNTIME_CANARY_RESULT` rapporte toujours `runtime_canary_timeout` avec `jobStatus: null` et `logStatuses: []` : **aucun `email_jobs` n'est jamais créé**. Or l'étape qui crée le job (`enqueueEmailJobsFromEvent`) ne touche à aucune credential Brevo — ce n'est donc pas un problème de secret. Toutes les sorties anticipées de l'enqueue ont été écartées par lecture du code :
+> - `mapEventToTemplate("support.ticket.created")` renvoie bien `tpl_transactional_support_ticket_created_v1` ;
+> - le template existe dans le registre legacy, avec `channel: transactionnel` ;
+> - les variables requises (`firstName`, `ticketNumber`, `ticketSubject`) sont toutes fournies par le canari ;
+> - `resolvePreferenceDecision(undefined, "transactionnel")` autorise (`mandatory_without_user`) ;
+> - la liste de suppression est vide (`Suppressions actives Firestore : 0` au même run) ;
+> - `enrichEventPayload` est best-effort et ne peut pas interrompre le flux.
+>
+> L'analyse statique a atteint sa limite. Le canari lisait déjà le statut de l'événement mais le **jetait** en cas de timeout : il rapporte désormais `eventStatus`, `ignoreReason` et `missingRequiredVariables`, ce qui transformera le prochain timeout en diagnostic exploitable — `created` désignera un déclencheur qui n'a jamais tourné, `ignored` livrera le motif exact du renoncement, `jobs_created` un job créé mais introuvable par la requête.
+>
+> **🔴 Diagnostic obtenu (26 août 2026, run [#65](https://github.com/stef25fwi/presto_app/actions/runs/32925619138), ~03h15 UTC) — le déclencheur d'entrée du pipeline email ne se déclenche pas.** Le canari instrumenté rapporte :
+> ```text
+> BREVO_RUNTIME_CANARY_RESULT={"ok":false,"eventStatus":"created","ignoreReason":null,
+>   "missingRequiredVariables":null,"jobStatus":null,"errorCode":"runtime_canary_timeout","logStatuses":[]}
+> ```
+> Le document `email_events` est bien écrit (`Canari runtime créé: evt_...` au même run) et reste à `status: "created"` — la valeur posée par le canari — pendant les 90 secondes d'attente. Or `enqueueEmailJobsFromEvent` écrit `jobs_created` en cas de succès et `ignored` en cas de renoncement sur variables manquantes. Un statut resté à `created` signifie donc : soit le déclencheur n'a jamais tourné, soit il a abandonné à une sortie silencieuse. **Toutes les sorties silencieuses ont été écartées par lecture du code** (mapping du template, `getCompatTemplateMeta` — le registre compat inclut bien `...legacyTemplateRegistry` donc le template legacy est trouvé —, présence du destinataire, liste de suppression vide, préférences autorisant le canal transactionnel).
+>
+> **Conclusion (provisoire, invalidée ci-dessous) : `enqueueEmailJobsFromEventTrigger` ne s'exécute pas sur la création d'un document `email_events`.** Élément discriminant : le webhook `handleEmailProviderWebhook`, déclencheur **HTTP** de la même base de code et du même déploiement, répond correctement (200 sur les 4 événements du smoke test). La différence porte donc sur le type de déclencheur — Firestore/Eventarc — et non sur le code applicatif, les secrets ou la configuration du module.
+>
+> **Portée présumée à ce stade : aucun email transactionnel n'est enqueué en production**, pas seulement le canari — tout le pipeline dépend de ce déclencheur d'entrée.
+>
+> Vérification suivante, hors de portée d'une session sans accès `gcloud`/Console : consulter Cloud Logging pour `enqueueEmailJobsFromEventTrigger` (europe-west1) et déterminer s'il enregistre la moindre exécution ou erreur lors de l'écriture d'un document `email_events`, puis vérifier l'état de son déclencheur Eventarc.
+>
+> **✅ Cause racine trouvée (26 août 2026, run [#66](https://github.com/stef25fwi/presto_app/actions/runs/32959114114), ~10h40 UTC) — la conclusion ci-dessus était fausse : le déclencheur s'exécute bien.** Le sandbox de session n'a ni `gcloud` ni credentials GCP, mais le runner CI est déjà authentifié en Workload Identity Federation pour Secret Manager : une étape de diagnostic a réutilisé cette authentification pour interroger `gcloud functions describe`, `gcloud eventarc triggers list` et Cloud Logging depuis le workflow lui-même, contournant ainsi l'absence d'accès Cloud Console en session.
+>
+> Résultats :
+> - `enqueueEmailJobsFromEventTrigger` est `"state": "ACTIVE"`, correctement configuré (`eventFilters` sur `email_events/{eventId}`, `eventType: google.cloud.firestore.document.v1.created`), et le trigger Eventarc `enqueueemailjobsfromeventtrigger-584879` existe avec sa souscription Pub/Sub, pointant vers la bonne fonction.
+> - Cloud Logging montre une exécution réelle **au moment précis du canari du même run** :
+>   ```text
+>   2026-08-26T10:37:25Z  Error: Value for argument "data" is not a valid Firestore document.
+>     Cannot use "undefined" as a Firestore value (found in field "recipient_user_id").
+>     If you want to ignore undefined values, enable `ignoreUndefinedProperties`.
+>       at WriteBatch.set (.../write-batch.js:267:9)
+>   ```
+> - Cause : `enqueueEmailJobsFromEvent` (`functions/src/modules/email/queue/enqueue.ts:118`) écrivait `recipient_user_id: recipientUserId` tel quel dans le job Firestore. Le canari (`functions/scripts/brevo_runtime_canary.mjs`) crée un événement `support.ticket.created` **sans** `recipient_user_id` (test technique anonyme), donc `recipientUserId` vaut `undefined` — et le SDK Admin Firestore rejette `undefined` par défaut. L'exception, non interceptée, faisait planter le déclencheur **avant** la mise à jour de statut de `email_events`, ce qui expliquait exactement le `status: "created"` figé observé par le canari.
+> - **Portée corrigée : le pipeline fonctionne pour tout événement produit avec un `recipient_user_id`** — et tous les producteurs de code applicatif (`support/triggers.ts`, `auth/`, `billing/`, `listings/`, `messaging/`, `marketing/`, `moderation/`, `legal/`) renseignent bien ce champ. Seuls les événements sans utilisateur (canari, et tout futur envoi transactionnel anonyme légitime — cas explicitement supporté par `resolvePreferenceDecision` via `mandatory_without_user`) faisaient planter le déclencheur. La formulation précédente (« aucun email transactionnel n'est enqueué en production ») était donc trop large : c'est un sous-cas, mais un sous-cas réel et vicieux puisqu'il masquait aussi tout diagnostic par canari.
+> - Correctif appliqué : omettre le champ `recipient_user_id` du document plutôt que d'y assigner `undefined`, cohérent avec le reste du code qui le relit déjà en `|| null` (`worker.ts`, `webhooks/handler.ts`). Build + suite de tests (341/341) verts après correctif.
+> - Prochaine étape : merger sur `main`, laisser le déploiement automatique pousser le correctif, puis rejouer `quality/brevo-production` pour confirmer que le canari obtient enfin `jobs_created` puis un envoi accepté par Brevo.
 
 Constat annexe : le compte ne contient qu'un template Brevo, `Nouveau template`, inactif, sujet `test`, avec le contenu de démonstration Brevo (`Your order is coming soon`, `contact@company.com`). Les templates transactionnels iliprestō sont rendus côté code (`functions/src/modules/email/templates/definitions/`) : ce template de démonstration doit être supprimé pour lever toute ambiguïté.
 

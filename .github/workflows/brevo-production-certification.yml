@@ -98,6 +98,50 @@ jobs:
           mkdir -p quality
           node functions/scripts/brevo_runtime_canary.mjs 2>&1 | tee quality/brevo-runtime-canary.log
 
+      - name: Diagnose enqueueEmailJobsFromEventTrigger Eventarc wiring
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p quality
+          {
+            echo "=== gcloud functions describe (gen2) : enqueueEmailJobsFromEventTrigger ==="
+            gcloud functions describe enqueueEmailJobsFromEventTrigger \
+              --region=europe-west1 --gen2 --project=presto-app-74abe \
+              --format=json 2>&1 || echo "DESCRIBE_FAILED enqueueEmailJobsFromEventTrigger"
+            echo
+            echo "=== gcloud functions describe (gen2) : processEmailJobTrigger ==="
+            gcloud functions describe processEmailJobTrigger \
+              --region=europe-west1 --gen2 --project=presto-app-74abe \
+              --format=json 2>&1 || echo "DESCRIBE_FAILED processEmailJobTrigger"
+            echo
+            echo "=== gcloud functions describe (gen2) : handleEmailProviderWebhook (control, known working HTTP function) ==="
+            gcloud functions describe handleEmailProviderWebhook \
+              --region=europe-west1 --gen2 --project=presto-app-74abe \
+              --format=json 2>&1 || echo "DESCRIBE_FAILED handleEmailProviderWebhook"
+            echo
+            echo "=== Cloud Run services in europe-west1 (name mapping) ==="
+            gcloud run services list --region=europe-west1 --project=presto-app-74abe \
+              --format="table(metadata.name,status.conditions[0].status,status.conditions[0].message)" 2>&1 || echo "RUN_LIST_FAILED"
+            echo
+            echo "=== Eventarc triggers in europe-west1 ==="
+            gcloud eventarc triggers list --location=europe-west1 --project=presto-app-74abe \
+              --format=json 2>&1 || echo "EVENTARC_LIST_FAILED"
+            echo
+            echo "=== Cloud Logging: last 2h for enqueueemailjobsfromeventtrigger (any log entry, incl. deployment/runtime errors) ==="
+            gcloud logging read \
+              'resource.labels.service_name="enqueueemailjobsfromeventtrigger" OR (resource.type="cloud_function" AND resource.labels.function_name="enqueueEmailJobsFromEventTrigger")' \
+              --project=presto-app-74abe --freshness=2h --limit=200 \
+              --format="value(timestamp,severity,resource.type,textPayload,jsonPayload.message,jsonPayload.error)" 2>&1 || echo "LOGGING_READ_FAILED"
+            echo
+            echo "=== Cloud Logging: Eventarc/Firestore trigger delivery errors, last 2h, project-wide ==="
+            gcloud logging read \
+              'protoPayload.serviceName="eventarc.googleapis.com" OR jsonPayload.error.message:"enqueueEmailJobsFromEventTrigger" OR textPayload:"enqueueEmailJobsFromEventTrigger"' \
+              --project=presto-app-74abe --freshness=2h --limit=100 \
+              --format="value(timestamp,severity,protoPayload.methodName,textPayload,jsonPayload)" 2>&1 || echo "EVENTARC_LOGGING_READ_FAILED"
+          } | tee quality/eventarc-diagnosis.log
+
       - name: Resolve and validate Brevo credentials from Secret Manager
         shell: bash
         run: |
@@ -270,6 +314,7 @@ jobs:
           path: |
             quality/brevo-production-certification.json
             quality/brevo-runtime-canary.log
+            quality/eventarc-diagnosis.log
             quality/brevo-inbound-dns.log
             quality/brevo-inbound-e2e.log
             quality/brevo-sender-dns.json

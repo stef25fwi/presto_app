@@ -49,6 +49,7 @@ console.log(`Canari runtime créé: ${eventId}`);
 const deadline = Date.now() + timeoutMs;
 let lastJob = null;
 let lastLogs = [];
+let lastEvent = null;
 
 while (Date.now() < deadline) {
   const [jobsSnap, logsSnap, eventSnap] = await Promise.all([
@@ -59,6 +60,7 @@ while (Date.now() < deadline) {
 
   lastJob = jobsSnap.docs[0]?.data() || null;
   lastLogs = logsSnap.docs.map((doc) => doc.data() || {});
+  lastEvent = eventSnap.data() || null;
 
   const sentLog = lastLogs.find((log) => ['sent', 'delivered'].includes(String(log.status || '')));
   if (sentLog || String(lastJob?.status || '') === 'sent') {
@@ -94,9 +96,15 @@ while (Date.now() < deadline) {
   await sleep(pollMs);
 }
 
+// Un timeout sans état d'événement ne dit pas où le pipeline s'est arrêté :
+// `created` signale un déclencheur qui n'a jamais tourné, `ignored` porte le
+// motif exact du renoncement, `jobs_created` désigne un job créé mais introuvable.
 const timeoutResult = {
   ok: false,
   eventId,
+  eventStatus: lastEvent?.status || null,
+  ignoreReason: lastEvent?.ignore_reason || null,
+  missingRequiredVariables: lastEvent?.missing_required_variables || null,
   jobStatus: lastJob?.status || null,
   errorCode: lastJob?.last_error_code || 'runtime_canary_timeout',
   errorMessage: lastJob?.last_error_message || 'Aucun résultat du pipeline email avant expiration.',
