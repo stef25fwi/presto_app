@@ -230,7 +230,7 @@ jobs:
 
       - name: Open, update or close lot 17 issue
         if: always()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           DEPLOYED_SHA: ${{ env.DEPLOYED_SHA }}
         with:

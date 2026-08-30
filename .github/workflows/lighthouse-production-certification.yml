@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Publish Lighthouse pending statuses
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
           TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -132,7 +132,7 @@ jobs:
           path: lighthouse-evidence
 
       - name: Verify evidence and publish final statuses
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           EVIDENCE_PATH: lighthouse-evidence
           TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
