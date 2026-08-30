@@ -69,6 +69,8 @@ iOS :
 - App ID construit depuis le vrai `IOS_TEAM_ID` ;
 - chemins `/app` et `/app/*`.
 
+`IOS_TEAM_ID` peut être configuré dans l’environnement GitHub `recaptcha` soit comme secret, soit comme variable. Si cette valeur n’est pas disponible, le workflow peut aussi la dériver de `IOS_PROVISIONING_PROFILE_B64`. Le lot reste volontairement bloqué si aucune de ces deux preuves Apple réelles n’est disponible : aucun App ID iOS fictif n’est accepté.
+
 Les fichiers servis sont :
 
 - `/.well-known/assetlinks.json` ;
@@ -80,11 +82,13 @@ Le workflow `.github/workflows/campaign-attribution-lot17.yml` démarre après u
 
 1. exécute les tests Dart et le contrat Node ;
 2. construit le Web du SHA déployé ;
-3. génère les associations depuis les vrais secrets de signature ;
+3. génère les associations depuis les vrais éléments de signature ;
 4. déploie Hosting avec les fichiers `.well-known` ;
 5. vérifie en production le lien Web avec UTM, Android App Links et iOS Universal Links ;
 6. archive les rapports 90 jours ;
 7. publie `quality/campaign-attribution-lot17` ;
 8. ouvre ou ferme l’issue de diagnostic du lot 17.
+
+En cas de prérequis natif manquant, le workflow écrit tout de même un rapport `blocked` et l’archive. La CI reste rouge jusqu’à ce que la preuve manquante soit réellement fournie ; le rapport sert uniquement à rendre le blocage explicite et traçable.
 
 Les contrôles `campaign_attribution` et `deep_links_campaigns` restent `pending` tant que ce statut n’est pas vert sur le SHA réellement déployé.

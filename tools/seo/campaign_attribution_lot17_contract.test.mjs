@@ -9,6 +9,10 @@ import {
   writeAssociationFiles,
 } from './build_campaign_link_associations.mjs';
 import {
+  buildBlockedLot17Report,
+  markdownForBlockedLot17,
+} from './campaign_attribution_lot17_blocker_report.mjs';
+import {
   prepareCampaignAttributionHosting,
 } from './prepare_campaign_attribution_hosting.mjs';
 import {
@@ -30,6 +34,17 @@ assert.deepEqual(
   payloads.appleAppSiteAssociation.applinks.details[0].paths,
   ['/app', '/app/*'],
 );
+
+const blockedReport = buildBlockedLot17Report({
+  commitSha: 'b'.repeat(40),
+  blocker: 'ios_team_id_missing',
+  description: 'Configurer IOS_TEAM_ID.',
+  generatedAt: new Date('2026-08-09T06:00:00Z'),
+});
+assert.equal(blockedReport.status, 'blocked');
+assert.equal(blockedReport.state, 'failure');
+assert.equal(blockedReport.blocker, 'ios_team_id_missing');
+assert.match(markdownForBlockedLot17(blockedReport), /ios_team_id_missing/u);
 
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lot17-'));
 await writeAssociationFiles({
@@ -127,10 +142,13 @@ for (const marker of [
   'Validate and Deploy Firebase',
   'KEYSTORE_B64',
   'IOS_TEAM_ID',
+  'vars.IOS_TEAM_ID',
   'IOS_PROVISIONING_PROFILE_B64',
   'openssl smime -inform der -verify -noverify',
   "profile.get('TeamIdentifier')",
   'RESOLVED_IOS_TEAM_ID',
+  'campaign_attribution_lot17_blocker_report.mjs',
+  'ios_team_id_missing',
   'build_campaign_link_associations.mjs',
   'prepare_campaign_attribution_hosting.mjs',
   'verify_campaign_attribution_lot17.mjs',
