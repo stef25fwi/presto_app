@@ -34,7 +34,7 @@ class TrustScoreService {
   }) async {
     final result = await callPrestoFunction<dynamic>(
       functions: _functions,
-      name: 'getEligibleRespondersForReview',
+      name: 'getEligibleRespondersForReviewV2',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{'offerId': offerId},
     );
@@ -46,6 +46,48 @@ class TrustScoreService {
         .map(EligibleResponderForReview.fromMap)
         .where((entry) => entry.userId.isNotEmpty)
         .toList(growable: false);
+  }
+
+  Future<List<Map<String, dynamic>>> getPendingReviewTasks() async {
+    final result = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'getPendingReviewTasksV2',
+      timeout: const Duration(seconds: 20),
+      parameters: const <String, dynamic>{},
+    );
+    final data = trustScoreStringMap(result.data);
+    final rawTasks = data['tasks'];
+    if (rawTasks is! List) return const <Map<String, dynamic>>[];
+    return rawTasks
+        .map(trustScoreStringMap)
+        .where((entry) => (entry['taskId'] ?? '').toString().trim().isNotEmpty)
+        .toList(growable: false);
+  }
+
+  Future<void> dismissPendingReviewTask({required String offerId}) async {
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'dismissPendingReviewTaskV2',
+      timeout: const Duration(seconds: 20),
+      parameters: <String, dynamic>{'offerId': offerId},
+    );
+  }
+
+  Future<String> reviseReview({
+    required String reviewId,
+    required String comment,
+  }) async {
+    final result = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'reviseReviewV2',
+      timeout: const Duration(seconds: 20),
+      parameters: <String, dynamic>{
+        'reviewId': reviewId,
+        'comment': comment.trim(),
+      },
+    );
+    return trustScoreStringMap(result.data)['status']?.toString() ??
+        'pending_moderation';
   }
 
   Future<SubmitReviewResult> submitVerifiedReview({
@@ -85,7 +127,7 @@ class TrustScoreService {
   }) async {
     final result = await callPrestoFunction<dynamic>(
       functions: _functions,
-      name: 'submitMutualVerifiedReview',
+      name: 'submitMutualVerifiedReviewComplete',
       timeout: const Duration(seconds: 30),
       parameters: <String, dynamic>{
         'offerId': offerId,
@@ -107,7 +149,7 @@ class TrustScoreService {
   Future<TrustScoreProfile> getUserTrustScore({required String userId}) async {
     final result = await callPrestoFunction<dynamic>(
       functions: _functions,
-      name: 'getUserTrustScoreV2',
+      name: 'getUserTrustScoreV2Complete',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{'userId': userId},
     );
@@ -119,7 +161,7 @@ class TrustScoreService {
   }) async {
     final result = await callPrestoFunction<dynamic>(
       functions: _functions,
-      name: 'getUserTrustScoreV2',
+      name: 'getUserTrustScoreV2Complete',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{'userId': userId},
     );
