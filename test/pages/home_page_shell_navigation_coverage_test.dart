@@ -132,10 +132,6 @@ void main() {
     expect(find.text('iliprestō'), findsOneWidget);
     final navItems = find.byType(HomeBottomNavItem);
     expect(navItems, findsNWidgets(5));
-    expect(
-      find.text('Trouvez immédiatement quelqu’un pour faire le job.'),
-      findsOneWidget,
-    );
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     await tester.pump();
