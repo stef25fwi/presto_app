@@ -77,8 +77,12 @@ void main() {
         home: FicheProPage(uid: 'pro-coverage', isOwner: isOwner),
       ),
     );
-    for (var i = 0; i < 12; i += 1) {
-      await tester.pump(const Duration(milliseconds: 100));
+
+    // La page déclenche plusieurs lectures Firestore au montage. Attendre le
+    // rendu métier plutôt qu'un délai arbitraire évite de tester le spinner.
+    for (var i = 0; i < 60; i += 1) {
+      if (find.text('Description').evaluate().isNotEmpty) break;
+      await tester.pump(const Duration(milliseconds: 200));
     }
   }
 
