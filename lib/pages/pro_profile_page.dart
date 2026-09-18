@@ -48,6 +48,7 @@ class _ProProfilePageState extends State<ProProfilePage> {
   final _websiteCtrl = TextEditingController();
 
   bool _acceptTerms = false;
+  bool _seoPublicProfileConsent = false;
   bool _isSaving = false;
   bool _isLoadingProfile = true;
   bool _isVerifyingSiret = false;
@@ -203,6 +204,7 @@ class _ProProfilePageState extends State<ProProfilePage> {
       if (mounted) {
         setState(() {
           _acceptTerms = accepted is bool ? accepted : _acceptTerms;
+          _seoPublicProfileConsent = data?['seoPublicProfileConsent'] == true;
           _siretVerified =
               verified == true || _s(data?['verifiedAt']).isNotEmpty;
         });
@@ -327,6 +329,9 @@ class _ProProfilePageState extends State<ProProfilePage> {
         'website': _websiteCtrl.text.trim(),
         'termsAccepted': _acceptTerms,
         'termsAcceptedAt': now,
+        'seoPublicProfileConsent': _seoPublicProfileConsent,
+        'seoPublicProfileConsentVersion': 1,
+        'seoPublicProfileConsentUpdatedAt': now,
         'profileCompletedAt': now,
         'updatedAt': now,
       };
@@ -615,6 +620,24 @@ class _ProProfilePageState extends State<ProProfilePage> {
                       ],
                     ),
                     const SizedBox(height: 18),
+                    CheckboxListTile(
+                      value: _seoPublicProfileConsent,
+                      onChanged: _isSaving
+                          ? null
+                          : (value) => setState(
+                                () => _seoPublicProfileConsent = value ?? false,
+                              ),
+                      title: const Text(
+                        "Rendre mon profil professionnel visible sur le web",
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      subtitle: const Text(
+                        "J’accepte que mon profil professionnel soit publié sur ilipresto.fr et puisse être indexé par les moteurs de recherche. Seuls le nom de l’entreprise, l’activité, la description, les catégories, la ville, la zone d’intervention et le site web pourront être publiés. Le SIRET, l’adresse complète, l’e-mail et le téléphone restent privés.",
+                      ),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    const SizedBox(height: 8),
                     CheckboxListTile(
                       value: _acceptTerms,
                       onChanged: _isSaving
