@@ -208,7 +208,7 @@ try {
       ].filter(Boolean));
       if (postalCode && postalCodes.has(postalCode)) return true;
       const expected = new Set([normalize(candidate.name), normalize(candidate.slug)]);
-      return cityKey && (expected.has(cityKey) || cityKey.endsWith(\`-\${normalize(candidate.slug)}\`));
+      return cityKey && (expected.has(cityKey) || cityKey.endsWith(`-${normalize(candidate.slug)}`));
     });
     if (!city) continue;
 
@@ -217,7 +217,7 @@ try {
     const publicationMs = timestampMs(publicationValue);
 
     for (const service of services) {
-      const bucket = counts.get(\`\${service.key}:\${city.slug}\`);
+      const bucket = counts.get(`${service.key}:${city.slug}`);
       if (!bucket) continue;
 
       bucket.qualifiedProfiles += 1;
