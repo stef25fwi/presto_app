@@ -8,6 +8,7 @@ const registryPath = 'web/programmatic-seo-registry.json';
 const defaultOutput = 'quality/seo-programmatic-local-signals.json';
 const SAFE_PUBLIC_ID = /^[A-Za-z0-9_-]{6,128}$/;
 const MAX_PREVIEWS_PER_PAGE = 5;
+const MAX_PROFILE_PREVIEWS_PER_PAGE = 5;
 
 function argValue(prefix, fallback = '') {
   const item = process.argv.slice(2).find((arg) => arg.startsWith(prefix));
@@ -78,6 +79,7 @@ function emptyPages() {
           qualifiedProfiles: 0,
           recentProfiles: 0,
           listingPreviews: [],
+          profilePreviews: [],
         };
       }
     }
@@ -101,8 +103,13 @@ try {
     .select('category', 'categoryId', 'city', 'cityId', 'postalCode', 'cp', 'title', 'description', 'publishedAt', 'createdAt');
 
   const snapshot = await query.get();
+  const profileSnapshot = await db.collection('public_service_profiles')
+    .where('visibility', '==', 'public')
+    .select('companyName', 'activity', 'serviceCategories', 'city', 'postalCode', 'publishedAt', 'updatedAt', 'seoEligible', 'verified')
+    .get();
   const counts = new Map();
   let seoQualifiedPublicListings = 0;
+  let seoQualifiedPublicProfiles = 0;
 
   for (const service of registry.services) {
     for (const city of registry.cities) {
@@ -110,6 +117,9 @@ try {
         activeListings: 0,
         recentListings: 0,
         listingPreviews: [],
+        qualifiedProfiles: 0,
+        recentProfiles: 0,
+        profilePreviews: [],
       });
     }
   }
@@ -167,11 +177,74 @@ try {
     });
   }
 
+
+  for (const doc of profileSnapshot.docs) {
+    const data = doc.data() || {};
+    if (data.seoEligible !== true || data.verified !== true) continue;
+
+    const searchable = normalize([
+      boundedText(data.activity, 140),
+      boundedText(data.serviceCategories, 400),
+    ].filter(Boolean).join(' '));
+    if (!searchable) continue;
+
+    const service = registry.services.find((candidate) => {
+      const expected = [
+        normalize(candidate.taxonomyValue),
+        normalize(candidate.key),
+        normalize(candidate.slug),
+        ...candidate.keywords.map(normalize),
+      ].filter(Boolean);
+      return expected.some((value) => searchable === value || searchable.includes(value));
+    });
+    if (!service) continue;
+
+    const postalCode = String(data.postalCode || '').trim();
+    const cityKey = normalize(data.city);
+    const city = registry.cities.find((candidate) => {
+      const postalCodes = new Set([
+        String(candidate.postalCode || '').trim(),
+        ...(Array.isArray(candidate.postalCodes) ? candidate.postalCodes.map((value) => String(value).trim()) : []),
+      ].filter(Boolean));
+      if (postalCode && postalCodes.has(postalCode)) return true;
+      const expected = new Set([normalize(candidate.name), normalize(candidate.slug)]);
+      return cityKey && (expected.has(cityKey) || cityKey.endsWith(\`-\${normalize(candidate.slug)}\`));
+    });
+    if (!city) continue;
+
+    const bucket = counts.get(\`\${service.key}:\${city.slug}\`);
+    if (!bucket) continue;
+
+    seoQualifiedPublicProfiles += 1;
+    bucket.qualifiedProfiles += 1;
+    const publicationValue = data.updatedAt || data.publishedAt;
+    const publicationMs = timestampMs(publicationValue);
+    if (publicationMs >= recentCutoff) bucket.recentProfiles += 1;
+    bucket.profilePreviews.push({
+      publicId: String(doc.id),
+      companyName: boundedText(data.companyName, 140),
+      activity: boundedText(data.activity, 140),
+      publishedAt: timestampIso(data.publishedAt),
+      updatedAt: timestampIso(data.updatedAt),
+      publicationMs,
+    });
+  }
+
   for (const bucket of counts.values()) {
     bucket.listingPreviews = bucket.listingPreviews
       .sort((a, b) => b.publicationMs - a.publicationMs || a.id.localeCompare(b.id))
       .slice(0, MAX_PREVIEWS_PER_PAGE)
       .map(({id, title, publishedAt}) => ({id, title, publishedAt}));
+    bucket.profilePreviews = bucket.profilePreviews
+      .sort((a, b) => b.publicationMs - a.publicationMs || a.publicId.localeCompare(b.publicId))
+      .slice(0, MAX_PROFILE_PREVIEWS_PER_PAGE)
+      .map(({publicId, companyName, activity, publishedAt, updatedAt}) => ({
+        publicId,
+        companyName,
+        activity,
+        publishedAt,
+        updatedAt,
+      }));
   }
 
   const pages = {};
@@ -182,13 +255,17 @@ try {
           activeListings: 0,
           recentListings: 0,
           listingPreviews: [],
+          qualifiedProfiles: 0,
+          recentProfiles: 0,
+          profilePreviews: [],
         };
         pages[`${intent.key}:${service.key}:${city.slug}`] = {
           activeListings: bucket.activeListings,
           recentListings: bucket.recentListings,
-          qualifiedProfiles: 0,
-          recentProfiles: 0,
+          qualifiedProfiles: bucket.qualifiedProfiles,
+          recentProfiles: bucket.recentProfiles,
           listingPreviews: bucket.listingPreviews,
+          profilePreviews: bucket.profilePreviews,
         };
       }
     }
@@ -201,10 +278,12 @@ try {
     projectId: projectId || null,
     scannedPublicActiveListings: snapshot.size,
     seoQualifiedPublicListings,
+    scannedPublicProfiles: profileSnapshot.size,
+    seoQualifiedPublicProfiles,
     recentWindowDays: Number(registry.activationGate.recentWindowDays || 90),
     pages,
   });
-  console.log(`SEO local signals: ${snapshot.size} annonces publiques actives analysées, ${seoQualifiedPublicListings} annonces SEO qualifiées; sortie ${outputPath}.`);
+  console.log(`SEO local signals: ${snapshot.size} annonces publiques actives analysées, ${seoQualifiedPublicListings} annonces SEO qualifiées; ${profileSnapshot.size} profils publics analysés, ${seoQualifiedPublicProfiles} profils SEO qualifiés; sortie ${outputPath}.`);
 } catch (error) {
   if (!allowFallback) throw error;
   writeReport({
@@ -214,6 +293,8 @@ try {
     projectId: projectId || null,
     scannedPublicActiveListings: 0,
     seoQualifiedPublicListings: 0,
+    scannedPublicProfiles: 0,
+    seoQualifiedPublicProfiles: 0,
     recentWindowDays: Number(registry.activationGate.recentWindowDays || 90),
     pages: emptyPages(),
     fallbackReason: String(error?.message || error || 'unknown'),
