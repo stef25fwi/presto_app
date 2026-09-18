@@ -100,6 +100,9 @@ jobs:
       - name: Validate public marketplace SEO
         run: node tools/quality/check_public_marketplace_seo.mjs
 
+      - name: Validate public profiles SEO
+        run: node tools/quality/check_public_profiles_seo.mjs
+
       - name: Validate every public page
         run: node tools/quality/check_public_page_seo.mjs
 
@@ -343,6 +346,32 @@ jobs:
             assert_not_contains "$listing_page" 'JobPosting' 'annonce publique'
           fi
 
+          profiles_sitemap="$(fetch_url https://ilipresto.fr/sitemap-prestataires.xml)"
+          assert_contains "$profiles_sitemap" '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' 'sitemap prestataires urlset'
+
+          missing_profile_status="$(curl --silent --show-error \
+            --retry 3 --retry-delay 2 --retry-all-errors \
+            --output /tmp/ilipresto-missing-profile.html \
+            --write-out '%{http_code}' \
+            https://ilipresto.fr/prestataires/000000000000000000000000/)"
+          test "$missing_profile_status" = "404"
+          grep -Fq 'noindex,follow' /tmp/ilipresto-missing-profile.html
+
+          first_profile_url=''
+          if [[ "$profiles_sitemap" =~ https://ilipresto\.fr/prestataires/[^\<]+ ]]; then
+            first_profile_url="${BASH_REMATCH[0]}"
+          fi
+
+          if [ -n "$first_profile_url" ]; then
+            profile_page="$(fetch_url "$first_profile_url")"
+            assert_contains "$profile_page" "<link rel=\"canonical\" href=\"$first_profile_url\">" 'profil canonical'
+            assert_contains "$profile_page" '"@type":"ProfilePage"' 'profil ProfilePage JSON-LD'
+            assert_contains "$profile_page" '<meta name="robots" content="index,follow' 'profil robots indexable'
+            assert_not_contains "$profile_page" 'JobPosting' 'profil public'
+            assert_not_contains "$profile_page" 'mailto:' 'profil public'
+            assert_not_contains "$profile_page" 'tel:' 'profil public'
+          fi
+
           echo '✅ Smoke production validé sans pipeline grep -q vulnérable à SIGPIPE.'
 
       - name: Publish deployment summary
@@ -358,6 +387,7 @@ jobs:
             echo '- Pages publiques de base contrôlées : `8`'
             echo '- SEO programmatique local : signaux production agrégés, pages générées et contrôlées avant build'
             echo '- SEO annonces publiques : sitemap SSR et routage annonces contrôlés en production'
+            echo '- SEO profils publics : consentement, projection minimisée, sitemap SSR et routage prestataires contrôlés en production'
             echo "- Functions modifiées : \`${{ steps.functions_changes.outputs.changed || 'unknown' }}\`"
             echo '- Artefact de restauration : `production-release-${{ github.sha }}`'
           } >> "$GITHUB_STEP_SUMMARY"

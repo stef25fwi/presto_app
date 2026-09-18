@@ -52,12 +52,20 @@ function readSignals(key) {
       && String(item?.title || '').trim().length >= 12,
     ).slice(0, 5)
     : [];
+  const profilePreviews = Array.isArray(value.profilePreviews)
+    ? value.profilePreviews.filter((item) =>
+      /^[a-f0-9]{24}$/.test(String(item?.publicId || ''))
+      && String(item?.companyName || '').trim().length >= 2
+      && String(item?.activity || '').trim().length >= 3,
+    ).slice(0, 5)
+    : [];
   return {
     activeListings: Number(value.activeListings || 0),
     recentListings: Number(value.recentListings || 0),
     qualifiedProfiles: Number(value.qualifiedProfiles || 0),
     recentProfiles: Number(value.recentProfiles || 0),
     listingPreviews,
+    profilePreviews,
   };
 }
 
@@ -72,7 +80,8 @@ function activationFor(intent, key, city) {
     const gate = registry.activationGate.intentGates.services;
     return {
       eligible: value.qualifiedProfiles >= gate.minQualifiedProfiles
-        && value.recentProfiles >= gate.minRecentProfiles,
+        && value.recentProfiles >= gate.minRecentProfiles
+        && value.profilePreviews.length >= gate.minQualifiedProfiles,
       ...value,
     };
   }
@@ -135,6 +144,13 @@ for (const intent of registry.intents) {
             activation.qualifiedProfiles >= registry.activationGate.intentGates.services.minQualifiedProfiles,
             `${route}: profils qualifiés insuffisants pour une page service indexable`,
           );
+          assert.ok(
+            activation.profilePreviews.length >= registry.activationGate.intentGates.services.minQualifiedProfiles,
+            `${route}: profils publics liés insuffisants pour une page service indexable`,
+          );
+          assert.ok(html.includes('aria-label="Prestataires locaux"'), `${route}: section prestataires locaux absente`);
+          assert.ok(html.includes('/prestataires/'), `${route}: liens profils publics absents`);
+          assert.ok(html.includes('"@type":"ItemList"'), `${route}: ItemList des prestataires absent`);
         }
       } else {
         assert.equal(robots, 'noindex,follow', `${route}: page inactive doit rester noindex`);

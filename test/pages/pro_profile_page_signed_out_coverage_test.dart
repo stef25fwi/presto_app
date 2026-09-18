@@ -191,22 +191,41 @@ void main() {
     await tester.pump();
     expect(fieldValue(tester, 'SIRET *'), '12345678901234');
 
+    final publicConsentText = find.text(
+      'Rendre mon profil professionnel visible sur le web',
+    );
     final termsText = find.text(
       "J'accepte les conditions d'utilisation professionnelles",
     );
+    await scrollTo(tester, publicConsentText);
     await scrollTo(tester, termsText);
 
-    CheckboxListTile termsTile() =>
-        tester.widget<CheckboxListTile>(find.byType(CheckboxListTile));
+    Finder tileFor(Finder label) => find.ancestor(
+          of: label,
+          matching: find.byType(CheckboxListTile),
+        );
 
-    expect(termsTile().value, isFalse);
-    await tester.tap(find.byType(CheckboxListTile));
-    await tester.pump();
-    expect(termsTile().value, isTrue);
+    CheckboxListTile readTile(Finder label) =>
+        tester.widget<CheckboxListTile>(tileFor(label));
 
-    await tester.tap(find.byType(CheckboxListTile));
+    expect(readTile(publicConsentText).value, isFalse);
+    expect(readTile(termsText).value, isFalse);
+
+    await tester.tap(tileFor(publicConsentText));
     await tester.pump();
-    expect(termsTile().value, isFalse);
+    expect(readTile(publicConsentText).value, isTrue);
+    expect(readTile(termsText).value, isFalse);
+
+    await tester.tap(tileFor(termsText));
+    await tester.pump();
+    expect(readTile(publicConsentText).value, isTrue);
+    expect(readTile(termsText).value, isTrue);
+
+    await tester.tap(tileFor(publicConsentText));
+    await tester.tap(tileFor(termsText));
+    await tester.pump();
+    expect(readTile(publicConsentText).value, isFalse);
+    expect(readTile(termsText).value, isFalse);
 
     await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
     await tester.pump();

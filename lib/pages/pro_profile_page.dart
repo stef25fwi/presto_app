@@ -8,6 +8,7 @@ import '../services/pro_siret_service.dart';
 import '../services/user_profile_bootstrap_service.dart';
 import '../utils/friendly_snackbar.dart';
 import '../widgets/phone_input_field.dart';
+import '../widgets/pro_profile_consent_section.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBeige = Color(0xFFFCEEE2);
@@ -47,7 +48,7 @@ class _ProProfilePageState extends State<ProProfilePage> {
   final _serviceCategoriesCtrl = TextEditingController();
   final _websiteCtrl = TextEditingController();
 
-  bool _acceptTerms = false;
+  bool _acceptTerms = false, _seoPublicProfileConsent = false;
   bool _isSaving = false;
   bool _isLoadingProfile = true;
   bool _isVerifyingSiret = false;
@@ -203,6 +204,7 @@ class _ProProfilePageState extends State<ProProfilePage> {
       if (mounted) {
         setState(() {
           _acceptTerms = accepted is bool ? accepted : _acceptTerms;
+          _seoPublicProfileConsent = data?['seoPublicProfileConsent'] == true;
           _siretVerified =
               verified == true || _s(data?['verifiedAt']).isNotEmpty;
         });
@@ -327,6 +329,8 @@ class _ProProfilePageState extends State<ProProfilePage> {
         'website': _websiteCtrl.text.trim(),
         'termsAccepted': _acceptTerms,
         'termsAcceptedAt': now,
+        'seoPublicProfileConsent': _seoPublicProfileConsent,
+        'seoPublicProfileConsentVersion': 1, 'seoPublicProfileConsentUpdatedAt': now,
         'profileCompletedAt': now,
         'updatedAt': now,
       };
@@ -615,17 +619,12 @@ class _ProProfilePageState extends State<ProProfilePage> {
                       ],
                     ),
                     const SizedBox(height: 18),
-                    CheckboxListTile(
-                      value: _acceptTerms,
-                      onChanged: _isSaving
-                          ? null
-                          : (value) =>
-                              setState(() => _acceptTerms = value ?? false),
-                      title: const Text(
-                        "J'accepte les conditions d'utilisation professionnelles",
-                      ),
-                      controlAffinity: ListTileControlAffinity.leading,
-                      contentPadding: EdgeInsets.zero,
+                    ProProfileConsentSection(
+                      publicProfileConsent: _seoPublicProfileConsent,
+                      termsAccepted: _acceptTerms,
+                      enabled: !_isSaving,
+                      onPublicProfileConsentChanged: (value) => setState(() => _seoPublicProfileConsent = value),
+                      onTermsAcceptedChanged: (value) => setState(() => _acceptTerms = value),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(

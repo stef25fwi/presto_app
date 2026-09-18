@@ -57,12 +57,27 @@ function readSignals(key) {
         publishedAt: item.publishedAt ? String(item.publishedAt) : null,
       }))
     : [];
+  const profilePreviews = Array.isArray(value.profilePreviews)
+    ? value.profilePreviews
+      .filter((item) => /^[a-f0-9]{24}$/.test(String(item?.publicId || ''))
+        && String(item?.companyName || '').trim().length >= 2
+        && String(item?.activity || '').trim().length >= 3)
+      .slice(0, 5)
+      .map((item) => ({
+        publicId: String(item.publicId),
+        companyName: String(item.companyName).trim().slice(0, 140),
+        activity: String(item.activity).trim().slice(0, 140),
+        publishedAt: item.publishedAt ? String(item.publishedAt) : null,
+        updatedAt: item.updatedAt ? String(item.updatedAt) : null,
+      }))
+    : [];
   return {
     activeListings: Number(value.activeListings || 0),
     qualifiedProfiles: Number(value.qualifiedProfiles || 0),
     recentListings: Number(value.recentListings || 0),
     recentProfiles: Number(value.recentProfiles || 0),
     listingPreviews,
+    profilePreviews,
   };
 }
 
@@ -80,7 +95,8 @@ function activationFor(intent, key, city) {
     eligible = fresh
       && localIntroReady
       && value.qualifiedProfiles >= minQualifiedProfiles
-      && value.recentProfiles >= minRecentProfiles;
+      && value.recentProfiles >= minRecentProfiles
+      && value.profilePreviews.length >= minQualifiedProfiles;
   } else if (intent.key === 'missions') {
     const missionGate = gate.intentGates?.missions || {};
     const minActiveListings = Number(missionGate.minActiveListings || gate.minRealEntities || 3);
@@ -167,6 +183,14 @@ function renderListingPreviews(intent, activation) {
   return `<section aria-label="Annonces locales"><h2>Annonces locales disponibles</h2><p>Exemples d’annonces publiques correspondant à cette catégorie et à cette ville :</p><ul>${items}</ul></section>`;
 }
 
+function renderProfilePreviews(intent, activation) {
+  if (intent.key !== 'services' || !activation.eligible) return '';
+  const items = activation.profilePreviews
+    .map((profile) => `<li><a href="/prestataires/${encodeURIComponent(profile.publicId)}/"><strong>${escapeHtml(profile.companyName)}</strong></a> — ${escapeHtml(profile.activity)}</li>`)
+    .join('');
+  return `<section aria-label="Prestataires locaux"><h2>Prestataires disponibles à proximité</h2><p>Profils professionnels vérifiés ayant choisi de rendre leur profil public :</p><ul>${items}</ul></section>`;
+}
+
 function renderPage(intent, service, city) {
   const key = pageKey(intent, service, city);
   const activation = activationFor(intent, key, city);
@@ -186,6 +210,7 @@ function renderPage(intent, service, city) {
     ? 'Cette page répond aux recherches de personnes qui cherchent une compétence ou une aide locale pour réaliser un service du quotidien.'
     : 'Cette page répond aux recherches de personnes qui souhaitent repérer des besoins locaux correspondant à leurs compétences. Une mission de service n’est pas automatiquement une offre d’emploi salarié.';
   const listingSection = renderListingPreviews(intent, activation);
+  const profileSection = renderProfilePreviews(intent, activation);
   const oppositeLink = oppositeActivation.eligible
     ? `<a href="${escapeHtml(oppositeRoute)}">${oppositeIntent.key === 'services' ? 'Chercher ce service' : 'Voir les missions correspondantes'}</a>`
     : '';
@@ -243,6 +268,20 @@ function renderPage(intent, service, city) {
     });
   }
 
+  if (intent.key === 'services' && activation.eligible) {
+    graph.push({
+      '@type': 'ItemList',
+      '@id': `${canonical}#prestataires`,
+      name: `Prestataires ${service.serviceTitle} à ${city.name}`,
+      itemListElement: activation.profilePreviews.map((profile, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: profile.companyName,
+        url: `${registry.baseUrl}/prestataires/${profile.publicId}/`,
+      })),
+    });
+  }
+
   const jsonLd = {'@context': 'https://schema.org', '@graph': graph};
 
   return `<!DOCTYPE html>
@@ -283,6 +322,7 @@ function renderPage(intent, service, city) {
         <article><h2>Données réelles avant indexation</h2><p>L’indexation n’est activée qu’après atteinte du seuil minimal de signaux réels, récents et adaptés à l’intention de recherche.</p></article>
         <article><h2>Échange direct</h2><p>iliprestō facilite la mise en relation. La plateforme n’est ni employeur, ni agence d’intérim, et ne garantit ni mission, ni revenu, ni délai de réponse.</p></article>
       </section>
+      ${profileSection}
       ${listingSection}
       <h2>Recherches associées</h2>
       <ul>${keywords}</ul>

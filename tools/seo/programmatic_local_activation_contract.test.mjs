@@ -15,6 +15,12 @@ const previews = [
   {id: 'seo-test-c3', title: 'Taille de haie et entretien extérieur', publishedAt: new Date().toISOString()},
 ];
 
+const profilePreviews = [
+  {publicId: 'aaaaaaaaaaaaaaaaaaaaaaaa', companyName: 'Jardin Soleil', activity: 'Jardinage', updatedAt: new Date().toISOString()},
+  {publicId: 'bbbbbbbbbbbbbbbbbbbbbbbb', companyName: 'Vert Caraïbes', activity: 'Entretien de jardins', updatedAt: new Date().toISOString()},
+  {publicId: 'cccccccccccccccccccccccc', companyName: 'Services Tropicaux', activity: 'Jardinage et débroussaillage', updatedAt: new Date().toISOString()},
+];
+
 const fixture = {
   version: 1,
   generatedAt: new Date().toISOString(),
@@ -30,9 +36,10 @@ const fixture = {
     'services:jardinage:les-abymes': {
       activeListings: 3,
       recentListings: 1,
-      qualifiedProfiles: 0,
-      recentProfiles: 0,
+      qualifiedProfiles: 3,
+      recentProfiles: 1,
       listingPreviews: previews,
+      profilePreviews,
     },
   },
 };
@@ -55,10 +62,15 @@ try {
   assert.ok(missionHtml.includes('"@type":"ItemList"'), 'ItemList des annonces locales absent');
   assert.ok(sitemap.includes(`<loc>${missionCanonical}</loc>`), 'Mission active absente du sitemap local');
 
-  assert.ok(serviceHtml.includes('<meta name="robots" content="noindex,follow">'), 'Les annonces seules ne doivent jamais activer une page services');
-  assert.ok(!sitemap.includes(`<loc>${serviceCanonical}</loc>`), 'Page services sans profils présente dans le sitemap local');
+  assert.match(serviceHtml, /<meta name="robots" content="index,follow/);
+  assert.ok(serviceHtml.includes('aria-label="Prestataires locaux"'), 'La page service active doit afficher les profils publics');
+  for (const profile of profilePreviews) {
+    assert.ok(serviceHtml.includes(`/prestataires/${profile.publicId}/`), `Profil ${profile.publicId} absent de la page service`);
+  }
+  assert.ok(serviceHtml.includes('"@type":"ItemList"'), 'ItemList des prestataires absent');
+  assert.ok(sitemap.includes(`<loc>${serviceCanonical}</loc>`), 'Service actif absent du sitemap local');
 
-  console.log('Contrat activation SEO locale: annonces -> missions indexables, services sans profils -> noindex.');
+  console.log('Contrat activation SEO locale: annonces -> missions indexables, profils publics -> services indexables.');
 } finally {
   fs.writeFileSync(signalsPath, originalSignals);
   execFileSync(process.execPath, [generatorPath], {stdio: 'pipe'});
