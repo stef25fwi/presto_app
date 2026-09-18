@@ -206,4 +206,6 @@ export { purgeOldEmailWebhooks, purgeOldEmailLogs, syncEmailAnalytics } from "./
 
 export { verifySiret } from "./modules/pro/verifySiret";
 export { preVerifySiret } from "./modules/pro/preVerifySiret";
+export { onProProfilePublicProjection } from "./modules/pro/public_profile_projection";
 export { publicMarketplaceSeo } from "./modules/seo/public_marketplace";
+export { publicProfilesSeo } from "./modules/seo/public_profiles";
