@@ -48,8 +48,7 @@ class _ProProfilePageState extends State<ProProfilePage> {
   final _serviceCategoriesCtrl = TextEditingController();
   final _websiteCtrl = TextEditingController();
 
-  bool _acceptTerms = false;
-  bool _seoPublicProfileConsent = false;
+  bool _acceptTerms = false, _seoPublicProfileConsent = false;
   bool _isSaving = false;
   bool _isLoadingProfile = true;
   bool _isVerifyingSiret = false;
@@ -331,8 +330,7 @@ class _ProProfilePageState extends State<ProProfilePage> {
         'termsAccepted': _acceptTerms,
         'termsAcceptedAt': now,
         'seoPublicProfileConsent': _seoPublicProfileConsent,
-        'seoPublicProfileConsentVersion': 1,
-        'seoPublicProfileConsentUpdatedAt': now,
+        'seoPublicProfileConsentVersion': 1, 'seoPublicProfileConsentUpdatedAt': now,
         'profileCompletedAt': now,
         'updatedAt': now,
       };
@@ -625,10 +623,8 @@ class _ProProfilePageState extends State<ProProfilePage> {
                       publicProfileConsent: _seoPublicProfileConsent,
                       termsAccepted: _acceptTerms,
                       enabled: !_isSaving,
-                      onPublicProfileConsentChanged: (value) =>
-                          setState(() => _seoPublicProfileConsent = value),
-                      onTermsAcceptedChanged: (value) =>
-                          setState(() => _acceptTerms = value),
+                      onPublicProfileConsentChanged: (value) => setState(() => _seoPublicProfileConsent = value),
+                      onTermsAcceptedChanged: (value) => setState(() => _acceptTerms = value),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
