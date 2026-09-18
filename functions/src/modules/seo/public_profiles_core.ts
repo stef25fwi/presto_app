@@ -65,7 +65,8 @@ function descriptionSnippet(value: string): string {
   if (value.length <= 158) return value;
   const slice = value.slice(0, 155).trimEnd();
   const lastSpace = slice.lastIndexOf(" ");
-  return `${lastSpace >= 120 ? slice.slice(0, lastSpace) : slice}…`;
+  const base = lastSpace >= 120 ? slice.slice(0, lastSpace) : slice;
+  return `${base}...`;
 }
 
 function normalizeWebsite(value: unknown): string {
