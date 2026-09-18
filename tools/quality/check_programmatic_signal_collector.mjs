@@ -1,7 +1,19 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
 
 const source = fs.readFileSync('functions/scripts/generate_programmatic_seo_signals.mjs', 'utf8');
+
+const syntaxCheck = spawnSync(
+  process.execPath,
+  ['--check', 'functions/scripts/generate_programmatic_seo_signals.mjs'],
+  { encoding: 'utf8' },
+);
+assert.equal(
+  syntaxCheck.status,
+  0,
+  `Le collecteur SEO doit être syntaxiquement exécutable par Node.\n${syntaxCheck.stderr || syntaxCheck.stdout}`,
+);
 
 assert.ok(
   source.includes("import { getApps, initializeApp } from 'firebase-admin/app';"),
