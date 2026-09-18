@@ -321,6 +321,20 @@
           }
         },
         {
+          "source": "/sitemap-prestataires.xml",
+          "function": {
+            "functionId": "publicProfilesSeo",
+            "region": "europe-west1"
+          }
+        },
+        {
+          "source": "/prestataires/**",
+          "function": {
+            "functionId": "publicProfilesSeo",
+            "region": "europe-west1"
+          }
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
@@ -671,6 +685,20 @@
           "source": "/annonces/**",
           "function": {
             "functionId": "publicMarketplaceSeo",
+            "region": "europe-west1"
+          }
+        },
+        {
+          "source": "/sitemap-prestataires.xml",
+          "function": {
+            "functionId": "publicProfilesSeo",
+            "region": "europe-west1"
+          }
+        },
+        {
+          "source": "/prestataires/**",
+          "function": {
+            "functionId": "publicProfilesSeo",
             "region": "europe-west1"
           }
         },
