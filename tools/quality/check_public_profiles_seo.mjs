@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const ui = fs.readFileSync('lib/pages/pro_profile_page.dart', 'utf8');
+const consentUi = fs.readFileSync('lib/widgets/pro_profile_consent_section.dart', 'utf8');
 const projection = fs.readFileSync('functions/src/modules/pro/public_profile_projection.ts', 'utf8');
 const core = fs.readFileSync('functions/src/modules/seo/public_profiles_core.ts', 'utf8');
 const handler = fs.readFileSync('functions/src/modules/seo/public_profiles.ts', 'utf8');
@@ -13,7 +14,9 @@ const robots = fs.readFileSync('web/robots.txt', 'utf8');
 
 assert.ok(ui.includes("'seoPublicProfileConsent': _seoPublicProfileConsent"), 'Consentement SEO profil non persisté');
 assert.ok(ui.includes('seoPublicProfileConsentVersion'), 'Version du consentement SEO absente');
-assert.ok(ui.includes('Le SIRET, l’adresse complète, l’e-mail et le téléphone restent privés.'), 'Information de confidentialité du consentement absente');
+assert.ok(ui.includes('ProProfileConsentSection('), 'Widget de consentement profil public non utilisé');
+assert.ok(consentUi.includes('Rendre mon profil professionnel visible sur le web'), 'Libellé de consentement public absent');
+assert.ok(consentUi.includes('Le SIRET, l’adresse complète, l’e-mail et le téléphone restent privés.'), 'Information de confidentialité du consentement absente');
 
 assert.ok(projection.includes('onDocumentWritten'), 'Trigger de projection profil public absent');
 assert.ok(projection.includes('"pro_profiles/{uid}"'), 'Source pro_profiles absente');
