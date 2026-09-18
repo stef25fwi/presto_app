@@ -188,7 +188,7 @@ try {
     ].filter(Boolean).join(' '));
     if (!searchable) continue;
 
-    const service = registry.services.find((candidate) => {
+    const services = registry.services.filter((candidate) => {
       const expected = [
         normalize(candidate.taxonomyValue),
         normalize(candidate.key),
@@ -197,7 +197,7 @@ try {
       ].filter(Boolean);
       return expected.some((value) => searchable === value || searchable.includes(value));
     });
-    if (!service) continue;
+    if (services.length === 0) continue;
 
     const postalCode = String(data.postalCode || '').trim();
     const cityKey = normalize(data.city);
@@ -212,22 +212,25 @@ try {
     });
     if (!city) continue;
 
-    const bucket = counts.get(\`\${service.key}:\${city.slug}\`);
-    if (!bucket) continue;
-
     seoQualifiedPublicProfiles += 1;
-    bucket.qualifiedProfiles += 1;
     const publicationValue = data.updatedAt || data.publishedAt;
     const publicationMs = timestampMs(publicationValue);
-    if (publicationMs >= recentCutoff) bucket.recentProfiles += 1;
-    bucket.profilePreviews.push({
-      publicId: String(doc.id),
-      companyName: boundedText(data.companyName, 140),
-      activity: boundedText(data.activity, 140),
-      publishedAt: timestampIso(data.publishedAt),
-      updatedAt: timestampIso(data.updatedAt),
-      publicationMs,
-    });
+
+    for (const service of services) {
+      const bucket = counts.get(\`\${service.key}:\${city.slug}\`);
+      if (!bucket) continue;
+
+      bucket.qualifiedProfiles += 1;
+      if (publicationMs >= recentCutoff) bucket.recentProfiles += 1;
+      bucket.profilePreviews.push({
+        publicId: String(doc.id),
+        companyName: boundedText(data.companyName, 140),
+        activity: boundedText(data.activity, 140),
+        publishedAt: timestampIso(data.publishedAt),
+        updatedAt: timestampIso(data.updatedAt),
+        publicationMs,
+      });
+    }
   }
 
   for (const bucket of counts.values()) {
