@@ -48,16 +48,16 @@ assert.ok(generator.includes('value.profilePreviews.length >= minQualifiedProfil
 
 for (const target of ['production', 'mirror']) {
   const hosting = firebase.hosting.find((entry) => entry.target === target);
-  assert.ok(hosting, \`Hosting target \${target} absent\`);
+  assert.ok(hosting, `Hosting target ${target} absent`);
   const rewrites = hosting.rewrites || [];
   const catchAll = rewrites.findIndex((entry) => entry.source === '**');
-  assert.ok(catchAll >= 0, \`\${target}: catch-all Flutter absent\`);
+  assert.ok(catchAll >= 0, `${target}: catch-all Flutter absent`);
   for (const source of ['/sitemap-prestataires.xml', '/prestataires/**']) {
     const indexRoute = rewrites.findIndex((entry) => entry.source === source);
-    assert.ok(indexRoute >= 0, \`\${target}: rewrite \${source} absent\`);
-    assert.ok(indexRoute < catchAll, \`\${target}: rewrite \${source} doit précéder le catch-all\`);
-    assert.equal(rewrites[indexRoute].function?.functionId, 'publicProfilesSeo', \`\${target}: functionId profil incorrect\`);
-    assert.equal(rewrites[indexRoute].function?.region, 'europe-west1', \`\${target}: région profil incorrecte\`);
+    assert.ok(indexRoute >= 0, `${target}: rewrite ${source} absent`);
+    assert.ok(indexRoute < catchAll, `${target}: rewrite ${source} doit précéder le catch-all`);
+    assert.equal(rewrites[indexRoute].function?.functionId, 'publicProfilesSeo', `${target}: functionId profil incorrect`);
+    assert.equal(rewrites[indexRoute].function?.region, 'europe-west1', `${target}: région profil incorrecte`);
   }
 }
 
