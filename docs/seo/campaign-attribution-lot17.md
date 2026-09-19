@@ -66,7 +66,7 @@ iOS :
 
 - bundle `fr.ilipresto.app` ;
 - domaine associé `applinks:ilipresto.fr` ;
-- App ID construit depuis le vrai `IOS_TEAM_ID` ;
+- App ID construit depuis le vrai Team ID Apple ; résolution par variable GitHub `IOS_TEAM_ID` (recommandée), puis fallback sur le profil de provisioning ou le certificat Apple Distribution ;
 - chemins `/app` et `/app/*`.
 
 Les fichiers servis sont :
@@ -80,7 +80,7 @@ Le workflow `.github/workflows/campaign-attribution-lot17.yml` démarre après u
 
 1. exécute les tests Dart et le contrat Node ;
 2. construit le Web du SHA déployé ;
-3. génère les associations depuis les vrais secrets de signature ;
+3. génère les associations depuis les vrais éléments de signature ; le Team ID iOS est lu depuis la variable GitHub `IOS_TEAM_ID` ou dérivé automatiquement du provisioning/certificat si disponible ;
 4. déploie Hosting avec les fichiers `.well-known` ;
 5. vérifie en production le lien Web avec UTM, Android App Links et iOS Universal Links ;
 6. archive les rapports 90 jours ;
