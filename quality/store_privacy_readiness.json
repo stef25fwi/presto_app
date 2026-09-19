@@ -26,13 +26,13 @@
       "id": "public-privacy-policy",
       "title": "Politique de confidentialité publique sans authentification Flutter",
       "status": "implemented",
-      "evidence": ["web/confidentialite/index.html", "lib/features/operating_mode/legal_documents.dart"]
+      "evidence": ["web/confidentialite.html", "lib/features/operating_mode/legal_documents.dart"]
     },
     {
       "id": "public-account-deletion",
       "title": "Page publique de suppression de compte",
       "status": "implemented",
-      "evidence": ["web/suppression-compte/index.html"]
+      "evidence": ["web/suppression-compte.html"]
     },
     {
       "id": "processor-register",
