@@ -9,6 +9,22 @@ const servicePath = 'web/services/jardinage/les-abymes/index.html';
 const sitemapPath = 'web/sitemap-local.xml';
 const originalSignals = fs.readFileSync(signalsPath, 'utf8');
 
+function publicSlug(value, fallback) {
+  const slug = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replaceAll('œ', 'oe')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[’']/g, '-')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 72)
+    .replace(/-$/g, '');
+  return slug.length >= 3 ? slug : fallback;
+}
+
 const previews = [
   {id: 'seo-test-a1', title: 'Entretien ponctuel d’un jardin aux Abymes', publishedAt: new Date().toISOString()},
   {id: 'seo-test-b2', title: 'Tonte et nettoyage d’un petit jardin', publishedAt: new Date().toISOString()},
@@ -57,7 +73,7 @@ try {
   assert.match(missionHtml, /<meta name="robots" content="index,follow/);
   assert.ok(missionHtml.includes('aria-label="Annonces locales"'), 'La page mission active doit afficher les annonces locales');
   for (const preview of previews) {
-    assert.ok(missionHtml.includes(`/annonces/${preview.id}/`), `Annonce ${preview.id} absente de la page mission`);
+    assert.ok(missionHtml.includes(`/annonces/${publicSlug(preview.title, 'annonce')}/${preview.id}/`), `Annonce ${preview.id} absente de la page mission`);
   }
   assert.ok(missionHtml.includes('"@type":"ItemList"'), 'ItemList des annonces locales absent');
   assert.ok(sitemap.includes(`<loc>${missionCanonical}</loc>`), 'Mission active absente du sitemap local');
@@ -65,7 +81,7 @@ try {
   assert.match(serviceHtml, /<meta name="robots" content="index,follow/);
   assert.ok(serviceHtml.includes('aria-label="Prestataires locaux"'), 'La page service active doit afficher les profils publics');
   for (const profile of profilePreviews) {
-    assert.ok(serviceHtml.includes(`/prestataires/${profile.publicId}/`), `Profil ${profile.publicId} absent de la page service`);
+    assert.ok(serviceHtml.includes(`/prestataires/${publicSlug(profile.companyName, 'prestataire')}/${profile.publicId}/`), `Profil ${profile.publicId} absent de la page service`);
   }
   assert.ok(serviceHtml.includes('"@type":"ItemList"'), 'ItemList des prestataires absent');
   assert.ok(sitemap.includes(`<loc>${serviceCanonical}</loc>`), 'Service actif absent du sitemap local');
