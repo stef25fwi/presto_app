@@ -50,12 +50,24 @@ function boundedText(value, maxLength) {
     .slice(0, maxLength);
 }
 
-function seoEligibleListing(id, data) {
+function listingEligibilityReasons(id, data) {
+  const reasons = [];
   const title = boundedText(data.title, 140);
   const description = boundedText(data.description, 2000);
-  return SAFE_PUBLIC_ID.test(String(id || ''))
-    && title.length >= 12
-    && description.length >= 80;
+  if (!SAFE_PUBLIC_ID.test(String(id || ''))) reasons.push('invalid_id');
+  if (title.length < 12) reasons.push('title_too_short');
+  if (description.length < 80) reasons.push('description_too_short');
+  return reasons;
+}
+
+function incrementReason(map, reason) {
+  map.set(reason, (map.get(reason) || 0) + 1);
+}
+
+function sortedReasonCounts(map) {
+  return Object.fromEntries(
+    [...map.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])),
+  );
 }
 
 const projectId = argValue('--project=', process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || '');
@@ -110,6 +122,8 @@ try {
   const counts = new Map();
   let seoQualifiedPublicListings = 0;
   let seoQualifiedPublicProfiles = 0;
+  const listingRejectionReasons = new Map();
+  const profileRejectionReasons = new Map();
 
   for (const service of registry.services) {
     for (const city of registry.cities) {
@@ -126,7 +140,11 @@ try {
 
   for (const doc of snapshot.docs) {
     const data = doc.data() || {};
-    if (!seoEligibleListing(doc.id, data)) continue;
+    const eligibilityReasons = listingEligibilityReasons(doc.id, data);
+    if (eligibilityReasons.length > 0) {
+      for (const reason of eligibilityReasons) incrementReason(listingRejectionReasons, reason);
+      continue;
+    }
 
     const categoryKeys = new Set([
       normalize(data.category),
@@ -147,7 +165,10 @@ try {
       ]);
       return [...categoryKeys].some((value) => expected.has(value));
     });
-    if (!service) continue;
+    if (!service) {
+      incrementReason(listingRejectionReasons, 'service_unmapped');
+      continue;
+    }
 
     const city = registry.cities.find((candidate) => {
       const postalCodes = new Set([
@@ -158,7 +179,10 @@ try {
       const expected = new Set([normalize(candidate.name), normalize(candidate.slug)]);
       return [...cityKeys].some((value) => expected.has(value) || value.endsWith(`-${normalize(candidate.slug)}`));
     });
-    if (!city) continue;
+    if (!city) {
+      incrementReason(listingRejectionReasons, 'city_unmapped');
+      continue;
+    }
 
     const key = `${service.key}:${city.slug}`;
     const bucket = counts.get(key);
@@ -180,13 +204,23 @@ try {
 
   for (const doc of profileSnapshot.docs) {
     const data = doc.data() || {};
-    if (data.seoEligible !== true || data.verified !== true) continue;
+    if (data.seoEligible !== true) {
+      incrementReason(profileRejectionReasons, 'seo_eligible_false');
+      continue;
+    }
+    if (data.verified !== true) {
+      incrementReason(profileRejectionReasons, 'not_verified');
+      continue;
+    }
 
     const searchable = normalize([
       boundedText(data.activity, 140),
       boundedText(data.serviceCategories, 400),
     ].filter(Boolean).join(' '));
-    if (!searchable) continue;
+    if (!searchable) {
+      incrementReason(profileRejectionReasons, 'missing_activity_or_categories');
+      continue;
+    }
 
     const services = registry.services.filter((candidate) => {
       const expected = [
@@ -197,7 +231,10 @@ try {
       ].filter(Boolean);
       return expected.some((value) => searchable === value || searchable.includes(value));
     });
-    if (services.length === 0) continue;
+    if (services.length === 0) {
+      incrementReason(profileRejectionReasons, 'service_unmapped');
+      continue;
+    }
 
     const postalCode = String(data.postalCode || '').trim();
     const cityKey = normalize(data.city);
@@ -210,7 +247,10 @@ try {
       const expected = new Set([normalize(candidate.name), normalize(candidate.slug)]);
       return cityKey && (expected.has(cityKey) || cityKey.endsWith(`-${normalize(candidate.slug)}`));
     });
-    if (!city) continue;
+    if (!city) {
+      incrementReason(profileRejectionReasons, 'city_unmapped');
+      continue;
+    }
 
     seoQualifiedPublicProfiles += 1;
     const publicationValue = data.updatedAt || data.publishedAt;
@@ -283,10 +323,25 @@ try {
     seoQualifiedPublicListings,
     scannedPublicProfiles: profileSnapshot.size,
     seoQualifiedPublicProfiles,
+    diagnostics: {
+      listings: {
+        scanned: snapshot.size,
+        qualified: seoQualifiedPublicListings,
+        rejected: snapshot.size - seoQualifiedPublicListings,
+        rejectionReasons: sortedReasonCounts(listingRejectionReasons),
+      },
+      profiles: {
+        scanned: profileSnapshot.size,
+        qualified: seoQualifiedPublicProfiles,
+        rejected: profileSnapshot.size - seoQualifiedPublicProfiles,
+        rejectionReasons: sortedReasonCounts(profileRejectionReasons),
+      },
+    },
     recentWindowDays: Number(registry.activationGate.recentWindowDays || 90),
     pages,
   });
   console.log(`SEO local signals: ${snapshot.size} annonces publiques actives analysées, ${seoQualifiedPublicListings} annonces SEO qualifiées; ${profileSnapshot.size} profils publics analysés, ${seoQualifiedPublicProfiles} profils SEO qualifiés; sortie ${outputPath}.`);
+  console.log(`SEO local diagnostics: listings=${JSON.stringify(sortedReasonCounts(listingRejectionReasons))}; profiles=${JSON.stringify(sortedReasonCounts(profileRejectionReasons))}.`);
 } catch (error) {
   if (!allowFallback) throw error;
   writeReport({
@@ -298,6 +353,10 @@ try {
     seoQualifiedPublicListings: 0,
     scannedPublicProfiles: 0,
     seoQualifiedPublicProfiles: 0,
+    diagnostics: {
+      listings: {scanned: 0, qualified: 0, rejected: 0, rejectionReasons: {}},
+      profiles: {scanned: 0, qualified: 0, rejected: 0, rejectionReasons: {}},
+    },
     recentWindowDays: Number(registry.activationGate.recentWindowDays || 90),
     pages: emptyPages(),
     fallbackReason: String(error?.message || error || 'unknown'),
