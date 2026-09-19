@@ -91,6 +91,13 @@ const Map<String, List<String>> kCategorySubcategories = {
     'Nettoyage après déménagement',
     'Organisation / rangement',
   ],
+  'Ménage': <String>[
+    'Ménage régulier',
+    'Ménage ponctuel / grand nettoyage',
+    'Repassage',
+    'Nettoyage après déménagement',
+    'Organisation / rangement',
+  ],
   'Garde d\'enfants': <String>[
     'Baby-sitting soirée',
     'Sortie d\'école / crèche',
@@ -127,6 +134,18 @@ const Map<String, List<String>> kCategorySubcategories = {
     'Cours de musique',
     'Coaching sport / fitness',
     'Préparation examens / concours',
+  ],
+  'Informatique': <String>[
+    'Informatique / dépannage',
+    'Assistance ordinateur / PC',
+    'Assistance smartphone / tablette',
+    'Installation imprimante / périphériques',
+    'Wi-Fi / réseau domestique',
+    'Sécurité / virus / sauvegarde',
+    'Installation de logiciels',
+    'Transfert de données',
+    'Mise en service de matériel',
+    'Assistance numérique à domicile',
   ],
   'Jardinage': <String>[
     'Tonte de pelouse',
@@ -412,13 +431,13 @@ const List<PublishCategoryPairRule> kPublishCategoryPairRules = [
   ),
   PublishCategoryPairRule(
     keywords: ['menage', 'nettoyage', 'grand nettoyage', 'nettoyer'],
-    category: 'Aide à domicile',
+    category: 'Ménage',
     subCategory: 'Ménage ponctuel / grand nettoyage',
     suggestedTitle: 'Ménage ponctuel / grand nettoyage',
   ),
   PublishCategoryPairRule(
     keywords: ['repassage'],
-    category: 'Aide à domicile',
+    category: 'Ménage',
     subCategory: 'Repassage',
     suggestedTitle: 'Repassage à domicile',
   ),
@@ -493,7 +512,7 @@ const List<PublishCategoryPairRule> kPublishCategoryPairRules = [
   ),
   PublishCategoryPairRule(
     keywords: ['ordinateur', 'imprimante', 'wifi', 'internet', 'informatique'],
-    category: 'Autre',
+    category: 'Informatique',
     subCategory: 'Informatique / dépannage',
     suggestedTitle: 'Dépannage informatique',
   ),
