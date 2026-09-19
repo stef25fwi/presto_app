@@ -63,10 +63,11 @@ test("projection contains only SEO-safe public fields", () => {
 
 test("public profile route never exposes the Firebase uid", () => {
   const publicId = publicProfileIdForUid("uid-private-123");
-  const canonical = publicProfileCanonical(publicId);
-  assert.match(canonical, /\/prestataires\/[a-f0-9]{24}\/$/);
+  const canonical = publicProfileCanonical(publicId, source.companyName);
+  assert.match(canonical, /\/prestataires\/atelier-soleil\/[a-f0-9]{24}\/$/);
   assert.doesNotMatch(canonical, /uid-private-123/);
   assert.equal(extractPublicProfileId(new URL(canonical).pathname), publicId);
+  assert.equal(extractPublicProfileId(`/prestataires/${publicId}/`), publicId);
 });
 
 test("public profile HTML emits ProfilePage without private data or JobPosting", () => {
