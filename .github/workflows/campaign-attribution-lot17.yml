@@ -83,8 +83,10 @@ jobs:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          IOS_TEAM_ID: ${{ vars.IOS_TEAM_ID || secrets.IOS_TEAM_ID }}
           IOS_PROVISIONING_PROFILE_B64: ${{ secrets.IOS_PROVISIONING_PROFILE_B64 }}
+          IOS_DIST_CERT_P12_B64: ${{ secrets.IOS_DIST_CERT_P12_B64 }}
+          IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
         run: |
           set -euo pipefail
 
@@ -96,15 +98,17 @@ jobs:
           done
 
           RESOLVED_IOS_TEAM_ID="${IOS_TEAM_ID:-}"
+          TEAM_ID_SOURCE=''
           PROFILE_PATH=''
           PROFILE_PLIST=''
+          CERT_PATH=''
+          CERT_PEM=''
 
-          if [[ -z "$RESOLVED_IOS_TEAM_ID" ]]; then
-            if [[ -z "${IOS_PROVISIONING_PROFILE_B64:-}" ]]; then
-              echo '::error::IOS_TEAM_ID absent et IOS_PROVISIONING_PROFILE_B64 indisponible.'
-              exit 1
-            fi
+          if [[ -n "$RESOLVED_IOS_TEAM_ID" ]]; then
+            TEAM_ID_SOURCE='github-variable-or-secret'
+          fi
 
+          if [[ -z "$RESOLVED_IOS_TEAM_ID" && -n "${IOS_PROVISIONING_PROFILE_B64:-}" ]]; then
             PROFILE_PATH="$RUNNER_TEMP/lot17-profile.mobileprovision"
             PROFILE_PLIST="$RUNNER_TEMP/lot17-profile.plist"
             printf '%s' "$IOS_PROVISIONING_PROFILE_B64" \
@@ -124,17 +128,56 @@ jobs:
 
           candidates = profile.get('TeamIdentifier') or profile.get('ApplicationIdentifierPrefix') or []
           team_id = candidates[0].strip() if candidates else ''
-          if not team_id:
-              raise SystemExit('Team ID iOS introuvable dans le profil de provisioning.')
           print(team_id)
           PY
             )
+            if [[ -n "$RESOLVED_IOS_TEAM_ID" ]]; then
+              TEAM_ID_SOURCE='provisioning-profile'
+            fi
+          fi
+
+          if [[ -z "$RESOLVED_IOS_TEAM_ID" \
+                && -n "${IOS_DIST_CERT_P12_B64:-}" \
+                && -n "${IOS_DIST_CERT_PASSWORD:-}" ]]; then
+            CERT_PATH="$RUNNER_TEMP/lot17-distribution.p12"
+            CERT_PEM="$RUNNER_TEMP/lot17-distribution.pem"
+            printf '%s' "$IOS_DIST_CERT_P12_B64" \
+              | tr -d '\r\n[:space:]' \
+              | base64 -d > "$CERT_PATH"
+
+            openssl pkcs12 \
+              -in "$CERT_PATH" \
+              -clcerts \
+              -nokeys \
+              -passin "pass:$IOS_DIST_CERT_PASSWORD" \
+              -out "$CERT_PEM" >/dev/null 2>&1
+
+            CERT_SUBJECT=$(openssl x509 -in "$CERT_PEM" -noout -subject -nameopt RFC2253)
+            RESOLVED_IOS_TEAM_ID=$(python3 - "$CERT_SUBJECT" <<'PY'
+          import re
+          import sys
+
+          subject = sys.argv[1]
+          match = re.search(r'(?:^|,)OU=([A-Z0-9]{10})(?:,|$)', subject)
+          print(match.group(1) if match else '')
+          PY
+            )
+            if [[ -n "$RESOLVED_IOS_TEAM_ID" ]]; then
+              TEAM_ID_SOURCE='distribution-certificate'
+            fi
+          fi
+
+          if [[ -z "$RESOLVED_IOS_TEAM_ID" ]]; then
+            echo '::error::Team ID iOS introuvable. Configurez la variable d’environnement GitHub IOS_TEAM_ID (recommandé), ou fournissez IOS_PROVISIONING_PROFILE_B64, ou IOS_DIST_CERT_P12_B64 + IOS_DIST_CERT_PASSWORD.'
+            exit 1
           fi
 
           if [[ ! "$RESOLVED_IOS_TEAM_ID" =~ ^[A-Z0-9]{10}$ ]]; then
             echo '::error::Team ID iOS invalide après résolution.'
             exit 1
           fi
+
+          echo "Team ID iOS résolu via: $TEAM_ID_SOURCE" >> "$GITHUB_STEP_SUMMARY"
 
           KEYSTORE_PATH="$RUNNER_TEMP/lot17-upload-keystore"
           printf '%s' "$KEYSTORE_B64" \
@@ -160,7 +203,7 @@ jobs:
             --ios-app-id "$RESOLVED_IOS_TEAM_ID.fr.ilipresto.app"
 
           node tools/seo/prepare_campaign_attribution_hosting.mjs
-          rm -f "$KEYSTORE_PATH" "$PROFILE_PATH" "$PROFILE_PLIST"
+          rm -f "$KEYSTORE_PATH" "$PROFILE_PATH" "$PROFILE_PLIST" "$CERT_PATH" "$CERT_PEM"
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools@13
