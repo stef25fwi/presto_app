@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-19",
+  "policy": {
+    "paidLinksAllowed": false,
+    "reciprocalLinkSchemesAllowed": false,
+    "massDirectorySubmissionAllowed": false,
+    "principle": "Privilégier les liens éditoriaux, institutionnels et écosystème obtenus par pertinence réelle."
+  },
+  "targets": [
+    {
+      "id": "france-num",
+      "name": "France Num",
+      "territory": "France / Outre-mer",
+      "type": "institutional-directory",
+      "url": "https://www.francenum.gouv.fr/experts-du-numerique/trouver-un-expert-du-numerique",
+      "status": "candidate",
+      "routeToEarn": "Évaluer l’éligibilité comme offreur de solution / acteur numérique et préparer une fiche factuelle.",
+      "landingPage": "/presse"
+    },
+    {
+      "id": "cci-guadeloupe",
+      "name": "CCI des Îles de Guadeloupe",
+      "territory": "Guadeloupe",
+      "type": "institutional-ecosystem",
+      "url": "https://www.guadeloupe.cci.fr/trouver-ma-solution/digital",
+      "status": "candidate",
+      "routeToEarn": "Présenter iliprestō comme solution numérique locale lors des dispositifs et événements digitaux, sans demander un lien en échange.",
+      "landingPage": "/presse"
+    },
+    {
+      "id": "guadeloupetech",
+      "name": "GuadeloupeTech",
+      "territory": "Guadeloupe",
+      "type": "ecosystem-association",
+      "url": "https://www.francenum.gouv.fr/activateurs/guadeloupetech",
+      "status": "candidate",
+      "routeToEarn": "Proposer une présentation produit, un retour d’expérience ou un contenu utile à l’écosystème numérique local.",
+      "landingPage": "/presse"
+    },
+    {
+      "id": "cci-martinique-digital",
+      "name": "CCI Martinique / annuaire digital",
+      "territory": "Martinique",
+      "type": "institutional-ecosystem",
+      "url": "https://www.martinique.cci.fr/ccim-transition-numerique.aspx",
+      "status": "candidate",
+      "routeToEarn": "Identifier les conditions d’accès à l’annuaire des acteurs du digital et proposer une présence éditoriale si iliprestō est éligible.",
+      "landingPage": "/presse"
+    },
+    {
+      "id": "france-num-outre-mer",
+      "name": "France Num Outre-mer",
+      "territory": "Guadeloupe / Martinique / Guyane",
+      "type": "institutional-content",
+      "url": "https://www.francenum.gouv.fr/pres-de-chez-moi/outre-mer",
+      "status": "candidate",
+      "routeToEarn": "Proposer un cas d’usage documenté sur la mise en relation locale et la numérisation des services de proximité.",
+      "landingPage": "/presse"
+    }
+  ]
+}
