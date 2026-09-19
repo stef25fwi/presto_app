@@ -124,7 +124,7 @@ requireMarkers('docs/deployment/appstore-privacy-declarations.md', [
   'https://ilipresto.fr/confidentialite',
 ]);
 
-requireMarkers('web/confidentialite/index.html', [
+requireMarkers('web/confidentialite.html', [
   'Politique de confidentialité iliprestō',
   'SIRET',
   'Firebase App Check',
@@ -134,7 +134,7 @@ requireMarkers('web/confidentialite/index.html', [
   '/suppression-compte',
 ]);
 
-requireMarkers('web/suppression-compte/index.html', [
+requireMarkers('web/suppression-compte.html', [
   'Supprimer votre compte iliprestō',
   'Sans passer par l’application',
   'contact@ilipresto.fr',
