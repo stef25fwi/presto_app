@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-17",
+  "updatedAt": "2026-09-19",
   "baseUrl": "https://ilipresto.fr",
   "positioning": "Services et missions de proximité, sans promesse de réponse garantie et sans assimilation automatique à une offre d'emploi.",
   "activationGate": {
@@ -46,7 +46,13 @@
       "serviceTitle": "Restauration et extras",
       "serviceLower": "de restauration et d'extras",
       "taxonomyValue": "Restauration / Extra",
-      "keywords": ["extra restauration", "service en salle", "aide en cuisine", "serveur extra", "renfort restauration"]
+      "keywords": [
+        "extra restauration",
+        "service en salle",
+        "aide en cuisine",
+        "serveur extra",
+        "renfort restauration"
+      ]
     },
     {
       "key": "bricolage",
@@ -54,7 +60,13 @@
       "serviceTitle": "Bricolage et petits travaux",
       "serviceLower": "de bricolage et petits travaux",
       "taxonomyValue": "Bricolage / Travaux",
-      "keywords": ["bricoleur", "petits travaux", "montage de meuble", "réparation", "travaux du quotidien"]
+      "keywords": [
+        "bricoleur",
+        "petits travaux",
+        "montage de meuble",
+        "réparation",
+        "travaux du quotidien"
+      ]
     },
     {
       "key": "aide-a-domicile",
@@ -62,7 +74,27 @@
       "serviceTitle": "Aide à domicile",
       "serviceLower": "d'aide à domicile",
       "taxonomyValue": "Aide à domicile",
-      "keywords": ["aide à domicile", "aide du quotidien", "courses", "petits services à domicile", "accompagnement ponctuel"]
+      "keywords": [
+        "aide à domicile",
+        "aide du quotidien",
+        "courses",
+        "petits services à domicile",
+        "accompagnement ponctuel"
+      ]
+    },
+    {
+      "key": "menage",
+      "slug": "menage",
+      "serviceTitle": "Ménage et entretien",
+      "serviceLower": "de ménage et d'entretien",
+      "taxonomyValue": "Ménage",
+      "keywords": [
+        "ménage à domicile",
+        "nettoyage",
+        "repassage",
+        "grand nettoyage",
+        "entretien du logement"
+      ]
     },
     {
       "key": "garde-enfants",
@@ -70,7 +102,13 @@
       "serviceTitle": "Garde d'enfants",
       "serviceLower": "de garde d'enfants",
       "taxonomyValue": "Garde d'enfants",
-      "keywords": ["garde d'enfants", "baby-sitting", "garde ponctuelle", "sortie d'école", "accompagnement enfant"]
+      "keywords": [
+        "garde d'enfants",
+        "baby-sitting",
+        "garde ponctuelle",
+        "sortie d'école",
+        "accompagnement enfant"
+      ]
     },
     {
       "key": "evenementiel-dj",
@@ -78,7 +116,13 @@
       "serviceTitle": "Événementiel et DJ",
       "serviceLower": "d'événementiel et de DJ",
       "taxonomyValue": "Événementiel / DJ",
-      "keywords": ["dj", "animation", "événement", "installation événementielle", "renfort événementiel"]
+      "keywords": [
+        "dj",
+        "animation",
+        "événement",
+        "installation événementielle",
+        "renfort événementiel"
+      ]
     },
     {
       "key": "cours-soutien",
@@ -86,7 +130,27 @@
       "serviceTitle": "Cours et soutien",
       "serviceLower": "de cours et de soutien",
       "taxonomyValue": "Cours & soutien",
-      "keywords": ["cours particuliers", "soutien scolaire", "aide aux devoirs", "initiation", "accompagnement pédagogique"]
+      "keywords": [
+        "cours particuliers",
+        "soutien scolaire",
+        "aide aux devoirs",
+        "initiation",
+        "accompagnement pédagogique"
+      ]
+    },
+    {
+      "key": "informatique",
+      "slug": "informatique",
+      "serviceTitle": "Assistance informatique",
+      "serviceLower": "d'assistance informatique",
+      "taxonomyValue": "Informatique",
+      "keywords": [
+        "dépannage informatique",
+        "assistance ordinateur",
+        "aide smartphone",
+        "installation imprimante",
+        "wifi à domicile"
+      ]
     },
     {
       "key": "jardinage",
@@ -94,7 +158,13 @@
       "serviceTitle": "Jardinage",
       "serviceLower": "de jardinage",
       "taxonomyValue": "Jardinage",
-      "keywords": ["jardinier", "entretien jardin", "tonte", "taille de haie", "débroussaillage"]
+      "keywords": [
+        "jardinier",
+        "entretien jardin",
+        "tonte",
+        "taille de haie",
+        "débroussaillage"
+      ]
     },
     {
       "key": "peinture",
@@ -102,7 +172,13 @@
       "serviceTitle": "Peinture",
       "serviceLower": "de peinture",
       "taxonomyValue": "Peinture",
-      "keywords": ["peintre", "petits travaux de peinture", "retouches peinture", "murs", "rafraîchissement"]
+      "keywords": [
+        "peintre",
+        "petits travaux de peinture",
+        "retouches peinture",
+        "murs",
+        "rafraîchissement"
+      ]
     },
     {
       "key": "aide-demenagement",
@@ -110,33 +186,241 @@
       "serviceTitle": "Aide au déménagement et manutention",
       "serviceLower": "d'aide au déménagement et de manutention",
       "taxonomyValue": "Main-d'œuvre",
-      "keywords": ["aide déménagement", "manutention", "porter des meubles", "chargement", "déchargement"]
+      "keywords": [
+        "aide déménagement",
+        "manutention",
+        "porter des meubles",
+        "chargement",
+        "déchargement"
+      ]
     }
   ],
   "cities": [
-    {"slug":"les-abymes","name":"Les Abymes","postalCode":"97139","territory":"Guadeloupe","localIntro":"Aux Abymes, iliprestō aide à rapprocher les besoins de services du quotidien et les personnes disponibles pour y répondre."},
-    {"slug":"baie-mahault","name":"Baie-Mahault","postalCode":"97122","territory":"Guadeloupe","localIntro":"À Baie-Mahault, les besoins de proximité peuvent concerner aussi bien les particuliers que les indépendants et professionnels."},
-    {"slug":"pointe-a-pitre","name":"Pointe-à-Pitre","postalCode":"97110","territory":"Guadeloupe","localIntro":"À Pointe-à-Pitre, cette page regroupe l'intention locale autour des services du quotidien et des missions correspondantes."},
-    {"slug":"fort-de-france","name":"Fort-de-France","postalCode":"97200","territory":"Martinique","localIntro":"À Fort-de-France, iliprestō structure les recherches locales de services et de missions autour de besoins réellement publiés."},
-    {"slug":"le-lamentin-martinique","name":"Le Lamentin","postalCode":"97232","territory":"Martinique","localIntro":"Au Lamentin en Martinique, cette page vise à faciliter la découverte des besoins et compétences disponibles à proximité."},
-    {"slug":"cayenne","name":"Cayenne","postalCode":"97300","territory":"Guyane","localIntro":"À Cayenne, iliprestō prépare un accès local aux annonces de services et aux missions de proximité dès que l'activité réelle le justifie."},
-    {"slug":"angers","name":"Angers","postalCode":"49000","territory":"Pays de la Loire","localIntro":"À Angers, iliprestō organise la découverte locale de services et de missions à partir des besoins réellement présents sur la plateforme."},
-    {"slug":"amiens","name":"Amiens","postalCode":"80000","territory":"Hauts-de-France","localIntro":"À Amiens, cette page rapproche les recherches de services du quotidien des annonces et compétences réellement disponibles à proximité."},
-    {"slug":"brest","name":"Brest","postalCode":"29200","territory":"Bretagne","localIntro":"À Brest, iliprestō structure les recherches locales afin de faire émerger uniquement les services et missions soutenus par une activité réelle."},
-    {"slug":"caen","name":"Caen","postalCode":"14000","territory":"Normandie","localIntro":"À Caen, cette page facilite la découverte de besoins de proximité et de compétences locales lorsque les données de production le justifient."},
-    {"slug":"dijon","name":"Dijon","postalCode":"21000","territory":"Bourgogne-Franche-Comté","localIntro":"À Dijon, iliprestō relie les intentions de recherche locales aux services et missions réellement publiés dans cette zone de proximité."},
-    {"slug":"le-mans","name":"Le Mans","postalCode":"72000","territory":"Pays de la Loire","localIntro":"Au Mans, cette page rassemble les recherches de services et de missions de proximité lorsque l'activité réelle atteint les seuils requis."},
-    {"slug":"poitiers","name":"Poitiers","postalCode":"86000","territory":"Nouvelle-Aquitaine","localIntro":"À Poitiers, iliprestō prépare une visibilité locale fondée sur les annonces et compétences réellement présentes, sans générer de page vide indexable."},
-    {"slug":"reims","name":"Reims","postalCode":"51100","territory":"Grand Est","localIntro":"À Reims, cette page organise l'accès aux services et missions de proximité uniquement lorsque des signaux de production récents sont disponibles."},
-    {"slug":"bordeaux","name":"Bordeaux","postalCode":"33000","postalCodes":["33000","33100","33200","33300","33800"],"territory":"Nouvelle-Aquitaine","localIntro":"À Bordeaux, iliprestō structure la recherche de services et de missions à l'échelle de la ville en tenant compte de ses différents codes postaux."},
-    {"slug":"lille","name":"Lille","postalCode":"59000","postalCodes":["59000","59160","59260","59777","59800"],"territory":"Hauts-de-France","localIntro":"À Lille, cette page regroupe les intentions locales de services et de missions sur l'ensemble des codes postaux rattachés à la commune."},
-    {"slug":"nantes","name":"Nantes","postalCode":"44000","postalCodes":["44000","44100","44200","44300"],"territory":"Pays de la Loire","localIntro":"À Nantes, iliprestō organise une visibilité locale commune aux différents codes postaux, uniquement lorsque l'activité de production est suffisante."},
-    {"slug":"toulouse","name":"Toulouse","postalCode":"31000","postalCodes":["31000","31100","31200","31300","31400","31500"],"territory":"Occitanie","localIntro":"À Toulouse, cette page consolide les besoins et compétences de proximité issus des différents secteurs postaux sans créer de pages locales artificielles."},
-    {"slug":"montpellier","name":"Montpellier","postalCode":"34000","postalCodes":["34000","34070","34080","34090"],"territory":"Occitanie","localIntro":"À Montpellier, iliprestō rassemble la recherche locale de services et de missions sur plusieurs codes postaux tout en conservant des seuils d'indexation stricts."},
-    {"slug":"nice","name":"Nice","postalCode":"06000","postalCodes":["06000","06100","06200","06300"],"territory":"Provence-Alpes-Côte d'Azur","localIntro":"À Nice, cette page couvre les principaux secteurs postaux de la commune et reste hors index tant que les données locales réelles sont insuffisantes."},
-    {"slug":"rennes","name":"Rennes","postalCode":"35000","postalCodes":["35000","35200","35700"],"territory":"Bretagne","localIntro":"À Rennes, iliprestō fédère les recherches de proximité des différents codes postaux dans une seule page locale pilotée par les signaux de production."},
-    {"slug":"strasbourg","name":"Strasbourg","postalCode":"67000","postalCodes":["67000","67100","67200"],"territory":"Grand Est","localIntro":"À Strasbourg, cette page couvre les différents secteurs postaux de la ville sans dupliquer les contenus ni activer l'indexation sans activité suffisante."},
-    {"slug":"grenoble","name":"Grenoble","postalCode":"38000","postalCodes":["38000","38100"],"territory":"Auvergne-Rhône-Alpes","localIntro":"À Grenoble, iliprestō regroupe les recherches de services et de missions des deux principaux codes postaux dans une seule expérience locale cohérente."},
-    {"slug":"rouen","name":"Rouen","postalCode":"76000","postalCodes":["76000","76100"],"territory":"Normandie","localIntro":"À Rouen, cette page rassemble les besoins et compétences de proximité des deux secteurs postaux tout en maintenant le contrôle strict de l'indexation."}
+    {
+      "slug": "les-abymes",
+      "name": "Les Abymes",
+      "postalCode": "97139",
+      "territory": "Guadeloupe",
+      "localIntro": "Aux Abymes, iliprestō aide à rapprocher les besoins de services du quotidien et les personnes disponibles pour y répondre."
+    },
+    {
+      "slug": "baie-mahault",
+      "name": "Baie-Mahault",
+      "postalCode": "97122",
+      "territory": "Guadeloupe",
+      "localIntro": "À Baie-Mahault, les besoins de proximité peuvent concerner aussi bien les particuliers que les indépendants et professionnels."
+    },
+    {
+      "slug": "pointe-a-pitre",
+      "name": "Pointe-à-Pitre",
+      "postalCode": "97110",
+      "territory": "Guadeloupe",
+      "localIntro": "À Pointe-à-Pitre, cette page regroupe l'intention locale autour des services du quotidien et des missions correspondantes."
+    },
+    {
+      "slug": "fort-de-france",
+      "name": "Fort-de-France",
+      "postalCode": "97200",
+      "territory": "Martinique",
+      "localIntro": "À Fort-de-France, iliprestō structure les recherches locales de services et de missions autour de besoins réellement publiés."
+    },
+    {
+      "slug": "le-lamentin-martinique",
+      "name": "Le Lamentin",
+      "postalCode": "97232",
+      "territory": "Martinique",
+      "localIntro": "Au Lamentin en Martinique, cette page vise à faciliter la découverte des besoins et compétences disponibles à proximité."
+    },
+    {
+      "slug": "cayenne",
+      "name": "Cayenne",
+      "postalCode": "97300",
+      "territory": "Guyane",
+      "localIntro": "À Cayenne, iliprestō prépare un accès local aux annonces de services et aux missions de proximité dès que l'activité réelle le justifie."
+    },
+    {
+      "slug": "angers",
+      "name": "Angers",
+      "postalCode": "49000",
+      "territory": "Pays de la Loire",
+      "localIntro": "À Angers, iliprestō organise la découverte locale de services et de missions à partir des besoins réellement présents sur la plateforme."
+    },
+    {
+      "slug": "amiens",
+      "name": "Amiens",
+      "postalCode": "80000",
+      "territory": "Hauts-de-France",
+      "localIntro": "À Amiens, cette page rapproche les recherches de services du quotidien des annonces et compétences réellement disponibles à proximité."
+    },
+    {
+      "slug": "brest",
+      "name": "Brest",
+      "postalCode": "29200",
+      "territory": "Bretagne",
+      "localIntro": "À Brest, iliprestō structure les recherches locales afin de faire émerger uniquement les services et missions soutenus par une activité réelle."
+    },
+    {
+      "slug": "caen",
+      "name": "Caen",
+      "postalCode": "14000",
+      "territory": "Normandie",
+      "localIntro": "À Caen, cette page facilite la découverte de besoins de proximité et de compétences locales lorsque les données de production le justifient."
+    },
+    {
+      "slug": "dijon",
+      "name": "Dijon",
+      "postalCode": "21000",
+      "territory": "Bourgogne-Franche-Comté",
+      "localIntro": "À Dijon, iliprestō relie les intentions de recherche locales aux services et missions réellement publiés dans cette zone de proximité."
+    },
+    {
+      "slug": "le-mans",
+      "name": "Le Mans",
+      "postalCode": "72000",
+      "territory": "Pays de la Loire",
+      "localIntro": "Au Mans, cette page rassemble les recherches de services et de missions de proximité lorsque l'activité réelle atteint les seuils requis."
+    },
+    {
+      "slug": "poitiers",
+      "name": "Poitiers",
+      "postalCode": "86000",
+      "territory": "Nouvelle-Aquitaine",
+      "localIntro": "À Poitiers, iliprestō prépare une visibilité locale fondée sur les annonces et compétences réellement présentes, sans générer de page vide indexable."
+    },
+    {
+      "slug": "reims",
+      "name": "Reims",
+      "postalCode": "51100",
+      "territory": "Grand Est",
+      "localIntro": "À Reims, cette page organise l'accès aux services et missions de proximité uniquement lorsque des signaux de production récents sont disponibles."
+    },
+    {
+      "slug": "bordeaux",
+      "name": "Bordeaux",
+      "postalCode": "33000",
+      "postalCodes": [
+        "33000",
+        "33100",
+        "33200",
+        "33300",
+        "33800"
+      ],
+      "territory": "Nouvelle-Aquitaine",
+      "localIntro": "À Bordeaux, iliprestō structure la recherche de services et de missions à l'échelle de la ville en tenant compte de ses différents codes postaux."
+    },
+    {
+      "slug": "lille",
+      "name": "Lille",
+      "postalCode": "59000",
+      "postalCodes": [
+        "59000",
+        "59160",
+        "59260",
+        "59777",
+        "59800"
+      ],
+      "territory": "Hauts-de-France",
+      "localIntro": "À Lille, cette page regroupe les intentions locales de services et de missions sur l'ensemble des codes postaux rattachés à la commune."
+    },
+    {
+      "slug": "nantes",
+      "name": "Nantes",
+      "postalCode": "44000",
+      "postalCodes": [
+        "44000",
+        "44100",
+        "44200",
+        "44300"
+      ],
+      "territory": "Pays de la Loire",
+      "localIntro": "À Nantes, iliprestō organise une visibilité locale commune aux différents codes postaux, uniquement lorsque l'activité de production est suffisante."
+    },
+    {
+      "slug": "toulouse",
+      "name": "Toulouse",
+      "postalCode": "31000",
+      "postalCodes": [
+        "31000",
+        "31100",
+        "31200",
+        "31300",
+        "31400",
+        "31500"
+      ],
+      "territory": "Occitanie",
+      "localIntro": "À Toulouse, cette page consolide les besoins et compétences de proximité issus des différents secteurs postaux sans créer de pages locales artificielles."
+    },
+    {
+      "slug": "montpellier",
+      "name": "Montpellier",
+      "postalCode": "34000",
+      "postalCodes": [
+        "34000",
+        "34070",
+        "34080",
+        "34090"
+      ],
+      "territory": "Occitanie",
+      "localIntro": "À Montpellier, iliprestō rassemble la recherche locale de services et de missions sur plusieurs codes postaux tout en conservant des seuils d'indexation stricts."
+    },
+    {
+      "slug": "nice",
+      "name": "Nice",
+      "postalCode": "06000",
+      "postalCodes": [
+        "06000",
+        "06100",
+        "06200",
+        "06300"
+      ],
+      "territory": "Provence-Alpes-Côte d'Azur",
+      "localIntro": "À Nice, cette page couvre les principaux secteurs postaux de la commune et reste hors index tant que les données locales réelles sont insuffisantes."
+    },
+    {
+      "slug": "rennes",
+      "name": "Rennes",
+      "postalCode": "35000",
+      "postalCodes": [
+        "35000",
+        "35200",
+        "35700"
+      ],
+      "territory": "Bretagne",
+      "localIntro": "À Rennes, iliprestō fédère les recherches de proximité des différents codes postaux dans une seule page locale pilotée par les signaux de production."
+    },
+    {
+      "slug": "strasbourg",
+      "name": "Strasbourg",
+      "postalCode": "67000",
+      "postalCodes": [
+        "67000",
+        "67100",
+        "67200"
+      ],
+      "territory": "Grand Est",
+      "localIntro": "À Strasbourg, cette page couvre les différents secteurs postaux de la ville sans dupliquer les contenus ni activer l'indexation sans activité suffisante."
+    },
+    {
+      "slug": "grenoble",
+      "name": "Grenoble",
+      "postalCode": "38000",
+      "postalCodes": [
+        "38000",
+        "38100"
+      ],
+      "territory": "Auvergne-Rhône-Alpes",
+      "localIntro": "À Grenoble, iliprestō regroupe les recherches de services et de missions des deux principaux codes postaux dans une seule expérience locale cohérente."
+    },
+    {
+      "slug": "rouen",
+      "name": "Rouen",
+      "postalCode": "76000",
+      "postalCodes": [
+        "76000",
+        "76100"
+      ],
+      "territory": "Normandie",
+      "localIntro": "À Rouen, cette page rassemble les besoins et compétences de proximité des deux secteurs postaux tout en maintenant le contrôle strict de l'indexation."
+    }
   ]
 }
