@@ -11,6 +11,7 @@ import {
   renderPublicProfileHtml,
   renderPublicProfilesSitemap,
   sourceProfileIsPublicEligible,
+  sourceProfilePublicEligibilityReasons,
 } from "./public_profiles_core";
 
 const source = {
@@ -35,6 +36,20 @@ test("public profile projection requires explicit SEO consent and verified data"
   assert.equal(sourceProfileIsPublicEligible(source), true);
   assert.equal(sourceProfileIsPublicEligible({ ...source, seoPublicProfileConsent: false }), false);
   assert.equal(sourceProfileIsPublicEligible({ ...source, description: "Trop court" }), false);
+});
+
+test("public profile eligibility diagnostics are aggregate-safe reason codes", () => {
+  assert.deepEqual(sourceProfilePublicEligibilityReasons(source), []);
+  assert.deepEqual(
+    sourceProfilePublicEligibilityReasons({
+      ...source,
+      seoPublicProfileConsent: false,
+      siretVerified: false,
+      description: "Trop court",
+      city: "",
+    }),
+    ["consent_missing", "siret_unverified", "description_too_short", "city_missing"],
+  );
 });
 
 test("projection contains only SEO-safe public fields", () => {
