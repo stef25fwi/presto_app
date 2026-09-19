@@ -55,6 +55,8 @@ jobs:
         run: node tools/seo/ga4_lot16_contract.test.mjs
       - name: Validate campaign attribution lot 17 tooling
         run: node tools/seo/campaign_attribution_lot17_contract.test.mjs
+      - name: Validate authority and backlink readiness
+        run: node tools/quality/check_seo_authority_readiness.mjs
       - name: Validate registry
         run: node tools/quality/check_seo_acquisition_readiness.test.mjs
       - name: Build readiness report
