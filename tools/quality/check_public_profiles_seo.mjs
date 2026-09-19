@@ -25,8 +25,14 @@ assert.ok(projection.includes('"pro_profiles/{uid}"'), 'Source pro_profiles abse
 assert.ok(projection.includes('"public_service_profiles"'), 'Collection publique séparée absente');
 assert.ok(projection.includes('sourceProfileIsPublicEligible'), 'Gate de consentement/éligibilité absent');
 
-assert.ok(core.includes('seoPublicProfileConsent === true'), 'Consentement explicite non exigé');
-assert.ok(core.includes('siretVerified === true'), 'SIRET vérifié non exigé');
+assert.ok(
+  core.includes('data.seoPublicProfileConsent !== true') && core.includes('"consent_missing"'),
+  'Consentement explicite non exigé',
+);
+assert.ok(
+  core.includes('data.siretVerified !== true') && core.includes('"siret_unverified"'),
+  'SIRET vérifié non exigé',
+);
 assert.ok(core.includes('createHash("sha256")'), 'ID public découplé du Firebase UID absent');
 assert.ok(core.includes('"@type": "ProfilePage"'), 'ProfilePage JSON-LD absent');
 assert.ok(!core.includes('contactEmail:'), 'Email interdit dans la projection publique');
