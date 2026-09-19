@@ -207,6 +207,57 @@ function renderProfilePreviews(intent, activation) {
   return `<section aria-label="Prestataires locaux"><h2>Prestataires disponibles à proximité</h2><p>Profils professionnels vérifiés ayant choisi de rendre leur profil public :</p><ul>${items}</ul></section>`;
 }
 
+
+function formatSignalDate() {
+  const parsed = new Date(String(signals.generatedAt || ''));
+  if (Number.isNaN(parsed.getTime())) return '';
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(parsed);
+}
+
+function pluralizeCount(count, singular, plural = `${singular}s`) {
+  return `${count} ${count > 1 ? plural : singular}`;
+}
+
+function renderLocalStats(intent, service, city, activation) {
+  if (!activation.eligible || !activation.signalsFresh) return '';
+  const sourceDate = formatSignalDate();
+  const windowDays = Number(registry.activationGate.recentWindowDays || 90);
+
+  if (intent.key === 'services') {
+    const total = activation.qualifiedProfiles;
+    const recent = activation.recentProfiles;
+    const totalLabel = total === 1 ? '1 profil public qualifié' : `${total} profils publics qualifiés`;
+    const recentLabel = recent === 1
+      ? '1 profil a été publié ou mis à jour'
+      : `${recent} profils ont été publiés ou mis à jour`;
+    const uniqueCopy = `À ${city.name}, la page ${service.serviceTitle} s’appuie sur ${totalLabel} correspondant à cette catégorie. ${recentLabel} au cours des ${windowDays} derniers jours.`;
+    return `<section aria-label="Statistiques locales réelles"><h2>Disponibilité locale mesurée</h2><p>${escapeHtml(uniqueCopy)}</p><p class="public-status">Données publiques agrégées${sourceDate ? ` le ${escapeHtml(sourceDate)}` : ''}. Aucun volume n’est estimé ou extrapolé.</p></section>`;
+  }
+
+  const total = activation.activeListings;
+  const recent = activation.recentListings;
+  const totalLabel = total === 1 ? '1 annonce publique active' : `${total} annonces publiques actives`;
+  const recentLabel = recent === 1
+    ? '1 annonce a été publiée'
+    : `${recent} annonces ont été publiées`;
+  const uniqueCopy = `À ${city.name}, la catégorie ${service.serviceTitle} compte ${totalLabel}. ${recentLabel} au cours des ${windowDays} derniers jours.`;
+  return `<section aria-label="Statistiques locales réelles"><h2>Activité locale mesurée</h2><p>${escapeHtml(uniqueCopy)}</p><p class="public-status">Données publiques agrégées${sourceDate ? ` le ${escapeHtml(sourceDate)}` : ''}. Aucun volume n’est estimé ou extrapolé.</p></section>`;
+}
+
+function localMarketCopy(intent, service, city, activation) {
+  if (!activation.eligible) return '';
+  const primaryKeyword = String(service.keywords?.[0] || service.serviceTitle);
+  if (intent.key === 'services') {
+    return `Pour une recherche « ${primaryKeyword} » à ${city.name}, iliprestō relie cette page aux profils publics qui ont choisi d’être visibles sur le web et dont la catégorie correspond à ${service.serviceTitle}. Le contenu local dépend donc des profils réellement publiés dans ${city.territory}, et non d’un texte générique dupliqué entre villes.`;
+  }
+  return `Pour une recherche de mission ${shortMissionLabel(service)} à ${city.name}, iliprestō relie cette page aux annonces publiques réellement classées dans ${service.serviceTitle}. Le contenu local évolue avec les besoins publiés dans ${city.territory}, sans transformer ces missions en offres d’emploi salarié.`;
+}
+
 function renderPage(intent, service, city) {
   const key = pageKey(intent, service, city);
   const activation = activationFor(intent, key, city);
@@ -227,6 +278,8 @@ function renderPage(intent, service, city) {
     : 'Cette page répond aux recherches de personnes qui souhaitent repérer des besoins locaux correspondant à leurs compétences. Une mission de service n’est pas automatiquement une offre d’emploi salarié.';
   const listingSection = renderListingPreviews(intent, activation);
   const profileSection = renderProfilePreviews(intent, activation);
+  const localStatsSection = renderLocalStats(intent, service, city, activation);
+  const localMarket = localMarketCopy(intent, service, city, activation);
   const oppositeLink = oppositeActivation.eligible
     ? `<a href="${escapeHtml(oppositeRoute)}">${oppositeIntent.key === 'services' ? 'Chercher ce service' : 'Voir les missions correspondantes'}</a>`
     : '';
@@ -338,6 +391,8 @@ function renderPage(intent, service, city) {
         <article><h2>Données réelles avant indexation</h2><p>L’indexation n’est activée qu’après atteinte du seuil minimal de signaux réels, récents et adaptés à l’intention de recherche.</p></article>
         <article><h2>Échange direct</h2><p>iliprestō facilite la mise en relation. La plateforme n’est ni employeur, ni agence d’intérim, et ne garantit ni mission, ni revenu, ni délai de réponse.</p></article>
       </section>
+      ${localStatsSection}
+      ${localMarket ? `<section aria-label="Contexte local"><h2>${escapeHtml(service.serviceTitle)} à ${escapeHtml(city.name)}</h2><p>${escapeHtml(localMarket)}</p></section>` : ''}
       ${profileSection}
       ${listingSection}
       <h2>Recherches associées</h2>
