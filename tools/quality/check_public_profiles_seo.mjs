@@ -11,6 +11,8 @@ const generator = fs.readFileSync('tools/seo/generate_programmatic_local_pages.m
 const index = fs.readFileSync('functions/src/index.ts', 'utf8');
 const firebase = JSON.parse(fs.readFileSync('firebase.json', 'utf8'));
 const robots = fs.readFileSync('web/robots.txt', 'utf8');
+const activationScript = fs.readFileSync('functions/scripts/backfill_public_service_profiles.mjs', 'utf8');
+const activationWorkflow = fs.readFileSync('.github/workflows/seo-public-profile-activation.yml', 'utf8');
 
 assert.ok(ui.includes("'seoPublicProfileConsent': _seoPublicProfileConsent"), 'Consentement SEO profil non persisté');
 assert.ok(ui.includes('seoPublicProfileConsentVersion'), 'Version du consentement SEO absente');
@@ -23,8 +25,14 @@ assert.ok(projection.includes('"pro_profiles/{uid}"'), 'Source pro_profiles abse
 assert.ok(projection.includes('"public_service_profiles"'), 'Collection publique séparée absente');
 assert.ok(projection.includes('sourceProfileIsPublicEligible'), 'Gate de consentement/éligibilité absent');
 
-assert.ok(core.includes('seoPublicProfileConsent === true'), 'Consentement explicite non exigé');
-assert.ok(core.includes('siretVerified === true'), 'SIRET vérifié non exigé');
+assert.ok(
+  core.includes('data.seoPublicProfileConsent !== true') && core.includes('"consent_missing"'),
+  'Consentement explicite non exigé',
+);
+assert.ok(
+  core.includes('data.siretVerified !== true') && core.includes('"siret_unverified"'),
+  'SIRET vérifié non exigé',
+);
 assert.ok(core.includes('createHash("sha256")'), 'ID public découplé du Firebase UID absent');
 assert.ok(core.includes('"@type": "ProfilePage"'), 'ProfilePage JSON-LD absent');
 assert.ok(!core.includes('contactEmail:'), 'Email interdit dans la projection publique');
@@ -68,5 +76,35 @@ assert.ok(
   robots.includes('Sitemap: https://ilipresto.fr/sitemap-prestataires.xml'),
   'Sitemap prestataires absent de robots.txt',
 );
+
+assert.ok(
+  core.includes('sourceProfilePublicEligibilityReasons'),
+  'Diagnostics agrégés des profils source absents',
+);
+assert.ok(
+  activationScript.includes('sourceProfilePublicEligibilityReasons'),
+  'Backfill non aligné sur le gate public canonique',
+);
+assert.ok(
+  activationScript.includes('seoPublicProfileConsent'),
+  'Projection consentie non auditée dans le backfill',
+);
+assert.ok(
+  !activationScript.includes('seoPublicProfileConsent: true'),
+  'Le backfill ne doit jamais forcer le consentement public',
+);
+assert.ok(
+  activationScript.includes('containsProfileIds: false'),
+  'Garantie de rapport sans identifiant absente',
+);
+assert.ok(
+  activationWorkflow.includes('ACTIVATE_CONSENTED_PROFILES'),
+  'Confirmation explicite du mode apply absente',
+);
+assert.ok(
+  activationWorkflow.includes('mode == \'apply\''),
+  'Garde-fou apply du workflow absent',
+);
+
 
 console.log('SEO profils publics: consentement, confidentialité, SSR, sitemap et activation locale validés.');
