@@ -114,6 +114,7 @@ for (const intent of registry.intents) {
       assert.ok(description && description.length >= 110 && description.length <= 180, `${route}: description invalide`);
       assert.ok(html.includes(`<link rel="canonical" href="${canonical}">`), `${route}: canonical absente`);
       assert.ok(html.includes('aria-label="Fil d’Ariane"'), `${route}: fil d’Ariane absent`);
+      assert.ok(html.includes('"@type":"CollectionPage"'), `${route}: CollectionPage JSON-LD absent`);
       assert.ok(html.includes('"@type":"Service"'), `${route}: Service JSON-LD absent`);
       assert.ok(html.includes('"@type":"BreadcrumbList"'), `${route}: BreadcrumbList absent`);
       assert.ok(!/"@type"\s*:\s*"JobPosting"/.test(html), `${route}: JobPosting interdit`);
