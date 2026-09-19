@@ -55,7 +55,7 @@ Recherche : `grep -rhoE "secrets\.[A-Z_0-9]+" .github/workflows/*.yml`.
 | `IOS_DIST_CERT_P12_B64` | Certificat de distribution iOS (base64) | À renseigner | À renseigner |
 | `IOS_DIST_CERT_PASSWORD` | Mot de passe du certificat iOS | À renseigner | À renseigner |
 | `IOS_PROVISIONING_PROFILE_B64` | Profil de provisionnement iOS (base64) | À renseigner | À renseigner |
-| `IOS_TEAM_ID` | Identifiant d'équipe Apple Developer | À renseigner | N/A — identifiant, pas un secret rotatif |
+| `IOS_TEAM_ID` | Identifiant d'équipe Apple Developer | Préférer une variable GitHub Actions dans l’environnement `recaptcha`; fallback secret/profil/certificat supporté | N/A — identifiant, pas un secret rotatif |
 | `APPSTORE_API_KEY_ID` | Clé API App Store Connect | À renseigner | À renseigner |
 | `APPSTORE_API_ISSUER_ID` | Émetteur de la clé API App Store Connect | À renseigner | N/A — identifiant, pas un secret rotatif |
 | `APPSTORE_API_PRIVATE_KEY` | Clé privée API App Store Connect | À renseigner | À renseigner |
