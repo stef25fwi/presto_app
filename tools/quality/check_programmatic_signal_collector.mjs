@@ -32,11 +32,18 @@ assert.ok(
   'Projection SEO minimale du collecteur absente',
 );
 assert.ok(source.includes('const SAFE_PUBLIC_ID = /^[A-Za-z0-9_-]{6,128}$/;'), 'Validation identifiant public absente');
-assert.ok(source.includes('title.length >= 12'), 'Seuil qualité title annonce absent');
-assert.ok(source.includes('description.length >= 80'), 'Seuil qualité description annonce absent');
+assert.ok(source.includes("reasons.push('title_too_short')"), 'Diagnostic title_too_short absent');
+assert.ok(source.includes("reasons.push('description_too_short')"), 'Diagnostic description_too_short absent');
 assert.ok(source.includes('listingPreviews: []'), 'Prévisualisations annonces locales absentes');
 assert.ok(source.includes('MAX_PREVIEWS_PER_PAGE = 5'), 'Limite des prévisualisations absente');
 assert.ok(source.includes('seoQualifiedPublicListings'), 'Compteur annonces SEO qualifiées absent');
+assert.ok(source.includes("incrementReason(listingRejectionReasons, 'service_unmapped')"), 'Diagnostic service_unmapped annonce absent');
+assert.ok(source.includes("incrementReason(listingRejectionReasons, 'city_unmapped')"), 'Diagnostic city_unmapped annonce absent');
+assert.ok(source.includes("incrementReason(profileRejectionReasons, 'seo_eligible_false')"), 'Diagnostic seo_eligible_false profil absent');
+assert.ok(source.includes("incrementReason(profileRejectionReasons, 'not_verified')"), 'Diagnostic not_verified profil absent');
+assert.ok(source.includes("diagnostics: {"), 'Bloc diagnostics absent du rapport');
+assert.ok(source.includes('rejectionReasons: sortedReasonCounts(listingRejectionReasons)'), 'Causes de rejet annonces absentes du rapport');
+assert.ok(source.includes('rejectionReasons: sortedReasonCounts(profileRejectionReasons)'), 'Causes de rejet profils absentes du rapport');
 assert.ok(!source.includes("'phone'"), 'Téléphone interdit dans la projection SEO locale');
 assert.ok(!source.includes("'email'"), 'Email interdit dans la projection SEO locale');
 assert.ok(!source.includes("'ownerId'"), 'ownerId interdit dans la projection SEO locale');
@@ -48,4 +55,4 @@ assert.ok(
 assert.ok(!source.includes("const safeFallback = !hasFlag('--strict')"), 'Le fallback implicite par défaut est interdit');
 assert.ok(source.includes('if (!allowFallback) throw error;'), 'Une erreur Firestore doit faire échouer le collecteur par défaut');
 
-console.log('Collecteur de signaux SEO production: annonces publiques qualifiées, projection sans PII, API Admin modulaire et mode strict validés.');
+console.log('Collecteur de signaux SEO production: qualification, diagnostics de rejet sans PII, API Admin modulaire et mode strict validés.');
