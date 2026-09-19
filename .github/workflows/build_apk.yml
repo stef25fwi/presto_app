@@ -38,7 +38,7 @@ jobs:
         run: flutter analyze --fatal-infos
 
       - name: Setup Java 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
           java-version: '17'
