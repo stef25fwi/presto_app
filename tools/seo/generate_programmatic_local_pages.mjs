@@ -341,6 +341,203 @@ function renderPage(intent, service, city) {
 </html>`;
 }
 
+
+function hubRoute(intent, service = null) {
+  return service
+    ? `${intent.routePrefix}/${service.slug}/`
+    : `${intent.routePrefix}/`;
+}
+
+function eligibleCitiesFor(intent, service) {
+  return registry.cities.filter((city) =>
+    activationFor(intent, pageKey(intent, service, city), city).eligible);
+}
+
+function hubTitle(intent, service = null) {
+  if (!service) {
+    return intent.key === 'services'
+      ? 'Services près de chez vous | iliprestō'
+      : 'Missions de services près de chez vous | iliprestō';
+  }
+  return intent.key === 'services'
+    ? `${service.serviceTitle} près de chez vous | iliprestō`
+    : `Missions ${shortMissionLabel(service)} près de chez vous | iliprestō`;
+}
+
+function hubDescription(intent, service = null) {
+  if (!service) {
+    return intent.key === 'services'
+      ? 'Explorez les catégories de services sur iliprestō et accédez aux pages locales activées uniquement lorsque des profils publics réels et récents sont disponibles.'
+      : 'Explorez les catégories de missions sur iliprestō et accédez aux pages locales activées uniquement lorsque des annonces publiques réelles et récentes sont disponibles.';
+  }
+  return intent.key === 'services'
+    ? `Explorez ${service.serviceLower} sur iliprestō et consultez uniquement les pages locales disposant de profils publics réels, qualifiés et récents.`
+    : `Explorez les missions ${shortMissionLabel(service)} sur iliprestō et consultez uniquement les pages locales disposant d’annonces publiques réelles et récentes.`;
+}
+
+function renderIntentHub(intent) {
+  const route = hubRoute(intent);
+  const canonical = `${registry.baseUrl}${route}`;
+  const title = hubTitle(intent);
+  const description = hubDescription(intent);
+  const serviceRows = registry.services.map((service) => {
+    const childRoute = hubRoute(intent, service);
+    const activeCities = eligibleCitiesFor(intent, service).length;
+    return `<li><a href="${escapeHtml(childRoute)}">${escapeHtml(service.serviceTitle)}</a><span> — ${activeCities > 0 ? `${activeCities} zone${activeCities > 1 ? 's' : ''} locale${activeCities > 1 ? 's' : ''} active${activeCities > 1 ? 's' : ''}` : 'pages locales en préparation'}</span></li>`;
+  }).join('');
+  const eligible = registry.services.some((service) => eligibleCitiesFor(intent, service).length > 0);
+  const robots = eligible ? registry.activationGate.activeRobots : registry.activationGate.inactiveRobots;
+  const counterpart = registry.intents.find((candidate) => candidate.key !== intent.key);
+  const graph = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        '@id': `${canonical}#webpage`,
+        url: canonical,
+        name: title,
+        description,
+        inLanguage: 'fr-FR',
+        isPartOf: {'@id': `${registry.baseUrl}/#website`},
+        publisher: {'@id': `${registry.baseUrl}/#organization`},
+        breadcrumb: {'@id': `${canonical}#breadcrumb`},
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${canonical}#breadcrumb`,
+        itemListElement: [
+          {'@type': 'ListItem', position: 1, name: 'Accueil', item: `${registry.baseUrl}/`},
+          {'@type': 'ListItem', position: 2, name: intent.key === 'services' ? 'Services' : 'Missions', item: canonical},
+        ],
+      },
+    ],
+  };
+  const lead = intent.key === 'services'
+    ? 'Choisissez un type de service. Les pages locales ne sont ouvertes à l’indexation que lorsqu’elles reposent sur des profils publics réels, qualifiés et récents.'
+    : 'Choisissez un type de mission. Les pages locales ne sont ouvertes à l’indexation que lorsqu’elles reposent sur des annonces publiques réelles, complètes et récentes.';
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <base href="/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="${escapeHtml(description)}">
+  <meta name="robots" content="${escapeHtml(robots)}">
+  <meta name="theme-color" content="#FF6600">
+  <link rel="canonical" href="${escapeHtml(canonical)}">
+  <link rel="alternate" hreflang="fr-FR" href="${escapeHtml(canonical)}">
+  <link rel="stylesheet" href="/public-pages.css">
+  <title>${escapeHtml(title)}</title>
+  <script type="application/ld+json">${escapeJson(graph)}</script>
+</head>
+<body class="public-page">
+  <div class="public-shell">
+    <header><a class="public-brand" href="/" aria-label="Accueil iliprestō"><img src="/assets/assets/images/ilipresto_splash_logo.webp" alt="Logo iliprestō" width="54" height="54"><span>iliprestō</span></a></header>
+    <nav class="public-breadcrumb" aria-label="Fil d’Ariane"><ol><li><a href="/">Accueil</a></li><li aria-current="page">${intent.key === 'services' ? 'Services' : 'Missions'}</li></ol></nav>
+    <main class="public-card">
+      <span class="public-kicker">France · Guadeloupe · Martinique · Guyane</span>
+      <h1>${intent.key === 'services' ? 'Services près de chez vous' : 'Missions de services près de chez vous'}</h1>
+      <p class="public-lead">${escapeHtml(lead)}</p>
+      <section aria-label="Catégories"><h2>Explorer les catégories</h2><ul>${serviceRows}</ul></section>
+      <p class="public-status">${eligible ? 'Ce hub référence au moins une page locale appuyée sur des données de production suffisantes.' : 'Ce hub reste hors index tant qu’aucune page locale ne dispose de signaux de production suffisants.'}</p>
+      <nav class="public-links" aria-label="Explorer iliprestō">
+        <a href="${escapeHtml(hubRoute(counterpart))}">${counterpart.key === 'services' ? 'Voir les services' : 'Voir les missions'}</a>
+        <a href="/guadeloupe">Guadeloupe</a>
+        <a href="/martinique">Martinique</a>
+        <a href="/guyane">Guyane</a>
+        <a href="/trouver-une-personne-disponible/">Trouver une personne disponible</a>
+        <a href="/guides/comment-fonctionne-ilipresto">Comment fonctionne iliprestō ?</a>
+      </nav>
+    </main>
+    <footer class="public-footer"><span>ilipresto.fr</span><a href="/mentions-legales">Mentions légales</a><a href="/confidentialite">Confidentialité</a><a href="/cgu">Conditions d’utilisation</a></footer>
+  </div>
+</body>
+</html>`;
+}
+
+function renderServiceHub(intent, service) {
+  const route = hubRoute(intent, service);
+  const canonical = `${registry.baseUrl}${route}`;
+  const title = hubTitle(intent, service);
+  const description = hubDescription(intent, service);
+  const activeCities = eligibleCitiesFor(intent, service);
+  const eligible = activeCities.length > 0;
+  const robots = eligible ? registry.activationGate.activeRobots : registry.activationGate.inactiveRobots;
+  const cityItems = activeCities.length > 0
+    ? activeCities.map((city) =>
+      `<li><a href="${escapeHtml(routeFor(intent, service, city))}">${escapeHtml(service.serviceTitle)} à ${escapeHtml(city.name)}</a> — ${escapeHtml(city.territory)}</li>`).join('')
+    : '<li>Aucune page locale n’est encore indexable pour cette catégorie.</li>';
+  const counterpart = registry.intents.find((candidate) => candidate.key !== intent.key);
+  const graph = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        '@id': `${canonical}#webpage`,
+        url: canonical,
+        name: title,
+        description,
+        inLanguage: 'fr-FR',
+        isPartOf: {'@id': `${registry.baseUrl}/#website`},
+        publisher: {'@id': `${registry.baseUrl}/#organization`},
+        breadcrumb: {'@id': `${canonical}#breadcrumb`},
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${canonical}#breadcrumb`,
+        itemListElement: [
+          {'@type': 'ListItem', position: 1, name: 'Accueil', item: `${registry.baseUrl}/`},
+          {'@type': 'ListItem', position: 2, name: intent.key === 'services' ? 'Services' : 'Missions', item: `${registry.baseUrl}${hubRoute(intent)}`},
+          {'@type': 'ListItem', position: 3, name: service.serviceTitle, item: canonical},
+        ],
+      },
+    ],
+  };
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <base href="/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="${escapeHtml(description)}">
+  <meta name="robots" content="${escapeHtml(robots)}">
+  <meta name="theme-color" content="#FF6600">
+  <link rel="canonical" href="${escapeHtml(canonical)}">
+  <link rel="alternate" hreflang="fr-FR" href="${escapeHtml(canonical)}">
+  <link rel="stylesheet" href="/public-pages.css">
+  <title>${escapeHtml(title)}</title>
+  <script type="application/ld+json">${escapeJson(graph)}</script>
+</head>
+<body class="public-page">
+  <div class="public-shell">
+    <header><a class="public-brand" href="/" aria-label="Accueil iliprestō"><img src="/assets/assets/images/ilipresto_splash_logo.webp" alt="Logo iliprestō" width="54" height="54"><span>iliprestō</span></a></header>
+    <nav class="public-breadcrumb" aria-label="Fil d’Ariane"><ol><li><a href="/">Accueil</a></li><li><a href="${escapeHtml(hubRoute(intent))}">${intent.key === 'services' ? 'Services' : 'Missions'}</a></li><li aria-current="page">${escapeHtml(service.serviceTitle)}</li></ol></nav>
+    <main class="public-card">
+      <span class="public-kicker">${intent.key === 'services' ? 'Trouver une compétence' : 'Trouver un besoin local'}</span>
+      <h1>${intent.key === 'services' ? escapeHtml(service.serviceTitle) + ' près de chez vous' : 'Missions ' + escapeHtml(shortMissionLabel(service)) + ' près de chez vous'}</h1>
+      <p class="public-lead">${escapeHtml(description)}</p>
+      <section aria-label="Zones locales"><h2>Pages locales disponibles</h2><ul>${cityItems}</ul></section>
+      <h2>Recherches associées</h2>
+      <ul>${service.keywords.map((keyword) => `<li>${escapeHtml(keyword)}</li>`).join('')}</ul>
+      <p class="public-status">${eligible ? `${activeCities.length} page${activeCities.length > 1 ? 's' : ''} locale${activeCities.length > 1 ? 's' : ''} dispose${activeCities.length > 1 ? 'nt' : ''} de signaux réels suffisants pour l’indexation.` : 'Cette catégorie reste hors index tant qu’aucune zone locale ne dispose de signaux réels suffisants.'}</p>
+      <nav class="public-links" aria-label="Explorer iliprestō">
+        <a href="${escapeHtml(hubRoute(intent))}">Toutes les catégories</a>
+        <a href="${escapeHtml(hubRoute(counterpart, service))}">${counterpart.key === 'services' ? 'Chercher ce service' : 'Voir les missions correspondantes'}</a>
+        <a href="/guadeloupe">Guadeloupe</a>
+        <a href="/martinique">Martinique</a>
+        <a href="/guyane">Guyane</a>
+        <a href="/guides/comment-fonctionne-ilipresto">Comment fonctionne iliprestō ?</a>
+        <a href="/guides/creer-micro-entreprise-services/">Créer une activité de services</a>
+      </nav>
+    </main>
+    <footer class="public-footer"><span>ilipresto.fr — ${escapeHtml(service.serviceTitle)}</span><a href="/mentions-legales">Mentions légales</a><a href="/confidentialite">Confidentialité</a><a href="/cgu">Conditions d’utilisation</a></footer>
+  </div>
+</body>
+</html>`;
+}
+
 const generated = [];
 for (const intent of registry.intents) {
   for (const service of registry.services) {
@@ -355,6 +552,23 @@ for (const intent of registry.intents) {
   }
 }
 
+for (const intent of registry.intents) {
+  const intentRoute = hubRoute(intent);
+  const intentOutput = path.join('web', intentRoute, 'index.html');
+  fs.mkdirSync(path.dirname(intentOutput), {recursive: true});
+  fs.writeFileSync(intentOutput, renderIntentHub(intent));
+  const intentEligible = registry.services.some((service) => eligibleCitiesFor(intent, service).length > 0);
+  generated.push({route: intentRoute, eligible: intentEligible});
+
+  for (const service of registry.services) {
+    const serviceRoute = hubRoute(intent, service);
+    const serviceOutput = path.join('web', serviceRoute, 'index.html');
+    fs.mkdirSync(path.dirname(serviceOutput), {recursive: true});
+    fs.writeFileSync(serviceOutput, renderServiceHub(intent, service));
+    generated.push({route: serviceRoute, eligible: eligibleCitiesFor(intent, service).length > 0});
+  }
+}
+
 const activeUrls = generated
   .filter((page) => page.eligible)
   .map((page) => `  <url>\n    <loc>${registry.baseUrl}${page.route}</loc>\n    <changefreq>daily</changefreq>\n  </url>`)
@@ -365,4 +579,4 @@ fs.writeFileSync(
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${activeUrls}${activeUrls ? '\n' : ''}</urlset>\n`,
 );
 
-console.log(`SEO local: ${generated.length} pages générées, ${generated.filter((page) => page.eligible).length} indexables.`);
+console.log(`SEO local + hubs: ${generated.length} pages générées, ${generated.filter((page) => page.eligible).length} indexables.`);
