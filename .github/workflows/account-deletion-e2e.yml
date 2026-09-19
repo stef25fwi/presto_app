@@ -1,0 +1,58 @@
+name: Account deletion E2E
+
+on:
+  pull_request:
+    paths:
+      - "functions/src/modules/auth/account_deletion.ts"
+      - "functions/src/modules/auth/account_deletion_cleanup.ts"
+      - "functions/scripts/account_deletion_e2e.cjs"
+      - "firebase.account-deletion.json"
+      - "lib/pages/account/account_security_page.dart"
+      - "lib/pages/account/delete_account_page.dart"
+      - "lib/pages/legal/account_deletion_info_page.dart"
+      - "test/pages/account/account_security_page_coverage_test.dart"
+      - "test/pages/account/delete_account_page_coverage_test.dart"
+      - ".github/workflows/account-deletion-e2e.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  account-deletion-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: functions
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Setup Java for Firebase emulators
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install Functions dependencies
+        run: npm ci
+
+      - name: Compile Functions
+        run: npm run build
+
+      - name: Run account deletion E2E on demo emulators
+        run: >-
+          npx --yes firebase-tools@15.23.0 emulators:exec
+          --project demo-ilipresto-account-deletion
+          --config ../firebase.account-deletion.json
+          --only auth,firestore,storage
+          "node scripts/account_deletion_e2e.cjs"

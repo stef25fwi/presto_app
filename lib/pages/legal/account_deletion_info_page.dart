@@ -93,10 +93,14 @@ class AccountDeletionInfoPage extends StatelessWidget {
                             '1. Ouvrez iliprestō et connectez-vous.\n'
                             '2. Allez dans Compte, puis Sécurité du compte.\n'
                             '3. Choisissez Supprimer mon compte.\n'
-                            '4. Confirmez votre identité (mot de passe, ou '
-                            'reconnexion Google ou Apple).\n\n'
-                            'La demande est enregistrée immédiatement après '
-                            'confirmation.',
+                            '4. Confirmez votre identité : mot de passe ou '
+                            'réauthentification Google, Apple ou Facebook.\n'
+                            '5. Tapez SUPPRIMER et confirmez la suppression '
+                            'définitive.\n\n'
+                            'Pour un compte Apple, iliprestō révoque également '
+                            'le jeton Sign in with Apple avant l’effacement. '
+                            'L’effacement actif est déclenché immédiatement '
+                            'après confirmation.',
                       ),
                       const SizedBox(height: 12),
                       _Card(
@@ -106,13 +110,17 @@ class AccountDeletionInfoPage extends StatelessWidget {
                             ? 'Écrivez à l’adresse de contact indiquée dans les '
                                 'mentions légales, depuis l’adresse e-mail du '
                                 'compte, avec pour objet « Suppression de '
-                                'compte ». La demande est traitée dans un délai '
-                                'de 30 jours.'
+                                'compte ». Une vérification d’identité '
+                                'proportionnée peut être demandée. La demande '
+                                'est traitée dans les meilleurs délais et au '
+                                'plus tard dans le délai légal applicable.'
                             : 'Écrivez à $email depuis l’adresse e-mail du '
                                 'compte, avec pour objet « Suppression de '
                                 'compte ». Nous vérifions que la demande '
-                                'provient bien du titulaire, puis la traitons '
-                                'dans un délai de 30 jours.',
+                                'provient bien du titulaire lorsque cela est '
+                                'nécessaire, puis la traitons dans les meilleurs '
+                                'délais et au plus tard dans le délai légal '
+                                'applicable.',
                         actionLabel: email.isEmpty ? null : 'Écrire à $email',
                         onAction: email.isEmpty
                             ? null
@@ -121,46 +129,65 @@ class AccountDeletionInfoPage extends StatelessWidget {
                                     scheme: 'mailto',
                                     path: email,
                                     queryParameters: const <String, String>{
-                                      'subject': 'Suppression de compte',
+                                      'subject':
+                                          'Suppression de compte iliprestō',
                                     },
                                   ),
                                 ),
                       ),
                       const SizedBox(height: 12),
                       const _Card(
-                        title: 'Données supprimées',
+                        title: 'Données supprimées ou désassociées',
                         icon: Icons.delete_outline_rounded,
                         body:
-                            '• Le compte d’authentification et ses moyens de '
-                            'connexion.\n'
-                            '• Le profil : nom, photo, téléphone, ville et code '
-                            'postal, préférences.\n'
-                            '• Les annonces publiées et leurs photos.\n'
-                            '• Les conversations et les messages envoyés.\n'
-                            '• Les enregistrements audio et les documents '
-                            'téléversés.\n'
-                            '• Les jetons de notification de vos appareils.',
+                            '• Le compte Firebase Authentication et ses moyens '
+                            'de connexion.\n'
+                            '• Le profil : nom, photo, téléphone, ville, code '
+                            'postal et préférences.\n'
+                            '• Les données de vérification téléphone et SIRET '
+                            'qui ne doivent pas être conservées pour un motif '
+                            'légal ou de sécurité.\n'
+                            '• Les photos et fichiers des annonces, brouillons '
+                            'et pièces jointes.\n'
+                            '• Les avis liés au compte.\n'
+                            '• Les messages envoyés par le compte dans les '
+                            'conversations actives ; la conversation est '
+                            'anonymisée pour les autres participants.\n'
+                            '• Les enregistrements audio temporaires.\n'
+                            '• Les jetons et préférences de notification.',
                       ),
                       const SizedBox(height: 12),
                       const _Card(
-                        title: 'Données conservées après suppression',
+                        title: 'Données pouvant être conservées',
                         icon: Icons.schedule_rounded,
                         body:
-                            'Certaines données sont conservées le temps imposé '
-                            'par nos obligations légales ou par la sécurité du '
-                            'service, puis supprimées :\n\n'
-                            '• Journaux techniques et de notification : 90 '
-                            'jours.\n'
-                            '• Journaux d’envoi d’e-mails : 180 jours.\n'
-                            '• Journaux de modération et d’administration : 1 '
-                            'an.\n'
-                            '• Annonces retirées, à des fins de preuve en cas '
-                            'de litige : 1 an.\n'
+                            'Une conservation résiduelle n’est possible que '
+                            'pour une finalité déterminée : obligation légale, '
+                            'sécurité, prévention de la fraude, modération ou '
+                            'gestion d’un litige. L’accès est alors limité et '
+                            'les données sont supprimées ou anonymisées à '
+                            'l’issue de la durée prévue.\n\n'
+                            '• Journaux techniques courants et notifications : '
+                            'jusqu’à 90 jours.\n'
+                            '• Journaux d’envoi d’e-mails : jusqu’à 180 jours.\n'
+                            '• Journaux de sécurité, modération et '
+                            'administration : jusqu’à 12 mois, sauf incident '
+                            'ou contentieux documenté.\n'
+                            '• Métadonnées minimales d’une annonce retirée : '
+                            'jusqu’à 12 mois pour la preuve et les litiges ; '
+                            'les fichiers publiés sont supprimés.\n'
+                            '• Demandes de support et signalements : jusqu’à '
+                            '3 ans après clôture lorsqu’une conservation est '
+                            'nécessaire à la preuve ou au suivi.\n'
                             '• Pièces comptables et factures, lorsqu’il en '
-                            'existe : 10 ans.\n\n'
-                            'Les messages déjà reçus par vos correspondants '
-                            'restent visibles dans leur propre boîte, sans '
-                            'votre profil.',
+                            'existe : 10 ans.\n'
+                            '• Statistiques irréversiblement anonymisées : '
+                            'elles peuvent subsister car elles ne permettent '
+                            'plus d’identifier un utilisateur.\n\n'
+                            'Les messages écrits par les autres participants '
+                            'restent dans leur conversation. Les messages '
+                            'envoyés par le compte supprimé sont retirés du '
+                            'parcours actif.',
                       ),
                       const SizedBox(height: 20),
                       FilledButton.icon(
@@ -180,8 +207,9 @@ class AccountDeletionInfoPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        'Ce bouton demande une connexion : il ouvre le parcours '
-                        'de suppression dans l’application.',
+                        'Ce bouton ouvre le parcours authentifié de suppression. '
+                        'Si vous n’avez plus accès à l’application, utilisez '
+                        'directement la demande par e-mail ci-dessus.',
                         style: TextStyle(
                           color: _muted,
                           fontSize: 12.5,

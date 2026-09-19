@@ -177,12 +177,11 @@ class _AccountSecurityPageState extends State<AccountSecurityPage> {
           ListTile(
             leading: const Icon(Icons.delete_forever, color: Colors.red),
             title: const Text('Supprimer mon compte'),
+            subtitle: const Text(
+              'Accessible même si l’adresse e-mail n’a pas encore été vérifiée.',
+            ),
             textColor: Colors.red,
-            onTap: () async {
-              final allowed = await AuthGuard.requireVerifiedEmail(context);
-              if (!allowed) return;
-              if (!context.mounted) return;
-
+            onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const DeleteAccountPage()),
               );
