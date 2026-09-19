@@ -25,6 +25,8 @@ jobs:
         run: node tools/seo/generate_programmatic_local_pages.mjs
       - name: Validate programmatic local SEO
         run: node tools/quality/check_programmatic_local_seo.mjs
+      - name: Validate service and mission hubs
+        run: node tools/quality/check_programmatic_hubs.mjs
       - name: Test positive local SEO activation
         run: node tools/seo/programmatic_local_activation_contract.test.mjs
       - name: Test multi-postal local SEO rendering
