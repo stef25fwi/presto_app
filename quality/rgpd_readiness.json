@@ -10,7 +10,7 @@
       "evidence": [
         "lib/features/operating_mode/legal_documents.dart",
         "lib/pages/legal_info_page.dart",
-        "web/confidentialite/index.html",
+        "web/confidentialite.html",
         "docs/privacy/STORE_DATA_INVENTORY.md"
       ]
     },
@@ -25,7 +25,7 @@
       "title": "Suppression de compte et orchestration serveur",
       "status": "pending",
       "evidence": [
-        "web/suppression-compte/index.html"
+        "web/suppression-compte.html"
       ]
     },
     {

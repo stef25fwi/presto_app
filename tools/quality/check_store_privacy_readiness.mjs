@@ -124,7 +124,7 @@ requireMarkers('docs/deployment/appstore-privacy-declarations.md', [
   'https://ilipresto.fr/confidentialite',
 ]);
 
-requireMarkers('web/confidentialite/index.html', [
+requireMarkers('web/confidentialite.html', [
   'Politique de confidentialité iliprestō',
   'SIRET',
   'Firebase App Check',
@@ -134,12 +134,44 @@ requireMarkers('web/confidentialite/index.html', [
   '/suppression-compte',
 ]);
 
-requireMarkers('web/suppression-compte/index.html', [
+requireMarkers('web/suppression-compte.html', [
   'Supprimer votre compte iliprestō',
   'Sans passer par l’application',
   'contact@ilipresto.fr',
   '/confidentialite',
 ]);
+
+
+const firebaseRaw = read('firebase.json');
+if (firebaseRaw) {
+  try {
+    const firebase = JSON.parse(firebaseRaw);
+    for (const target of ['production', 'mirror']) {
+      const hosting = firebase.hosting?.find((entry) => entry.target === target);
+      if (!hosting) {
+        failures.push(`firebase.json: target ${target} absent`);
+        continue;
+      }
+      const rewrites = hosting.rewrites || [];
+      const catchAll = rewrites.findIndex((entry) => entry.source === '**');
+      for (const [source, destination] of [
+        ['/confidentialite', '/confidentialite.html'],
+        ['/suppression-compte', '/suppression-compte.html'],
+      ]) {
+        const index = rewrites.findIndex(
+          (entry) => entry.source === source && entry.destination === destination,
+        );
+        if (index < 0) {
+          failures.push(`firebase.json: ${target} rewrite ${source} -> ${destination} absent`);
+        } else if (catchAll >= 0 && index > catchAll) {
+          failures.push(`firebase.json: ${target} rewrite ${source} doit précéder le catch-all`);
+        }
+      }
+    }
+  } catch (error) {
+    failures.push(`firebase.json: invalid JSON: ${error.message}`);
+  }
+}
 
 requireMarkers('android/app/src/main/AndroidManifest.xml', [
   'firebase_analytics_collection_enabled',

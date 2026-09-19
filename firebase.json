@@ -335,6 +335,14 @@
           }
         },
         {
+          "source": "/suppression-compte",
+          "destination": "/suppression-compte.html"
+        },
+        {
+          "source": "/confidentialite",
+          "destination": "/confidentialite.html"
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
@@ -388,6 +396,26 @@
         {
           "source": "/guyane.html",
           "destination": "/guyane",
+          "type": 301
+        },
+        {
+          "source": "/confidentialite/",
+          "destination": "/confidentialite",
+          "type": 301
+        },
+        {
+          "source": "/confidentialite.html",
+          "destination": "/confidentialite",
+          "type": 301
+        },
+        {
+          "source": "/suppression-compte/",
+          "destination": "/suppression-compte",
+          "type": 301
+        },
+        {
+          "source": "/suppression-compte.html",
+          "destination": "/suppression-compte",
           "type": 301
         }
       ]
@@ -703,6 +731,14 @@
           }
         },
         {
+          "source": "/suppression-compte",
+          "destination": "/suppression-compte.html"
+        },
+        {
+          "source": "/confidentialite",
+          "destination": "/confidentialite.html"
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
@@ -756,6 +792,26 @@
         {
           "source": "/guyane.html",
           "destination": "/guyane",
+          "type": 301
+        },
+        {
+          "source": "/confidentialite/",
+          "destination": "/confidentialite",
+          "type": 301
+        },
+        {
+          "source": "/confidentialite.html",
+          "destination": "/confidentialite",
+          "type": 301
+        },
+        {
+          "source": "/suppression-compte/",
+          "destination": "/suppression-compte",
+          "type": 301
+        },
+        {
+          "source": "/suppression-compte.html",
+          "destination": "/suppression-compte",
           "type": 301
         }
       ]
