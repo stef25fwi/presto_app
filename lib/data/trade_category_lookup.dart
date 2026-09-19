@@ -139,22 +139,23 @@ const Map<String, TradeCategoryMatch> kTradeLookup = {
     tags: ['TV', 'support mural', 'fixation', 'home cinéma'],
   ),
 
-  // ── Aide à domicile ────────────────────────────────────────────────────────
+  // ── Ménage ──────────────────────────────────────────────────────────────────
   'menage': TradeCategoryMatch(
-    categorie: 'Aide à domicile',
+    categorie: 'Ménage',
     sousCat: 'Ménage régulier',
     tags: ['ménage', 'nettoyage', 'aspirateur', 'entretien'],
   ),
   'nettoyage_grand': TradeCategoryMatch(
-    categorie: 'Aide à domicile',
+    categorie: 'Ménage',
     sousCat: 'Ménage ponctuel / grand nettoyage',
     tags: ['grand ménage', 'nettoyage', 'fond', 'désinfection'],
   ),
   'repassage': TradeCategoryMatch(
-    categorie: 'Aide à domicile',
+    categorie: 'Ménage',
     sousCat: 'Repassage',
     tags: ['repassage', 'linge', 'fer à repasser', 'chemise'],
   ),
+  // ── Aide à domicile ────────────────────────────────────────────────────────
   'courses': TradeCategoryMatch(
     categorie: 'Aide à domicile',
     sousCat: 'Aide aux courses',
@@ -181,12 +182,12 @@ const Map<String, TradeCategoryMatch> kTradeLookup = {
     tags: ['gardiennage', 'maison', 'surveillance', 'absence'],
   ),
   'nettoyage_demenagement': TradeCategoryMatch(
-    categorie: 'Aide à domicile',
+    categorie: 'Ménage',
     sousCat: 'Nettoyage après déménagement',
     tags: ['déménagement', 'nettoyage', 'remise en état', 'état des lieux'],
   ),
   'rangement': TradeCategoryMatch(
-    categorie: 'Aide à domicile',
+    categorie: 'Ménage',
     sousCat: 'Organisation / rangement',
     tags: ['rangement', 'organisation', 'tri', 'désencombrement'],
   ),
@@ -428,12 +429,13 @@ const Map<String, TradeCategoryMatch> kTradeLookup = {
     tags: ['stand', 'montage', 'exposition', 'foire'],
   ),
 
-  // ── Autre ──────────────────────────────────────────────────────────────────
+  // ── Informatique ────────────────────────────────────────────────────────────
   'informatique_depannage': TradeCategoryMatch(
-    categorie: 'Autre',
+    categorie: 'Informatique',
     sousCat: 'Informatique / dépannage',
     tags: ['informatique', 'dépannage', 'PC', 'virus'],
   ),
+  // ── Autre ──────────────────────────────────────────────────────────────────
   'reseaux_sociaux': TradeCategoryMatch(
     categorie: 'Autre',
     sousCat: 'Réseaux sociaux / contenu',
