@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 
+import { publicSeoSlug } from "./public_slug";
+
 export interface PublicServiceProfile {
   publicId: string;
   visibility: string;
@@ -170,22 +172,27 @@ export function isIndexablePublicProfile(profile: PublicServiceProfile): boolean
     && profile.city.length >= 2;
 }
 
-export function publicProfileRoute(publicId: string): string {
+export function publicProfileRoute(publicId: string, companyName: string): string {
   if (!SAFE_PUBLIC_ID.test(publicId)) throw new Error("invalid_public_profile_id");
-  return `/prestataires/${publicId}/`;
+  const slug = publicSeoSlug(companyName, "prestataire");
+  return `/prestataires/${slug}/${publicId}/`;
 }
 
-export function publicProfileCanonical(publicId: string): string {
-  return `${BASE_URL}${publicProfileRoute(publicId)}`;
+export function publicProfileCanonical(publicId: string, companyName: string): string {
+  return `${BASE_URL}${publicProfileRoute(publicId, companyName)}`;
 }
 
 export function extractPublicProfileId(pathname: string): string | null {
-  const match = pathname.match(/^\/prestataires\/([a-f0-9]{24})\/?$/);
-  return match?.[1] ?? null;
+  const canonical = pathname.match(
+    /^\/prestataires\/[a-z0-9-]{3,72}\/([a-f0-9]{24})\/?$/,
+  );
+  if (canonical?.[1]) return canonical[1];
+  const legacy = pathname.match(/^\/prestataires\/([a-f0-9]{24})\/?$/);
+  return legacy?.[1] ?? null;
 }
 
 export function renderPublicProfileHtml(profile: PublicServiceProfile): string {
-  const canonical = publicProfileCanonical(profile.publicId);
+  const canonical = publicProfileCanonical(profile.publicId, profile.companyName);
   const title = `${profile.companyName} – ${profile.activity} à ${profile.city} | iliprestō`.slice(0, 70);
   const metaDescription = descriptionSnippet(
     `${profile.companyName} à ${profile.city}. ${profile.description}`,
@@ -294,7 +301,7 @@ export function renderPublicProfilesSitemap(profiles: PublicServiceProfile[]): s
       const lastmod = profile.updatedAt ?? profile.publishedAt;
       return [
         "  <url>",
-        `    <loc>${publicProfileCanonical(profile.publicId)}</loc>`,
+        `    <loc>${publicProfileCanonical(profile.publicId, profile.companyName)}</loc>`,
         ...(lastmod ? [`    <lastmod>${lastmod.slice(0, 10)}</lastmod>`] : []),
         "    <changefreq>weekly</changefreq>",
         "  </url>",
