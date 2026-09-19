@@ -1,3 +1,5 @@
+import { publicSeoSlug } from "./public_slug";
+
 export interface PublicListingProjection {
   id: string;
   status: string;
@@ -107,25 +109,30 @@ export function isSeoEligiblePublicListing(listing: PublicListingProjection): bo
     && listing.city.length >= 2;
 }
 
-export function publicListingRoute(id: string): string {
+export function publicListingRoute(id: string, title: string): string {
   if (!SAFE_ID.test(id)) throw new Error("invalid_public_listing_id");
-  return `/annonces/${id}/`;
+  const slug = publicSeoSlug(title, "annonce");
+  return `/annonces/${slug}/${id}/`;
 }
 
-export function publicListingCanonical(id: string): string {
-  return `${BASE_URL}${publicListingRoute(id)}`;
+export function publicListingCanonical(id: string, title: string): string {
+  return `${BASE_URL}${publicListingRoute(id, title)}`;
 }
 
 export function extractPublicListingId(pathname: string): string | null {
-  const match = pathname.match(/^\/annonces\/([A-Za-z0-9_-]{6,128})\/?$/);
-  return match?.[1] ?? null;
+  const canonical = pathname.match(
+    /^\/annonces\/[a-z0-9-]{3,72}\/([A-Za-z0-9_-]{6,128})\/?$/,
+  );
+  if (canonical?.[1]) return canonical[1];
+  const legacy = pathname.match(/^\/annonces\/([A-Za-z0-9_-]{6,128})\/?$/);
+  return legacy?.[1] ?? null;
 }
 
 export function renderPublicListingHtml(
   listing: PublicListingProjection,
   options: { indexable?: boolean } = {},
 ): string {
-  const canonical = publicListingCanonical(listing.id);
+  const canonical = publicListingCanonical(listing.id, listing.title);
   const indexable = options.indexable ?? isSeoEligiblePublicListing(listing);
   const robots = indexable
     ? "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
@@ -220,7 +227,7 @@ export function renderPublicListingsSitemap(listings: PublicListingProjection[])
       const lastmod = listing.publishedAt ?? listing.createdAt;
       return [
         "  <url>",
-        `    <loc>${publicListingCanonical(listing.id)}</loc>`,
+        `    <loc>${publicListingCanonical(listing.id, listing.title)}</loc>`,
         ...(lastmod ? [`    <lastmod>${lastmod.slice(0, 10)}</lastmod>`] : []),
         "    <changefreq>daily</changefreq>",
         "  </url>",
