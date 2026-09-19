@@ -8,6 +8,7 @@ import {
   isIndexablePublicProfile,
   normalizePublicProfile,
   publicProfileCanonical,
+  publicProfileRoute,
   renderMissingPublicProfileHtml,
   renderPublicProfileHtml,
   renderPublicProfilesSitemap,
@@ -63,12 +64,6 @@ export const publicProfilesSeo = onRequest(
         return;
       }
 
-      const canonical = publicProfileCanonical(publicId);
-      if (!req.path.endsWith("/")) {
-        res.redirect(301, canonical);
-        return;
-      }
-
       const snapshot = await db.collection(PUBLIC_COLLECTION).doc(publicId).get();
       const profile = snapshot.exists
         ? normalizePublicProfile(snapshot.id, snapshot.data() || {})
@@ -79,6 +74,12 @@ export const publicProfilesSeo = onRequest(
         res.set("X-Robots-Tag", "noindex, follow");
         res.set("Cache-Control", "public, max-age=30, s-maxage=60");
         res.status(404).send(req.method === "HEAD" ? "" : renderMissingPublicProfileHtml());
+        return;
+      }
+
+      const canonical = publicProfileCanonical(profile.publicId, profile.companyName);
+      if (req.path !== publicProfileRoute(profile.publicId, profile.companyName)) {
+        res.redirect(301, canonical);
         return;
       }
 
