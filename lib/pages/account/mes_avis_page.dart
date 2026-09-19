@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/system_ui_style.dart';
+import '../../features/trust_score/pending_reviews_v2_card.dart';
 import '../../features/trust_score/trust_score_v2_card.dart';
 import '../../app_core.dart' show kPrestoOrange;
 
@@ -35,6 +36,8 @@ class MesAvisPage extends StatelessWidget {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                const PendingReviewsV2Card(),
+                const SizedBox(height: 14),
                 TrustScoreV2Card(userId: uid),
               ],
             ),
