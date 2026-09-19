@@ -32,7 +32,8 @@ for (const intent of registry.intents) {
   visited += 1;
   assert.ok(title && title.length >= 25 && title.length <= 70, `${route}: title invalide`);
   assert.ok(html.includes(`<link rel="canonical" href="${canonical}">`), `${route}: canonical absente`);
-  assert.ok(html.includes('"@type":"WebPage"'), `${route}: WebPage JSON-LD absent`);
+  assert.ok(html.includes('"@type":"CollectionPage"'), `${route}: CollectionPage JSON-LD absent`);
+  assert.ok(html.includes('"@type":"ItemList"'), `${route}: ItemList JSON-LD absent`);
   assert.ok(html.includes('"@type":"BreadcrumbList"'), `${route}: BreadcrumbList absent`);
   assert.ok(!/"@type"\s*:\s*"JobPosting"/.test(html), `${route}: JobPosting interdit`);
   assert.ok(!canonicals.has(canonical), `${route}: canonical dupliquée`);
@@ -67,7 +68,8 @@ for (const intent of registry.intents) {
     assert.ok(serviceTitle && serviceTitle.length >= 25 && serviceTitle.length <= 70, `${serviceRoute}: title invalide`);
     assert.ok(serviceHtml.includes(`<link rel="canonical" href="${serviceCanonical}">`), `${serviceRoute}: canonical absente`);
     assert.ok(serviceHtml.includes(`href="${route}"`), `${serviceRoute}: retour au hub parent absent`);
-    assert.ok(serviceHtml.includes('"@type":"WebPage"'), `${serviceRoute}: WebPage JSON-LD absent`);
+    assert.ok(serviceHtml.includes('"@type":"CollectionPage"'), `${serviceRoute}: CollectionPage JSON-LD absent`);
+    assert.ok(serviceHtml.includes('"@type":"ItemList"'), `${serviceRoute}: ItemList JSON-LD absent`);
     assert.ok(serviceHtml.includes('"@type":"BreadcrumbList"'), `${serviceRoute}: BreadcrumbList absent`);
     assert.ok(!/"@type"\s*:\s*"JobPosting"/.test(serviceHtml), `${serviceRoute}: JobPosting interdit`);
     assert.ok(!canonicals.has(serviceCanonical), `${serviceRoute}: canonical dupliquée`);
