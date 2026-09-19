@@ -298,6 +298,14 @@ jobs:
             assert_contains "$page" 'rel="canonical"' "$url canonical"
           done
 
+          privacy_page="$(fetch_url https://ilipresto.fr/confidentialite)"
+          assert_contains "$privacy_page" '<link rel="canonical" href="https://ilipresto.fr/confidentialite">' 'confidentialite canonical exact'
+          assert_contains "$privacy_page" '<title>Politique de confidentialité' 'confidentialite title statique'
+
+          deletion_page="$(fetch_url https://ilipresto.fr/suppression-compte)"
+          assert_contains "$deletion_page" '<link rel="canonical" href="https://ilipresto.fr/suppression-compte">' 'suppression compte canonical exact'
+          assert_contains "$deletion_page" '<title>Suppression du compte' 'suppression compte title statique'
+
           for slug in guadeloupe martinique guyane; do
             page="$(fetch_url "https://ilipresto.fr/$slug")"
             assert_contains "$page" "<link rel=\"canonical\" href=\"https://ilipresto.fr/$slug\">" "$slug canonical"
