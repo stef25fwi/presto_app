@@ -286,7 +286,7 @@ function renderPage(intent, service, city) {
 
   const graph = [
     {
-      '@type': 'WebPage',
+      '@type': 'CollectionPage',
       '@id': `${canonical}#webpage`,
       url: canonical,
       name: title,
@@ -294,7 +294,9 @@ function renderPage(intent, service, city) {
       inLanguage: 'fr-FR',
       isPartOf: {'@id': `${registry.baseUrl}/#website`},
       publisher: {'@id': `${registry.baseUrl}/#organization`},
-      mainEntity: {'@id': `${canonical}#service`},
+      mainEntity: activation.eligible
+        ? {'@id': `${canonical}#${intent.key === 'services' ? 'prestataires' : 'annonces'}`}
+        : {'@id': `${canonical}#service`},
       breadcrumb: {'@id': `${canonical}#breadcrumb`},
     },
     {
@@ -463,7 +465,7 @@ function renderIntentHub(intent) {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'WebPage',
+        '@type': 'CollectionPage',
         '@id': `${canonical}#webpage`,
         url: canonical,
         name: title,
@@ -471,6 +473,7 @@ function renderIntentHub(intent) {
         inLanguage: 'fr-FR',
         isPartOf: {'@id': `${registry.baseUrl}/#website`},
         publisher: {'@id': `${registry.baseUrl}/#organization`},
+        mainEntity: {'@id': `${canonical}#categories`},
         breadcrumb: {'@id': `${canonical}#breadcrumb`},
       },
       {
@@ -480,6 +483,18 @@ function renderIntentHub(intent) {
           {'@type': 'ListItem', position: 1, name: 'Accueil', item: `${registry.baseUrl}/`},
           {'@type': 'ListItem', position: 2, name: intent.key === 'services' ? 'Services' : 'Missions', item: canonical},
         ],
+      },
+      {
+        '@type': 'ItemList',
+        '@id': `${canonical}#categories`,
+        name: intent.key === 'services' ? 'Catégories de services' : 'Catégories de missions',
+        numberOfItems: registry.services.length,
+        itemListElement: registry.services.map((service, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: service.serviceTitle,
+          url: `${registry.baseUrl}${hubRoute(intent, service)}`,
+        })),
       },
     ],
   };
@@ -544,7 +559,7 @@ function renderServiceHub(intent, service) {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'WebPage',
+        '@type': 'CollectionPage',
         '@id': `${canonical}#webpage`,
         url: canonical,
         name: title,
@@ -552,6 +567,7 @@ function renderServiceHub(intent, service) {
         inLanguage: 'fr-FR',
         isPartOf: {'@id': `${registry.baseUrl}/#website`},
         publisher: {'@id': `${registry.baseUrl}/#organization`},
+        mainEntity: {'@id': `${canonical}#zones`},
         breadcrumb: {'@id': `${canonical}#breadcrumb`},
       },
       {
@@ -562,6 +578,18 @@ function renderServiceHub(intent, service) {
           {'@type': 'ListItem', position: 2, name: intent.key === 'services' ? 'Services' : 'Missions', item: `${registry.baseUrl}${hubRoute(intent)}`},
           {'@type': 'ListItem', position: 3, name: service.serviceTitle, item: canonical},
         ],
+      },
+      {
+        '@type': 'ItemList',
+        '@id': `${canonical}#zones`,
+        name: `${service.serviceTitle} — zones locales disponibles`,
+        numberOfItems: activeCities.length,
+        itemListElement: activeCities.map((city, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: `${service.serviceTitle} à ${city.name}`,
+          url: `${registry.baseUrl}${routeFor(intent, service, city)}`,
+        })),
       },
     ],
   };
