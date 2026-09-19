@@ -32,8 +32,8 @@ assert.ok(
   'Projection SEO minimale du collecteur absente',
 );
 assert.ok(source.includes('const SAFE_PUBLIC_ID = /^[A-Za-z0-9_-]{6,128}$/;'), 'Validation identifiant public absente');
-assert.ok(source.includes('title.length >= 12'), 'Seuil qualité title annonce absent');
-assert.ok(source.includes('description.length >= 80'), 'Seuil qualité description annonce absent');
+assert.ok(source.includes("if (title.length < 12) reasons.push('title_too_short')"), 'Seuil qualité title annonce absent');
+assert.ok(source.includes("if (description.length < 80) reasons.push('description_too_short')"), 'Seuil qualité description annonce absent');
 assert.ok(source.includes('listingPreviews: []'), 'Prévisualisations annonces locales absentes');
 assert.ok(source.includes('MAX_PREVIEWS_PER_PAGE = 5'), 'Limite des prévisualisations absente');
 assert.ok(source.includes('seoQualifiedPublicListings'), 'Compteur annonces SEO qualifiées absent');
