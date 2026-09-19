@@ -231,13 +231,21 @@ function renderLocalStats(intent, service, city, activation) {
   if (intent.key === 'services') {
     const total = activation.qualifiedProfiles;
     const recent = activation.recentProfiles;
-    const uniqueCopy = `À ${city.name}, la page ${service.serviceTitle} s’appuie sur ${pluralizeCount(total, 'profil public qualifié')} correspondant à cette catégorie. ${pluralizeCount(recent, 'profil', 'profils')} ont été publiés ou mis à jour au cours des ${windowDays} derniers jours.`;
+    const totalLabel = total === 1 ? '1 profil public qualifié' : `${total} profils publics qualifiés`;
+    const recentLabel = recent === 1
+      ? '1 profil a été publié ou mis à jour'
+      : `${recent} profils ont été publiés ou mis à jour`;
+    const uniqueCopy = `À ${city.name}, la page ${service.serviceTitle} s’appuie sur ${totalLabel} correspondant à cette catégorie. ${recentLabel} au cours des ${windowDays} derniers jours.`;
     return `<section aria-label="Statistiques locales réelles"><h2>Disponibilité locale mesurée</h2><p>${escapeHtml(uniqueCopy)}</p><p class="public-status">Données publiques agrégées${sourceDate ? ` le ${escapeHtml(sourceDate)}` : ''}. Aucun volume n’est estimé ou extrapolé.</p></section>`;
   }
 
   const total = activation.activeListings;
   const recent = activation.recentListings;
-  const uniqueCopy = `À ${city.name}, la catégorie ${service.serviceTitle} compte ${pluralizeCount(total, 'annonce publique active')}. ${pluralizeCount(recent, 'annonce', 'annonces')} ont été publiées au cours des ${windowDays} derniers jours.`;
+  const totalLabel = total === 1 ? '1 annonce publique active' : `${total} annonces publiques actives`;
+  const recentLabel = recent === 1
+    ? '1 annonce a été publiée'
+    : `${recent} annonces ont été publiées`;
+  const uniqueCopy = `À ${city.name}, la catégorie ${service.serviceTitle} compte ${totalLabel}. ${recentLabel} au cours des ${windowDays} derniers jours.`;
   return `<section aria-label="Statistiques locales réelles"><h2>Activité locale mesurée</h2><p>${escapeHtml(uniqueCopy)}</p><p class="public-status">Données publiques agrégées${sourceDate ? ` le ${escapeHtml(sourceDate)}` : ''}. Aucun volume n’est estimé ou extrapolé.</p></section>`;
 }
 
