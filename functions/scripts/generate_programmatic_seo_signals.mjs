@@ -50,12 +50,37 @@ function boundedText(value, maxLength) {
     .slice(0, maxLength);
 }
 
-function seoEligibleListing(id, data) {
+function listingContentRejectionReasons(id, data) {
   const title = boundedText(data.title, 140);
   const description = boundedText(data.description, 2000);
-  return SAFE_PUBLIC_ID.test(String(id || ''))
-    && title.length >= 12
-    && description.length >= 80;
+  const reasons = [];
+  if (!SAFE_PUBLIC_ID.test(String(id || ''))) reasons.push('invalid_public_id');
+  if (title.length < 12) reasons.push('title_too_short');
+  if (description.length < 80) reasons.push('description_too_short');
+  return reasons;
+}
+
+function listingDiagnosticBase(id, data) {
+  const title = boundedText(data.title, 140);
+  const description = boundedText(data.description, 2000);
+  return {
+    id: String(id || ''),
+    title,
+    titleLength: title.length,
+    descriptionLength: description.length,
+    category: boundedText(data.category, 140),
+    categoryId: boundedText(data.categoryId, 140),
+    subCategory: boundedText(data.subCategory || data.subcategory, 180),
+    city: boundedText(data.city, 140),
+    cityId: boundedText(data.cityId, 180),
+    postalCode: String(data.postalCode || data.cp || '').trim().slice(0, 16),
+  };
+}
+
+function addRejection(summary, reasons) {
+  for (const reason of reasons) {
+    summary[reason] = Number(summary[reason] || 0) + 1;
+  }
 }
 
 const projectId = argValue('--project=', process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || '');
@@ -100,7 +125,7 @@ try {
   const query = db.collection('listings')
     .where('status', '==', 'active')
     .where('visibility', '==', 'public')
-    .select('category', 'categoryId', 'city', 'cityId', 'postalCode', 'cp', 'title', 'description', 'publishedAt', 'createdAt');
+    .select('category', 'categoryId', 'subCategory', 'subcategory', 'city', 'cityId', 'postalCode', 'cp', 'title', 'description', 'publishedAt', 'createdAt');
 
   const snapshot = await query.get();
   const profileSnapshot = await db.collection('public_service_profiles')
@@ -110,6 +135,8 @@ try {
   const counts = new Map();
   let seoQualifiedPublicListings = 0;
   let seoQualifiedPublicProfiles = 0;
+  const listingDiagnostics = [];
+  const listingRejectionSummary = {};
 
   for (const service of registry.services) {
     for (const city of registry.cities) {
@@ -126,7 +153,15 @@ try {
 
   for (const doc of snapshot.docs) {
     const data = doc.data() || {};
-    if (!seoEligibleListing(doc.id, data)) continue;
+    const diagnostic = listingDiagnosticBase(doc.id, data);
+    const contentReasons = listingContentRejectionReasons(doc.id, data);
+    if (contentReasons.length > 0) {
+      diagnostic.status = 'rejected';
+      diagnostic.reasons = contentReasons;
+      listingDiagnostics.push(diagnostic);
+      addRejection(listingRejectionSummary, contentReasons);
+      continue;
+    }
 
     const categoryKeys = new Set([
       normalize(data.category),
@@ -147,7 +182,13 @@ try {
       ]);
       return [...categoryKeys].some((value) => expected.has(value));
     });
-    if (!service) continue;
+    if (!service) {
+      diagnostic.status = 'rejected';
+      diagnostic.reasons = ['service_unmatched'];
+      listingDiagnostics.push(diagnostic);
+      addRejection(listingRejectionSummary, diagnostic.reasons);
+      continue;
+    }
 
     const city = registry.cities.find((candidate) => {
       const postalCodes = new Set([
@@ -158,7 +199,20 @@ try {
       const expected = new Set([normalize(candidate.name), normalize(candidate.slug)]);
       return [...cityKeys].some((value) => expected.has(value) || value.endsWith(`-${normalize(candidate.slug)}`));
     });
-    if (!city) continue;
+    if (!city) {
+      diagnostic.status = 'rejected';
+      diagnostic.reasons = ['city_unmatched'];
+      diagnostic.matchedServiceKey = service.key;
+      listingDiagnostics.push(diagnostic);
+      addRejection(listingRejectionSummary, diagnostic.reasons);
+      continue;
+    }
+
+    diagnostic.status = 'qualified';
+    diagnostic.reasons = [];
+    diagnostic.matchedServiceKey = service.key;
+    diagnostic.matchedCitySlug = city.slug;
+    listingDiagnostics.push(diagnostic);
 
     const key = `${service.key}:${city.slug}`;
     const bucket = counts.get(key);
@@ -281,12 +335,20 @@ try {
     projectId: projectId || null,
     scannedPublicActiveListings: snapshot.size,
     seoQualifiedPublicListings,
+    listingDiagnostics,
+    listingRejectionSummary,
     scannedPublicProfiles: profileSnapshot.size,
     seoQualifiedPublicProfiles,
     recentWindowDays: Number(registry.activationGate.recentWindowDays || 90),
     pages,
   });
   console.log(`SEO local signals: ${snapshot.size} annonces publiques actives analysées, ${seoQualifiedPublicListings} annonces SEO qualifiées; ${profileSnapshot.size} profils publics analysés, ${seoQualifiedPublicProfiles} profils SEO qualifiés; sortie ${outputPath}.`);
+  for (const diagnostic of listingDiagnostics.filter((item) => item.status === 'rejected')) {
+    console.warn(`SEO listing rejected: ${JSON.stringify(diagnostic)}`);
+  }
+  if (Object.keys(listingRejectionSummary).length > 0) {
+    console.warn(`SEO listing rejection summary: ${JSON.stringify(listingRejectionSummary)}`);
+  }
 } catch (error) {
   if (!allowFallback) throw error;
   writeReport({
@@ -296,6 +358,8 @@ try {
     projectId: projectId || null,
     scannedPublicActiveListings: 0,
     seoQualifiedPublicListings: 0,
+    listingDiagnostics: [],
+    listingRejectionSummary: {},
     scannedPublicProfiles: 0,
     seoQualifiedPublicProfiles: 0,
     recentWindowDays: Number(registry.activationGate.recentWindowDays || 90),
