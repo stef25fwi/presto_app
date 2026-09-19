@@ -13,6 +13,11 @@ test("canonical taxonomy normalizes common category aliases", () => {
   assert.equal(normalizeListingCategory("travaux"), "Bricolage / Travaux");
   assert.equal(normalizeListingCategory("AIDE À DOMICILE"), "Aide à domicile");
   assert.equal(normalizeListingCategory("manutention"), "Main-d'œuvre");
+  assert.equal(normalizeListingCategory("ménage"), "Ménage");
+  assert.equal(normalizeListingCategory("nettoyage"), "Ménage");
+  assert.equal(normalizeListingCategory("informatique"), "Informatique");
+  assert.equal(normalizeListingCategory("dépannage informatique"), "Informatique");
+  assert.equal(normalizeListingCategory("initiation informatique"), "Cours & soutien");
   assert.equal(normalizeListingCategory("inconnue"), null);
   assert.equal(new Set(LISTING_CATEGORY_VALUES).size, LISTING_CATEGORY_VALUES.length);
 });
