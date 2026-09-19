@@ -117,7 +117,6 @@ jobs:
         run: |
           node tools/quality/check_ai_eval_corpus.mjs
           node tools/quality/check_ai_eval_corpus.test.mjs
-          node tools/quality/check_ai_metrics_trend.test.mjs
 
       - name: Enforce point 8 completion when requested
         if: github.event_name == 'workflow_dispatch' && inputs.enforce_readiness == true
@@ -125,6 +124,9 @@ jobs:
 
       - name: Build and test Functions
         run: npm --prefix functions run ci
+
+      - name: Validate AI metrics trend
+        run: node tools/quality/check_ai_metrics_trend.test.mjs
 
       - name: Generate synthetic privacy-safe evaluation media
         run: npm --prefix functions run ai:eval:media
