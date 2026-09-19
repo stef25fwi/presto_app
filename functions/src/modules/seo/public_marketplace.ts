@@ -10,6 +10,7 @@ import {
   isSeoEligiblePublicListing,
   normalizePublicListingProjection,
   publicListingCanonical,
+  publicListingRoute,
   renderMissingPublicListingHtml,
   renderPublicListingHtml,
   renderPublicListingsSitemap,
@@ -107,18 +108,18 @@ export const publicMarketplaceSeo = onRequest(
         return;
       }
 
-      const canonical = publicListingCanonical(listingId);
-      if (!req.path.endsWith("/")) {
-        res.redirect(301, canonical);
-        return;
-      }
-
       const listing = await loadPublicListing(listingId);
       if (!listing || !isPublicListing(listing)) {
         res.set("Content-Type", "text/html; charset=utf-8");
         res.set("X-Robots-Tag", "noindex, follow");
         res.set("Cache-Control", "public, max-age=30, s-maxage=60");
         res.status(404).send(req.method === "HEAD" ? "" : renderMissingPublicListingHtml());
+        return;
+      }
+
+      const canonical = publicListingCanonical(listing.id, listing.title);
+      if (req.path !== publicListingRoute(listing.id, listing.title)) {
+        res.redirect(301, canonical);
         return;
       }
 
