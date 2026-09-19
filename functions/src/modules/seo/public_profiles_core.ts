@@ -223,7 +223,7 @@ export function renderPublicProfileHtml(profile: PublicServiceProfile): string {
         "@id": `${canonical}#breadcrumb`,
         itemListElement: [
           { "@type": "ListItem", position: 1, name: "Accueil", item: `${BASE_URL}/` },
-          { "@type": "ListItem", position: 2, name: "Services", item: `${BASE_URL}/services-et-microservices/` },
+          { "@type": "ListItem", position: 2, name: "Services", item: `${BASE_URL}/services/` },
           { "@type": "ListItem", position: 3, name: profile.companyName, item: canonical },
         ],
       },
@@ -259,7 +259,7 @@ export function renderPublicProfileHtml(profile: PublicServiceProfile): string {
 <body class="public-page">
   <div class="public-shell">
     <header><a class="public-brand" href="/" aria-label="Accueil iliprestō"><img src="/assets/assets/images/ilipresto_splash_logo.webp" alt="Logo iliprestō" width="54" height="54"><span>iliprestō</span></a></header>
-    <nav class="public-breadcrumb" aria-label="Fil d’Ariane"><ol><li><a href="/">Accueil</a></li><li><a href="/services-et-microservices/">Services</a></li><li aria-current="page">${escapeHtml(profile.companyName)}</li></ol></nav>
+    <nav class="public-breadcrumb" aria-label="Fil d’Ariane"><ol><li><a href="/">Accueil</a></li><li><a href="/services/">Services</a></li><li aria-current="page">${escapeHtml(profile.companyName)}</li></ol></nav>
     <main class="public-card">
       <span class="public-kicker">Professionnel vérifié · ${escapeHtml(profile.city)}${profile.postalCode ? ` · ${escapeHtml(profile.postalCode)}` : ""}</span>
       <h1>${escapeHtml(profile.companyName)}</h1>
@@ -272,7 +272,7 @@ export function renderPublicProfileHtml(profile: PublicServiceProfile): string {
       <section><h2>Présentation</h2><p>${escapeHtml(profile.description)}</p></section>
       <nav class="public-links" aria-label="Explorer iliprestō">
         ${websiteLink}
-        <a href="/services-et-microservices/">Explorer les services</a>
+        <a href="/services/">Explorer les services</a>
         <a href="/annonces-services/">Voir les annonces de services</a>
       </nav>
     </main>
@@ -283,7 +283,7 @@ export function renderPublicProfileHtml(profile: PublicServiceProfile): string {
 }
 
 export function renderMissingPublicProfileHtml(): string {
-  return '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="robots" content="noindex,follow"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Profil indisponible | iliprestō</title></head><body><main><h1>Profil indisponible</h1><p>Ce profil professionnel n’est plus public ou n’existe pas.</p><a href="/services-et-microservices/">Explorer les services</a></main></body></html>';
+  return '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="robots" content="noindex,follow"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Profil indisponible | iliprestō</title></head><body><main><h1>Profil indisponible</h1><p>Ce profil professionnel n’est plus public ou n’existe pas.</p><a href="/services/">Explorer les services</a></main></body></html>';
 }
 
 export function renderPublicProfilesSitemap(profiles: PublicServiceProfile[]): string {
