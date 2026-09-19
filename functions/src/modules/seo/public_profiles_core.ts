@@ -87,15 +87,33 @@ export function publicProfileIdForUid(uid: string): string {
     .slice(0, 24);
 }
 
+export type SourceProfilePublicEligibilityReason =
+  | "consent_missing"
+  | "siret_unverified"
+  | "establishment_inactive"
+  | "company_name_too_short"
+  | "activity_too_short"
+  | "description_too_short"
+  | "service_categories_missing"
+  | "city_missing";
+
+export function sourceProfilePublicEligibilityReasons(
+  data: Record<string, unknown>,
+): SourceProfilePublicEligibilityReason[] {
+  const reasons: SourceProfilePublicEligibilityReason[] = [];
+  if (data.seoPublicProfileConsent !== true) reasons.push("consent_missing");
+  if (data.siretVerified !== true) reasons.push("siret_unverified");
+  if (data.establishmentActive === false) reasons.push("establishment_inactive");
+  if (boundedText(data.companyName, 140).length < 2) reasons.push("company_name_too_short");
+  if (boundedText(data.activity, 140).length < 3) reasons.push("activity_too_short");
+  if (boundedText(data.description, 2000).length < 80) reasons.push("description_too_short");
+  if (boundedText(data.serviceCategories, 400).length < 2) reasons.push("service_categories_missing");
+  if (boundedText(data.city, 120).length < 2) reasons.push("city_missing");
+  return reasons;
+}
+
 export function sourceProfileIsPublicEligible(data: Record<string, unknown>): boolean {
-  return data.seoPublicProfileConsent === true
-    && data.siretVerified === true
-    && data.establishmentActive !== false
-    && boundedText(data.companyName, 140).length >= 2
-    && boundedText(data.activity, 140).length >= 3
-    && boundedText(data.description, 2000).length >= 80
-    && boundedText(data.serviceCategories, 400).length >= 2
-    && boundedText(data.city, 120).length >= 2;
+  return sourceProfilePublicEligibilityReasons(data).length === 0;
 }
 
 export function buildPublicProfileProjection(
