@@ -13,7 +13,7 @@ void main() {
     test('gère valeurs vides, alias et correspondances partielles', () {
       expect(canonicalizeOfferCategory(null), isNull);
       expect(canonicalizeOfferCategory('   '), isNull);
-      expect(canonicalizeOfferCategory('ménage'), 'Aide à domicile');
+      expect(canonicalizeOfferCategory('ménage'), 'Ménage');
       expect(canonicalizeOfferCategory('DJ'), 'Événementiel / DJ');
       expect(canonicalizeOfferCategory('jardin'), 'Jardinage');
       expect(canonicalizeOfferCategory('catégorie inconnue'), 'catégorie inconnue');
@@ -29,6 +29,7 @@ void main() {
     test('résout les ids connus et génère un slug de secours', () {
       expect(resolveOfferCategoryId(null), isNull);
       expect(resolveOfferCategoryId('bricolage'), 'bricolage-travaux');
+      expect(resolveOfferCategoryId('informatique'), 'informatique');
       expect(resolveOfferCategoryId("Main-d'œuvre"), 'main-d-oeuvre');
       expect(resolveOfferCategoryId('Service très spécial'), 'service-tres-special');
     });
@@ -64,8 +65,8 @@ void main() {
         status: 'active',
       );
 
-      expect(fields['category'], 'Aide à domicile');
-      expect(fields['categoryId'], 'aide-a-domicile');
+      expect(fields['category'], 'Ménage');
+      expect(fields['categoryId'], 'menage');
       expect(fields['city'], 'Baie-Mahault');
       expect(fields['location'], 'Baie-Mahault');
       expect(fields['cp'], '97122');
@@ -73,7 +74,7 @@ void main() {
       expect(fields['cityId'], '97122_baie-mahault');
       expect(
         fields['cityCategoryKey'],
-        '97122_baie-mahault_aide-a-domicile',
+        '97122_baie-mahault_menage',
       );
       expect(fields['dept'], '971');
       expect(fields['budgetValue'], 45.5);
