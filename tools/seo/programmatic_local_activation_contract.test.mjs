@@ -76,6 +76,10 @@ try {
     assert.ok(missionHtml.includes(`/annonces/${publicSlug(preview.title, 'annonce')}/${preview.id}/`), `Annonce ${preview.id} absente de la page mission`);
   }
   assert.ok(missionHtml.includes('"@type":"ItemList"'), 'ItemList des annonces locales absent');
+  assert.ok(missionHtml.includes('aria-label="Statistiques locales réelles"'), 'Statistiques locales réelles absentes de la page mission');
+  assert.match(missionHtml, /3 annonces publiques actives/);
+  assert.match(missionHtml, /1 annonce a été publiée/);
+  assert.match(missionHtml, /Aucun volume n’est estimé ou extrapolé/);
   assert.ok(sitemap.includes(`<loc>${missionCanonical}</loc>`), 'Mission active absente du sitemap local');
 
   assert.match(serviceHtml, /<meta name="robots" content="index,follow/);
@@ -84,6 +88,10 @@ try {
     assert.ok(serviceHtml.includes(`/prestataires/${publicSlug(profile.companyName, 'prestataire')}/${profile.publicId}/`), `Profil ${profile.publicId} absent de la page service`);
   }
   assert.ok(serviceHtml.includes('"@type":"ItemList"'), 'ItemList des prestataires absent');
+  assert.ok(serviceHtml.includes('aria-label="Statistiques locales réelles"'), 'Statistiques locales réelles absentes de la page service');
+  assert.match(serviceHtml, /3 profils publics qualifiés/);
+  assert.match(serviceHtml, /1 profil a été publié ou mis à jour/);
+  assert.match(serviceHtml, /Jardinage à Les Abymes/);
   assert.ok(sitemap.includes(`<loc>${serviceCanonical}</loc>`), 'Service actif absent du sitemap local');
 
   console.log('Contrat activation SEO locale: annonces -> missions indexables, profils publics -> services indexables.');
