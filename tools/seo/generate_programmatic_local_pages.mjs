@@ -16,6 +16,22 @@ const escapeHtml = (value) => String(value)
 
 const escapeJson = (value) => JSON.stringify(value).replaceAll('<', '\\u003c');
 
+function publicSlug(value, fallback) {
+  const slug = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replaceAll('œ', 'oe')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[’']/g, '-')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 72)
+    .replace(/-$/g, '');
+  return slug.length >= 3 ? slug : fallback;
+}
+
 function postalCodesForCity(city) {
   const candidates = [
     city.postalCode,
@@ -178,7 +194,7 @@ function statusCopy(intent, activation) {
 function renderListingPreviews(intent, activation) {
   if (intent.key !== 'missions' || !activation.eligible) return '';
   const items = activation.listingPreviews
-    .map((listing) => `<li><a href="/annonces/${encodeURIComponent(listing.id)}/">${escapeHtml(listing.title)}</a></li>`)
+    .map((listing) => `<li><a href="/annonces/${publicSlug(listing.title, 'annonce')}/${encodeURIComponent(listing.id)}/">${escapeHtml(listing.title)}</a></li>`)
     .join('');
   return `<section aria-label="Annonces locales"><h2>Annonces locales disponibles</h2><p>Exemples d’annonces publiques correspondant à cette catégorie et à cette ville :</p><ul>${items}</ul></section>`;
 }
@@ -186,7 +202,7 @@ function renderListingPreviews(intent, activation) {
 function renderProfilePreviews(intent, activation) {
   if (intent.key !== 'services' || !activation.eligible) return '';
   const items = activation.profilePreviews
-    .map((profile) => `<li><a href="/prestataires/${encodeURIComponent(profile.publicId)}/"><strong>${escapeHtml(profile.companyName)}</strong></a> — ${escapeHtml(profile.activity)}</li>`)
+    .map((profile) => `<li><a href="/prestataires/${publicSlug(profile.companyName, 'prestataire')}/${encodeURIComponent(profile.publicId)}/"><strong>${escapeHtml(profile.companyName)}</strong></a> — ${escapeHtml(profile.activity)}</li>`)
     .join('');
   return `<section aria-label="Prestataires locaux"><h2>Prestataires disponibles à proximité</h2><p>Profils professionnels vérifiés ayant choisi de rendre leur profil public :</p><ul>${items}</ul></section>`;
 }
@@ -263,7 +279,7 @@ function renderPage(intent, service, city) {
         '@type': 'ListItem',
         position: index + 1,
         name: listing.title,
-        url: `${registry.baseUrl}/annonces/${listing.id}/`,
+        url: `${registry.baseUrl}/annonces/${publicSlug(listing.title, 'annonce')}/${listing.id}/`,
       })),
     });
   }
@@ -277,7 +293,7 @@ function renderPage(intent, service, city) {
         '@type': 'ListItem',
         position: index + 1,
         name: profile.companyName,
-        url: `${registry.baseUrl}/prestataires/${profile.publicId}/`,
+        url: `${registry.baseUrl}/prestataires/${publicSlug(profile.companyName, 'prestataire')}/${profile.publicId}/`,
       })),
     });
   }
