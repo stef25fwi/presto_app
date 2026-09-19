@@ -4,6 +4,7 @@ import '../services/public_landing_config_service.dart';
 import 'public_prelaunch_feature_sections.dart';
 import 'public_prelaunch_footer.dart';
 import 'public_prelaunch_header.dart';
+import 'public_prelaunch_hero_slider.dart';
 
 class PublicPrelaunchContent extends StatelessWidget {
   const PublicPrelaunchContent({
@@ -55,6 +56,7 @@ class PublicPrelaunchContent extends StatelessWidget {
             statusKey: accessTriggerKey,
           ),
           SizedBox(height: compact ? 18 : 22),
+          const PublicPrelaunchHeroSlider(),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 720),
             child: Text(
