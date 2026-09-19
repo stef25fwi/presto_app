@@ -39,7 +39,7 @@ test("public listing projection keeps only SEO-safe fields", () => {
 test("public listing renderer emits canonical SEO HTML without private data or JobPosting", () => {
   const html = renderPublicListingHtml(publicListing);
   assert.match(html, /<meta name="robots" content="index,follow/);
-  assert.match(html, /<link rel="canonical" href="https:\/\/ilipresto\.fr\/annonces\/listing_123456\/">/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/ilipresto\.fr\/annonces\/aide-pour-monter-un-meuble\/listing_123456\/">/);
   assert.match(html, /Aide pour monter un meuble/);
   assert.match(html, /Les Abymes/);
   assert.match(html, /0 % de commission/);
@@ -74,7 +74,7 @@ test("weak or private listings stay outside the SEO sitemap", () => {
     privateListing,
     weakListing,
   ]);
-  assert.match(sitemap, /https:\/\/ilipresto\.fr\/annonces\/listing_123456\//);
+  assert.match(sitemap, /https:\/\/ilipresto\.fr\/annonces\/aide-pour-monter-un-meuble\/listing_123456\//);
   assert.doesNotMatch(sitemap, /listing_abcdef/);
   assert.doesNotMatch(sitemap, /listing_ghijkl/);
 });
@@ -82,9 +82,16 @@ test("weak or private listings stay outside the SEO sitemap", () => {
 test("listing route parser accepts only stable safe identifiers", () => {
   assert.equal(extractPublicListingId("/annonces/listing_123456/"), "listing_123456");
   assert.equal(extractPublicListingId("/annonces/listing_123456"), "listing_123456");
+  assert.equal(
+    extractPublicListingId("/annonces/aide-pour-monter-un-meuble/listing_123456/"),
+    "listing_123456",
+  );
   assert.equal(extractPublicListingId("/annonces/a/b/"), null);
   assert.equal(extractPublicListingId("/annonces/%2Fprivate/"), null);
-  assert.equal(publicListingCanonical("listing_123456"), "https://ilipresto.fr/annonces/listing_123456/");
+  assert.equal(
+    publicListingCanonical("listing_123456", "Aide pour monter un meuble"),
+    "https://ilipresto.fr/annonces/aide-pour-monter-un-meuble/listing_123456/",
+  );
 });
 
 test("missing listing page is explicitly noindex", () => {
