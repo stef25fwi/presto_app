@@ -114,7 +114,3 @@ String sanitizeAdminContactMailPreview(String input, {int maxLength = 280}) {
   if (clean.length <= maxLength) return clean;
   return clean.substring(0, maxLength);
 }
-
-extension on String {
-  String trimRight() => replaceFirst(RegExp(r'\s+$'), '');
-}
