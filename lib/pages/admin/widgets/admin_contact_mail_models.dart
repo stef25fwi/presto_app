@@ -1,3 +1,5 @@
+import 'admin_contact_mail_content.dart';
+
 class AdminContactInboxSummary {
   final int unreadCount;
 
@@ -46,8 +48,8 @@ class AdminContactMailItem {
       senderName: '${data['senderName'] ?? ''}'.trim(),
       senderEmail: '${data['senderEmail'] ?? ''}'.trim(),
       subject: '${data['subject'] ?? ''}'.trim(),
-      preview: '${data['preview'] ?? ''}'.trim(),
-      body: '${data['body'] ?? ''}'.trim(),
+      preview: sanitizeAdminContactMailPreview('${data['preview'] ?? ''}'),
+      body: sanitizeAdminContactMailText('${data['body'] ?? ''}'),
       receivedAt: asInt(data['receivedAt']),
       isRead: data['isRead'] == true,
       attachmentCount: asInt(data['attachmentCount']),
