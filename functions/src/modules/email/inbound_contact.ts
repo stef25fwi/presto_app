@@ -5,7 +5,7 @@ import { db } from "../../core/firestore";
 import { logger } from "../../core/logger";
 import { sha256 } from "../../utils/hash";
 import { extractRolesFromAuthToken, requireAnyRole } from "../marketplace/services/roles";
-import { createEmailProvider } from "./providers/provider_factory";
+import { emailPreview, markdownEmailToPlainText, selectInboundDisplayBody } from "./inbound_content";\nimport { createEmailProvider } from "./providers/provider_factory";
 import { normalizeHeaders } from "./webhooks/signature";
 
 const INBOUND_COLLECTION = "adminInboundEmails";
@@ -125,13 +125,19 @@ function requireAdmin(request: {
 
 function serializeMail(id: string, data: Record<string, unknown>): Record<string, unknown> {
   const attachments = Array.isArray(data.attachments) ? data.attachments : [];
+  const legacyMarkdown = cleanString(data.body_markdown, MAX_BODY_CHARS);
+  const body = cleanString(data.body_text, MAX_BODY_CHARS)
+    || markdownEmailToPlainText(legacyMarkdown).slice(0, MAX_BODY_CHARS);
+  const legacyPreview = markdownEmailToPlainText(cleanString(data.preview, MAX_BODY_CHARS));
+  const preview = emailPreview(body || legacyPreview, MAX_PREVIEW_CHARS);
   return {
     id,
     senderName: cleanString(data.sender_name, 240),
     senderEmail: normalizeEmail(data.sender_email),
     subject: cleanString(data.subject, 500),
-    preview: cleanString(data.preview, MAX_PREVIEW_CHARS),
-    body: cleanString(data.body_markdown, MAX_BODY_CHARS),
+    preview,
+    body,
+    bodyFormat: "plain",
     receivedAt: Number(data.received_at || 0),
     isRead: data.is_read === true,
     attachmentCount: attachments.length,
@@ -183,14 +189,26 @@ export const handleInboundContactEmailWebhook = onRequest(
       const sender = mailboxFrom(item.From ?? item.from);
       const replyTo = mailboxFrom(item.ReplyTo ?? item.replyTo);
       const subject = cleanString(item.Subject ?? item.subject, 500);
-      const body = cleanString(
-        item.ExtractedMarkdownMessage
-          ?? item.extractedMarkdownMessage
-          ?? item.RawTextBody
-          ?? item.rawTextBody,
-        MAX_BODY_CHARS,
-      );
-      const preview = body.replace(/\s+/g, " ").trim().slice(0, MAX_PREVIEW_CHARS);
+      const rawTextBody = item.RawTextBody
+        ?? item.rawTextBody
+        ?? item.TextBody
+        ?? item.textBody;
+      const markdownBody = item.ExtractedMarkdownMessage
+        ?? item.extractedMarkdownMessage;
+      const htmlBody = item.RawHtmlBody
+        ?? item.rawHtmlBody
+        ?? item.HtmlBody
+        ?? item.htmlBody
+        ?? item.Html
+        ?? item.html;
+      const selectedBody = selectInboundDisplayBody({
+        rawText: rawTextBody,
+        markdown: markdownBody,
+        html: htmlBody,
+        maxLength: MAX_BODY_CHARS,
+      });
+      const body = selectedBody.text;
+      const preview = emailPreview(body, MAX_PREVIEW_CHARS);
       const messageId = cleanString(item.MessageId ?? item.messageId, 1_000);
       const uuidValue = item.Uuid ?? item.uuid;
       const firstUuid = Array.isArray(uuidValue)
@@ -218,7 +236,10 @@ export const handleInboundContactEmailWebhook = onRequest(
           reply_to_email: replyTo.address || sender.address,
           subject,
           preview,
-          body_markdown: body,
+          preview_text: preview,
+          body_text: body,
+          body_markdown: cleanString(markdownBody, MAX_BODY_CHARS),
+          body_source: selectedBody.source,
           received_at: receivedAt,
           webhook_received_at: Date.now(),
           recipient_addresses: recipientAddresses(item),
