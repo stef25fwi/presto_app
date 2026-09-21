@@ -36,7 +36,7 @@ void main() {
     const raw = 'Bonjour\n\n iliprestō';
     expect(
       sanitizeAdminContactMailPreview(raw, maxLength: 12),
-      'Bonjour ilipr',
+      'Bonjour ilip',
     );
   });
 }
