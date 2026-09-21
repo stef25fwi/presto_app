@@ -71,5 +71,5 @@ test("htmlEmailToPlainText fournit un fallback sûr sans balises ni scripts", ()
 });
 
 test("emailPreview aplatit les espaces et borne la taille", () => {
-  assert.equal(emailPreview("Bonjour\n\n  iliprestō", 12), "Bonjour ilipr");
+  assert.equal(emailPreview("Bonjour\n\n  iliprestō", 12), "Bonjour ilip");
 });
