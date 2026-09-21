@@ -5,7 +5,8 @@ import { db } from "../../core/firestore";
 import { logger } from "../../core/logger";
 import { sha256 } from "../../utils/hash";
 import { extractRolesFromAuthToken, requireAnyRole } from "../marketplace/services/roles";
-import { emailPreview, markdownEmailToPlainText, selectInboundDisplayBody } from "./inbound_content";\nimport { createEmailProvider } from "./providers/provider_factory";
+import { emailPreview, markdownEmailToPlainText, selectInboundDisplayBody } from "./inbound_content";
+import { createEmailProvider } from "./providers/provider_factory";
 import { normalizeHeaders } from "./webhooks/signature";
 
 const INBOUND_COLLECTION = "adminInboundEmails";
