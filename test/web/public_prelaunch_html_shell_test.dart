@@ -6,22 +6,13 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('web public prelaunch shell', () {
     late String html;
-    late String bootstrap;
     late String publicRouteSeo;
-    late String webBridge;
-    late String appChrome;
     late Map<String, dynamic> structuredData;
     late List<Map<String, dynamic>> structuredNodes;
 
     setUpAll(() {
       html = File('web/index.html').readAsStringSync();
-      bootstrap = File('web/flutter_bootstrap.js').readAsStringSync();
       publicRouteSeo = File('web/public-route-seo.js').readAsStringSync();
-      webBridge = File(
-        'lib/platform/public_prelaunch_shell_web.dart',
-      ).readAsStringSync();
-      appChrome = File('lib/app/presto_app_chrome.dart').readAsStringSync();
-
       final jsonLdMatch = RegExp(
         r'<script\s+type="application/ld\+json"[^>]*>([\s\S]*?)</script>',
       ).firstMatch(html);
@@ -79,59 +70,6 @@ void main() {
       expect(
         types,
         containsAll(<String>{'Organization', 'WebSite', 'WebPage', 'Service'}),
-      );
-    });
-
-    test('ne charge pas Flutter avant le déverrouillage de la racine publique',
-        () {
-      expect(bootstrap, contains('const deferredPublicPrelaunch ='));
-      expect(
-        bootstrap,
-        contains(
-          'useFlutterPrelaunchOnly && '
-          '!window.iliprestoHasPrelaunchAccess()',
-        ),
-      );
-      expect(
-        bootstrap,
-        contains(
-          'if (deferredPublicPrelaunch) {\n'
-          '    armHiddenDeveloperAccess();\n'
-          '    return;\n'
-          '  }',
-        ),
-      );
-    });
-
-    test('conserve huit taps invisibles avec remise à zéro après huit secondes',
-        () {
-      expect(bootstrap, contains('const developerAccessTapCount = 8;'));
-      expect(bootstrap, contains('const tapSequenceTimeoutMs = 8000;'));
-      expect(
-        bootstrap,
-        contains("shell.querySelector('.prelaunch-card')"),
-      );
-      expect(bootstrap, contains("trigger.addEventListener('click'"));
-      expect(bootstrap, contains('tapCount >= developerAccessTapCount'));
-      expect(bootstrap, isNot(contains('tapCount.toString')));
-      expect(bootstrap, isNot(contains('Compteur')));
-    });
-
-    test('mémorise le déverrouillage dans l’onglet et ouvre directement Home',
-        () {
-      expect(
-        bootstrap,
-        contains("const prelaunchAccessStorageKey = 'ilipresto-prelaunch-access'"),
-      );
-      expect(bootstrap, contains('window.iliprestoHasPrelaunchAccess'));
-      expect(bootstrap, contains('persistPrelaunchAccess();'));
-      expect(webBridge, contains("@JS('iliprestoHasPrelaunchAccess')"));
-      expect(webBridge, contains('bool hasPublicPrelaunchAccess()'));
-      expect(
-        appChrome,
-        contains(
-          '_temporaryDeveloperAccessGranted || hasPublicPrelaunchAccess()',
-        ),
       );
     });
 

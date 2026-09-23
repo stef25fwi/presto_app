@@ -68,39 +68,15 @@
 
   const useFlutterPrelaunchOnly =
       normalizedPath === '/' && prodHosts.has(host);
-  const developerAccessTapCount = 8;
-  const tapSequenceTimeoutMs = 8000;
-  const prelaunchAccessStorageKey = 'ilipresto-prelaunch-access';
-
   let prelaunchTransitionShell = null;
   let flutterStartRequested = false;
-  let tapCount = 0;
-  let lastTapAt = 0;
-  let tapResetTimer = null;
-  let prelaunchAccessGranted = false;
 
-  function readStoredPrelaunchAccess() {
-    try {
-      return window.sessionStorage.getItem(prelaunchAccessStorageKey) === '1';
-    } catch (_) {
-      return false;
-    }
+  // Old session flags never authorize access to the public application.
+  try {
+    window.sessionStorage.removeItem('ilipresto-prelaunch-access');
+  } catch (_) {
+    // Storage may be unavailable in private browsing; access stays closed.
   }
-
-  function persistPrelaunchAccess() {
-    try {
-      window.sessionStorage.setItem(prelaunchAccessStorageKey, '1');
-    } catch (_) {
-      // Le mode privé peut refuser sessionStorage. Le drapeau mémoire suffit
-      // alors pour terminer l'ouverture dans l'onglet courant.
-    }
-  }
-
-  prelaunchAccessGranted = readStoredPrelaunchAccess();
-
-  window.iliprestoHasPrelaunchAccess = function () {
-    return prelaunchAccessGranted || readStoredPrelaunchAccess();
-  };
 
   function applyPrelaunchAccessibilityFixes() {
     if (document.getElementById('ilipresto-prelaunch-a11y-fixes')) return;
@@ -173,16 +149,10 @@
     const shell = getPrelaunchSeoShell();
     if (shell) shell.remove();
 
-    if (!useFlutterPrelaunchOnly || window.iliprestoHasPrelaunchAccess()) {
+    if (!useFlutterPrelaunchOnly) {
       removePrelaunchTransitionShell();
     }
   }
-
-  window.iliprestoOpenApplication = function () {
-    prelaunchAccessGranted = true;
-    persistPrelaunchAccess();
-    removePrelaunchTransitionShell();
-  };
 
   const isLocalHost =
       host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0';
@@ -219,57 +189,11 @@
     });
   }
 
-  function grantHiddenDeveloperAccess() {
-    if (prelaunchAccessGranted) return;
-    prelaunchAccessGranted = true;
-    persistPrelaunchAccess();
-    if (tapResetTimer !== null) {
-      window.clearTimeout(tapResetTimer);
-      tapResetTimer = null;
-    }
-    startFlutterApplication();
-  }
-
-  function armHiddenDeveloperAccess() {
-    const shell = getPrelaunchSeoShell();
-    const trigger = shell && shell.querySelector('.prelaunch-card');
-    if (!trigger) return;
-
-    trigger.addEventListener('click', function () {
-      if (prelaunchAccessGranted) return;
-
-      const now = Date.now();
-      const sequenceExpired = lastTapAt === 0 ||
-          now - lastTapAt > tapSequenceTimeoutMs;
-      tapCount = sequenceExpired ? 1 : tapCount + 1;
-      lastTapAt = now;
-
-      if (tapResetTimer !== null) {
-        window.clearTimeout(tapResetTimer);
-      }
-
-      if (tapCount >= developerAccessTapCount) {
-        tapCount = developerAccessTapCount;
-        grantHiddenDeveloperAccess();
-        return;
-      }
-
-      tapResetTimer = window.setTimeout(function () {
-        tapCount = 0;
-        lastTapAt = 0;
-        tapResetTimer = null;
-      }, tapSequenceTimeoutMs);
-    });
-  }
-
   applyPrelaunchAccessibilityFixes();
 
-  const deferredPublicPrelaunch =
-      useFlutterPrelaunchOnly && !window.iliprestoHasPrelaunchAccess();
-  if (deferredPublicPrelaunch) {
-    armHiddenDeveloperAccess();
-    return;
-  }
+  // Keep the public landing static. Preview hosts still start Flutter;
+  // public deep links are gated again by PublicPrelaunchEntryMode in Dart.
+  if (useFlutterPrelaunchOnly) return;
 
   startFlutterApplication();
 })();

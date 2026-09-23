@@ -8,7 +8,6 @@ void main() {
         resolvePublicPrelaunchEntryMode(
           Uri.parse('https://ilipresto.fr/mentions-legales'),
           enabled: true,
-          hasDeveloperAccess: false,
           isWeb: true,
         ),
         PublicPrelaunchEntryMode.legalNotices,
@@ -17,7 +16,6 @@ void main() {
         resolvePublicPrelaunchEntryMode(
           Uri.parse('https://ilipresto.fr/cgu'),
           enabled: true,
-          hasDeveloperAccess: false,
           isWeb: true,
         ),
         PublicPrelaunchEntryMode.terms,
@@ -43,7 +41,6 @@ void main() {
           resolvePublicPrelaunchEntryMode(
             Uri.parse('https://ilipresto.fr$path'),
             enabled: true,
-            hasDeveloperAccess: false,
             isWeb: true,
           ),
           PublicPrelaunchEntryMode.landing,
@@ -57,7 +54,6 @@ void main() {
         resolvePublicPrelaunchEntryMode(
           Uri.parse('https://ilipresto.fr/#/cgu'),
           enabled: true,
-          hasDeveloperAccess: false,
           isWeb: true,
         ),
         PublicPrelaunchEntryMode.landing,
@@ -66,22 +62,20 @@ void main() {
         resolvePublicPrelaunchEntryMode(
           Uri.parse('https://ilipresto.fr/#/mentions-legales'),
           enabled: true,
-          hasDeveloperAccess: false,
           isWeb: true,
         ),
         PublicPrelaunchEntryMode.landing,
       );
     });
 
-    test('autorise l application uniquement après accès développeur', () {
+    test('ignore les paramètres et fragments de déverrouillage publics', () {
       expect(
         resolvePublicPrelaunchEntryMode(
-          Uri.parse('https://ilipresto.fr/login'),
+          Uri.parse('https://ilipresto.fr/login?developerAccess=1#/admin'),
           enabled: true,
-          hasDeveloperAccess: true,
           isWeb: true,
         ),
-        PublicPrelaunchEntryMode.application,
+        PublicPrelaunchEntryMode.landing,
       );
     });
 
@@ -90,7 +84,6 @@ void main() {
         resolvePublicPrelaunchEntryMode(
           Uri.parse('https://ilipresto.fr/account'),
           enabled: false,
-          hasDeveloperAccess: false,
           isWeb: true,
         ),
         PublicPrelaunchEntryMode.application,
@@ -102,7 +95,6 @@ void main() {
         resolvePublicPrelaunchEntryMode(
           Uri.parse('https://preview.example.dev/login'),
           enabled: true,
-          hasDeveloperAccess: false,
           isWeb: true,
         ),
         PublicPrelaunchEntryMode.application,
