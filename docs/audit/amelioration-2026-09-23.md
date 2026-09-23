@@ -60,6 +60,14 @@ modification Remote Config n’est faite dans ce lot.
 
 ## Conditions de livraison du lot 1
 
+La première validation complète sur `185de1fe` a réussi l'analyse Flutter,
+les seuils qualité et couverture, les tests Functions et Firestore, le build
+web et le budget bundle. La suite Flutter a signalé un seul échec : le nouveau
+test U01 tentait de saisir dans la description encore en lecture seule, sans
+le clic utilisateur qui active son édition. Le scénario est corrigé et
+vérifie désormais le texte avant de quitter, pendant le masquage et au retour,
+ainsi que l'identité de l'état et du contrôleur. Sa nouvelle CI reste requise.
+
 Obtenir les résultats de la CI sur le SHA exact, vérifier les éventuels
 correctifs générés automatiquement et confirmer le build web. Déployer les
 règles Firestore et le code de façon cohérente lors d’une livraison autorisée.

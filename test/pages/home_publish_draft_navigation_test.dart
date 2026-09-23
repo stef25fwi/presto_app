@@ -91,13 +91,21 @@ void main() {
     final description = find.byWidgetPredicate(
       (widget) => widget is TextField && (widget.maxLines ?? 1) > 1,
     );
+    // Selecting text primes a read-only preview; the user taps it to edit.
+    await tester.tap(description);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(tester.widget<TextField>(description).readOnly, isFalse);
+    final draftController = tester.widget<TextField>(description).controller;
+    final publishState = tester.state(find.byType(PublishOfferPage));
     const draft = 'Recherche jardinier à Baie-Mahault pour entretenir un jardin.';
     await tester.enterText(description, draft);
     await tester.pump();
+    expect(draftController?.text, draft);
 
     await tester.tap(find.text('Accueil'));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.byType(PublishOfferPage), findsNothing);
+    expect(draftController?.text, draft);
     expect(
       TickerMode.of(tester.element(
         find.byType(PublishOfferPage, skipOffstage: false),
@@ -107,6 +115,11 @@ void main() {
 
     await tester.tap(find.text('Publier\nune offre'));
     await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.state(find.byType(PublishOfferPage)), same(publishState));
+    expect(
+      tester.widget<TextField>(description).controller,
+      same(draftController),
+    );
     expect(tester.widget<TextField>(description).controller?.text, draft);
     expect(tester.widget<TextField>(description).enabled, isNot(false));
     expect(
