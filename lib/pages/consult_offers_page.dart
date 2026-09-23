@@ -36,11 +36,15 @@ class ConsultOffersPage extends StatefulWidget {
   final String? searchQuery;
   final Function(double)? onScroll;
 
+  @visibleForTesting
+  final CitySearch? citySearchForTesting;
+
   const ConsultOffersPage({
     super.key,
     this.categoryFilter,
     this.searchQuery,
     this.onScroll,
+    this.citySearchForTesting,
   });
 
   @override
@@ -1328,7 +1332,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     return true;
   }
 
-  void _applyFiltersOrSearch() {
+  void _applyFiltersOrSearch({bool closeFilterPanel = true}) {
     // Annule le debounce en cours pour éviter les conflits
     _filterDebounce._t?.cancel();
 
@@ -1397,7 +1401,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       _lastDoc = null; // Reset pagination
       _pageLimit = _paginationPolicy.initialLimit;
       _lastPaginationRequestAt = null;
-      _showFilters = false;
+      if (closeFilterPanel) _showFilters = false;
       _headerTitle = _resolveConsultOffersTitle();
     });
 
@@ -1434,7 +1438,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     // ✅ Auto-apply avec debounce à partir de 3 critères sélectionnés
     _filterDebounce.run(() {
-      _applyFiltersOrSearch();
+      _applyFiltersOrSearch(closeFilterPanel: false);
     });
   }
 
@@ -2426,7 +2430,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   // Méthodes pour la gestion de l'autocomplétion de ville dans les filtres
   List<CityRecord> _searchCities(String q) {
     final allowed = _allowedDeptCodesForCity;
-    return CitySearch.instance.search(q, limit: 20, allowedDeptCodes: allowed);
+    final citySearch = widget.citySearchForTesting ?? CitySearch.instance;
+    return citySearch.search(q, limit: 20, allowedDeptCodes: allowed);
   }
 
   Widget _buildFilterCityField() {

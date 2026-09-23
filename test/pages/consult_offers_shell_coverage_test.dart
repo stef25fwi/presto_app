@@ -4,6 +4,7 @@ import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/pages/consult_offers_page.dart';
+import 'package:presto_app/services/city_search.dart';
 
 class _SignedOutConsultAuthPlatform extends FirebaseAuthPlatform {
   _SignedOutConsultAuthPlatform() : super(appInstance: null);
@@ -43,13 +44,24 @@ void main() {
     FirebaseAuthPlatform.instance = originalAuthPlatform;
   });
 
-  Future<void> pumpPage(WidgetTester tester, {String? categoryFilter}) async {
+  Future<void> pumpPage(
+    WidgetTester tester, {
+    String? categoryFilter,
+    CitySearch? citySearchForTesting,
+  }) async {
     tester.view.physicalSize = const Size(900, 1800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(MaterialApp(home: ConsultOffersPage(categoryFilter: categoryFilter)));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ConsultOffersPage(
+          categoryFilter: categoryFilter,
+          citySearchForTesting: citySearchForTesting,
+        ),
+      ),
+    );
     for (var i = 0; i < 5; i += 1) {
       await tester.pump(const Duration(milliseconds: 80));
     }
@@ -75,6 +87,68 @@ void main() {
     await tester.tap(find.text('Filtres'));
     await tester.pump();
     expect(find.text('Filtres'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await drainQueryTimeouts(tester);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('garde le panneau ouvert en auto-application puis le ferme sur demande', (tester) async {
+    final citySearch = CitySearch.forTesting(<CityRecord>[
+      CityRecord(
+        name: 'Les Abymes',
+        postalCode: '97139',
+        departmentCode: '971',
+        regionCode: '01',
+      ),
+    ]);
+    await pumpPage(tester, citySearchForTesting: citySearch);
+    await tester.tap(find.text('Filtres'));
+    await tester.pump(const Duration(milliseconds: 350));
+    final filterPanel = find.byType(AnimatedCrossFade).first;
+    expect(
+      tester.widget<AnimatedCrossFade>(filterPanel).crossFadeState,
+      CrossFadeState.showFirst,
+    );
+
+    // Exerce les callbacks des champs sans dépendre de l'overlay animé des menus.
+    final categoryDropdown = tester.widget<DropdownButtonFormField<String>>(
+      find.byType(DropdownButtonFormField<String>).first,
+    );
+    expect(categoryDropdown.onChanged, isNotNull);
+    categoryDropdown.onChanged!('Bricolage / Travaux');
+    await tester.pump();
+
+    final regionDropdown = tester.widget<DropdownButtonFormField<String?>>(
+      find.byType(DropdownButtonFormField<String?>).first,
+    );
+    expect(regionDropdown.onChanged, isNotNull);
+    regionDropdown.onChanged!('01');
+    await tester.pump();
+
+    final cityAutocomplete = tester.widget<Autocomplete<CityRecord>>(
+      find.byType(Autocomplete<CityRecord>).first,
+    );
+    final cityResults = (await cityAutocomplete.optionsBuilder(
+      const TextEditingValue(text: 'Les Abymes'),
+    )).toList();
+    expect(cityResults, hasLength(1));
+    expect(cityAutocomplete.onSelected, isNotNull);
+    cityAutocomplete.onSelected!(cityResults.single);
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(
+      tester.widget<AnimatedCrossFade>(filterPanel).crossFadeState,
+      CrossFadeState.showFirst,
+    );
+    expect(find.text('Rechercher'), findsOneWidget);
+
+    await tester.tap(find.text('Rechercher'));
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(
+      tester.widget<AnimatedCrossFade>(filterPanel).crossFadeState,
+      CrossFadeState.showSecond,
+    );
     expect(tester.takeException(), isNull);
 
     await drainQueryTimeouts(tester);
