@@ -1458,7 +1458,10 @@ class _HomePageState extends State<HomePage>
                     )
                   : const SizedBox.shrink(),
               _mountedTabs.contains(2)
-                  ? PublishOfferPage(onScroll: (_) {})
+                  ? TickerMode(
+                      enabled: _selectedIndex == 2,
+                      child: PublishOfferPage(onScroll: (_) {}),
+                    )
                   : const SizedBox.shrink(),
               _mountedTabs.contains(3)
                   ? MessagesPageV2(

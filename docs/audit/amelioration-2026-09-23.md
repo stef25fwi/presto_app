@@ -17,7 +17,7 @@ maintien du formulaire de publication dans les onglets déjà visités.
 | S01 | nodemailer ≥ 9.1.1, sharp ≥ 0.35.4, qs verrouillé à 6.16.0 ; audit de production sur PR/main et chaque lundi, échec sur high/critical, preuves en artefact | Audit npm : 0 vulnérabilité ; build et tests Functions réussis | Implémenté, non déployé |
 | S02 | Suppression de toute création cliente de messages ; l’application conserve son envoi existant via `sendConversationMessage` | Émulateur : l’ancien payload de secours est refusé pour participants, participant bloqué et tiers, avec/sans pièce jointe ; lectures légitimes préservées | Implémenté, non déployé |
 | S03 | Suppression des compteurs de clics, des callbacks de déverrouillage et du pont JavaScript ; ancien indicateur de session invalidé | 11 tests comportementaux du bootstrap réussis ; tests Flutter adaptés pour les routes et appuis répétés | Implémenté ; validation Flutter en CI |
-| U01 | Publication montée au premier accès puis conservée pendant les changements d’onglet | Nouveau test Publier → saisie → Accueil → Publier ; diff Home limité à une ligne | Implémenté ; validation Flutter en CI |
+| U01 | Publication montée au premier accès puis conservée pendant les changements d’onglet ; animations suspendues lorsque l’onglet est masqué | Nouveau test Publier → saisie → Accueil → Publier et vérification TickerMode ; diff Home limité au montage de l’onglet Publier | Implémenté ; validation Flutter en CI |
 
 La conservation U01 couvre les changements d’onglet dans la même Home. Elle ne
 constitue pas encore une sauvegarde durable après rechargement, fermeture de

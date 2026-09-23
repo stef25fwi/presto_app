@@ -98,11 +98,21 @@ void main() {
     await tester.tap(find.text('Accueil'));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.byType(PublishOfferPage), findsNothing);
+    expect(
+      TickerMode.of(tester.element(
+        find.byType(PublishOfferPage, skipOffstage: false),
+      )),
+      isFalse,
+    );
 
     await tester.tap(find.text('Publier\nune offre'));
     await tester.pump(const Duration(milliseconds: 300));
     expect(tester.widget<TextField>(description).controller?.text, draft);
     expect(tester.widget<TextField>(description).enabled, isNot(false));
+    expect(
+      TickerMode.of(tester.element(find.byType(PublishOfferPage))),
+      isTrue,
+    );
 
     await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
     await tester.pump(const Duration(seconds: 13));
