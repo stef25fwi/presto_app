@@ -52,13 +52,72 @@ jobs:
       - name: Validate lot 17 contract
         run: node tools/seo/campaign_attribution_lot17_contract.test.mjs
 
+      - name: Preflight mobile signing prerequisites
+        id: preflight
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          IOS_TEAM_ID: ${{ vars.IOS_TEAM_ID || secrets.IOS_TEAM_ID }}
+          IOS_PROVISIONING_PROFILE_B64: ${{ secrets.IOS_PROVISIONING_PROFILE_B64 }}
+          IOS_DIST_CERT_P12_B64: ${{ secrets.IOS_DIST_CERT_P12_B64 }}
+          IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/seo
+
+          for name in KEYSTORE_B64 KEYSTORE_PASSWORD KEY_ALIAS; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "::error::Secret Android lot 17 manquant : $name"
+              exit 1
+            fi
+          done
+
+          IOS_SOURCE_AVAILABLE=false
+          if [[ -n "${IOS_TEAM_ID:-}"                 || -n "${IOS_PROVISIONING_PROFILE_B64:-}"                 || ( -n "${IOS_DIST_CERT_P12_B64:-}" && -n "${IOS_DIST_CERT_PASSWORD:-}" ) ]]; then
+            IOS_SOURCE_AVAILABLE=true
+          fi
+
+          if [[ "$IOS_SOURCE_AVAILABLE" == 'false' ]]; then
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo 'status_state=pending' >> "$GITHUB_OUTPUT"
+            echo 'status_description=Lot 17 en attente: Team ID Apple à configurer' >> "$GITHUB_OUTPUT"
+            cat > build/seo/campaign-attribution-lot17-report.json <<JSON
+          {
+            "status": "blocked",
+            "certified": false,
+            "reason": "missing_ios_team_id_source",
+            "commitSha": "$DEPLOYED_SHA",
+            "requiredAction": "Configurer la variable GitHub IOS_TEAM_ID dans l’environnement recaptcha, ou fournir un profil de provisioning/certificat Apple Distribution."
+          }
+          JSON
+            cat > build/seo/campaign-attribution-lot17-report.md <<'MD'
+          # Lot 17 — certification en attente
+
+          Le Web et Android ne sont pas déclarés certifiés séparément : la certification Lot 17 reste globale.
+
+          **Blocage externe :** aucune source permettant de déterminer le Team ID Apple n’est configurée.
+
+          Action requise : renseigner la variable GitHub Actions `IOS_TEAM_ID` dans l’environnement `recaptcha` (recommandé), ou fournir un profil de provisioning / certificat Apple Distribution exploitable.
+
+          Aucun seuil n’est abaissé et aucun faux vert n’est publié.
+          MD
+            exit 0
+          fi
+
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+          echo 'status_state=pending' >> "$GITHUB_OUTPUT"
+          echo 'status_description=Lot 17 en cours de certification' >> "$GITHUB_OUTPUT"
+
       - name: Authenticate to Google Cloud
+        if: steps.preflight.outputs.ready == 'true'
         uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
       - name: Setup Flutter 3.44.6
+        if: steps.preflight.outputs.ready == 'true'
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.44.6'
@@ -66,19 +125,23 @@ jobs:
           cache: true
 
       - name: Install Flutter dependencies
+        if: steps.preflight.outputs.ready == 'true'
         run: flutter pub get
 
       - name: Validate campaign attribution in Flutter
+        if: steps.preflight.outputs.ready == 'true'
         run: |
           flutter test test/campaign_attribution_service_test.dart test/app_route_parser_test.dart
           flutter analyze --fatal-infos
 
       - name: Build Web for campaign links
+        if: steps.preflight.outputs.ready == 'true'
         env:
           APPCHECK_RECAPTCHA_SITE_KEY: ${{ secrets.APPCHECK_RECAPTCHA_SITE_KEY }}
         run: bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run
 
       - name: Generate signed Android and iOS associations
+        if: steps.preflight.outputs.ready == 'true'
         env:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -206,9 +269,11 @@ jobs:
           rm -f "$KEYSTORE_PATH" "$PROFILE_PATH" "$PROFILE_PLIST" "$CERT_PATH" "$CERT_PEM"
 
       - name: Install Firebase CLI
+        if: steps.preflight.outputs.ready == 'true'
         run: npm install -g firebase-tools@13
 
       - name: Deploy signed association files to Hosting
+        if: steps.preflight.outputs.ready == 'true'
         run: |
           firebase deploy \
             --project presto-app-74abe \
@@ -216,6 +281,7 @@ jobs:
             --force
 
       - name: Verify lot 17 in production
+        if: steps.preflight.outputs.ready == 'true'
         id: verify
         continue-on-error: true
         run: |
@@ -249,8 +315,8 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
-          STATUS_STATE: ${{ steps.verify.outputs.state }}
-          STATUS_DESCRIPTION: ${{ steps.verify.outputs.description }}
+          STATUS_STATE: ${{ steps.verify.outputs.state || steps.preflight.outputs.status_state }}
+          STATUS_DESCRIPTION: ${{ steps.verify.outputs.description || steps.preflight.outputs.status_description }}
           TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           REPOSITORY: ${{ github.repository }}
         run: |
@@ -337,6 +403,10 @@ jobs:
           const file = 'build/seo/campaign-attribution-lot17-report.json';
           if (!fs.existsSync(file)) process.exit(1);
           const report = JSON.parse(fs.readFileSync(file, 'utf8'));
+          if (report.status === 'blocked' && report.reason === 'missing_ios_team_id_source') {
+            console.log('Lot 17 en attente d’un prérequis Apple externe ; certification non verte.');
+            process.exit(0);
+          }
           if (report.status !== 'available') process.exit(1);
           console.log('Lot 17 Web, Android et iOS disponible.');
           NODE
