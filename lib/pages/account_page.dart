@@ -23,6 +23,7 @@ import '../services/ad_placeholder_image_service.dart';
 import '../services/email_action_service.dart';
 import '../services/firebase_functions_region.dart';
 import '../services/notification_service.dart';
+import '../services/publish_offer_draft_store.dart';
 import '../services/user_profile_bootstrap_service.dart';
 import '../services/user_profile_save_payload.dart';
 import '../utils/crashlytics_context.dart';
@@ -2369,8 +2370,16 @@ class _AccountPageState extends State<AccountPage> {
 
     setState(() => _isSigningOut = true);
     try {
+      final ownerId = _auth.currentUser?.uid;
       await NotificationService().detachCurrentDevice();
       await _auth.signOut().timeout(const Duration(seconds: 10));
+      if (ownerId != null && ownerId.isNotEmpty) {
+        try {
+          await PublishOfferDraftStore.instance.clearForOwner(ownerId);
+        } catch (error) {
+          debugPrint('[Account] publication draft purge failed: $error');
+        }
+      }
       SessionState.userId = null;
       sessionState.logOut();
       await CrashlyticsContext.setUserId(null);

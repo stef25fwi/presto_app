@@ -42,6 +42,7 @@ import '../services/location_text_normalizer.dart';
 import '../services/marketplace_remote_config_service.dart';
 import '../services/offer_indexing.dart';
 import '../services/admin_audio_runtime_store.dart';
+import '../services/publish_offer_draft_store.dart';
 import '../services/user_profile_bootstrap_service.dart';
 import '../utils/crashlytics_context.dart';
 import '../utils/friendly_snackbar.dart';
@@ -58,6 +59,8 @@ import '../features/offers/presentation/widgets/publish_offer_flow_hint.dart';
 import '../widgets/phone_input_field.dart';
 import '../widgets/orbiting_ai_visual.dart';
 
+part 'publish_offer_draft_lifecycle.dart';
+
 final AdminAudioRuntimeStore _adminAudioRuntimeStore =
     AdminAudioRuntimeStore.instance;
 
@@ -73,13 +76,25 @@ enum PublishOfferAiFlowStep {
 class PublishOfferPage extends StatefulWidget {
   final Function(double)? onScroll;
 
-  const PublishOfferPage({super.key, this.onScroll});
+  const PublishOfferPage({
+    super.key,
+    this.onScroll,
+    this.draftStoreForTesting,
+    this.draftOwnerIdForTesting,
+  });
+
+  @visibleForTesting
+  final PublishOfferDraftStore? draftStoreForTesting;
+
+  @visibleForTesting
+  final String? draftOwnerIdForTesting;
 
   @override
   State<PublishOfferPage> createState() => _PublishOfferPageState();
 }
 
-class _PublishOfferPageState extends State<PublishOfferPage> {
+class _PublishOfferPageState extends State<PublishOfferPage>
+    with WidgetsBindingObserver {
   MarketplacePublishService? _marketplacePublishService;
   static const int _publishPhotoHardLimit = 2;
   static const int _defaultMaxListingPhotos = _publishPhotoHardLimit;
@@ -534,6 +549,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _categoryEditedByUser = false;
   bool _delayEditedByUser = false;
   bool _budgetEditedByUser = false;
+  Timer? _publishDraftSaveDebounce;
+  bool _publishDraftReady = false;
+  bool _publishDraftTouched = false;
+  bool _publishDraftCompleted = false;
+  Future<void> _publishDraftWriteQueue = Future<void>.value();
   final List<PublishAiTraceEntry> _publishAiTraceEntries =
       <PublishAiTraceEntry>[];
   final ValueNotifier<int> _publishAiTraceVersion = ValueNotifier<int>(0);
@@ -556,6 +576,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     } catch (_) {
       return null;
     }
+  }
+
+  PublishOfferDraftStore get _publishDraftStore =>
+      widget.draftStoreForTesting ?? PublishOfferDraftStore.instance;
+
+  String? get _publishDraftOwnerId {
+    final override = widget.draftOwnerIdForTesting?.trim();
+    if (override != null && override.isNotEmpty) return override;
+    return _authOrNull?.currentUser?.uid.trim();
   }
 
   final GlobalKey _titleFieldKey = GlobalKey();
@@ -1018,31 +1047,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         composing: TextRange.empty,
       );
     });
-  }
-
-  void _handlePublishTitleChanged() {
-    if (_isApplyingProgrammaticPublishUpdate) return;
-    _titleEditedByUser = true;
-  }
-
-  void _handlePublishDescriptionChanged() {
-    if (_isApplyingProgrammaticPublishUpdate) return;
-    _descriptionEditedByUser = true;
-  }
-
-  void _handlePublishLocationChanged() {
-    if (_isApplyingProgrammaticPublishUpdate) return;
-    _locationEditedByUser = true;
-  }
-
-  void _handlePublishPostalCodeChanged() {
-    if (_isApplyingProgrammaticPublishUpdate) return;
-    _postalCodeEditedByUser = true;
-  }
-
-  void _handlePublishBudgetChanged() {
-    if (_isApplyingProgrammaticPublishUpdate) return;
-    _budgetEditedByUser = true;
   }
 
   AiPublishState get _aiPublishState {
@@ -1700,6 +1704,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _recompute();
     });
+    this._markPublishDraftChanged();
   }
 
   // ✅ Extraction rapide CP (FR + DROM) depuis la transcription
@@ -2120,9 +2125,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     //     });
 
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     unawaited(_adminAudioRuntimeStore.ensureInitialized());
     unawaited(_loadMarketplacePhotoLimit());
-    unawaited(_prefillPublishFromProfile());
     unawaited(_refreshAdminAudioRuntimeAccess());
 
     _scrollController.addListener(() {
@@ -2130,18 +2135,30 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
 
     _titleController.addListener(_recompute);
-    _titleController.addListener(_handlePublishTitleChanged);
+    _titleController.addListener(this._handlePublishTitleChanged);
     _descriptionController.addListener(_recompute);
-    _descriptionController.addListener(_handlePublishDescriptionChanged);
+    _descriptionController.addListener(this._handlePublishDescriptionChanged);
     _locationController.addListener(_recompute);
-    _locationController.addListener(_handlePublishLocationChanged);
-    _postalCodeController.addListener(_handlePublishPostalCodeChanged);
+    _locationController.addListener(this._handlePublishLocationChanged);
+    _postalCodeController.addListener(this._handlePublishPostalCodeChanged);
     _phoneController.addListener(_recompute);
+    _phoneController.addListener(this._handlePublishPhoneChanged);
     _budgetController.addListener(_recompute);
-    _budgetController.addListener(_handlePublishBudgetChanged);
+    _budgetController.addListener(this._handlePublishBudgetChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
     FocusManager.instance.addListener(_onFocusManagerChange);
+    unawaited(this._restorePublishDraftThenPrefill());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
+      unawaited(this._savePublishDraftNow());
+    }
   }
 
   void _onFocusManagerChange() {
@@ -2277,7 +2294,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     _selectedPhoneCountryCode = selectedCode;
-    _phoneController.text = localDigits.isNotEmpty ? localDigits : trimmed;
+    _setControllerText(
+      _phoneController,
+      localDigits.isNotEmpty ? localDigits : trimmed,
+    );
   }
 
   Future<void> _prefillPublishFromProfile() async {
@@ -3608,7 +3628,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     FocusManager.instance.removeListener(_onFocusManagerChange);
+    _publishDraftSaveDebounce?.cancel();
+    if (_publishDraftReady &&
+        _publishDraftTouched &&
+        !_publishDraftCompleted) {
+      unawaited(this._savePublishDraftNow());
+    }
     _publishAiTraceDisposed = true;
     _publishAiTraceVersion.dispose();
     _titleController.dispose();
@@ -3623,6 +3650,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   void _resetAllFields() {
+    _publishDraftReady = false;
+    _publishDraftSaveDebounce?.cancel();
+    _publishDraftSaveDebounce = null;
     setState(() {
       _titleController.clear();
       _descriptionController.clear();
@@ -3660,8 +3690,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _publishAiFlowStep = PublishOfferAiFlowStep.chooseMethod;
       _manualEntryEnabled = false;
     });
+    _publishDraftTouched = false;
+    _publishDraftCompleted = false;
+    _publishDraftReady = true;
+    unawaited(this._clearPublishDraft());
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
-    unawaited(_prefillPublishFromProfile());
+    if (widget.draftOwnerIdForTesting == null) {
+      unawaited(_prefillPublishFromProfile());
+    }
     showSuccessSnackBar(context, 'Tous les champs ont été réinitialisés');
   }
 
@@ -4148,6 +4184,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final budgetValue = _budgetType == 'À négocier'
         ? 0.0
         : (parseBudget(_budgetController.text) ?? 0.0);
+    await this._savePublishDraftNow(ownerIdOverride: user.uid);
     final publishService =
         _marketplacePublishService ??= MarketplacePublishService();
 
@@ -4208,6 +4245,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }) async {
     try {
       final publishResult = await publishFuture;
+
+      _publishDraftCompleted = true;
+      await this._clearPublishDraft(ownerIdOverride: ownerId);
 
       // ✅ Analytics: publication
       await _logOfferPublished(
@@ -4503,12 +4543,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                 _selectedSubCategory = null;
                               });
                               _recompute();
+                              this._markPublishDraftChanged();
                             },
                             onSubcategoryChanged: (value) {
                               setState(() {
                                 _selectedSubCategory = value;
                               });
                               _recompute();
+                              this._markPublishDraftChanged();
                             },
                           ),
 
@@ -4552,6 +4594,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                 _locationEditedByUser = true;
                                 _postalCodeEditedByUser = true;
                               });
+                              this._markPublishDraftChanged();
                             },
                             onPostalTap:
                                 _clearAiPrefilledLocationPostalOnUserTap,
@@ -4577,6 +4620,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                               setState(() {
                                 _selectedPhoneCountryCode = code;
                               });
+                              this._markPublishDraftChanged();
                             },
                             onPhoneChanged: (_) => _recompute(),
                             validator: (value) {
@@ -4587,6 +4631,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             hidePhone: _hidePhone,
                             onHidePhoneChanged: (value) {
                               setState(() => _hidePhone = value);
+                              this._markPublishDraftChanged();
                             },
                           ),
 
@@ -4608,6 +4653,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                 _isUrgent = value == 'Urgent';
                               });
                               _recompute();
+                              this._markPublishDraftChanged();
                             },
                             budgetTypes: _budgetTypes,
                             selectedBudgetType: _budgetType,
@@ -4626,6 +4672,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                 _budgetType = value;
                               });
                               _recompute();
+                              this._markPublishDraftChanged();
                             },
                             budgetValidator: (value) {
                               if (_budgetType == 'À négocier') return null;
