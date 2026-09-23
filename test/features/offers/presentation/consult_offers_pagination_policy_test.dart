@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/features/offers/presentation/consult_offers_pagination_policy.dart';
 
 void main() {
-  const policy = ConsultOffersPaginationPolicy();
+  const policy = ConsultOffersPaginationPolicy(maxLimit: 100);
   final now = DateTime.utc(2026, 7, 11, 14);
 
   group('shouldRequestNextPage', () {
@@ -34,7 +34,7 @@ void main() {
           maxScrollExtent: 2000,
           now: now,
         ),
-        isFalse,
+        isTrue,
       );
       expect(
         policy.shouldRequestNextPage(

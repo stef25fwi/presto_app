@@ -11,6 +11,8 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import '../app_core.dart';
 import '../constants.dart';
 import '../features/offers/presentation/consult_offers_pagination_policy.dart';
+import '../features/offers/presentation/consult_offers_pager.dart';
+import '../features/offers/presentation/widgets/consult_offers_pagination_footer.dart';
 import '../features/trust_score/trust_score_widgets.dart';
 import '../app/system_ui_style.dart' show prestoOverlayStyleFor;
 import '../services/offer_details_mapper.dart' show buildOfferDetailsOffer;
@@ -202,7 +204,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   final Map<String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _offersWarmCache =
       <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
-  final Set<String> _offersWarmLoadsInFlight = <String>{};
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>? _initialOffersLoad;
 
   final _Debouncer _filterDebounce = _Debouncer(
     delay: const Duration(milliseconds: 300),
@@ -215,13 +217,18 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   bool _departmentResetScheduled = false;
 
   // Pagination par curseur : chaque page ne relit plus les documents déjà
-  // affichés. La limite maximale borne aussi le coût d'une session.
-  DocumentSnapshot<Map<String, dynamic>>? _lastDoc;
-  List<QueryDocumentSnapshot<Map<String, dynamic>>> _paginationDocs =
-      <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-  String? _paginationKey;
-  bool _isLoadingNextPage = false;
-  bool _hasMorePages = true;
+  // affichés. Chaque requête reste bornée à une page de 20 documents.
+  late final _pager =
+      ConsultOffersPager<QueryDocumentSnapshot<Map<String, dynamic>>>(
+    idOf: (doc) => doc.id,
+    fetchPage: (cursor, limit) => loadMergedPublicOfferQueryVariants(
+      queries: _buildCurrentListingsQueries(
+        limit: limit,
+        startAfterDocument: cursor,
+      ),
+      source: 'consult_listings_next_page',
+    ),
+  );
 
   static const ConsultOffersPaginationPolicy _paginationPolicy =
       ConsultOffersPaginationPolicy();
@@ -244,8 +251,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
   bool _showFilters = false; // Panneau de filtres rétracté au départ
   int _lastResultCount = 0;
-  int? _totalPublishedCount;
-  bool _isLoadingPublishedCount = false;
   String _headerTitle = 'Je consulte les offres';
   static const int _autoApplyFiltersThreshold = 3;
 
@@ -581,11 +586,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     _filterCityController.addListener(_syncLocationFieldFromFilter);
     _syncLocationFieldFromFilter();
 
-    final initialStreamKey = _buildOffersStreamKey();
-    unawaited(_primeOffersWarmCache(initialStreamKey));
-    if (!_hasActiveClientFilters) {
-      unawaited(_refreshPublishedOffersCount(force: true));
-    }
   }
 
   @override
@@ -595,72 +595,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     }
   }
 
-  Future<void> _refreshPublishedOffersCount({bool force = false}) async {
-    if (!force && _hasActiveClientFilters) {
-      return;
-    }
-    if (_isLoadingPublishedCount) {
-      return;
-    }
-    if (!force && _totalPublishedCount != null) {
-      return;
-    }
-
-    if (mounted) {
-      setState(() {
-        _isLoadingPublishedCount = true;
-      });
-    } else {
-      _isLoadingPublishedCount = true;
-    }
-
-    try {
-      final aggregate = await FirebaseFirestore.instance
-          .collection(kListingsCollection)
-          .where('status', isEqualTo: 'active')
-          .where('visibility', isEqualTo: 'public')
-          .count()
-          .get();
-
-      if (!mounted) {
-        _totalPublishedCount = aggregate.count;
-        return;
-      }
-
-      setState(() {
-        _totalPublishedCount = aggregate.count;
-      });
-    } catch (error) {
-      debugPrint('[ConsultOffers] published count failed: $error');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingPublishedCount = false;
-        });
-      } else {
-        _isLoadingPublishedCount = false;
-      }
-    }
-  }
-
-  void _refreshPublishedOffersCountIfNeeded() {
-    if (_hasActiveClientFilters) {
-      return;
-    }
-    unawaited(_refreshPublishedOffersCount(force: true));
-  }
-
   void _maybeLoadMore() {
-    if (!_scrollController.hasClients) return;
+    if (!_scrollController.hasClients || _pager.error != null) return;
 
     final position = _scrollController.position;
     final now = DateTime.now();
     final shouldRequest = _paginationPolicy.shouldRequestNextPage(
       hasActiveClientFilters: _hasActiveClientFilters,
-      isLoading: _isLoadingNextPage,
-      hasMore: _hasMorePages,
-      hasCursor: _lastDoc != null,
-      loadedCount: _paginationDocs.length,
+      isLoading: _pager.loading,
+      hasMore: _pager.hasMore,
+      hasCursor: _pager.cursor != null,
+      loadedCount: _pager.docs.length,
       pixels: position.pixels,
       maxScrollExtent: position.maxScrollExtent,
       now: now,
@@ -673,61 +618,27 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   }
 
   Future<void> _loadNextPage() async {
-    if (_hasActiveClientFilters || _isLoadingNextPage || !_hasMorePages) return;
-    final cursor = _lastDoc;
-    final key = _paginationKey;
-    if (cursor == null || key == null) return;
-
-    final requestedLimit = _paginationPolicy.nextPageLimit(
-      _paginationDocs.length,
-    );
-    if (requestedLimit <= 0) return;
-    setState(() => _isLoadingNextPage = true);
-
-    try {
-      final nextDocs = await loadMergedPublicOfferQueryVariants(
-        queries: _buildCurrentListingsQueries(
-          limit: requestedLimit,
-          startAfterDocument: cursor,
-        ),
-        source: 'consult_listings_next_page',
-      );
-      if (!mounted || _paginationKey != key) return;
-
-      final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{
-        for (final doc in _paginationDocs) doc.id: doc,
-      };
-      for (final doc in nextDocs) {
-        byId.putIfAbsent(doc.id, () => doc);
-      }
-
-      setState(() {
-        _paginationDocs = byId.values.toList(growable: false);
-        if (nextDocs.isNotEmpty) _lastDoc = nextDocs.last;
-        _hasMorePages = _paginationPolicy.hasMoreAfterPage(
-          receivedCount: nextDocs.length,
-          requestedLimit: requestedLimit,
-          totalLoadedCount: _paginationDocs.length,
-        );
-        _lastResultCount = _buildDisplayedOfferDocs(_paginationDocs).length;
-        _offersWarmCache[key] = _paginationDocs;
-        _displayedDocsCacheSignature = null;
-        _displayedDocsCache = null;
-        _renderItemsCacheSignature = null;
-        _renderItemsCache = null;
-      });
-    } catch (error) {
-      _logConsultOffersFetch(
-        'next-page-error',
-        details: <String, Object?>{
-          'message': error.toString(),
-          'loadedCount': _paginationDocs.length,
-        },
-      );
-    } finally {
-      if (mounted) setState(() => _isLoadingNextPage = false);
-    }
+    if (!mounted || _pager.queryKey != _buildOffersStreamKey()) return;
+    final generation = _pager.generation;
+    final pending = _pager.loadNext();
+    setState(() {});
+    await pending;
+    if (!mounted || generation != _pager.generation) return;
+    setState(() {
+      _lastResultCount = _buildDisplayedOfferDocs(_pager.docs).length;
+      final key = _pager.queryKey;
+      if (key != null) _offersWarmCache[key] = _pager.docs;
+      _displayedDocsCacheSignature = null;
+      _renderItemsCacheSignature = null;
+    });
   }
+
+  Widget _buildPaginationFooter() => ConsultOffersPaginationFooter(
+    hasMore: _pager.hasMore,
+    loading: _pager.loading,
+    failed: _pager.error != null,
+    onLoad: _loadNextPage,
+  );
 
   /// ✅ Précharge les données région/département au démarrage
   Future<void> _preloadRegionDeptData() async {
@@ -795,79 +706,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     );
   }
 
-  Future<void> _primeOffersWarmCache(String key) async {
-    if (_offersWarmCache.containsKey(key) ||
-        _offersWarmLoadsInFlight.contains(key)) {
-      return;
-    }
-
-    _offersWarmLoadsInFlight.add(key);
-    final limit = _hasActiveClientFilters
-        ? _paginationPolicy.maxLimit
-        : _paginationPolicy.initialLimit;
-
-    try {
-      final loads = <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
-        loadMergedPublicOfferQueryVariants(
-          queries: _buildCurrentListingsQueries(limit: limit),
-          source: 'consult_listings_warm',
-        ),
-      ];
-
-      if (kEnableLegacyPublicOffersBackfill) {
-        loads.add(
-          loadMergedPublicOfferQueryVariants(
-            queries: buildLatestPublicOffersQueryVariants(limit: limit),
-            source: 'consult_legacy_warm',
-          ),
-        );
-      }
-
-      final results = await Future.wait(loads);
-      final listings = results[0];
-      final legacy = results.length > 1
-          ? results[1]
-          : listings.isEmpty
-              ? await loadLegacyPublicOffersOnDemand(
-                  limit: limit,
-                  source: 'consult_legacy_warm_fallback',
-                )
-              : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-      final merged = mergeOfferDocsById(listings, legacy);
-      final displayedCount = _buildDisplayedOfferDocs(merged).length;
-
-      _offersWarmCache[key] = merged;
-
-      if (mounted && _buildOffersStreamKey() == key) {
-        setState(() {
-          _lastResultCount = displayedCount;
-        });
-      }
-    } catch (_) {
-      // Le stream live reste la source de vérité ; l'amorçage est opportuniste.
-    } finally {
-      _offersWarmLoadsInFlight.remove(key);
-    }
-  }
-
   Future<void> _refreshOffers() async {
     final key = _buildOffersStreamKey();
-
     _cachedOffersStream = null;
     _cachedOffersStreamKey = null;
     _offersWarmCache.remove(key);
-    _offersWarmLoadsInFlight.remove(key);
-    _paginationDocs = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-    _paginationKey = null;
-    _lastDoc = null;
-    _hasMorePages = true;
-
+    _getOffersStream();
+    if (mounted) setState(() {});
     try {
-      await _primeOffersWarmCache(key);
-    } finally {
-      if (mounted) {
-        setState(() {});
-      }
+      await _initialOffersLoad;
+    } catch (_) {
+      // Le StreamBuilder affiche l'erreur et propose une nouvelle tentative.
     }
   }
 
@@ -876,30 +725,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _getOffersStream() {
     final key = _buildOffersStreamKey();
     if (_cachedOffersStream == null || _cachedOffersStreamKey != key) {
-      if (!_hasActiveClientFilters && _paginationKey != key) {
-        _paginationKey = key;
-        _paginationDocs = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-        _lastDoc = null;
-        _hasMorePages = true;
-      }
+      _pager.reset(key);
+      _lastResultCount = 0;
+      final generation = _pager.generation;
       // Le stream principal est l’unique chargement initial. Le warm load
       // parallèle doublait les lectures Firestore pour le même écran.
-      _cachedOffersStream = _watchCombinedOffers().map((docs) {
-        if (!_hasActiveClientFilters && _paginationKey == key) {
-          _paginationDocs =
-              List<QueryDocumentSnapshot<Map<String, dynamic>>>.of(
-            docs,
-            growable: false,
-          );
-          _lastDoc = docs.isEmpty ? null : docs.last;
-          _hasMorePages = docs.length >= _paginationPolicy.initialLimit &&
-              docs.length < _paginationPolicy.maxLimit;
-        }
+      _initialOffersLoad = _loadCombinedOffers(generation);
+      _cachedOffersStream = _initialOffersLoad!.asStream().map((docs) {
+        if (generation != _pager.generation) return docs;
         final displayedCount = _buildDisplayedOfferDocs(docs).length;
         _offersWarmCache[key] = docs;
-        if (mounted &&
-            _cachedOffersStreamKey == key &&
-            _lastResultCount != displayedCount) {
+        if (mounted && _cachedOffersStreamKey == key) {
           setState(() {
             _lastResultCount = displayedCount;
           });
@@ -912,17 +748,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     return _cachedOffersStream!;
   }
 
-  Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
-      _watchCombinedOffers() {
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+      _loadCombinedOffers(int generation) {
     // ✅ Fetch-once (get) au lieu d'un snapshots() permanent: la consultation
     // publique n'a pas besoin d'un live stream. La stream émet un unique
     // résultat fusionné, puis se termine. Un changement de filtre/pagination
     // change la clé (_buildOffersStreamKey), ce qui recrée un nouveau stream
     // et déclenche un nouveau fetch. Le refresh manuel reste assuré par le
     // bouton "Actualiser" qui invalide le cache du stream.
-    final limit = _hasActiveClientFilters
-        ? _paginationPolicy.maxLimit
-        : _paginationPolicy.initialLimit;
+    final limit = _paginationPolicy.initialLimit;
     final categoryId = _effectiveListingsCategoryId();
     final cityId = _effectiveListingsCityId();
 
@@ -968,6 +802,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                   )
                 : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
         final merged = mergeOfferDocsById(listings, legacy);
+        _pager.seed(
+          requestGeneration: generation,
+          canonicalPage: listings,
+          displayedPage: merged,
+        );
         _logConsultOffersFetch(
           'success',
           details: <String, Object?>{
@@ -989,7 +828,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       }
     }
 
-    return loadOnce().asStream();
+    return loadOnce();
   }
 
   bool _offerIsActive(Map<String, dynamic> data) {
@@ -1036,6 +875,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         if (!mounted) return;
         setState(() {
           _nextJobDoneOverlayRefreshAt = null;
+          _displayedDocsCacheSignature = null;
+          _renderItemsCacheSignature = null;
+          _lastResultCount = _buildDisplayedOfferDocs(_pager.docs).length;
         });
       },
     );
@@ -1394,14 +1236,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       _budgetRangeWarning = budgetWarning;
       _activeSearchQuery =
           _keywordCtrl.text.trim().isEmpty ? null : _keywordCtrl.text.trim();
-      _lastDoc = null; // Reset pagination
       _pageLimit = _paginationPolicy.initialLimit;
       _lastPaginationRequestAt = null;
       _showFilters = false;
       _headerTitle = _resolveConsultOffersTitle();
     });
-
-    _refreshPublishedOffersCountIfNeeded();
   }
 
   void _trackManualFilterCriterion(String key, {required bool isActive}) {
@@ -1484,7 +1323,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     FocusScope.of(context).unfocus();
 
     // 4) ✅ Pas de scroll forcé: on conserve la position courante
-    _refreshPublishedOffersCountIfNeeded();
   }
 
   void _mutateActiveFilters(VoidCallback mutation) {
@@ -1492,13 +1330,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       mutation();
       _pruneManualAutoApplyCriteria();
       _budgetRangeWarning = null;
-      _lastDoc = null;
       _pageLimit = _paginationPolicy.initialLimit;
       _lastPaginationRequestAt = null;
       _headerTitle = _resolveConsultOffersTitle();
     });
-
-    _refreshPublishedOffersCountIfNeeded();
   }
 
   Widget _buildRemovableFilterChip({
@@ -1705,22 +1540,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final activeFilterChips = _buildActiveFilterChipItems();
     final activeFiltersCount = activeFilterChips.length;
 
-    final bool hasActiveFilters = _hasActiveClientFilters;
-    final int displayedResultCount = _lastResultCount;
-    final int publishedCount = _totalPublishedCount ?? displayedResultCount;
-    final String offersLabel;
-
-    if (!hasActiveFilters &&
-        _isLoadingPublishedCount &&
-        _totalPublishedCount == null) {
-      offersLabel = 'Chargement des annonces publiées...';
-    } else if (hasActiveFilters) {
-      offersLabel =
-          '$displayedResultCount annonce${displayedResultCount > 1 ? 's' : ''} trouvée${displayedResultCount > 1 ? 's' : ''}';
-    } else {
-      offersLabel =
-          '$publishedCount annonce${publishedCount > 1 ? 's' : ''} publiée${publishedCount > 1 ? 's' : ''}';
-    }
+    final offersLabel = consultOffersResultLabel(
+      count: _lastResultCount,
+      initialized: _pager.initialized && _pager.queryKey == _buildOffersStreamKey(),
+      hasMore: _pager.hasMore,
+    );
 
     return Container(
       color: Colors.white,
@@ -1929,6 +1753,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
               Expanded(
                 child: StreamBuilder<
                     List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
+                  key: ValueKey(currentOffersStreamKey),
                   stream: _getOffersStream(),
                   initialData: initialOfferDocs,
                   builder: (context, snapshot) {
@@ -2013,10 +1838,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
                     final snapshotDocs = snapshot.data ??
                         const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-                    final rawDocs = !_hasActiveClientFilters &&
-                            _paginationKey == currentOffersStreamKey &&
-                            _paginationDocs.isNotEmpty
-                        ? _paginationDocs
+                    final rawDocs = _pager.queryKey == currentOffersStreamKey &&
+                            _pager.docs.isNotEmpty
+                        ? _pager.docs
                         : snapshotDocs;
 
                     final docs = _getDisplayedOfferDocsMemo(
@@ -2046,21 +1870,29 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                     color: _offersOrange,
                                   ),
                                   SizedBox(width: 10),
-                                  Text(
-                                    '0 annonce',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w800,
-                                      color: _offersNavy,
+                                  Flexible(
+                                    child: Text(
+                                      _pager.hasMore
+                                          ? 'Recherche à poursuivre'
+                                          : '0 annonce',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: _offersNavy,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            SizedBox(
-                              height: 420,
-                              child: _EmptyOffers(onRefresh: _refreshOffers),
-                            ),
+                            if (_pager.hasMore)
+                              _buildPaginationFooter()
+                            else
+                              SizedBox(
+                                height: 420,
+                                child: _EmptyOffers(onRefresh: _refreshOffers),
+                              ),
+                            const SizedBox(height: 132),
                           ],
                         ),
                       );
@@ -2089,8 +1921,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                               padding: const EdgeInsets.fromLTRB(6, 0, 6, 132),
                               addAutomaticKeepAlives: false,
                               addRepaintBoundaries: true,
-                              itemCount: items.length,
+                              itemCount: items.length + 1,
                               itemBuilder: (context, index) {
+                                if (index == items.length) {
+                                  return _buildPaginationFooter();
+                                }
                                 final item = items[index];
                                 if (item.isAd) {
                                   return Padding(
