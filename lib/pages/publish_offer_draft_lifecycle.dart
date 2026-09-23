@@ -111,7 +111,11 @@ extension _PublishOfferDraftLifecycle on _PublishOfferPageState {
     }
     if (!mounted) return;
 
-    final shouldRestore = draft != null && !_publishDraftTouched;
+    final currentDraftHasContent =
+        _capturePublishDraft(ownerIdOverride: ownerId)?.hasMeaningfulContent ??
+            false;
+    final shouldRestore =
+        draft != null && !(_publishDraftTouched && currentDraftHasContent);
     if (shouldRestore) {
       _applyRestoredPublishDraft(draft);
     }
