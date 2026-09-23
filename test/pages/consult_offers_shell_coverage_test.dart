@@ -105,32 +105,39 @@ void main() {
     await pumpPage(tester, citySearchForTesting: citySearch);
     await tester.tap(find.text('Filtres'));
     await tester.pump(const Duration(milliseconds: 350));
-
-    final categoryDropdown = find.byType(DropdownButton<String>).first;
-    await tester.tap(categoryDropdown);
-    await tester.pump(const Duration(milliseconds: 350));
-    await tester.tap(find.text('Bricolage / Travaux').last);
-    await tester.pump();
-
-    final regionDropdown = find.byType(DropdownButton<String?>).first;
-    await tester.tap(regionDropdown);
-    await tester.pump(const Duration(milliseconds: 350));
-    await tester.tap(find.text('Guadeloupe').last);
-    await tester.pump();
-
-    final cityField = find.byWidgetPredicate(
-      (widget) => widget is TextField && widget.decoration?.labelText == 'Ville',
+    final filterPanel = find.byType(AnimatedCrossFade).first;
+    expect(
+      tester.widget<AnimatedCrossFade>(filterPanel).crossFadeState,
+      CrossFadeState.showFirst,
     );
-    await tester.enterText(cityField, 'Les Abymes');
-    await tester.pump(const Duration(milliseconds: 100));
-    final citySuggestion = find.text('Les Abymes (97139)');
-    expect(citySuggestion, findsOneWidget);
-    await tester.tap(citySuggestion);
+
+    // Exerce les callbacks des champs sans dépendre de l'overlay animé des menus.
+    final categoryDropdown = tester.widget<DropdownButtonFormField<String>>(
+      find.byType(DropdownButtonFormField<String>).first,
+    );
+    expect(categoryDropdown.onChanged, isNotNull);
+    categoryDropdown.onChanged!('Bricolage / Travaux');
+    await tester.pump();
+
+    final regionDropdown = tester.widget<DropdownButtonFormField<String?>>(
+      find.byType(DropdownButtonFormField<String?>).first,
+    );
+    expect(regionDropdown.onChanged, isNotNull);
+    regionDropdown.onChanged!('01');
+    await tester.pump();
+
+    final cityAutocomplete = tester.widget<Autocomplete<CityRecord>>(
+      find.byType(Autocomplete<CityRecord>).first,
+    );
+    final cityResults = (await cityAutocomplete.optionsBuilder(
+      const TextEditingValue(text: 'Les Abymes'),
+    )).toList();
+    expect(cityResults, hasLength(1));
+    cityAutocomplete.onSelected(cityResults.single);
     await tester.pump(const Duration(milliseconds: 350));
 
     expect(
-      tester.widget<AnimatedCrossFade>(find.byType(AnimatedCrossFade).first)
-          .crossFadeState,
+      tester.widget<AnimatedCrossFade>(filterPanel).crossFadeState,
       CrossFadeState.showFirst,
     );
     expect(find.text('Rechercher'), findsOneWidget);
@@ -138,8 +145,7 @@ void main() {
     await tester.tap(find.text('Rechercher'));
     await tester.pump(const Duration(milliseconds: 350));
     expect(
-      tester.widget<AnimatedCrossFade>(find.byType(AnimatedCrossFade).first)
-          .crossFadeState,
+      tester.widget<AnimatedCrossFade>(filterPanel).crossFadeState,
       CrossFadeState.showSecond,
     );
     expect(tester.takeException(), isNull);
