@@ -8,6 +8,33 @@ import 'package:presto_app/pages/publish_offer_page.dart';
 import 'package:presto_app/services/publish_offer_draft_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class _MemoryPublishOfferDraftStore extends PublishOfferDraftStore {
+  _MemoryPublishOfferDraftStore(this.draft);
+
+  PublishOfferDraft? draft;
+
+  @override
+  Future<void> save(PublishOfferDraft value) async {
+    draft = value.hasMeaningfulContent ? value : null;
+  }
+
+  @override
+  Future<PublishOfferDraft?> loadForOwner(String rawOwnerId) async {
+    final ownerId = rawOwnerId.trim();
+    final currentDraft = draft;
+    if (currentDraft?.ownerId == ownerId) return currentDraft;
+    draft = null;
+    return null;
+  }
+
+  @override
+  Future<void> clearForOwner(String rawOwnerId) async {
+    if (draft?.ownerId == rawOwnerId.trim()) {
+      draft = null;
+    }
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -66,8 +93,7 @@ void main() {
 
   testWidgets('restaure le brouillon et sauvegarde les modifications',
       (tester) async {
-    final store = PublishOfferDraftStore();
-    await store.save(
+    final store = _MemoryPublishOfferDraftStore(
       PublishOfferDraft(
         ownerId: 'user-971',
         savedAt: DateTime.now(),
@@ -113,7 +139,7 @@ void main() {
     await tester.enterText(titleField(), 'Repeindre deux chambres');
     await tester.pump(const Duration(milliseconds: 400));
 
-    final saved = await store.loadForOwner('user-971');
+    final saved = store.draft;
     expect(saved?.title, 'Repeindre deux chambres');
     expect(saved?.description, contains('personne soigneuse'));
 
@@ -123,8 +149,7 @@ void main() {
 
   testWidgets('la réinitialisation supprime le brouillon durable',
       (tester) async {
-    final store = PublishOfferDraftStore();
-    await store.save(
+    final store = _MemoryPublishOfferDraftStore(
       PublishOfferDraft(
         ownerId: 'user-971',
         savedAt: DateTime.now(),
@@ -141,7 +166,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(await store.loadForOwner('user-971'), isNull);
+    expect(store.draft, isNull);
     expect(find.text('Remplir sans l’IA'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
