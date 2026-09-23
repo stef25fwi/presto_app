@@ -42,6 +42,7 @@ import '../services/location_text_normalizer.dart';
 import '../services/marketplace_remote_config_service.dart';
 import '../services/offer_indexing.dart';
 import '../services/admin_audio_runtime_store.dart';
+import '../services/publish_offer_draft_store.dart';
 import '../services/user_profile_bootstrap_service.dart';
 import '../utils/crashlytics_context.dart';
 import '../utils/friendly_snackbar.dart';
@@ -54,8 +55,11 @@ import '../features/offers/presentation/widgets/publish_offer_photos_section.dar
 import '../features/offers/presentation/widgets/publish_offer_category_fields.dart';
 import '../features/offers/presentation/widgets/publish_offer_contact_fields.dart';
 import '../features/offers/presentation/widgets/publish_offer_mission_fields.dart';
+import '../features/offers/presentation/widgets/publish_offer_flow_hint.dart';
 import '../widgets/phone_input_field.dart';
 import '../widgets/orbiting_ai_visual.dart';
+
+part 'publish_offer_draft_lifecycle.dart';
 
 final AdminAudioRuntimeStore _adminAudioRuntimeStore =
     AdminAudioRuntimeStore.instance;
@@ -72,13 +76,25 @@ enum PublishOfferAiFlowStep {
 class PublishOfferPage extends StatefulWidget {
   final Function(double)? onScroll;
 
-  const PublishOfferPage({super.key, this.onScroll});
+  const PublishOfferPage({
+    super.key,
+    this.onScroll,
+    this.draftStoreForTesting,
+    this.draftOwnerIdForTesting,
+  });
+
+  @visibleForTesting
+  final PublishOfferDraftStore? draftStoreForTesting;
+
+  @visibleForTesting
+  final String? draftOwnerIdForTesting;
 
   @override
   State<PublishOfferPage> createState() => _PublishOfferPageState();
 }
 
-class _PublishOfferPageState extends State<PublishOfferPage> {
+class _PublishOfferPageState extends State<PublishOfferPage>
+    with WidgetsBindingObserver {
   MarketplacePublishService? _marketplacePublishService;
   static const int _publishPhotoHardLimit = 2;
   static const int _defaultMaxListingPhotos = _publishPhotoHardLimit;
@@ -522,6 +538,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   PublishOfferAiFlowStep _publishAiFlowStep =
       PublishOfferAiFlowStep.chooseMethod;
   bool _descriptionTapToEditPrimed = false;
+  bool _manualEntryEnabled = false;
   bool _isApplyingProgrammaticPublishUpdate = false;
   bool _titleEditedByUser = false;
   bool _descriptionEditedByUser = false;
@@ -532,6 +549,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _categoryEditedByUser = false;
   bool _delayEditedByUser = false;
   bool _budgetEditedByUser = false;
+  Timer? _publishDraftSaveDebounce;
+  bool _publishDraftReady = false;
+  bool _publishDraftTouched = false;
+  bool _publishDraftCompleted = false;
+  Future<void> _publishDraftWriteQueue = Future<void>.value();
   final List<PublishAiTraceEntry> _publishAiTraceEntries =
       <PublishAiTraceEntry>[];
   final ValueNotifier<int> _publishAiTraceVersion = ValueNotifier<int>(0);
@@ -554,6 +576,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     } catch (_) {
       return null;
     }
+  }
+
+  PublishOfferDraftStore get _publishDraftStore =>
+      widget.draftStoreForTesting ?? PublishOfferDraftStore.instance;
+
+  String? get _publishDraftOwnerId {
+    final override = widget.draftOwnerIdForTesting?.trim();
+    if (override != null && override.isNotEmpty) return override;
+    return _authOrNull?.currentUser?.uid.trim();
   }
 
   final GlobalKey _titleFieldKey = GlobalKey();
@@ -591,6 +622,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _isApplyingProgrammaticPublishUpdate = previous;
     }
   }
+
+  void _updatePublishDraftState(VoidCallback update) => setState(update);
 
   void _notifyPublishAiTraceChanged() {
     if (_publishAiTraceDisposed) return;
@@ -1018,31 +1051,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
   }
 
-  void _handlePublishTitleChanged() {
-    if (_isApplyingProgrammaticPublishUpdate) return;
-    _titleEditedByUser = true;
-  }
-
-  void _handlePublishDescriptionChanged() {
-    if (_isApplyingProgrammaticPublishUpdate) return;
-    _descriptionEditedByUser = true;
-  }
-
-  void _handlePublishLocationChanged() {
-    if (_isApplyingProgrammaticPublishUpdate) return;
-    _locationEditedByUser = true;
-  }
-
-  void _handlePublishPostalCodeChanged() {
-    if (_isApplyingProgrammaticPublishUpdate) return;
-    _postalCodeEditedByUser = true;
-  }
-
-  void _handlePublishBudgetChanged() {
-    if (_isApplyingProgrammaticPublishUpdate) return;
-    _budgetEditedByUser = true;
-  }
-
   AiPublishState get _aiPublishState {
     if (_isListening) return AiPublishState.recording;
     if (_isAnalyzing) return AiPublishState.analyzing;
@@ -1051,6 +1059,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   bool get _isPublishFlowCompleted {
     return _publishAiFlowStep == PublishOfferAiFlowStep.completed;
+  }
+
+  bool get _isFormEditable =>
+      (_manualEntryEnabled || _isPublishFlowCompleted) &&
+      !_isAnalyzing &&
+      !_isListening;
+
+  void _onSelectManualMethod() {
+    if (_isAnalyzing || _isListening || _isSubmitting || _isClassifyingPhoto) {
+      return;
+    }
+    setState(() {
+      _manualEntryEnabled = true;
+      _descriptionTapToEditPrimed = false;
+      _publishAiFlowStep = PublishOfferAiFlowStep.chooseMethod;
+    });
   }
 
   bool get _isVoiceFlowActive {
@@ -1131,6 +1155,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (_isListening) {
       return 'Enregistrement en cours. Parlez à l\'IA puis arrêtez pour lancer l\'analyse.';
     }
+    if (_manualEntryEnabled && !_isAnalyzing) {
+      return 'Complétez les champs obligatoires, puis publiez votre offre. L’aide IA reste facultative.';
+    }
 
     switch (_publishAiFlowStep) {
       case PublishOfferAiFlowStep.chooseMethod:
@@ -1149,56 +1176,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Widget _buildPublishAiFlowHint() {
-    if (_publishAiFlowStep == PublishOfferAiFlowStep.chooseMethod ||
-        _publishAiFlowStep == PublishOfferAiFlowStep.voiceSelected ||
-        _publishAiFlowStep == PublishOfferAiFlowStep.voiceAnalyzing) {
+    if (!_manualEntryEnabled &&
+        (_publishAiFlowStep == PublishOfferAiFlowStep.chooseMethod ||
+            _publishAiFlowStep == PublishOfferAiFlowStep.voiceSelected ||
+            _publishAiFlowStep == PublishOfferAiFlowStep.voiceAnalyzing)) {
       return const SizedBox.shrink();
     }
 
-    final isCompleted = _isPublishFlowCompleted;
-    final isAnalyzing =
-        _publishAiFlowStep == PublishOfferAiFlowStep.voiceAnalyzing ||
-            _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
-
-    return AnimatedContainer(
+    return PublishOfferFlowHint(
       key: _publishAiFlowHintKey,
-      duration: const Duration(milliseconds: 220),
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: BoxDecoration(
-        color: isCompleted ? const Color(0xFFF2F8FF) : const Color(0xFFF8FAFD),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color:
-              isCompleted ? const Color(0xFFD7E7FF) : const Color(0xFFE5E7EB),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            isAnalyzing
-                ? Icons.auto_awesome_rounded
-                : isCompleted
-                    ? Icons.check_circle_outline_rounded
-                    : Icons.tips_and_updates_outlined,
-            color: isCompleted ? kPrestoBlue : const Color(0xFF5B6475),
-            size: 18,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              _publishAiGuidanceText,
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.4,
-                fontWeight: isCompleted ? FontWeight.w700 : FontWeight.w600,
-                color: const Color(0xFF1F2937),
-              ),
-            ),
-          ),
-        ],
-      ),
+      message: _publishAiGuidanceText,
+      completed: _isPublishFlowCompleted,
+      analyzing: _isAnalyzing,
     );
   }
 
@@ -1717,6 +1706,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _recompute();
     });
+    this._markPublishDraftChanged();
   }
 
   // ✅ Extraction rapide CP (FR + DROM) depuis la transcription
@@ -2137,9 +2127,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     //     });
 
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     unawaited(_adminAudioRuntimeStore.ensureInitialized());
     unawaited(_loadMarketplacePhotoLimit());
-    unawaited(_prefillPublishFromProfile());
     unawaited(_refreshAdminAudioRuntimeAccess());
 
     _scrollController.addListener(() {
@@ -2147,18 +2137,30 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
 
     _titleController.addListener(_recompute);
-    _titleController.addListener(_handlePublishTitleChanged);
+    _titleController.addListener(this._handlePublishTitleChanged);
     _descriptionController.addListener(_recompute);
-    _descriptionController.addListener(_handlePublishDescriptionChanged);
+    _descriptionController.addListener(this._handlePublishDescriptionChanged);
     _locationController.addListener(_recompute);
-    _locationController.addListener(_handlePublishLocationChanged);
-    _postalCodeController.addListener(_handlePublishPostalCodeChanged);
+    _locationController.addListener(this._handlePublishLocationChanged);
+    _postalCodeController.addListener(this._handlePublishPostalCodeChanged);
     _phoneController.addListener(_recompute);
+    _phoneController.addListener(this._handlePublishPhoneChanged);
     _budgetController.addListener(_recompute);
-    _budgetController.addListener(_handlePublishBudgetChanged);
+    _budgetController.addListener(this._handlePublishBudgetChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
     FocusManager.instance.addListener(_onFocusManagerChange);
+    unawaited(this._restorePublishDraftThenPrefill());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
+      unawaited(this._savePublishDraftNow());
+    }
   }
 
   void _onFocusManagerChange() {
@@ -2294,7 +2296,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     _selectedPhoneCountryCode = selectedCode;
-    _phoneController.text = localDigits.isNotEmpty ? localDigits : trimmed;
+    _setControllerText(
+      _phoneController,
+      localDigits.isNotEmpty ? localDigits : trimmed,
+    );
   }
 
   Future<void> _prefillPublishFromProfile() async {
@@ -3625,7 +3630,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     FocusManager.instance.removeListener(_onFocusManagerChange);
+    _publishDraftSaveDebounce?.cancel();
+    if (_publishDraftReady &&
+        _publishDraftTouched &&
+        !_publishDraftCompleted) {
+      unawaited(this._savePublishDraftNow());
+    }
     _publishAiTraceDisposed = true;
     _publishAiTraceVersion.dispose();
     _titleController.dispose();
@@ -3640,6 +3652,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   void _resetAllFields() {
+    _publishDraftReady = false;
+    _publishDraftSaveDebounce?.cancel();
+    _publishDraftSaveDebounce = null;
     setState(() {
       _titleController.clear();
       _descriptionController.clear();
@@ -3675,9 +3690,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _publishLocked = false;
       _canPublish = false;
       _publishAiFlowStep = PublishOfferAiFlowStep.chooseMethod;
+      _manualEntryEnabled = false;
     });
+    _publishDraftTouched = false;
+    _publishDraftCompleted = false;
+    _publishDraftReady = true;
+    unawaited(this._clearPublishDraft());
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
-    unawaited(_prefillPublishFromProfile());
+    if (widget.draftOwnerIdForTesting == null) {
+      unawaited(_prefillPublishFromProfile());
+    }
     showSuccessSnackBar(context, 'Tous les champs ont été réinitialisés');
   }
 
@@ -3958,7 +3980,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       // Détection métier → catégorie/sous-catégorie en arrière-plan (~400-600 ms).
       // Déclenché uniquement si la catégorie n'a pas encore été choisie.
-      if (!_categoryEditedByUser && (_category ?? '').trim().isEmpty) {
+      if (!_manualEntryEnabled &&
+          !_categoryEditedByUser &&
+          (_category ?? '').trim().isEmpty) {
         unawaited(_classifyPhotoAndApply(bytes));
       }
     } catch (e) {
@@ -3976,7 +4000,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final b64 = base64Encode(bytes);
       final result = await _tradeClassifier.classifyFromBase64(b64);
 
-      if (!mounted || _categoryEditedByUser) return;
+      if (!mounted || _manualEntryEnabled || _categoryEditedByUser) return;
       if (!result.isConfident || result.match == null) return;
 
       final match = result.match!;
@@ -4162,6 +4186,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final budgetValue = _budgetType == 'À négocier'
         ? 0.0
         : (parseBudget(_budgetController.text) ?? 0.0);
+    await this._savePublishDraftNow(ownerIdOverride: user.uid);
     final publishService =
         _marketplacePublishService ??= MarketplacePublishService();
 
@@ -4223,6 +4248,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     try {
       final publishResult = await publishFuture;
 
+      _publishDraftCompleted = true;
+      await this._clearPublishDraft(ownerIdOverride: ownerId);
+
       // ✅ Analytics: publication
       await _logOfferPublished(
         offerId: publishResult.listingId,
@@ -4272,10 +4300,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   @override
   Widget build(BuildContext context) {
     final publishVisuallyDisabled = !_canPublish || _isSubmitting;
-    final isDescriptionActive = _isTextFlowActive;
+    final isDescriptionActive =
+        _isTextFlowActive || (_manualEntryEnabled && _isFormEditable);
     final shouldDimDescription =
-        !_isPublishFlowCompleted && !isDescriptionActive;
-    final shouldDimRemainingSections = !_isPublishFlowCompleted;
+        !_isFormEditable && !isDescriptionActive;
+    final shouldDimRemainingSections = !_isFormEditable;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -4379,7 +4408,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    if (_publishAiFlowStep ==
+                    PublishOfferManualEntry(
+                      active: _manualEntryEnabled,
+                      busy: _isListening ||
+                          _isAnalyzing ||
+                          _isSubmitting ||
+                          _isClassifyingPhoto,
+                      onSelected: _onSelectManualMethod,
+                    ),
+                    const SizedBox(height: 16),
+                    if (_manualEntryEnabled ||
+                        _publishAiFlowStep ==
                             PublishOfferAiFlowStep.textSelected ||
                         _publishAiFlowStep ==
                             PublishOfferAiFlowStep.textAnalyzing ||
@@ -4457,7 +4496,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     const SizedBox(height: 16),
 
                     _guidedSection(
-                      isActive: _isPublishFlowCompleted,
+                      isActive: _isFormEditable,
                       isDimmed: shouldDimRemainingSections,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -4506,12 +4545,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                 _selectedSubCategory = null;
                               });
                               _recompute();
+                              this._markPublishDraftChanged();
                             },
                             onSubcategoryChanged: (value) {
                               setState(() {
                                 _selectedSubCategory = value;
                               });
                               _recompute();
+                              this._markPublishDraftChanged();
                             },
                           ),
 
@@ -4555,6 +4596,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                 _locationEditedByUser = true;
                                 _postalCodeEditedByUser = true;
                               });
+                              this._markPublishDraftChanged();
                             },
                             onPostalTap:
                                 _clearAiPrefilledLocationPostalOnUserTap,
@@ -4580,6 +4622,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                               setState(() {
                                 _selectedPhoneCountryCode = code;
                               });
+                              this._markPublishDraftChanged();
                             },
                             onPhoneChanged: (_) => _recompute(),
                             validator: (value) {
@@ -4590,6 +4633,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             hidePhone: _hidePhone,
                             onHidePhoneChanged: (value) {
                               setState(() => _hidePhone = value);
+                              this._markPublishDraftChanged();
                             },
                           ),
 
@@ -4611,6 +4655,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                 _isUrgent = value == 'Urgent';
                               });
                               _recompute();
+                              this._markPublishDraftChanged();
                             },
                             budgetTypes: _budgetTypes,
                             selectedBudgetType: _budgetType,
@@ -4629,6 +4674,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                 _budgetType = value;
                               });
                               _recompute();
+                              this._markPublishDraftChanged();
                             },
                             budgetValidator: (value) {
                               if (_budgetType == 'À négocier') return null;

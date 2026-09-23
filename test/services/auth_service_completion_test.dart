@@ -213,6 +213,7 @@ void main() {
   late FakeFirebaseFirestore firestore;
   late List<_FunctionCall> functionCalls;
   late int googleSignOutCalls;
+  late List<String> clearedDraftOwnerIds;
   late AuthService service;
 
   setUpAll(() async {
@@ -239,6 +240,7 @@ void main() {
     firestore = FakeFirebaseFirestore();
     functionCalls = <_FunctionCall>[];
     googleSignOutCalls = 0;
+    clearedDraftOwnerIds = <String>[];
     service = AuthService.forTesting(
       auth: FirebaseAuth.instance,
       firestore: firestore,
@@ -257,6 +259,9 @@ void main() {
       },
       googleSignOut: () async {
         googleSignOutCalls += 1;
+      },
+      draftClearer: (ownerId) async {
+        clearedDraftOwnerIds.add(ownerId);
       },
     );
   });
@@ -353,6 +358,7 @@ void main() {
     expect(googleSignOutCalls, 1);
     expect(platform.signOutCalls, 1);
     expect(platform.user, isNull);
+    expect(clearedDraftOwnerIds, <String>['user-1']);
   });
 
   test('envoie un reset neutre et propage les autres erreurs', () async {
@@ -455,6 +461,7 @@ void main() {
     expect(functionCalls.single.timeout, const Duration(seconds: 120));
     expect(functionCalls.single.area, 'account-deletion');
     expect(platform.signOutCalls, 1);
+    expect(clearedDraftOwnerIds, <String>['user-1']);
   });
 
   test('supprime un compte social récemment authentifié sans mot de passe',
@@ -470,6 +477,7 @@ void main() {
     expect(current.reauthenticationCalls, 0);
     expect(functionCalls.single.name, 'requestAccountDeletion');
     expect(platform.signOutCalls, 1);
+    expect(clearedDraftOwnerIds, <String>['user-1']);
   });
 
   test('connexion Apple avec user met à jour le profil social', () async {
