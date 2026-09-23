@@ -110,12 +110,20 @@ void main() {
     await tester.tap(citySuggestion);
     await tester.pump(const Duration(milliseconds: 350));
 
-    expect(cityField, findsOneWidget);
+    expect(
+      tester.widget<AnimatedCrossFade>(find.byType(AnimatedCrossFade).first)
+          .crossFadeState,
+      CrossFadeState.showFirst,
+    );
     expect(find.text('Rechercher'), findsOneWidget);
 
     await tester.tap(find.text('Rechercher'));
     await tester.pump(const Duration(milliseconds: 350));
-    expect(cityField, findsNothing);
+    expect(
+      tester.widget<AnimatedCrossFade>(find.byType(AnimatedCrossFade).first)
+          .crossFadeState,
+      CrossFadeState.showSecond,
+    );
     expect(tester.takeException(), isNull);
 
     await drainQueryTimeouts(tester);
