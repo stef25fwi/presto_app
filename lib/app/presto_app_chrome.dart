@@ -4,34 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../core/connectivity/connectivity_status.dart';
-import '../pages/home_page.dart';
 import '../pages/public_prelaunch_page.dart';
-import '../platform/public_prelaunch_shell.dart';
 import '../services/public_landing_config_service.dart';
 import '../widgets/cookie_consent_banner.dart';
 import '../widgets/offline_banner.dart';
-import 'app_globals.dart';
 import 'typography_settings.dart';
-
-@visibleForTesting
-bool resetNavigatorToHomeAfterPublicLandingAccess(
-  GlobalKey<NavigatorState> navigatorKey, {
-  WidgetBuilder? homeBuilder,
-}) {
-  final navigator = navigatorKey.currentState;
-  if (navigator == null) return false;
-
-  unawaited(
-    navigator.pushAndRemoveUntil<void>(
-      MaterialPageRoute<void>(
-        settings: const RouteSettings(name: '/'),
-        builder: homeBuilder ?? (_) => const HomePage(),
-      ),
-      (route) => false,
-    ),
-  );
-  return true;
-}
 
 /// Habillage commun à toutes les pages : réglages typographiques de
 /// l'utilisateur (police, graisse, échelle) puis les bandeaux superposés —
@@ -40,8 +17,8 @@ bool resetNavigatorToHomeAfterPublicLandingAccess(
 /// Sur les domaines publics uniquement, ce composant peut remplacer
 /// temporairement toute l'application par la page de pré-lancement pilotée
 /// depuis Firebase Remote Config. Les canaux Hosting de prévisualisation et les
-/// routes d'administration/authentification restent accessibles pour continuer
-/// les travaux pendant la période de préparation.
+/// versions natives restent accessibles pour les travaux de préparation.
+/// Aucun geste ou indicateur de session ne déverrouille la page publique.
 class PrestoAppChrome extends StatefulWidget {
   final Widget child;
 
@@ -53,14 +30,10 @@ class PrestoAppChrome extends StatefulWidget {
 
 class _PrestoAppChromeState extends State<PrestoAppChrome>
     with WidgetsBindingObserver {
-  static bool _temporaryDeveloperAccessGranted = false;
-
   final PublicLandingConfigService _publicLanding =
       PublicLandingConfigService.instance;
 
   Timer? _refreshTimer;
-  bool _publicLandingBypassed =
-      _temporaryDeveloperAccessGranted || hasPublicPrelaunchAccess();
 
   @override
   void initState() {
@@ -96,37 +69,11 @@ class _PrestoAppChromeState extends State<PrestoAppChrome>
     if (mounted) setState(() {});
   }
 
-  void _openApplicationHome({int remainingAttempts = 3}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      if (resetNavigatorToHomeAfterPublicLandingAccess(appNavigatorKey)) return;
-      if (remainingAttempts <= 1) return;
-      _openApplicationHome(remainingAttempts: remainingAttempts - 1);
-    });
-  }
-
-  void _revealApplicationAfterHomePaint() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) revealApplicationAfterPublicPrelaunch();
-      });
-    });
-  }
-
-  void _grantTemporaryDeveloperAccess() {
-    if (!mounted || _publicLandingBypassed) return;
-    _temporaryDeveloperAccessGranted = true;
-    setState(() => _publicLandingBypassed = true);
-    _openApplicationHome();
-    _revealApplicationAfterHomePaint();
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (!_publicLandingBypassed && _publicLanding.shouldShowFor(Uri.base)) {
+    if (_publicLanding.shouldShowFor(Uri.base)) {
       return PublicPrelaunchPage(
         config: _publicLanding,
-        onDeveloperAccessGranted: _grantTemporaryDeveloperAccess,
       );
     }
 

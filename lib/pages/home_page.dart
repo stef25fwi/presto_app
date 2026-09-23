@@ -1457,7 +1457,7 @@ class _HomePageState extends State<HomePage>
                       searchQuery: _consultSearchQuery,
                     )
                   : const SizedBox.shrink(),
-              _selectedIndex == 2
+              _mountedTabs.contains(2)
                   ? PublishOfferPage(onScroll: (_) {})
                   : const SizedBox.shrink(),
               _mountedTabs.contains(3)

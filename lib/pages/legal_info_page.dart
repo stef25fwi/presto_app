@@ -7,7 +7,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../constants.dart';
 import '../features/operating_mode/app_operating_mode.dart';
 import '../features/operating_mode/legal_documents.dart';
-import '../platform/public_prelaunch_shell.dart';
 import '../services/public_landing_config_service.dart';
 import '../widgets/ads_privacy_options_card.dart';
 
@@ -91,7 +90,7 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
   bool get _restrictToPrelaunchLegalTabs {
     final override = widget.restrictToPrelaunchLegalTabs;
     if (override != null) return override;
-    if (!kIsWeb || hasPublicPrelaunchAccess() || !_publicLanding.enabled) {
+    if (!kIsWeb || !_publicLanding.enabled) {
       return false;
     }
 

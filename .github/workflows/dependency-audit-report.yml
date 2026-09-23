@@ -1,82 +1,61 @@
-name: Dependency audit report
+name: Dependency security gate
 
 on:
-  push:
-    branches:
-      - audit/prod-hardening-p0-p11
+  pull_request:
+    branches: [main]
     paths:
       - functions/package.json
       - functions/package-lock.json
       - .github/workflows/dependency-audit-report.yml
+  push:
+    branches: [main]
+    paths:
+      - functions/package.json
+      - functions/package-lock.json
+      - .github/workflows/dependency-audit-report.yml
+  schedule:
+    - cron: '0 9 * * 1'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: dependency-audit-report
+  group: dependency-security-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: audit/prod-hardening-p0-p11
-          fetch-depth: 0
-
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
-          cache: npm
-          cache-dependency-path: functions/package-lock.json
 
-      - run: npm --prefix functions ci
+      - name: Audit production dependencies and reject high or critical advisories
+        run: |
+          mkdir -p quality_reports/dependencies
+          npm --prefix functions audit --package-lock-only --omit=dev --audit-level=high --json > quality_reports/dependencies/npm-audit.json
 
-      - name: Generate npm audit JSON
-        run: npm --prefix functions audit --json > docs/DEPENDENCY_AUDIT.json || true
-
-      - name: Generate readable report
+      - name: Summarize the current audit
+        if: always()
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
-          const report = JSON.parse(fs.readFileSync('docs/DEPENDENCY_AUDIT.json', 'utf8'));
-          const metadata = report.metadata?.vulnerabilities ?? {};
-          const vulnerabilities = Object.entries(report.vulnerabilities ?? {})
-            .sort((a, b) => {
-              const order = { critical: 4, high: 3, moderate: 2, low: 1, info: 0 };
-              return (order[b[1].severity] ?? 0) - (order[a[1].severity] ?? 0);
-            });
-          const lines = [
-            '# Audit des dépendances Functions',
-            '',
-            'Rapport reproductible généré à partir de `functions/package-lock.json`.',
-            '',
-            `- Critiques : **${metadata.critical ?? 0}**`,
-            `- Hautes : **${metadata.high ?? 0}**`,
-            `- Modérées : **${metadata.moderate ?? 0}**`,
-            `- Faibles : **${metadata.low ?? 0}**`,
-            '',
-            '| Module | Sévérité | Direct | Correctif disponible | Dépendances affectées |',
-            '|---|---|---:|---:|---|',
-          ];
-          for (const [name, item] of vulnerabilities) {
-            const effects = Array.isArray(item.effects) ? item.effects.join(', ') : '';
-            lines.push(`| ${name} | ${item.severity} | ${item.isDirect ? 'oui' : 'non'} | ${item.fixAvailable ? 'oui' : 'non'} | ${effects} |`);
-          }
-          fs.writeFileSync('docs/DEPENDENCY_AUDIT.md', `${lines.join('\n')}\n`);
+          const report = JSON.parse(fs.readFileSync('quality_reports/dependencies/npm-audit.json', 'utf8'));
+          const counts = report.metadata?.vulnerabilities;
+          if (report.error || !counts) throw new Error('Dependency audit is unavailable; no successful verdict can be issued.');
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+            `## Production dependency audit\n\nCritical: ${counts.critical}; high: ${counts.high}; moderate: ${counts.moderate}; low: ${counts.low}.\n`);
           NODE
 
-      - name: Commit report only when dependency results changed
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/DEPENDENCY_AUDIT.md docs/DEPENDENCY_AUDIT.json
-          if git diff --cached --quiet; then
-            echo "Dependency report unchanged."
-            exit 0
-          fi
-          git commit -m "security: publie le rapport npm audit"
-          git push origin HEAD:audit/prod-hardening-p0-p11
+      - name: Keep the audit evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dependency-audit-${{ github.sha }}
+          path: quality_reports/dependencies/npm-audit.json
+          if-no-files-found: error
+          retention-days: 14
