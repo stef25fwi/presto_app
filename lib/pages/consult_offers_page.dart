@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter/services.dart';
@@ -36,11 +37,15 @@ class ConsultOffersPage extends StatefulWidget {
   final String? searchQuery;
   final Function(double)? onScroll;
 
+  @visibleForTesting
+  final CitySearch? citySearchForTesting;
+
   const ConsultOffersPage({
     super.key,
     this.categoryFilter,
     this.searchQuery,
     this.onScroll,
+    this.citySearchForTesting,
   });
 
   @override
@@ -2426,7 +2431,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   // Méthodes pour la gestion de l'autocomplétion de ville dans les filtres
   List<CityRecord> _searchCities(String q) {
     final allowed = _allowedDeptCodesForCity;
-    return CitySearch.instance.search(q, limit: 20, allowedDeptCodes: allowed);
+    final citySearch = widget.citySearchForTesting ?? CitySearch.instance;
+    return citySearch.search(q, limit: 20, allowedDeptCodes: allowed);
   }
 
   Widget _buildFilterCityField() {

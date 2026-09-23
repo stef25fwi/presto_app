@@ -44,13 +44,24 @@ void main() {
     FirebaseAuthPlatform.instance = originalAuthPlatform;
   });
 
-  Future<void> pumpPage(WidgetTester tester, {String? categoryFilter}) async {
+  Future<void> pumpPage(
+    WidgetTester tester, {
+    String? categoryFilter,
+    CitySearch? citySearchForTesting,
+  }) async {
     tester.view.physicalSize = const Size(900, 1800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(MaterialApp(home: ConsultOffersPage(categoryFilter: categoryFilter)));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ConsultOffersPage(
+          categoryFilter: categoryFilter,
+          citySearchForTesting: citySearchForTesting,
+        ),
+      ),
+    );
     for (var i = 0; i < 5; i += 1) {
       await tester.pump(const Duration(milliseconds: 80));
     }
@@ -83,39 +94,39 @@ void main() {
   });
 
   testWidgets('garde le panneau ouvert en auto-application puis le ferme sur demande', (tester) async {
-    await tester.runAsync<void>(() => CitySearch.instance.ensureLoaded());
-    debugPrint('[ConsultFiltersTest] villes chargées');
-    await pumpPage(tester);
-    debugPrint('[ConsultFiltersTest] page affichée');
+    final citySearch = CitySearch.forTesting(<CityRecord>[
+      CityRecord(
+        name: 'Les Abymes',
+        postalCode: '97139',
+        departmentCode: '971',
+        regionCode: '01',
+      ),
+    ]);
+    await pumpPage(tester, citySearchForTesting: citySearch);
     await tester.tap(find.text('Filtres'));
     await tester.pump(const Duration(milliseconds: 350));
-    debugPrint('[ConsultFiltersTest] panneau ouvert');
 
     final categoryDropdown = find.byType(DropdownButtonFormField<String>).first;
     await tester.tap(categoryDropdown);
     await tester.pump(const Duration(milliseconds: 350));
     await tester.tap(find.text('Bricolage / Travaux').last);
     await tester.pump();
-    debugPrint('[ConsultFiltersTest] catégorie choisie');
 
     final regionDropdown = find.byType(DropdownButtonFormField<String?>).first;
     await tester.tap(regionDropdown);
     await tester.pump(const Duration(milliseconds: 350));
     await tester.tap(find.text('Guadeloupe').last);
     await tester.pump();
-    debugPrint('[ConsultFiltersTest] région choisie');
 
     final cityField = find.byWidgetPredicate(
       (widget) => widget is TextField && widget.decoration?.labelText == 'Ville',
     );
     await tester.enterText(cityField, 'Les Abymes');
-    debugPrint('[ConsultFiltersTest] ville saisie');
     await tester.pump(const Duration(milliseconds: 100));
     final citySuggestion = find.text('Les Abymes (97139)');
     expect(citySuggestion, findsOneWidget);
     await tester.tap(citySuggestion);
     await tester.pump(const Duration(milliseconds: 350));
-    debugPrint('[ConsultFiltersTest] auto-application terminée');
 
     expect(
       tester.widget<AnimatedCrossFade>(find.byType(AnimatedCrossFade).first)
@@ -126,7 +137,6 @@ void main() {
 
     await tester.tap(find.text('Rechercher'));
     await tester.pump(const Duration(milliseconds: 350));
-    debugPrint('[ConsultFiltersTest] validation manuelle terminée');
     expect(
       tester.widget<AnimatedCrossFade>(find.byType(AnimatedCrossFade).first)
           .crossFadeState,
