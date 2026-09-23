@@ -623,6 +623,8 @@ class _PublishOfferPageState extends State<PublishOfferPage>
     }
   }
 
+  void _updatePublishDraftState(VoidCallback update) => setState(update);
+
   void _notifyPublishAiTraceChanged() {
     if (_publishAiTraceDisposed) return;
     _publishAiTraceVersion.value++;

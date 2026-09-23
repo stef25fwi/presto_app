@@ -53,8 +53,15 @@ void main() {
         ),
       ),
     );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    for (var frame = 0; frame < 20; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 50));
+      if (find
+          .text('Saisie manuelle activée · Aide IA facultative')
+          .evaluate()
+          .isNotEmpty) {
+        break;
+      }
+    }
   }
 
   testWidgets('restaure le brouillon et sauvegarde les modifications',

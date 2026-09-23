@@ -149,7 +149,7 @@ extension _PublishOfferDraftLifecycle on _PublishOfferPageState {
         : '+33';
 
     _runWithoutMarkingUserEdits(() {
-      setState(() {
+      _updatePublishDraftState(() {
         _setControllerText(_titleController, draft.title);
         _setControllerText(_descriptionController, draft.description);
         _setControllerText(_locationController, draft.city);
