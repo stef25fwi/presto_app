@@ -20,10 +20,10 @@ import '../models/admin_access_state.dart';
 import 'admin_space_loader.dart';
 import '../services/admin_access_resolver.dart';
 import '../services/ad_placeholder_image_service.dart';
+import '../services/auth_service.dart';
 import '../services/email_action_service.dart';
 import '../services/firebase_functions_region.dart';
 import '../services/notification_service.dart';
-import '../services/publish_offer_draft_store.dart';
 import '../services/user_profile_bootstrap_service.dart';
 import '../services/user_profile_save_payload.dart';
 import '../utils/crashlytics_context.dart';
@@ -33,7 +33,6 @@ import '../widgets/account_profile_sections.dart';
 import '../services/app_check_bootstrap.dart';
 import '../widgets/account_menu_item.dart';
 import '../widgets/language_picker_sheet.dart';
-
 import '../app/runtime_stores.dart' show adminAudioRuntimeStore;
 import '../app/startup_state.dart'
     show pendingRedirectAuthError, pendingRedirectAuthResult;
@@ -2370,16 +2369,8 @@ class _AccountPageState extends State<AccountPage> {
 
     setState(() => _isSigningOut = true);
     try {
-      final ownerId = _auth.currentUser?.uid;
       await NotificationService().detachCurrentDevice();
-      await _auth.signOut().timeout(const Duration(seconds: 10));
-      if (ownerId != null && ownerId.isNotEmpty) {
-        try {
-          await PublishOfferDraftStore.instance.clearForOwner(ownerId);
-        } catch (error) {
-          debugPrint('[Account] publication draft purge failed: $error');
-        }
-      }
+      await AuthService.instance.signOut().timeout(const Duration(seconds: 10));
       SessionState.userId = null;
       sessionState.logOut();
       await CrashlyticsContext.setUserId(null);
