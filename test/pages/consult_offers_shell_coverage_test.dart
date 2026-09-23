@@ -83,32 +83,39 @@ void main() {
   });
 
   testWidgets('garde le panneau ouvert en auto-application puis le ferme sur demande', (tester) async {
-    await CitySearch.instance.ensureLoaded();
+    await tester.runAsync<void>(() => CitySearch.instance.ensureLoaded());
+    debugPrint('[ConsultFiltersTest] villes chargées');
     await pumpPage(tester);
+    debugPrint('[ConsultFiltersTest] page affichée');
     await tester.tap(find.text('Filtres'));
     await tester.pump(const Duration(milliseconds: 350));
+    debugPrint('[ConsultFiltersTest] panneau ouvert');
 
     final categoryDropdown = find.byType(DropdownButtonFormField<String>).first;
     await tester.tap(categoryDropdown);
     await tester.pump(const Duration(milliseconds: 350));
     await tester.tap(find.text('Bricolage / Travaux').last);
     await tester.pump();
+    debugPrint('[ConsultFiltersTest] catégorie choisie');
 
     final regionDropdown = find.byType(DropdownButtonFormField<String?>).first;
     await tester.tap(regionDropdown);
     await tester.pump(const Duration(milliseconds: 350));
     await tester.tap(find.text('Guadeloupe').last);
     await tester.pump();
+    debugPrint('[ConsultFiltersTest] région choisie');
 
     final cityField = find.byWidgetPredicate(
       (widget) => widget is TextField && widget.decoration?.labelText == 'Ville',
     );
     await tester.enterText(cityField, 'Les Abymes');
+    debugPrint('[ConsultFiltersTest] ville saisie');
     await tester.pump(const Duration(milliseconds: 100));
     final citySuggestion = find.text('Les Abymes (97139)');
     expect(citySuggestion, findsOneWidget);
     await tester.tap(citySuggestion);
     await tester.pump(const Duration(milliseconds: 350));
+    debugPrint('[ConsultFiltersTest] auto-application terminée');
 
     expect(
       tester.widget<AnimatedCrossFade>(find.byType(AnimatedCrossFade).first)
@@ -119,6 +126,7 @@ void main() {
 
     await tester.tap(find.text('Rechercher'));
     await tester.pump(const Duration(milliseconds: 350));
+    debugPrint('[ConsultFiltersTest] validation manuelle terminée');
     expect(
       tester.widget<AnimatedCrossFade>(find.byType(AnimatedCrossFade).first)
           .crossFadeState,
