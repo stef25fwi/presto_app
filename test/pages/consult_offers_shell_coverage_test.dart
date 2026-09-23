@@ -133,7 +133,8 @@ void main() {
       const TextEditingValue(text: 'Les Abymes'),
     )).toList();
     expect(cityResults, hasLength(1));
-    cityAutocomplete.onSelected(cityResults.single);
+    expect(cityAutocomplete.onSelected, isNotNull);
+    cityAutocomplete.onSelected!(cityResults.single);
     await tester.pump(const Duration(milliseconds: 350));
 
     expect(
