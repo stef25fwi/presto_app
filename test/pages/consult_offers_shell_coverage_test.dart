@@ -101,7 +101,7 @@ void main() {
     await tester.pump();
 
     final cityField = find.byWidgetPredicate(
-      (widget) => widget is TextField && widget.decoration.labelText == 'Ville',
+      (widget) => widget is TextField && widget.decoration?.labelText == 'Ville',
     );
     await tester.enterText(cityField, 'Les Abymes');
     await tester.pump(const Duration(milliseconds: 100));
