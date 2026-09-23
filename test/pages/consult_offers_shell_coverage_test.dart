@@ -94,10 +94,7 @@ void main() {
     await tester.tap(find.text('Bricolage / Travaux').last);
     await tester.pump();
 
-    final regionDropdown = find.byWidgetPredicate(
-      (widget) => widget is DropdownButtonFormField<String?> &&
-          widget.decoration.labelText == 'Région',
-    );
+    final regionDropdown = find.byType(DropdownButtonFormField<String?>).first;
     await tester.tap(regionDropdown);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Guadeloupe').last);
