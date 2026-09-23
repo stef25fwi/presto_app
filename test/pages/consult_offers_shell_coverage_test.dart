@@ -4,6 +4,7 @@ import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/pages/consult_offers_page.dart';
+import 'package:presto_app/services/city_search.dart';
 
 class _SignedOutConsultAuthPlatform extends FirebaseAuthPlatform {
   _SignedOutConsultAuthPlatform() : super(appInstance: null);
@@ -75,6 +76,49 @@ void main() {
     await tester.tap(find.text('Filtres'));
     await tester.pump();
     expect(find.text('Filtres'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await drainQueryTimeouts(tester);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('garde le panneau ouvert en auto-application puis le ferme sur demande', (tester) async {
+    await CitySearch.instance.ensureLoaded();
+    await pumpPage(tester);
+    await tester.tap(find.text('Filtres'));
+    await tester.pumpAndSettle();
+
+    final categoryDropdown = find.byType(DropdownButtonFormField<String>).first;
+    await tester.tap(categoryDropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bricolage / Travaux').last);
+    await tester.pump();
+
+    final regionDropdown = find.byWidgetPredicate(
+      (widget) => widget is DropdownButtonFormField<String?> &&
+          widget.decoration.labelText == 'Région',
+    );
+    await tester.tap(regionDropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Guadeloupe').last);
+    await tester.pump();
+
+    final cityField = find.byWidgetPredicate(
+      (widget) => widget is TextField && widget.decoration.labelText == 'Ville',
+    );
+    await tester.enterText(cityField, 'Les Abymes');
+    await tester.pump(const Duration(milliseconds: 100));
+    final citySuggestion = find.text('Les Abymes (97139)');
+    expect(citySuggestion, findsOneWidget);
+    await tester.tap(citySuggestion);
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(cityField, findsOneWidget);
+    expect(find.text('Rechercher'), findsOneWidget);
+
+    await tester.tap(find.text('Rechercher'));
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(cityField, findsNothing);
     expect(tester.takeException(), isNull);
 
     await drainQueryTimeouts(tester);

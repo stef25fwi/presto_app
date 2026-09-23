@@ -1328,7 +1328,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     return true;
   }
 
-  void _applyFiltersOrSearch() {
+  void _applyFiltersOrSearch({bool closeFilterPanel = true}) {
     // Annule le debounce en cours pour éviter les conflits
     _filterDebounce._t?.cancel();
 
@@ -1397,7 +1397,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       _lastDoc = null; // Reset pagination
       _pageLimit = _paginationPolicy.initialLimit;
       _lastPaginationRequestAt = null;
-      _showFilters = false;
+      if (closeFilterPanel) _showFilters = false;
       _headerTitle = _resolveConsultOffersTitle();
     });
 
@@ -1434,7 +1434,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     // ✅ Auto-apply avec debounce à partir de 3 critères sélectionnés
     _filterDebounce.run(() {
-      _applyFiltersOrSearch();
+      _applyFiltersOrSearch(closeFilterPanel: false);
     });
   }
 
