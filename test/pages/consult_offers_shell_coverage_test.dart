@@ -86,17 +86,17 @@ void main() {
     await CitySearch.instance.ensureLoaded();
     await pumpPage(tester);
     await tester.tap(find.text('Filtres'));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 350));
 
     final categoryDropdown = find.byType(DropdownButtonFormField<String>).first;
     await tester.tap(categoryDropdown);
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 350));
     await tester.tap(find.text('Bricolage / Travaux').last);
     await tester.pump();
 
     final regionDropdown = find.byType(DropdownButtonFormField<String?>).first;
     await tester.tap(regionDropdown);
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 350));
     await tester.tap(find.text('Guadeloupe').last);
     await tester.pump();
 
