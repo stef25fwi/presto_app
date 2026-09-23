@@ -106,13 +106,13 @@ void main() {
     await tester.tap(find.text('Filtres'));
     await tester.pump(const Duration(milliseconds: 350));
 
-    final categoryDropdown = find.byType(DropdownButtonFormField<String>).first;
+    final categoryDropdown = find.byType(DropdownButton<String>).first;
     await tester.tap(categoryDropdown);
     await tester.pump(const Duration(milliseconds: 350));
     await tester.tap(find.text('Bricolage / Travaux').last);
     await tester.pump();
 
-    final regionDropdown = find.byType(DropdownButtonFormField<String?>).first;
+    final regionDropdown = find.byType(DropdownButton<String?>).first;
     await tester.tap(regionDropdown);
     await tester.pump(const Duration(milliseconds: 350));
     await tester.tap(find.text('Guadeloupe').last);
