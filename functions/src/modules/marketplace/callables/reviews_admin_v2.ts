@@ -170,7 +170,9 @@ export const adminModerateReviewV2 = onCall(
             title: notification.title,
             message: notification.message,
             type: "review_moderation_decision",
-            routeName: `/profile/${encodeURIComponent(userId)}`,
+            routeName: decision === "request_correction"
+              ? "/account/mes-avis"
+              : `/profile/${encodeURIComponent(userId)}` ,
             offerId: offerId || undefined,
             data: { reviewId, decision },
           })),
