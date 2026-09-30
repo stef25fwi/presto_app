@@ -81,8 +81,8 @@ prouvé par l'export opérateur, mais les restrictions attendues ne le sont pas.
 ## Correction préparée après confirmation directe
 
 La clé iOS `187a10af-5395-4c40-a949-6920e8905082` n’a aucun bundle autorisé
-renseigné. Le bundle du dépôt est `fr.ilipresto.app`. La commande suivante est
-préparée pour l’opérateur ; elle n’a pas été exécutée par Codex :
+renseigné. Le bundle du dépôt est `fr.ilipresto.app`. La commande suivante a été tentée par l’opérateur puis refusée par GCP ;
+elle n’a donc pas ajouté la restriction :
 
 ```bash
 gcloud services api-keys update 187a10af-5395-4c40-a949-6920e8905082 \
@@ -113,3 +113,51 @@ Références complémentaires :
 - https://docs.cloud.google.com/sdk/gcloud/reference/services/api-keys/update
 - https://firebase.google.com/docs/reference/firebase-management/rest/v1beta1/projects.webApps
 - https://firebase.google.com/docs/reference/firebase-management/rest/v1beta1/projects.androidApps
+
+
+## Résultat opérateur : protection de trafic et associations Firebase
+
+Le 30/09/2026, la mise à jour iOS avec `--check-existing-usage` a échoué en
+`FAILED_PRECONDITION` / `APIKEYS_RESTRICTION_INCOMPATIBLE_WITH_USAGE`.
+GCP signale du trafic incompatible sur les sept derniers jours pour :
+`generativelanguage.googleapis.com`, `places-backend.googleapis.com`,
+`speech.googleapis.com`, `static-maps-backend.googleapis.com`.
+Le diagnostic n’identifie pas les appelants et ne démontre pas que ces requêtes
+ont réussi. Aucun contournement du contrôle, élargissement des API autorisées,
+ou attribution à un secret serveur n’est décidé sur cette seule base.
+
+Les ressources Firebase lues par l’opérateur confirment :
+
+| Application | Clé associée | Identité |
+|---|---|---|
+| Web 1:151421230024:web:1f974719da2f98822b3efd | e489e9b6-ea2a-4634-9f48-1fd96ad6a19b | Application Web principale |
+| Android 1:151421230024:android:339090c7418b3d7c2b3efd | 83512e8a-3c39-496f-b3a8-1dbddacdf97e | fr.ilipresto.app |
+| iOS 1:151421230024:ios:c3a75745c492983d2b3efd | 187a10af-5395-4c40-a949-6920e8905082 | fr.ilipresto.app |
+
+Empreintes SHA-1 enregistrées pour Android :
+
+- 37c41a3947967a59e3efbd21e67c97d75fdcdd62
+- fd4a4037722307133c15e9c6da72570120e37447
+- 87f5a3f7075bc85e86b5e8df34a1ec773277685b
+- 945981042660b58de9e15945835cfd870f9f0006
+
+La commande Android suivante est préparée avec les quatre certificats
+réellement enregistrés, sans contourner le contrôle de trafic. Elle n’est pas
+encore attestée appliquée. Après réussite, vérifier les restrictions, les
+signatures des versions distribuées et Auth/App Check sur un appareil.
+
+```bash
+gcloud services api-keys update 83512e8a-3c39-496f-b3a8-1dbddacdf97e \
+  --project=presto-app-74abe --append --check-existing-usage \
+  --allowed-application=package_name=fr.ilipresto.app,sha1_fingerprint=37c41a3947967a59e3efbd21e67c97d75fdcdd62 \
+  --allowed-application=package_name=fr.ilipresto.app,sha1_fingerprint=fd4a4037722307133c15e9c6da72570120e37447 \
+  --allowed-application=package_name=fr.ilipresto.app,sha1_fingerprint=87f5a3f7075bc85e86b5e8df34a1ec773277685b \
+  --allowed-application=package_name=fr.ilipresto.app,sha1_fingerprint=945981042660b58de9e15945835cfd870f9f0006
+```
+
+Prochaine investigation iOS : identifier les appelants du trafic incompatible
+via les métriques API par identifiant de credential et réconcilier les usages
+serveur. Le code source relie Places à `GOOGLE_PLACES_API_KEY` et VEO à
+`VEO_API_KEY` (ou à la saisie administrateur), sans réutilisation directe de la
+constante iOS dans ces modules. Cela ne prouve pas les valeurs ou configurations
+réellement déployées. Conserver le contrôle global en `pending`.
