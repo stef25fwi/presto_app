@@ -229,3 +229,37 @@ L’opérateur doit ensuite relancer la collecte des restrictions et essayer
 Auth/App Check sur iOS et Android. Aucune exécution réussie de la reprise n’est
 encore attestée. Le contrôle global reste `pending`, ainsi que l’inventaire des
 secrets jusqu’à confirmation des responsables et rotations/non-applicabilité.
+
+
+## Restrictions natives appliquées et relues le 30/09/2026
+
+La sortie Cloud Shell fournie par l’opérateur confirme maintenant la réussite
+des deux mises à jour et leur relecture, avec comparaison des listes d’API
+avant/après : `API autorisées inchangées.` pour les deux clés.
+
+| Plateforme | UUID | Configuration relue | updateTime GCP |
+|---|---|---|---|
+| iOS | 187a10af-5395-4c40-a949-6920e8905082 | allowedBundleIds = [fr.ilipresto.app] | 2026-09-30T13:35:28.743097Z |
+| Android | 83512e8a-3c39-496f-b3a8-1dbddacdf97e | Quatre allowedApplications, package fr.ilipresto.app et empreintes enregistrées listées plus haut | 2026-09-30T13:35:35.409074Z |
+
+Cette preuve porte sur les réglages GCP appliqués, pas sur la validation d’un
+binaire distribué. Auth/App Check sur appareils, correspondance avec la
+signature Play si distribuée par Play et autres fonctions Firebase restent
+à valider. Aucun résultat fonctionnel réel n’est inventé.
+
+Pour le Web principal, `.firebaserc` et `web/index.html` identifient les domaines
+`ilipresto.fr`, `www.ilipresto.fr`, `ilipresto.web.app`,
+`ilipresto.firebaseapp.com`, `presto-app-74abe.web.app` et
+`presto-app-74abe.firebaseapp.com`. Ces six origines HTTPS sont proposées pour
+la restriction de production, sans origine universelle. Les preview channels
+et usages de développement doivent être réconciliés séparément.
+
+Aucun build Windows/Linux n’a été trouvé dans les workflows inspectés, mais
+`lib/firebase_options.dart` partage la clé Web avec ces plateformes : cela ne
+prouve pas l’absence d’utilisateurs de ces clients. Clarifier leur usage avant
+restriction de referrer. La deuxième clé Browser nécessite également
+l’identification de ses consommateurs avant restriction ou désactivation.
+
+**Statut global : pending.** Les restrictions natives sont désormais attestées
+par la sortie opérateur ; Web, usages serveur et essais fonctionnels restent
+à compléter. L’inventaire des responsables/rotations des secrets reste distinct.
