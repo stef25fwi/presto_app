@@ -90,6 +90,13 @@ async function patchConsultOffersWarmLoad() {
   const path = 'lib/pages/consult_offers_page.dart';
   let content = await read(path);
 
+  // La pagination extraite utilise un unique Future partagé avec le refresh.
+  if (!content.includes('_primeOffersWarmCache') &&
+      content.includes('_initialOffersLoad = _loadCombinedOffers(generation);') &&
+      content.includes('_cachedOffersStream = _initialOffersLoad!.asStream().map(')) {
+    return;
+  }
+
   content = replaceOnce(
     content,
     '      unawaited(_primeOffersWarmCache(key));\n      _cachedOffersStream = _watchCombinedOffers().map((docs) {',

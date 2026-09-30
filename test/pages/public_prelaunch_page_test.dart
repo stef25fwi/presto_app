@@ -32,7 +32,6 @@ void main() {
   Future<void> pumpPage(
     WidgetTester tester, {
     required Size size,
-    VoidCallback? onDeveloperAccessGranted,
   }) async {
     tester.view
       ..physicalSize = size
@@ -47,7 +46,6 @@ void main() {
       MaterialApp(
         home: PublicPrelaunchPage(
           config: createConfig(),
-          onDeveloperAccessGranted: onDeveloperAccessGranted,
         ),
       ),
     );
@@ -85,148 +83,21 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('toute la carte compte huit appuis sans afficher de compteur',
+  testWidgets('des appuis répétés ne déverrouillent jamais la préouverture',
       (tester) async {
-    var accessGrantCount = 0;
-    await pumpPage(
-      tester,
-      size: const Size(390, 844),
-      onDeveloperAccessGranted: () => accessGrantCount += 1,
-    );
+    await pumpPage(tester, size: const Size(390, 844));
 
-    final launchMessage =
-        find.text(PublicLandingConfigService.defaultLaunchMessage);
-    expect(launchMessage, findsOneWidget);
-
-    Future<void> tapVisibleLaunchMessage() async {
-      await tester.ensureVisible(launchMessage);
-      await tester.pumpAndSettle();
-      await tester.tap(launchMessage);
+    final status = find.byKey(PublicPrelaunchPage.statusKey);
+    for (var index = 0; index < 16; index += 1) {
+      await tester.ensureVisible(status);
+      await tester.tap(status);
       await tester.pump(const Duration(milliseconds: 100));
     }
-
-    for (var index = 0;
-        index < PublicPrelaunchPage.developerAccessTapCount - 1;
-        index += 1) {
-      await tapVisibleLaunchMessage();
-      expect(find.textContaining('Accès test'), findsNothing);
-    }
-
-    expect(accessGrantCount, 0);
-
-    await tapVisibleLaunchMessage();
-
-    expect(accessGrantCount, 1);
-    expect(find.textContaining('Accès test'), findsNothing);
-  });
-
-  testWidgets('accorde l’accès une seule fois au huitième appui silencieux',
-      (tester) async {
-    var accessGrantCount = 0;
-    await pumpPage(
-      tester,
-      size: const Size(390, 844),
-      onDeveloperAccessGranted: () => accessGrantCount += 1,
-    );
-
-    final trigger = find.text(PublicLandingConfigService.defaultBadge);
-    expect(trigger, findsOneWidget);
-
-    for (var index = 0;
-        index < PublicPrelaunchPage.developerAccessTapCount - 1;
-        index += 1) {
-      await tester.tap(trigger);
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-
-    expect(accessGrantCount, 0);
-    expect(find.textContaining('Accès test'), findsNothing);
-
-    await tester.tap(trigger);
-    await tester.pump();
-
-    expect(accessGrantCount, 1);
-
-    for (var index = 0;
-        index < PublicPrelaunchPage.developerAccessTapCount;
-        index += 1) {
-      await tester.tap(trigger);
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-
-    expect(accessGrantCount, 1);
-    expect(find.textContaining('Accès test'), findsNothing);
-  });
-
-  testWidgets('réinitialise silencieusement la séquence après huit secondes',
-      (tester) async {
-    var accessGrantCount = 0;
-    await pumpPage(
-      tester,
-      size: const Size(390, 844),
-      onDeveloperAccessGranted: () => accessGrantCount += 1,
-    );
-
-    final trigger = find.text(PublicLandingConfigService.defaultBadge);
-    await tester.tap(trigger);
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(find.textContaining('Accès test'), findsNothing);
-
     await tester.pump(const Duration(seconds: 9));
 
-    for (var index = 0;
-        index < PublicPrelaunchPage.developerAccessTapCount - 1;
-        index += 1) {
-      await tester.tap(trigger);
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-
-    expect(accessGrantCount, 0);
-    expect(find.textContaining('Accès test'), findsNothing);
-
-    await tester.tap(trigger);
-    await tester.pump();
-
-    expect(accessGrantCount, 1);
-  });
-
-  testWidgets('remplace la préouverture par une seule page application',
-      (tester) async {
-    var showPrelaunch = true;
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: StatefulBuilder(
-          builder: (context, setState) {
-            if (!showPrelaunch) {
-              return const Scaffold(
-                body: Center(child: Text('APP_HOME_UNIQUE')),
-              );
-            }
-
-            return PublicPrelaunchPage(
-              config: createConfig(),
-              onDeveloperAccessGranted: () {
-                setState(() => showPrelaunch = false);
-              },
-            );
-          },
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final trigger = find.text(PublicLandingConfigService.defaultBadge);
-    for (var index = 0;
-        index < PublicPrelaunchPage.developerAccessTapCount;
-        index += 1) {
-      await tester.tap(trigger);
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-    await tester.pumpAndSettle();
-
-    expect(find.byType(PublicPrelaunchPage), findsNothing);
-    expect(find.text('APP_HOME_UNIQUE'), findsOneWidget);
+    expect(find.byType(PublicPrelaunchPage), findsOneWidget);
+    expect(find.text('Mentions légales'), findsOneWidget);
+    expect(find.text('CGU'), findsOneWidget);
     expect(find.textContaining('Accès test'), findsNothing);
     expect(tester.takeException(), isNull);
   });

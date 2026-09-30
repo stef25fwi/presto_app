@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'firebase_functions_region.dart';
+import 'publish_offer_draft_store.dart';
 
 typedef AuthFunctionCaller = Future<void> Function({
   required String name,
@@ -13,6 +14,7 @@ typedef AuthFunctionCaller = Future<void> Function({
   required String area,
 });
 typedef AuthGoogleSignOut = Future<void> Function();
+typedef AuthDraftClearer = Future<void> Function(String ownerId);
 
 enum AuthStatus {
   loading,
@@ -30,12 +32,15 @@ class AuthService {
     FirebaseFunctions? functions,
     AuthFunctionCaller? functionCaller,
     AuthGoogleSignOut? googleSignOut,
+    AuthDraftClearer? draftClearer,
     bool isWeb = kIsWeb,
   })  : _auth = auth ?? FirebaseAuth.instance,
         _db = firestore ?? FirebaseFirestore.instance,
         _functionsOverride = functions,
         _functionCaller = functionCaller,
         _googleSignOut = googleSignOut,
+        _draftClearer = draftClearer ??
+            PublishOfferDraftStore.instance.clearForOwner,
         _isWeb = isWeb;
 
   static final AuthService instance = AuthService._();
@@ -47,6 +52,7 @@ class AuthService {
     FirebaseFunctions? functions,
     AuthFunctionCaller? functionCaller,
     AuthGoogleSignOut? googleSignOut,
+    AuthDraftClearer? draftClearer,
     bool isWeb = kIsWeb,
   }) {
     return AuthService._(
@@ -55,15 +61,19 @@ class AuthService {
       functions: functions,
       functionCaller: functionCaller,
       googleSignOut: googleSignOut,
+      draftClearer: draftClearer ?? _ignoreDraftClear,
       isWeb: isWeb,
     );
   }
+
+  static Future<void> _ignoreDraftClear(String _) async {}
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _db;
   final FirebaseFunctions? _functionsOverride;
   final AuthFunctionCaller? _functionCaller;
   final AuthGoogleSignOut? _googleSignOut;
+  final AuthDraftClearer _draftClearer;
   final bool _isWeb;
 
   FirebaseFunctions get _functions =>
@@ -199,6 +209,7 @@ class AuthService {
   }
 
   Future<void> signOut() async {
+    final ownerId = _auth.currentUser?.uid;
     try {
       if (!kIsWeb) {
         final override = _googleSignOut;
@@ -213,6 +224,17 @@ class AuthService {
     }
 
     await _auth.signOut();
+    await _clearPublishDraft(ownerId);
+  }
+
+  Future<void> _clearPublishDraft(String? ownerId) async {
+    final normalizedOwnerId = ownerId?.trim() ?? '';
+    if (normalizedOwnerId.isEmpty) return;
+    try {
+      await _draftClearer(normalizedOwnerId);
+    } catch (error) {
+      debugPrint('[Auth] publication draft purge failed: $error');
+    }
   }
 
   Future<void> sendPasswordReset({
@@ -380,6 +402,8 @@ class AuthService {
       parameters: const <String, dynamic>{},
       area: 'account-deletion',
     );
+
+    await _clearPublishDraft(user.uid);
 
     try {
       await _auth.signOut();

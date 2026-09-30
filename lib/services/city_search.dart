@@ -1,4 +1,6 @@
 import 'dart:convert';
+
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart' show rootBundle;
 
 /// Modèle ville minimal
@@ -22,11 +24,17 @@ class CityRecord {
 }
 
 class CitySearch {
-  CitySearch._internal();
+  CitySearch._internal() : _allCities = <CityRecord>[];
+
+  @visibleForTesting
+  CitySearch.forTesting(List<CityRecord> cities)
+      : _loaded = true,
+        _allCities = List<CityRecord>.of(cities);
+
   static final CitySearch instance = CitySearch._internal();
 
   bool _loaded = false;
-  final List<CityRecord> _allCities = [];
+  final List<CityRecord> _allCities;
 
   /// ====== CHARGEMENT DU FICHIER JSON ======
   ///

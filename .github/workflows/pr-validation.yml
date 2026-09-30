@@ -42,7 +42,7 @@ jobs:
 
           echo "functions=$(changed '^(functions/|package.json$|package-lock.json$)')" >> "$GITHUB_OUTPUT"
           echo "firestore=$(changed '^(functions/|firestore\.rules$|firestore\.indexes\.json$|storage\.rules$)')" >> "$GITHUB_OUTPUT"
-          echo "web=$(changed '^(lib/|web/|assets/|fonts/|pubspec\.yaml$|pubspec\.lock$|firebase\.json$|\.firebaserc$)')" >> "$GITHUB_OUTPUT"
+          echo "web=$(changed '^(lib/|web/|assets/|fonts/|tools/public_prelaunch_bootstrap\.test\.mjs$|pubspec\.yaml$|pubspec\.lock$|firebase\.json$|\.firebaserc$)')" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@v7
         if: steps.scope.outputs.functions == 'true' || steps.scope.outputs.firestore == 'true' || steps.scope.outputs.web == 'true'
@@ -53,6 +53,10 @@ jobs:
 
       - name: Prepare validation logs
         run: mkdir -p pr_validation_logs quality_reports/pr
+
+      - name: Test public prelaunch bootstrap
+        if: steps.scope.outputs.web == 'true'
+        run: node --test tools/public_prelaunch_bootstrap.test.mjs
 
       - name: Verify generated hardening patches are committed
         id: generated_check

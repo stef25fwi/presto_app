@@ -5,6 +5,7 @@ const { defineSecret } = require('firebase-functions/params');
 const admin = require('./lib/core/firebase_admin_compat');
 const OpenAI = require('openai');
 const { createModerateNewOffer } = require('./moderation');
+const { summarizeGoogleSttResults } = require('./lib/modules/ai/google_stt_result');
 
 const os = require('os');
 const path = require('path');
@@ -1543,12 +1544,7 @@ async function providerGoogleSTT({ audioBuffer, languageCode, audioInfo }) {
 
   const [response] = await speechClient.recognize(request);
 
-  const alternatives = response?.results?.flatMap((r) => r.alternatives || []) || [];
-  const best = alternatives[0] || {};
-  const text = best.transcript || "";
-  const confidence = typeof best.confidence === "number" ? best.confidence : null;
-
-  return { text, googleConfidence: confidence, raw: response };
+  return { ...summarizeGoogleSttResults(response?.results), raw: response };
 }
 
 async function providerWhisper({ audioBuffer, languageCode, openai }) {
@@ -2623,4 +2619,3 @@ const paymentInfoAudioPipeline = require("./payment_info_audio_pipeline");
 exports.generatePaymentInfoAudio = paymentInfoAudioPipeline.generatePaymentInfoAudio;
 exports.generatePaymentInfoAudioDraft = paymentInfoAudioPipeline.generatePaymentInfoAudioDraft;
 exports.publishPaymentInfoAudioDraft = paymentInfoAudioPipeline.publishPaymentInfoAudioDraft;
-

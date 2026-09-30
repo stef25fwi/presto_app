@@ -35,7 +35,7 @@ import '../pages/offers/offer_details_page.dart';
 import '../pages/messages/messages_page_v2.dart';
 import 'account_page.dart';
 import 'consult_offers_page.dart';
-import 'publish_offer_page.dart';
+import '../features/offers/presentation/widgets/publish_offer_tab.dart';
 import '../app/system_ui_style.dart' show prestoOverlayStyleFor;
 import '../services/offer_details_mapper.dart' show buildOfferDetailsOffer;
 import '../services/presto_monitoring.dart' show PrestoMonitoring;
@@ -1457,8 +1457,8 @@ class _HomePageState extends State<HomePage>
                       searchQuery: _consultSearchQuery,
                     )
                   : const SizedBox.shrink(),
-              _selectedIndex == 2
-                  ? PublishOfferPage(onScroll: (_) {})
+              _mountedTabs.contains(2)
+                  ? PublishOfferTab(active: _selectedIndex == 2)
                   : const SizedBox.shrink(),
               _mountedTabs.contains(3)
                   ? MessagesPageV2(

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -10,62 +8,18 @@ class PublicPrelaunchPage extends StatefulWidget {
   const PublicPrelaunchPage({
     super.key,
     required this.config,
-    this.onDeveloperAccessGranted,
   });
 
-  static const accessTriggerKey = Key('public-prelaunch-access-trigger');
-  static const developerAccessTapCount = 8;
+  static const statusKey = Key('public-prelaunch-status');
 
   final PublicLandingConfigService config;
-  final VoidCallback? onDeveloperAccessGranted;
 
   @override
   State<PublicPrelaunchPage> createState() => _PublicPrelaunchPageState();
 }
 
 class _PublicPrelaunchPageState extends State<PublicPrelaunchPage> {
-  static const _tapSequenceTimeout = Duration(seconds: 8);
   static const _publicBaseUrl = 'https://ilipresto.fr';
-
-  Timer? _tapResetTimer;
-  int _tapCount = 0;
-  DateTime? _lastTapAt;
-  bool _accessGranted = false;
-
-  @override
-  void dispose() {
-    _tapResetTimer?.cancel();
-    super.dispose();
-  }
-
-  void _resetTapSequence() {
-    if (_accessGranted || _tapCount == 0) return;
-    _tapCount = 0;
-    _lastTapAt = null;
-  }
-
-  void _handleStatusTap() {
-    if (_accessGranted) return;
-
-    final now = DateTime.now();
-    final sequenceExpired = _lastTapAt == null ||
-        now.difference(_lastTapAt!) > _tapSequenceTimeout;
-    final nextTapCount = sequenceExpired ? 1 : _tapCount + 1;
-
-    _tapResetTimer?.cancel();
-
-    if (nextTapCount >= PublicPrelaunchPage.developerAccessTapCount) {
-      _accessGranted = true;
-      _tapCount = PublicPrelaunchPage.developerAccessTapCount;
-      _lastTapAt = now;
-      widget.onDeveloperAccessGranted?.call();
-      return;
-    }
-
-    _tapCount = nextTapCount;
-    _lastTapAt = now;
-    _tapResetTimer = Timer(_tapSequenceTimeout, _resetTapSequence);
-  }
 
   Future<void> _openPublicPage(String path) async {
     final uri = Uri.parse('$_publicBaseUrl$path');
@@ -117,16 +71,12 @@ class _PublicPrelaunchPageState extends State<PublicPrelaunchPage> {
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 920),
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: _handleStatusTap,
-                        child: PublicPrelaunchContent(
-                          config: widget.config,
-                          compact: compact,
-                          veryCompact: veryCompact,
-                          accessTriggerKey: PublicPrelaunchPage.accessTriggerKey,
-                          onOpenPublicPage: _openPublicPage,
-                        ),
+                      child: PublicPrelaunchContent(
+                        config: widget.config,
+                        compact: compact,
+                        veryCompact: veryCompact,
+                        statusKey: PublicPrelaunchPage.statusKey,
+                        onOpenPublicPage: _openPublicPage,
                       ),
                     ),
                   ),
