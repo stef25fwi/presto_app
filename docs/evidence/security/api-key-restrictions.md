@@ -1,11 +1,11 @@
 # Restrictions des clés API — 30 septembre 2026
 
 Projet : `presto-app-74abe`. Auteur : Codex. Contrôle : `api-keys-restricted`.
-**Statut : pending — collecte réelle nécessaire.**
+**Statut : pending — collecte reçue, restrictions applicatives à corriger et valider.**
 
-Le fichier de preuve était absent. Aucun accès GCP authentifié n'est disponible
-ici. La présence d'une clé cliente dans les fichiers Firebase ne démontre pas
-ses restrictions côté serveur ; aucune configuration n'est attestée ici.
+Le fichier de preuve était initialement absent. Les relevés opérateur ci-dessous
+documentent maintenant les réglages GCP. Leur conformité reste à valider après
+correction et essais sur les clients réels.
 
 ## Collecte en lecture seule depuis Cloud Shell
 
@@ -59,8 +59,9 @@ explicite. Aucune clé n'est attestée conforme par ce relevé.
 | Android — 83512e8a-3c39-496f-b3a8-1dbddacdf97e | allowedApplications vide ; aucun couple package/empreinte exporté |
 | Browser — 22d51620-5b04-490f-911e-9042a93a64a2 | Objet Browser vide ; aucune origine exportée |
 
-Un second relevé direct des restrictions est requis pour confirmer que les
-listes vides sont réellement la configuration et non une perte de projection.
+Le second relevé direct transmis par l’opérateur le 30/09/2026 confirme les
+objets vides sur les quatre clés clientes ; il ne s’agit pas d’une perte de
+projection du collecteur.
 Les champs camelCase du collecteur correspondent au schéma REST documenté.
 Les fichiers Android, iOS et Firebase du dépôt déclarent `fr.ilipresto.app` ;
 les empreintes de signature Android doivent venir des certificats réels,
@@ -75,3 +76,40 @@ les clés anciennes sans preuve qu'aucun client déployé ne les utilise.
 
 **Décision : contrôle toujours pending.** L'accès de collecte est maintenant
 prouvé par l'export opérateur, mais les restrictions attendues ne le sont pas.
+
+
+## Correction préparée après confirmation directe
+
+La clé iOS `187a10af-5395-4c40-a949-6920e8905082` n’a aucun bundle autorisé
+renseigné. Le bundle du dépôt est `fr.ilipresto.app`. La commande suivante est
+préparée pour l’opérateur ; elle n’a pas été exécutée par Codex :
+
+```bash
+gcloud services api-keys update 187a10af-5395-4c40-a949-6920e8905082 \
+  --project=presto-app-74abe \
+  --append \
+  --allowed-bundle-ids=fr.ilipresto.app \
+  --check-existing-usage
+```
+
+`--append` conserve les restrictions existantes. Le contrôle de trafic doit
+rester activé ; une incompatibilité doit être investiguée avant toute reprise.
+Après application, collecter les restrictions et tester Auth/App Check sur le
+binaire iOS. Cette étape seule ne valide pas le contrôle global.
+
+Avant modification Web/Android, relever `apiKeyId` des applications Firebase
+et les certificats Android enregistrés (métadonnées, sans valeurs de clés).
+L’association Firebase doit être rapprochée de la configuration des binaires
+réellement distribués ; les certificats enregistrés ne prouvent pas à eux seuls
+qu’ils couvrent toutes les signatures distribuées, notamment Play.
+
+Le code `lib/firebase_options.dart` réutilise la clé Web sur Windows/Linux.
+L’ajout de referrers sur cette clé exige de vérifier les clients effectivement
+supportés et les autres usages. Les deux clés Browser ne doivent pas être
+modifiées en bloc sans identification de leurs consommateurs. Aucune empreinte
+Android n’est inventée. Aucun contrôle du registre n’est promu.
+
+Références complémentaires :
+- https://docs.cloud.google.com/sdk/gcloud/reference/services/api-keys/update
+- https://firebase.google.com/docs/reference/firebase-management/rest/v1beta1/projects.webApps
+- https://firebase.google.com/docs/reference/firebase-management/rest/v1beta1/projects.androidApps
