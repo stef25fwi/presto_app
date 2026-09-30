@@ -47,13 +47,17 @@ annonce exactement le SHA du workflow, avec reprises limitées.
 
 ## Limites et suite requise
 
-La branche n'est ni publiée, ni fusionnée, ni déployée. La revue automatique
-a refusé son push faute d'autorisation explicite de publication sur GitHub.
+La branche est publiée dans la PR #1464 après autorisation explicite.
+Le premier SHA publié est 4d19bd2f76f9fc5182499f789a820f6f1bcf6b28 ; son
+contenu correspond exactement à l'arbre local validé. La PR n'est pas
+fusionnée et aucun déploiement n'est réalisé pour ce lot.
 La CI Flutter complète et le build web doivent être exécutés sur le SHA
 réunissant les correctifs ; Flutter est indisponible localement.
 
-Les restrictions des clés API, l'inventaire des secrets et la revue OWASP
-restent en attente ; aucun statut n'est promu artificiellement. La protection
+La revue OWASP a depuis été reprise et documentée ; son contrôle de
+réalisation est vérifié. Les restrictions des clés API et l'inventaire des
+secrets restent en attente, faute de métadonnées externes authentifiées.
+Aucun de ces deux statuts n'est promu artificiellement. La protection
 de main nécessite encore une configuration GitHub d'administration. Aucun
 secret, réglage Remote Config ou compte de production n'a été modifié.
 

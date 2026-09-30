@@ -66,3 +66,27 @@ pour protéger `main` et définir les contrôles requis ; ces réglages ne sont
 pas modifiés ici. Aucun secret ne doit être copié dans les preuves.
 
 Ce lot ne change aucun fichier UI, le hero Home ou ses trois affiches.
+
+## Mise à jour du 30 septembre 2026 — PR #1464
+
+La revue OWASP Top 10:2021 a été reprise, datée et attribuée à Codex ; elle
+couvre les dix catégories avec réserves et cibles de remédiation au 07/10.
+Le contrôle de réalisation de la revue passe à `verified`, sans attester
+la remédiation des réserves ni l'état des consoles de production.
+Les défauts de rejeu du webhook Resend et de redirection du téléchargement
+VEO sont corrigés avec tests de non-régression.
+
+Deux contrôles restent incomplets : restrictions réelles des clés API et
+inventaire/rotations des secrets. Les preuves sont actualisées et un
+collecteur de métadonnées en lecture seule est disponible :
+
+```bash
+python3 tools/security/collect_external_evidence.py --github
+```
+
+Le collecteur ne lit aucune valeur et ne promeut aucun statut. L'absence
+d'accès GCP authentifié empêche encore leur validation dans cette session.
+Le déploiement exige désormais le verdict strict avant authentification GCP
+dans `.github/workflows/deploy.yml` ; les preuves manquantes bloquent la
+livraison. Les affirmations du paragraphe S05 ci-dessus décrivent l'état du
+lot du 23 septembre, et non cette intégration.

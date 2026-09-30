@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { EmailProvider, NormalizedWebhookEvent, ProviderSendInput, ProviderSendResult } from "./email_provider.interface";
 
 export class ResendProvider implements EmailProvider {
@@ -79,14 +80,22 @@ export class ResendProvider implements EmailProvider {
     const msgTimestamp = headers["svix-timestamp"] || headers["Svix-Timestamp"];
     if (!msgId || !msgTimestamp) return false;
 
+    // Reject captured deliveries and malformed/future timestamps before HMAC work.
+    if (!/^\d+$/.test(msgTimestamp)) return false;
+    const timestamp = Number(msgTimestamp);
+    if (!Number.isSafeInteger(timestamp)
+      || Math.abs(Math.floor(Date.now() / 1000) - timestamp) > 300) return false;
+
     try {
-      const crypto = require("crypto") as typeof import("crypto");
       const toSign = `${msgId}.${msgTimestamp}.${rawBody}`;
       const secretBytes = Buffer.from(this.webhookSecret.replace(/^whsec_/, ""), "base64");
-      const expected = crypto.createHmac("sha256", secretBytes).update(toSign).digest("base64");
+      if (secretBytes.length === 0) return false;
+      const expected = createHmac("sha256", secretBytes).update(toSign).digest();
       return sig.split(" ").some((s: string) => {
         const parts = s.split(",");
-        return parts.length === 2 && parts[1] === expected;
+        if (parts.length !== 2 || parts[0] !== "v1" || !parts[1]) return false;
+        const actual = Buffer.from(parts[1], "base64");
+        return actual.length === expected.length && timingSafeEqual(actual, expected);
       });
     } catch {
       return false;

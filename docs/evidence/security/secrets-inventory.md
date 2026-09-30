@@ -1,82 +1,75 @@
-# Inventaire des secrets de production — amorcé le 16/08/2026
+# Inventaire des secrets — 30 septembre 2026
 
-Contrôle : `secrets-inventory-current` (`quality/security-controls.json`).
+Auteur du relevé source : Codex. Projet : `presto-app-74abe`.
+Dépôt : `stef25fwi/presto_app`, PR #1464.
+**Contrôle `secrets-inventory-current` : pending.**
 
-## Statut : amorcé, pas complet
+Les références du code sont actualisées. La présence réelle, les propriétaires
+et les rotations ne sont pas attestés : aucun accès GCP authentifié ou accès
+aux métadonnées des secrets GitHub n'est disponible ici. Une référence de
+code n'est pas une preuve d'existence dans la console.
 
-Le contrôle exige, pour chaque secret : nom, stockage, **propriétaire** et
-**date de dernière rotation**. Les deux premières colonnes sont vérifiables
-depuis le code — c'est ce que fait ce document, par recherche exhaustive des
-références à des secrets dans le dépôt. Les deux dernières (propriétaire,
-rotation) sont des faits organisationnels qui n'existent dans aucun fichier
-du dépôt : aucune session de code ne peut les produire sans les inventer.
+## Secret Manager — références defineSecret
 
-**Ce document réduit le travail restant à une revue de complétion — cocher
-propriétaire et date pour chaque ligne — plutôt qu'à un inventaire à
-construire depuis zéro.**
+| Nom | Usage | Propriétaire / rotation confirmée |
+|---|---|---|
+| BREVO_API_KEY | Envoi e-mail | À confirmer |
+| BREVO_WEBHOOK_SECRET | Authentification webhook Brevo | À confirmer |
+| EMAIL_PROVIDER_API_KEY | Provider Resend | À confirmer |
+| EMAIL_PROVIDER_WEBHOOK_SECRET | Signature Resend/Svix | À confirmer |
+| GOOGLE_PLACES_API_KEY | Places, manquant de l'ancien inventaire | À confirmer |
+| OPENAI_API_KEY | IA | À confirmer |
+| STRIPE_PRICE_ILIPRESTO_PLUS | Identifiant de prix | À confirmer ; rotation de secret non applicable |
+| STRIPE_PRICE_ILIPRO | Identifiant de prix | À confirmer ; rotation de secret non applicable |
+| STRIPE_SECRET_KEY | API Stripe | À confirmer |
+| STRIPE_WEBHOOK_SECRET | Signature Stripe | À confirmer |
+| VEO_API_KEY | Génération vidéo admin | À confirmer |
 
-## Secrets Cloud Functions (Google Secret Manager, via `defineSecret`)
+## GitHub Actions — références secrets.*
 
-Recherche : `grep -rn "defineSecret(" functions/src`.
+| Références | Nature | Propriétaire / rotation confirmée |
+|---|---|---|
+| FIREBASE_TOKEN, FIREBASE_STAGING_TOKEN | Jetons CLI persistants | À confirmer |
+| KEYSTORE_B64, KEYSTORE_PASSWORD, KEY_PASSWORD | Signature Android | À confirmer |
+| KEY_ALIAS | Alias de signature | À confirmer ; identifiant |
+| PLAY_SERVICE_ACCOUNT_JSON | Identité Play | À confirmer, présence non déduite des anciennes checklists |
+| IOS_DIST_CERT_P12_B64, IOS_DIST_CERT_PASSWORD, IOS_PROVISIONING_PROFILE_B64 | Signature iOS | À confirmer |
+| APPSTORE_API_PRIVATE_KEY | Clé privée App Store Connect | À confirmer |
+| APPSTORE_API_KEY_ID, APPSTORE_API_ISSUER_ID, IOS_TEAM_ID | Identifiants Apple | À confirmer ; rotation de secret non applicable |
+| WIF_PROVIDER, WIF_SERVICE_ACCOUNT | Identifiants de fédération | À confirmer ; pas de jeton durable dans ces identifiants |
+| APPCHECK_RECAPTCHA_SITE_KEY, FIREBASE_API_KEY, FIREBASE_APP_ID, FIREBASE_PROJECT_ID, FIREBASE_STAGING_PROJECT_ID | Configuration cliente/publique | À confirmer ; pas des secrets serveur |
 
-| Secret | Utilisé par | Propriétaire | Dernière rotation |
-|---|---|---|---|
-| `STRIPE_SECRET_KEY` | Appels API Stripe (`billing/callables.ts`) | À renseigner | À renseigner |
-| `STRIPE_WEBHOOK_SECRET` | Vérification de signature webhook (`stripe_webhook.ts`) | À renseigner | À renseigner |
-| `STRIPE_PRICE_ILIPRESTO_PLUS` | Identifiant de prix Stripe (pas un secret au sens strict, mais géré via Secret Manager) | À renseigner | À renseigner |
-| `STRIPE_PRICE_ILIPRO` | Identifiant de prix Stripe (idem) | À renseigner | À renseigner |
-| `OPENAI_API_KEY` | Transcription/génération micro-IA | À renseigner | À renseigner |
-| `VEO_API_KEY` | Génération vidéo admin | À renseigner | À renseigner |
-| `BREVO_API_KEY` | Provider email principal | À renseigner | À renseigner |
-| `BREVO_WEBHOOK_SECRET` | Authentification des webhooks Brevo entrants (`handler.ts`) | À renseigner | À renseigner |
-| `EMAIL_PROVIDER_API_KEY` | Provider email de repli (Resend) | À renseigner | À renseigner |
-| `EMAIL_PROVIDER_WEBHOOK_SECRET` | Authentification webhooks du provider de repli | À renseigner | À renseigner |
+`GITHUB_TOKEN` est éphémère et émis par job. Les secrets d'organisation,
+s'ils sont ajoutés ultérieurement, doivent aussi être rapprochés de leur
+inventaire. Le dépôt appartient actuellement à un compte utilisateur.
 
-## Secrets GitHub Actions (`secrets.*` référencés dans `.github/workflows/`)
+## Collecte sans valeurs
 
-Recherche : `grep -rhoE "secrets\.[A-Z_0-9]+" .github/workflows/*.yml`.
+```bash
+python3 tools/security/collect_external_evidence.py --github
+```
 
-| Secret | Rôle apparent | Propriétaire | Dernière rotation |
-|---|---|---|---|
-| `FIREBASE_TOKEN` | Authentification CLI Firebase (déploiement) | À renseigner | À renseigner |
-| `FIREBASE_API_KEY` | Configuration client Firebase en CI | À renseigner | À renseigner |
-| `FIREBASE_APP_ID` | Configuration client Firebase en CI | À renseigner | À renseigner |
-| `FIREBASE_PROJECT_ID` | Identifiant projet production | À renseigner | À renseigner |
-| `FIREBASE_STAGING_PROJECT_ID` | Identifiant projet staging | À renseigner | À renseigner |
-| `FIREBASE_STAGING_TOKEN` | Authentification CLI Firebase (staging) | À renseigner | À renseigner |
-| `WIF_PROVIDER` | Workload Identity Federation (auth GCP sans clé statique) | À renseigner | N/A — fédéré, pas de rotation manuelle |
-| `WIF_SERVICE_ACCOUNT` | Compte de service ciblé par la fédération | À renseigner | À renseigner |
-| `APPCHECK_RECAPTCHA_SITE_KEY` | Clé publique reCAPTCHA Enterprise (App Check web) | À renseigner | À renseigner |
-| `KEYSTORE_B64` | Keystore de signature Android (base64) | À renseigner | À renseigner |
-| `KEYSTORE_PASSWORD` | Mot de passe du keystore Android | À renseigner | À renseigner |
-| `KEY_ALIAS` | Alias de la clé de signature Android | À renseigner | À renseigner |
-| `KEY_PASSWORD` | Mot de passe de la clé de signature Android | À renseigner | À renseigner |
-| `PLAY_SERVICE_ACCOUNT_JSON` | Compte de service pour l'upload Play Console | À renseigner | **Non applicable — le secret n'existe pas encore**, d'après `docs/deployment/playstore-launch-checklist.md` |
-| `IOS_DIST_CERT_P12_B64` | Certificat de distribution iOS (base64) | À renseigner | À renseigner |
-| `IOS_DIST_CERT_PASSWORD` | Mot de passe du certificat iOS | À renseigner | À renseigner |
-| `IOS_PROVISIONING_PROFILE_B64` | Profil de provisionnement iOS (base64) | À renseigner | À renseigner |
-| `IOS_TEAM_ID` | Identifiant d'équipe Apple Developer | Préférer une variable GitHub Actions dans l’environnement `recaptcha`; fallback secret/profil/certificat supporté | N/A — identifiant, pas un secret rotatif |
-| `APPSTORE_API_KEY_ID` | Clé API App Store Connect | À renseigner | À renseigner |
-| `APPSTORE_API_ISSUER_ID` | Émetteur de la clé API App Store Connect | À renseigner | N/A — identifiant, pas un secret rotatif |
-| `APPSTORE_API_PRIVATE_KEY` | Clé privée API App Store Connect | À renseigner | À renseigner |
-| `GITHUB_TOKEN` | Jeton natif GitHub Actions | GitHub (auto-généré, auto-rotation par run) | Automatique — hors périmètre |
+Le collecteur utilise uniquement `gcloud secrets list`, `gcloud secrets
+versions list` et les endpoints GitHub de liste des secrets du dépôt et de
+tous les environnements accessibles. Il n'appelle jamais `versions access`.
+Les CLIs nécessitent une identité disposant des droits de lecture metadata.
 
-## Ce qui n'a volontairement pas été inclus
+Compléter pour chaque ressource effectivement présente, même non référencée :
+nom, stockage/périmètre, propriétaire, date de rotation confirmée et référence
+non sensible de l'opération. `createTime` d'une version ou `updated_at`
+GitHub ne prouve pas la révocation de l'ancienne clé chez le fournisseur.
+Justifier explicitement « non applicable » pour les identifiants ; ne pas
+faire tourner une clé de signature mobile à seule fin de remplir un tableau.
 
-- Les variables `NEXT_PUBLIC_*`/configuration Firebase côté client
-  (`firebase_options.dart`) : publiques par construction (clé API Firebase
-  web), protégées par les restrictions d'API et App Check, pas par le secret
-  lui-même. Suivies séparément par le contrôle `api-keys-restricted`.
-- Les préfixes `sk_live_`/`sk_test_` trouvés dans `stripe_mode.ts` : ce sont
-  des motifs de validation de format, pas des clés — déjà écarté dans
-  `docs/evidence/security/dependency-audit.md` et l'audit général du 15/08.
+Recherche ciblée sur 2 524 fichiers suivis au 30/09 : aucun secret complet
+correspondant aux motifs Stripe, AWS et blocs de clé privée identifié.
+Trois candidats contenaient seulement des motifs de détection/caviardage
+`BEGIN PRIVATE KEY` dans des outils de contrôle. Cette recherche ne couvre
+ni tout l'historique Git, ni les consoles, ni les journaux externes.
 
-## Prochaine étape
+La collecte locale a échoué comme attendu : gcloud indisponible et GitHub
+non collecté. La date de ce document ne remplace pas les rotations manquantes.
 
-Compléter les colonnes « Propriétaire » et « Dernière rotation » depuis la
-console GitHub (Settings → Secrets) et Google Secret Manager, qui seules
-portent ces informations. Le contrôle ne peut passer `verified` qu'une fois
-ce tableau intégralement renseigné et daté de moins de 90 jours, comme
-l'exige `quality/security-controls.json`.
-
-Amorcé le 2026-08-16.
+Références :
+- https://cloud.google.com/sdk/gcloud/reference/secrets/versions/list
+- https://docs.github.com/en/rest/actions/secrets

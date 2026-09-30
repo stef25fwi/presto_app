@@ -7,6 +7,7 @@ import { defineSecret } from "firebase-functions/params";
 
 import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { getDb } from "../../core/firestore";
+import { fetchVeoVideo } from "./veo_download";
 import { extractRolesFromAuthToken, requireAnyRole } from "../marketplace/services/roles";
 import {
   DEFAULT_VEO_MODEL,
@@ -208,10 +209,7 @@ async function waitForVeoVideo(apiKey: string, operationName: string): Promise<s
 }
 
 async function downloadVeoVideo(apiKey: string, videoUri: string): Promise<Buffer> {
-  const response = await fetch(videoUri, {
-    headers: { "x-goog-api-key": apiKey },
-    redirect: "follow",
-  });
+  const response = await fetchVeoVideo(apiKey, videoUri);
   if (!response.ok) {
     throw new VeoHttpError(response.status, "Impossible de télécharger la vidéo générée.");
   }
