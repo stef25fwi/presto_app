@@ -30,8 +30,8 @@ jobs:
       - name: Test security controls checker
         run: node --test tools/quality/check_security_controls.test.mjs
 
-      - name: Test metadata collector does not export secret values
-        run: python3 -m unittest discover -s tools/security -p 'test_collect_external_evidence.py'
+      - name: Test metadata collectors do not export secret values
+        run: python3 -m unittest discover -s tools/security -p 'test_collect*.py'
 
       - name: Inventory security readiness
         if: github.event_name != 'workflow_dispatch' || !inputs.enforce

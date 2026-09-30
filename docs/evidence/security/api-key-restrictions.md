@@ -161,3 +161,41 @@ serveur. Le code source relie Places à `GOOGLE_PLACES_API_KEY` et VEO à
 `VEO_API_KEY` (ou à la saisie administrateur), sans réutilisation directe de la
 constante iOS dans ces modules. Cela ne prouve pas les valeurs ou configurations
 réellement déployées. Conserver le contrôle global en `pending`.
+
+
+## Refus Android et diagnostic de trafic préparé
+
+L’opérateur signale ensuite le même `FAILED_PRECONDITION` sur la tentative
+Android, avec les quatre mêmes services. Son collage contient des fragments
+parasites ; le diagnostic reçu ne permet pas d’inférer l’origine des appels,
+ni de certifier une nouvelle configuration Android. Aucune réussite d’ajout
+des restrictions clientes n’est attestée.
+
+`tools/security/collect_api_usage.py` lit uniquement les en-têtes des séries
+Cloud Monitoring `serviceruntime.googleapis.com/api/request_count` sur les
+sept derniers jours pour ces quatre services. Il conserve l’UUID de credential
+quand disponible et les codes/classes HTTP ; les identifiants non UUID sont
+hachés pour corrélation. Il ne lit pas les valeurs de clés ou secrets,
+n’exporte pas le jeton OAuth, ne récupère pas le contenu des requêtes et ne
+modifie ni GCP ni le registre de sécurité. La pagination est suivie.
+
+```bash
+git pull --ff-only origin fix/ilipresto-audit-integration-20260930
+python3 tools/security/collect_api_usage.py
+```
+
+La sortie permet de rapprocher les UUID Android/iOS des services et codes
+observés, si ces dimensions sont disponibles. Ce diagnostic n’identifie pas
+nécessairement les appelants, ne fournit pas les volumes et une sortie vide
+ne prouve pas l’absence de trafic. Un refus IAM/Monitoring reste une collecte
+échouée, pas une preuve de conformité. Ne pas désactiver le contrôle de trafic
+ou élargir les scopes pour contourner l’erreur avant réconciliation des usages.
+
+Validation locale : huit tests des deux collecteurs réussis, couvrant projection
+sans valeurs sensibles, conservation des codes 200/403 et UUID, pagination et
+sanitisation des erreurs. La collecte de trafic réelle reste à exécuter par
+l’opérateur authentifié Cloud Shell.
+
+Références :
+- https://docs.cloud.google.com/monitoring/api/resources#tag_consumed_api
+- https://docs.cloud.google.com/monitoring/api/ref_v3/rest/v3/projects.timeSeries/list
