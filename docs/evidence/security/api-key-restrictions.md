@@ -263,3 +263,26 @@ l’identification de ses consommateurs avant restriction ou désactivation.
 **Statut global : pending.** Les restrictions natives sont désormais attestées
 par la sortie opérateur ; Web, usages serveur et essais fonctionnels restent
 à compléter. L’inventaire des responsables/rotations des secrets reste distinct.
+
+
+## Périmètre utilisateur confirmé : Web iPad et Web Android
+
+L’utilisateur précise le 30/09/2026 : « ipad web et android web ». Le périmètre
+actuel à valider est donc Safari/iPad et navigateur/Android. La restriction
+Web principale peut être préparée pour la clé Firebase associée
+`e489e9b6-ea2a-4634-9f48-1fd96ad6a19b`, avec les six domaines de production
+identifiés plus haut. Pour chaque domaine HTTPS, inclure le domaine nu et le
+motif de chemin `/*`, conformément à la documentation Google. Ne pas autoriser
+un sous-domaine universel ni tous les sites Firebase.
+
+La reprise utilise `--append --no-check-existing-usage` : les quatre services
+incompatibles observés pour cette clé n’apparaissaient qu’en HTTP 403 dans le
+relevé reçu. Relire les restrictions après modification et comparer les
+`apiTargets` avant/après. Cette modification Web n’est pas encore attestée
+appliquée. Tester ensuite Auth et publication sur les deux navigateurs.
+
+La seconde clé Browser `22d51620-5b04-490f-911e-9042a93a64a2` n’est pas la clé
+associée à l’application Web principale. Son identification reste nécessaire,
+sans suppression automatique ni présomption qu’elle est inutilisée.
+
+Référence : https://docs.cloud.google.com/api-keys/docs/add-restrictions-api-keys
