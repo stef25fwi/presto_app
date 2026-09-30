@@ -199,3 +199,33 @@ l’opérateur authentifié Cloud Shell.
 Références :
 - https://docs.cloud.google.com/monitoring/api/resources#tag_consumed_api
 - https://docs.cloud.google.com/monitoring/api/ref_v3/rest/v3/projects.timeSeries/list
+
+
+## Trafic réel fourni : appels refusés, décision de reprise ciblée
+
+Diagnostic Cloud Monitoring transmis par l’opérateur : fenêtre du
+`2026-09-23T13:31:54.011597+00:00` au `2026-09-30T13:31:54.011597+00:00`.
+Pour les UUID iOS et Android, les quatre services signalés par le contrôle
+(`generativelanguage`, `places-backend`, `speech`, `static-maps-backend`)
+n’apparaissent qu’en HTTP 403 dans les en-têtes reçus. Aucune série 2xx pour
+ces UUID et services n’est présente dans cette collecte. La clé Web principale
+présente également 403 sur ces quatre services. La seconde clé Browser apparaît
+403 pour Gemini et Places, sans série Speech/Static Maps dans le relevé.
+Une série Speech 200 utilise un autre credential, anonymisé par le collecteur.
+
+Cela explique que le contrôle de trafic refuse la mise à jour même pour des
+services dont les requêtes sont déjà refusées. La collecte ne donne ni les
+volumes, ni l’origine des requêtes, ni la garantie d’exhaustivité de toute
+l’activité. Elle ne démontre pas une compromission ou une réussite de ces appels.
+
+Décision : les commandes iOS et Android préparées plus haut peuvent être
+reprises avec `--no-check-existing-usage` à la place de
+`--check-existing-usage`, en conservant `--append` et les API autorisées.
+Le contournement est maintenant motivé par les codes 403 observés ; il ne doit
+pas ajouter les quatre services interdits à la liste des API. Ne pas appliquer
+cette décision aux clés serveur ou aux clés Browser non encore réconciliées.
+
+L’opérateur doit ensuite relancer la collecte des restrictions et essayer
+Auth/App Check sur iOS et Android. Aucune exécution réussie de la reprise n’est
+encore attestée. Le contrôle global reste `pending`, ainsi que l’inventaire des
+secrets jusqu’à confirmation des responsables et rotations/non-applicabilité.
