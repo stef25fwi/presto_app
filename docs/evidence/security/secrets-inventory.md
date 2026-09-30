@@ -73,3 +73,73 @@ non collecté. La date de ce document ne remplace pas les rotations manquantes.
 Références :
 - https://cloud.google.com/sdk/gcloud/reference/secrets/versions/list
 - https://docs.github.com/en/rest/actions/secrets
+
+## Inventaire réel reçu de Cloud Shell — 30/09/2026
+
+Source : export opérateur du `2026-09-30T12:58:54.552838+00:00` ; collecte
+sans erreur, projet numérique `151421230024`. Quinze ressources Secret
+Manager et dix-sept secrets/configurations GitHub recensés. Les onze
+références defineSecret du code sont présentes. Quatre ressources GCP
+supplémentaires sont désormais incluses. Aucun ownerLabel renseigné ; les
+champs lastRotationConfirmed restent non attestés. Ce champ est laissé à
+null par conception du collecteur : il ne prouve pas que le fournisseur n'a
+jamais effectué de rotation.
+
+| Ressource GCP | Dernière version créée (UTC) | Versions ENABLED observées |
+|---|---|---:|
+| BREVO_API_KEY | v10 — 2026-08-26 | 10 |
+| BREVO_WEBHOOK_SECRET | v8 — 2026-04-16 | 8 |
+| EMAIL_PROVIDER_API_KEY | v1 — 2026-03-22 | 1 |
+| EMAIL_PROVIDER_WEBHOOK_SECRET | v1 — 2026-03-22 | 1 |
+| GOOGLE_PLACES_API_KEY | v1 — 2026-01-02 | 1 |
+| OPENAI_API_KEY | v8 — 2026-07-01 | 8 |
+| RECAPTCHA_ENTERPRISE_SITE_KEY | v2 — 2026-05-09 | 2 |
+| STRIPE_PRICE_ILIPRESTO_PLUS | v1 — 2026-07-10 | 1 |
+| STRIPE_PRICE_ILIPRO | v1 — 2026-07-10 | 1 |
+| STRIPE_SECRET_KEY | v2 — 2026-08-01 | 2 |
+| STRIPE_WEBHOOK_SECRET | v3 — 2026-07-10 | 3 |
+| VEO_API_KEY | v1 — 2026-07-29 | 1 |
+| Connexion App Hosting avqfysf | v1 — 2025-12-21 | 1 |
+| Connexion App Hosting m81pshh | v1 — 2026-04-15 | 1 |
+| Extension firestore-stripe-payments-STRIPE_API_KEY | v1 — 2026-04-08 | 1 |
+
+Les dates sont des créations de versions, pas des rotations de credential.
+La matrice impose un inventaire daté de moins de 90 jours ; elle n'impose pas
+une rotation universelle tous les 90 jours. Plusieurs versions ENABLED ne
+prouvent pas qu'elles sont utilisées, ni que leurs valeurs sont différentes.
+Avant de les désactiver, relever les versions liées aux Functions/Cloud Run,
+aux connexions App Hosting et à l'extension Stripe. Ne rien détruire sur la
+seule base de cet export. Les OAuth App Hosting sont potentiellement gérés
+par le service : documenter le gestionnaire et la politique applicable.
+
+| Stockage GitHub | Ressource effectivement présente | updated_at UTC |
+|---|---|---|
+| Dépôt | FIREBASE_API_KEY | 2026-07-18 |
+| Dépôt | FIREBASE_APP_ID | 2026-07-18 |
+| Dépôt | FIREBASE_MESSAGING_SENDER_ID | 2026-07-18 |
+| Dépôt | FIREBASE_SERVICE_ACCOUNT_PRESTO_APP_74ABE | 2026-07-18 |
+| recaptcha | APPCHECK_RECAPTCHA_SITE_KEY | 2026-05-10 |
+| recaptcha | FCM_WEB_VAPID_KEY | 2026-06-19 |
+| recaptcha | GOOGLE_CREDENTIALS_B64 | 2026-05-10 |
+| recaptcha | KEYSTORE_B64 | 2026-06-26 |
+| recaptcha | KEYSTORE_PASSWORD | 2026-06-26 |
+| recaptcha | KEY_ALIAS | 2026-06-26 |
+| recaptcha | KEY_PASSWORD | 2026-06-26 |
+| recaptcha | MARKETPLACE_RECAPTCHA_WEB_SITE_KEY | 2026-05-18 |
+| recaptcha | WIF_PROVIDER | 2026-07-20 |
+| recaptcha | WIF_SERVICE_ACCOUNT | 2026-07-20 |
+| staging | FIREBASE_STAGING_PROJECT_ID | 2026-07-15 |
+| staging | FIREBASE_STAGING_TOKEN | 2026-07-15 |
+| staging | STAGING_APPCHECK_RECAPTCHA_SITE_KEY | 2026-07-15 |
+
+Le relevé ne contient pas les secrets de signature iOS/App Store ni
+PLAY_SERVICE_ACCOUNT_JSON ; les workflows les référencent, sans prouver
+leur existence. Les identités persistantes FIREBASE_SERVICE_ACCOUNT et
+GOOGLE_CREDENTIALS_B64 doivent être rapprochées de WIF et de leurs usages
+réels, sans lire leurs valeurs dans un rapport public.
+
+**Décision : pending.** L'inventaire réel est disponible ; il reste à
+attribuer les ressources et confirmer les dates de rotation ou justifier
+non-applicabilité/service-managed pour chacune. La preuve peut être
+complétée par une attestation opérateur nominative sans communiquer aucune
+valeur de secret. Aucun statut vérifié ni rotation n'est inventé.
