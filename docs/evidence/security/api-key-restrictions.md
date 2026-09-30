@@ -286,3 +286,21 @@ associée à l’application Web principale. Son identification reste nécessair
 sans suppression automatique ni présomption qu’elle est inutilisée.
 
 Référence : https://docs.cloud.google.com/api-keys/docs/add-restrictions-api-keys
+
+
+## Web principal : modification appliquée et relue
+
+La sortie opérateur du 30/09/2026 confirme la réussite de la mise à jour de
+`e489e9b6-ea2a-4634-9f48-1fd96ad6a19b`, avec
+`updateTime = 2026-09-30T13:47:10.064650Z`. Les douze referrers HTTPS attendus
+(six domaines, domaine nu et chemin `/*`) figurent dans la relecture.
+La comparaison avant/après confirme `API autorisées inchangées.`
+
+Les réglages GCP des trois clés principales Web/Android/iOS sont maintenant
+attestés par les sorties opérateur. Les essais fonctionnels sur Safari/iPad,
+navigateur/Android et les binaires natifs ne sont pas encore attestés.
+Le contrôle global reste `pending` : ancienne clé Browser et trois clés
+serveur restent à réconcilier, notamment les restrictions applicatives serveur
+compatibles avec l’architecture d’exécution. Ne pas leur appliquer de referrers
+Web ou d’IP Cloud Shell. L’identification des apps Web associées à l’ancienne
+clé peut être collectée sans télécharger les valeurs des clés.
