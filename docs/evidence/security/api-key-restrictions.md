@@ -304,3 +304,22 @@ serveur restent à réconcilier, notamment les restrictions applicatives serveur
 compatibles avec l’architecture d’exécution. Ne pas leur appliquer de referrers
 Web ou d’IP Cloud Shell. L’identification des apps Web associées à l’ancienne
 clé peut être collectée sans télécharger les valeurs des clés.
+
+
+## Application Web active unique et traitement de la clé Browser historique
+
+Le relevé Firebase Management transmis le 30/09/2026 liste une seule application
+Web active : `ilipresto`, App ID `1:151421230024:web:1f974719da2f98822b3efd`,
+clé associée `e489e9b6-ea2a-4634-9f48-1fd96ad6a19b`. L’ancienne clé
+`22d51620-5b04-490f-911e-9042a93a64a2` n’est associée à aucune application
+Web active dans ce relevé. Cela ne prouve pas son absence dans un ancien
+binaire, une ancienne configuration ou un autre consommateur.
+
+Décision préparée : conserver cette clé et lui appliquer les mêmes referrers
+que la clé Web principale, sans changer les API autorisées. Le trafic relevé
+pour cette clé vers Gemini et Places était HTTP 403. Le contournement du
+contrôle de trafic reste ciblé, sans autoriser ces services. Les consommateurs
+historiques servis sur les mêmes domaines restent dans le périmètre autorisé ;
+les usages hors de ces domaines ne sont pas attestés. Relecture et comparaison
+des apiTargets requises. L’application effective de cette décision n’est pas
+encore confirmée. Ne pas supprimer la clé sur la seule base de ce relevé.
