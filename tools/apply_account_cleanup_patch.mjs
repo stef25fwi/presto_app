@@ -5,6 +5,13 @@ import fs from 'node:fs/promises';
 const path = 'functions/src/modules/auth/account_deletion.ts';
 let content = await fs.readFile(path, 'utf8');
 
+// The cleanup is already part of the branch after the Store account-deletion
+// change. Keep this generator idempotent so CI does not try to patch it twice.
+if (content.includes('archiveUserListings(')) {
+  console.log('account cleanup patch: already applied');
+  process.exit(0);
+}
+
 function replaceOnce(before, after, label) {
   if (content.includes(after)) return;
   const count = content.split(before).length - 1;
