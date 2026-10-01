@@ -74,7 +74,7 @@
     "google-auth-library": "^11.0.0",
     "nodemailer": "^10.0.13",
     "openai": "^7.3.0",
-    "resend": "^6.18.0",
+    "resend": "^6.30.0",
     "sharp": "^0.35.4"
   },
   "devDependencies": {
