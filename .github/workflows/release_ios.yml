@@ -33,6 +33,31 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Verify Xcode 26 and iOS 26 SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcode_version="$(xcodebuild -version | awk '/^Xcode / {print $2; exit}')"
+          sdk_version="$(xcrun --sdk iphoneos --show-sdk-version)"
+          xcode_major="${xcode_version%%.*}"
+          sdk_major="${sdk_version%%.*}"
+
+          echo "Xcode: ${xcode_version}"
+          echo "iPhoneOS SDK: ${sdk_version}"
+          xcodebuild -showsdks | grep -E 'iphoneos(26|[3-9][0-9])' || {
+            echo "::error::Le runner ne propose pas de SDK iOS 26 ou ultérieur."
+            exit 1
+          }
+
+          if ! [[ "${xcode_major}" =~ ^[0-9]+$ ]] || (( xcode_major < 26 )); then
+            echo "::error::Xcode 26 ou ultérieur est requis pour une soumission App Store."
+            exit 1
+          fi
+          if ! [[ "${sdk_major}" =~ ^[0-9]+$ ]] || (( sdk_major < 26 )); then
+            echo "::error::Le SDK iOS 26 ou ultérieur est requis pour une soumission App Store."
+            exit 1
+          fi
+
       - name: Install dependencies
         run: flutter pub get
 
