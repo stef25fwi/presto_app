@@ -15,6 +15,7 @@ import {
   getDocs,
   orderBy,
   query,
+  serverTimestamp,
   setDoc,
   updateDoc,
   where,
@@ -57,6 +58,11 @@ async function seedDocs(testEnv) {
       setDoc(doc(db, 'conversations', 'conv_seed', 'messages', 'msg_1'), {
         senderId: 'user_1',
         text: 'Bonjour',
+      }),
+      setDoc(doc(db, 'conversations', 'conv_blocked'), {
+        participantIds: ['user_1', 'user_2'],
+        blockedBy: { user_2: true },
+        status: 'blocked',
       }),
     ]);
   });
@@ -138,6 +144,41 @@ async function main() {
       senderId: 'user_1',
       text: 'Bonjour encore',
     }));
+
+    // Regression S02: this exact payload passed the former client fallback.
+    // Even a genuine participant must send via the guarded callable.
+    for (const conversationId of ['conv_seed', 'conv_blocked']) {
+      for (const senderId of ['user_1', 'user_2', 'outsider']) {
+        const senderDb = testEnv.authenticatedContext(senderId).firestore();
+        for (const attachments of [[], [{ type: 'image', url: 'https://example.invalid/unvalidated.jpg' }]]) {
+          await assertFails(setDoc(
+            doc(senderDb, 'conversations', conversationId, 'messages', `fallback_${senderId}`),
+            {
+              senderId,
+              sender_id: senderId,
+              text: 'Message de test',
+              body: 'Message de test',
+              attachments,
+              createdVia: 'client_firestore_fallback',
+              createdAt: serverTimestamp(),
+              created_at: serverTimestamp(),
+            },
+          ));
+        }
+      }
+    }
+
+    // Server-created messages remain readable by their participants only.
+    await assertSucceeds(getDoc(doc(userDb, 'conversations', 'conv_seed', 'messages', 'msg_1')));
+    await assertSucceeds(getDoc(doc(
+      testEnv.authenticatedContext('user_2').firestore(),
+      'conversations', 'conv_seed', 'messages', 'msg_1',
+    )));
+    await assertFails(getDoc(doc(anonDb, 'conversations', 'conv_seed', 'messages', 'msg_1')));
+    await assertFails(getDoc(doc(
+      testEnv.authenticatedContext('outsider').firestore(),
+      'conversations', 'conv_seed', 'messages', 'msg_1',
+    )));
 
     await assertSucceeds(
       getDocs(

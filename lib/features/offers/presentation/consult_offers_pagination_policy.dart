@@ -6,17 +6,17 @@ class ConsultOffersPaginationPolicy {
   const ConsultOffersPaginationPolicy({
     this.initialLimit = 20,
     this.pageSize = 20,
-    this.maxLimit = 100,
+    this.maxLimit,
     this.triggerDistancePx = 500,
     this.requestThrottle = const Duration(milliseconds: 450),
   })  : assert(initialLimit > 0),
         assert(pageSize > 0),
-        assert(maxLimit >= initialLimit),
+        assert(maxLimit == null || maxLimit >= initialLimit),
         assert(triggerDistancePx >= 0);
 
   final int initialLimit;
   final int pageSize;
-  final int maxLimit;
+  final int? maxLimit;
   final double triggerDistancePx;
   final Duration requestThrottle;
 
@@ -31,10 +31,10 @@ class ConsultOffersPaginationPolicy {
     required DateTime now,
     DateTime? lastRequestAt,
   }) {
-    if (hasActiveClientFilters || isLoading || !hasMore || !hasCursor) {
+    if (isLoading || !hasMore || !hasCursor) {
       return false;
     }
-    if (loadedCount >= maxLimit) return false;
+    if (maxLimit != null && loadedCount >= maxLimit!) return false;
     if (maxScrollExtent - pixels > triggerDistancePx) return false;
     if (lastRequestAt != null &&
         now.difference(lastRequestAt) <= requestThrottle) {
@@ -44,7 +44,8 @@ class ConsultOffersPaginationPolicy {
   }
 
   int nextPageLimit(int loadedCount) {
-    final remaining = maxLimit - loadedCount;
+    if (maxLimit == null) return pageSize;
+    final remaining = maxLimit! - loadedCount;
     if (remaining <= 0) return 0;
     return remaining < pageSize ? remaining : pageSize;
   }
@@ -55,6 +56,7 @@ class ConsultOffersPaginationPolicy {
     required int totalLoadedCount,
   }) {
     if (requestedLimit <= 0) return false;
-    return receivedCount == requestedLimit && totalLoadedCount < maxLimit;
+    return receivedCount == requestedLimit &&
+        (maxLimit == null || totalLoadedCount < maxLimit!);
   }
 }

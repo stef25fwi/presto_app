@@ -1,7 +1,6 @@
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:presto_app/app/presto_app_chrome.dart';
 import 'package:presto_app/pages/public_prelaunch_page.dart';
 import 'package:presto_app/services/public_landing_config_service.dart';
 
@@ -24,66 +23,35 @@ class _NoopRemoteConfigAdapter
 }
 
 void main() {
-  testWidgets(
-    'le huitième appui ouvre directement une seule Home sans Splash',
-    (tester) async {
-      final navigatorKey = GlobalKey<NavigatorState>();
-      final config = PublicLandingConfigService(
-        adapter: _NoopRemoteConfigAdapter(),
-      );
-
-      await tester.pumpWidget(
-        MaterialApp(
-          navigatorKey: navigatorKey,
-          initialRoute: '/prelaunch',
-          routes: <String, WidgetBuilder>{
-            '/': (_) => const Scaffold(
-                  body: Center(child: Text('SPLASH_SHOULD_NOT_APPEAR')),
-                ),
-            '/prelaunch': (_) => PublicPrelaunchPage(
-                  config: config,
-                  onDeveloperAccessGranted: () {
-                    resetNavigatorToHomeAfterPublicLandingAccess(
-                      navigatorKey,
-                      homeBuilder: (_) => const Scaffold(
-                        body: Center(child: Text('APP_HOME_COMPLETE')),
-                      ),
-                    );
-                  },
-                ),
-          },
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.byType(PublicPrelaunchPage), findsOneWidget);
-      expect(find.text('APP_HOME_COMPLETE'), findsNothing);
-
-      final trigger = find.byKey(PublicPrelaunchPage.accessTriggerKey);
-      for (var index = 0;
-          index < PublicPrelaunchPage.developerAccessTapCount;
-          index += 1) {
-        await tester.tap(trigger);
-        await tester.pump(const Duration(milliseconds: 100));
-      }
-      await tester.pumpAndSettle();
-
-      expect(find.byType(PublicPrelaunchPage), findsNothing);
-      expect(find.text('SPLASH_SHOULD_NOT_APPEAR'), findsNothing);
-      expect(find.text('APP_HOME_COMPLETE'), findsOneWidget);
-      expect(navigatorKey.currentState?.canPop(), isFalse);
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets('le retour Home échoue proprement sans Navigator actif',
+  testWidgets('les appuis de préouverture ne changent pas la route active',
       (tester) async {
     final navigatorKey = GlobalKey<NavigatorState>();
-
-    expect(
-      resetNavigatorToHomeAfterPublicLandingAccess(navigatorKey),
-      isFalse,
+    final config = PublicLandingConfigService(
+      adapter: _NoopRemoteConfigAdapter(),
     );
+    await tester.pumpWidget(
+      MaterialApp(
+        navigatorKey: navigatorKey,
+        home: PublicPrelaunchPage(config: config),
+        routes: <String, WidgetBuilder>{
+          '/application': (_) => const Scaffold(
+                body: Center(child: Text('APP_HOME_COMPLETE')),
+              ),
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final status = find.byKey(PublicPrelaunchPage.statusKey);
+    for (var index = 0; index < 16; index += 1) {
+      await tester.tap(status);
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PublicPrelaunchPage), findsOneWidget);
+    expect(find.text('APP_HOME_COMPLETE'), findsNothing);
+    expect(navigatorKey.currentState?.canPop(), isFalse);
     expect(tester.takeException(), isNull);
   });
 }

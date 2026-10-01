@@ -8,6 +8,8 @@
     "openai": "^6.49.0"
   },
   "overrides": {
-    "uuid": "^11.1.1"
+    "uuid": "^11.1.1",
+    "brace-expansion": "^2.1.7",
+    "qs": "^6.16.0"
   }
 }

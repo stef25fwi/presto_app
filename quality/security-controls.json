@@ -71,7 +71,7 @@
       "required": true,
       "description": "Une revue OWASP Top 10 a été conduite sur les surfaces exposées et ses conclusions sont tracées.",
       "verification": "docs/evidence/security/owasp-review.md couvrant les dix catégories, chacune assortie d'un constat et d'une décision (traité, accepté avec justification, ou reporté avec échéance). Périmètre minimal : callables Cloud Functions, règles Firestore et Storage, webhooks Stripe et Brevo, pages publiques. Daté et attribué.",
-      "status": "pending",
+      "status": "verified",
       "evidence": "docs/evidence/security/owasp-review.md"
     },
     {

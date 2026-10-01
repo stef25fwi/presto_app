@@ -13,7 +13,6 @@ import '../core/localization/locale_controller.dart';
 import '../l10n/app_localizations.dart';
 import '../pages/legal_info_page.dart';
 import '../pages/public_prelaunch_page.dart';
-import '../platform/public_prelaunch_shell.dart';
 import '../services/app_check_bootstrap.dart';
 import '../services/notification_service.dart';
 import '../services/public_landing_config_service.dart';
@@ -116,10 +115,9 @@ enum PublicPrelaunchEntryMode {
 PublicPrelaunchEntryMode resolvePublicPrelaunchEntryMode(
   Uri uri, {
   required bool enabled,
-  required bool hasDeveloperAccess,
   bool isWeb = kIsWeb,
 }) {
-  if (!isWeb || !enabled || hasDeveloperAccess) {
+  if (!isWeb || !enabled) {
     return PublicPrelaunchEntryMode.application;
   }
 
@@ -166,8 +164,6 @@ class _PublicPrelaunchEntryGateState extends State<_PublicPrelaunchEntryGate> {
   final PublicLandingConfigService _publicLanding =
       PublicLandingConfigService.instance;
 
-  bool _temporaryDeveloperAccessGranted = false;
-
   @override
   void initState() {
     super.initState();
@@ -182,13 +178,6 @@ class _PublicPrelaunchEntryGateState extends State<_PublicPrelaunchEntryGate> {
   }
 
   void _handleConfigChanged() {
-    if (mounted) setState(() {});
-  }
-
-  void _grantDeveloperAccess() {
-    if (_temporaryDeveloperAccessGranted) return;
-    _temporaryDeveloperAccessGranted = true;
-    revealApplicationAfterPublicPrelaunch();
     if (mounted) setState(() {});
   }
 
@@ -209,8 +198,6 @@ class _PublicPrelaunchEntryGateState extends State<_PublicPrelaunchEntryGate> {
     final mode = resolvePublicPrelaunchEntryMode(
       Uri.base,
       enabled: _publicLanding.enabled,
-      hasDeveloperAccess:
-          _temporaryDeveloperAccessGranted || hasPublicPrelaunchAccess(),
     );
 
     switch (mode) {
@@ -227,7 +214,6 @@ class _PublicPrelaunchEntryGateState extends State<_PublicPrelaunchEntryGate> {
           theme: buildPrestoTheme(),
           home: PublicPrelaunchPage(
             config: _publicLanding,
-            onDeveloperAccessGranted: _grantDeveloperAccess,
           ),
         );
     }

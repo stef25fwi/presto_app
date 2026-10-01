@@ -52,7 +52,12 @@ async function patchConsultPage() {
       content.includes('_paginationPolicy.shouldRequestNextPage(') &&
       content.includes('_paginationPolicy.nextPageLimit(') &&
       content.includes('_paginationPolicy.hasMoreAfterPage(');
-  if (usesPaginationPolicy) {
+  const usesExtractedPager =
+      content.includes('ConsultOffersPager<QueryDocumentSnapshot<Map<String, dynamic>>>') &&
+      content.includes('_pager.loadNext()') &&
+      content.includes('_pager.seed(') &&
+      content.includes('_paginationPolicy.shouldRequestNextPage(');
+  if (usesPaginationPolicy || usesExtractedPager) {
     return;
   }
 

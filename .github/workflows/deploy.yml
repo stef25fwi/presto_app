@@ -59,6 +59,23 @@ jobs:
           git diff --exit-code
           node tools/check_production_guardrails.mjs
 
+      - name: Require complete security evidence before production access
+        run: node tools/quality/check_security_controls.mjs --enforce
+
+      - name: Archive security verdict even when production is blocked
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: production-security-${{ github.sha }}
+          path: quality_reports/security
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Audit production dependencies before deployment
+        run: |
+          npm audit --package-lock-only --omit=dev --audit-level=high
+          npm --prefix functions audit --package-lock-only --omit=dev --audit-level=high
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
@@ -381,6 +398,48 @@ jobs:
           fi
 
           echo '✅ Smoke production validé sans pipeline grep -q vulnérable à SIGPIPE.'
+
+      - name: Verify the SHA actually served by production
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          mkdir -p quality_reports/deployment
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const expected = process.env.EXPECTED_SHA;
+          const urls = ['https://ilipresto.fr', 'https://ilipresto.web.app'];
+          const evidence = [];
+          for (const base of urls) {
+            let matched = false;
+            for (let attempt = 0; attempt < 6; attempt++) {
+              const url = `${base}/version.json?sha=${expected}&attempt=${attempt}`;
+              try {
+                const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(15000) });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const metadata = await response.json();
+                if (metadata.gitCommit !== expected) throw new Error(`served ${metadata.gitCommit}, expected ${expected}`);
+                evidence.push({ url: base, ...metadata });
+                matched = true;
+                break;
+              } catch (error) {
+                console.error(`${base}: ${error.message}`);
+                if (attempt < 5) await new Promise(resolve => setTimeout(resolve, 5000));
+              }
+            }
+            if (!matched) throw new Error(`Production SHA verification failed: ${base}`);
+          }
+          fs.writeFileSync('quality_reports/deployment/served-version.json', JSON.stringify(evidence, null, 2));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\nVerified production SHA on both domains: ${expected}\n`);
+          NODE
+
+      - name: Archive production version evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: served-version-${{ github.sha }}
+          path: quality_reports/deployment
+          if-no-files-found: ignore
+          retention-days: 90
 
       - name: Publish deployment summary
         if: always()
