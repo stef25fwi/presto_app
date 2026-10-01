@@ -7,7 +7,7 @@ let content = await fs.readFile(path, 'utf8');
 
 // The cleanup is already part of the branch after the Store account-deletion
 // change. Keep this generator idempotent so CI does not try to patch it twice.
-if (content.includes('archiveUserListings(uid)')) {
+if (content.includes('archiveUserListings(')) {
   console.log('account cleanup patch: already applied');
   process.exit(0);
 }
