@@ -225,8 +225,8 @@ jobs:
           {
             echo "### iOS archive evidence"
             echo ""
-            echo "- Bundle ID : `$BUNDLE_ID`"
-            echo "- PrivacyInfo.xcprivacy détectés : `$MANIFEST_COUNT`"
+            echo "- Bundle ID : $BUNDLE_ID"
+            echo "- PrivacyInfo.xcprivacy détectés : $MANIFEST_COUNT"
             if [[ "$MANIFEST_COUNT" -eq 0 ]]; then
               echo "- Rapport de confidentialité Xcode : **revue manuelle requise**"
             else
