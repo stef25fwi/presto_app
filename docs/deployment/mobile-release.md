@@ -9,11 +9,11 @@ que si on le demande explicitement.
 |---|---|---|---|
 | Android | `.github/workflows/release_android.yml` | AAB signé | Play Console (piste au choix) |
 | iOS | `.github/workflows/release_ios.yml` | IPA signé | TestFlight |
-| Android (hors store) | `.github/workflows/build_apk.yml` | APK arm64 | Artefact seulement |
+| Android (AAB vérifié hors upload) | `.github/workflows/build_apk.yml` | AAB signé + certificat | Artefact seulement |
 
-Le Play Store n'accepte plus l'APK pour une nouvelle application : `build_apk.yml`
-reste utile pour installer une build sur un appareil de test, mais ne peut pas
-servir à publier.
+Le Play Store n'accepte plus l'APK pour une nouvelle application. `build_apk.yml`
+produit maintenant un AAB signé et vérifie sa signature ; il reste séparé de
+`release_android.yml` pour permettre un contrôle d'artefact sans envoi Play.
 
 ## Numérotation des versions
 
@@ -125,6 +125,24 @@ le premier build.
      `draft` pour garder la main sur la diffusion.
    - iOS : le build arrive dans TestFlight, la soumission App Store reste une
      action manuelle depuis App Store Connect.
+
+## Preuves produites par les candidats
+
+Les workflows peuvent produire des preuves traçables avant toute action externe :
+
+- Android : `release_android.yml` vérifie `compileSdk=36`, `targetSdk=36`, le
+  manifest final de l'AAB, son hash SHA-256 et la concordance du certificat
+  embarqué avec la clé d'upload ;
+- Android hors envoi : `build_apk.yml` produit également un AAB signé, contrôle
+  l'empreinte Firebase de la clé d'upload et archive la certification ;
+- iOS : `release_ios.yml` bloque un runner inférieur à Xcode 26 / SDK iOS 26,
+  archive le bundle, vérifie le bundle ID et inventorie les
+  `PrivacyInfo.xcprivacy` présents.
+
+Une exécution verte de ces étapes prouve uniquement ce qui est exécuté dans la
+CI. Elle ne prouve pas encore l'upload sur Play Internal Testing, la validation
+TestFlight, la concordance des identités Store ou le rapport de confidentialité
+final accepté par Apple.
 
 ## Limites connues
 
