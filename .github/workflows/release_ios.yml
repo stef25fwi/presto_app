@@ -187,6 +187,62 @@ jobs:
             PROVISIONING_PROFILE_SPECIFIER="${{ steps.signing.outputs.profile_name }}" \
             OTHER_CODE_SIGN_FLAGS="--keychain ${{ steps.signing.outputs.keychain_path }}"
 
+      - name: Inspect archive bundle and privacy manifests
+        run: |
+          set -euo pipefail
+          ARCHIVE_APP="$RUNNER_TEMP/Runner.xcarchive/Products/Applications/Runner.app"
+          INFO_PLIST="$ARCHIVE_APP/Info.plist"
+          EVIDENCE_DIR="$RUNNER_TEMP/ios-archive-evidence"
+          mkdir -p "$EVIDENCE_DIR"
+
+          test -d "$ARCHIVE_APP"
+          BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$INFO_PLIST")"
+          if [[ "$BUNDLE_ID" != "fr.ilipresto.app" ]]; then
+            echo "::error::Bundle ID archive inattendu : $BUNDLE_ID"
+            exit 1
+          fi
+          echo "bundleIdentifier=$BUNDLE_ID" | tee "$EVIDENCE_DIR/bundle-identity.txt"
+          xcodebuild -version | tee "$EVIDENCE_DIR/xcode-version.txt"
+          xcrun --sdk iphoneos --show-sdk-version | tee "$EVIDENCE_DIR/iphoneos-sdk-version.txt"
+
+          MANIFEST_LIST="$EVIDENCE_DIR/privacy-manifests.txt"
+          find "$ARCHIVE_APP" -name 'PrivacyInfo.xcprivacy' -print | sort | tee "$MANIFEST_LIST"
+          MANIFEST_COUNT="$(grep -c . "$MANIFEST_LIST" || true)"
+          echo "manifestCount=$MANIFEST_COUNT" | tee "$EVIDENCE_DIR/privacy-manifest-summary.txt"
+
+          while IFS= read -r manifest; do
+            [[ -z "$manifest" ]] && continue
+            plutil -lint "$manifest"
+          done < "$MANIFEST_LIST"
+
+          if [[ "$MANIFEST_COUNT" -eq 0 ]]; then
+            echo "::warning::Aucun PrivacyInfo.xcprivacy dans l'archive ; valider le rapport de confidentialité dans Xcode avant soumission."
+            echo "privacyManifestStatus=manual-review-required" >> "$EVIDENCE_DIR/privacy-manifest-summary.txt"
+          else
+            echo "privacyManifestStatus=all-manifests-lint-clean" >> "$EVIDENCE_DIR/privacy-manifest-summary.txt"
+          fi
+
+          {
+            echo "### iOS archive evidence"
+            echo ""
+            echo "- Bundle ID : `$BUNDLE_ID`"
+            echo "- PrivacyInfo.xcprivacy détectés : `$MANIFEST_COUNT`"
+            if [[ "$MANIFEST_COUNT" -eq 0 ]]; then
+              echo "- Rapport de confidentialité Xcode : **revue manuelle requise**"
+            else
+              echo "- Syntaxe des manifests : ✅ valide"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload iOS archive evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-archive-evidence-${{ github.sha }}
+          path: ${{ runner.temp }}/ios-archive-evidence/
+          retention-days: 90
+          if-no-files-found: warn
+
       - name: Export IPA
         run: |
           set -euo pipefail
