@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "point": 8,
   "name": "Fonctions IA",
-  "updatedAt": "2026-08-04T00:00:00Z",
+  "updatedAt": "2026-10-01T00:00:00Z",
   "status": "in_progress",
   "certificationRule": "Aucun contrôle ne passe à verified sans preuve automatisée et, lorsqu'il concerne la production, sans preuve associée au même SHA déployé.",
   "controls": [
@@ -144,6 +144,16 @@
       "evidence": [
         "functions/scripts/microia_production_smoke_test.mjs",
         "docs/evidence/ai/production-smoke.md"
+      ]
+    },
+    {
+      "id": "offensive-content-reporting",
+      "label": "Signalement intégré des résultats IA offensants ou dangereux",
+      "status": "implemented",
+      "evidence": [
+        "functions/src/modules/ai/report_content.ts",
+        "functions/src/modules/ai/report_content.test.ts",
+        "lib/pages/publish_offer_page.dart"
       ]
     }
   ]
