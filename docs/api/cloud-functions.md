@@ -11,6 +11,7 @@ Source de référence : `functions/src/index.ts`. Ce document regroupe les expor
 
 ## IA, lieux et publication héritée
 
+- callable : `reportAiGeneratedContent` (signalement minimisé des sorties IA) ;
 - `placesAutocomplete`, `placesDetails` ;
 - `generateOfferDraft` ;
 - `openAiExtractListingFields` ;
