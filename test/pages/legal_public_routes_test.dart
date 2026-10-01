@@ -73,9 +73,9 @@ void main() {
       expect(find.text('Supprimer votre compte iliprestō'), findsOneWidget);
       expect(find.text('Depuis l’application'), findsOneWidget);
       expect(find.text('Sans passer par l’application'), findsOneWidget);
-      expect(find.text('Données supprimées'), findsOneWidget);
+      expect(find.text('Données supprimées ou désassociées'), findsOneWidget);
       expect(
-        find.text('Données conservées après suppression'),
+        find.text('Données pouvant être conservées'),
         findsOneWidget,
       );
     });
