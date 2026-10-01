@@ -3513,6 +3513,74 @@ class _PublishOfferPageState extends State<PublishOfferPage>
     );
   }
 
+  Future<void> _reportAiGeneratedContent() async {
+    const reasons = <String, String>{
+      'offensive': 'Contenu offensant ou harcelant',
+      'illegal': 'Contenu illégal ou dangereux',
+      'personal_data': 'Données personnelles ou sensibles',
+      'fraud': 'Contenu trompeur ou frauduleux',
+      'other': 'Autre problème',
+    };
+
+    final reasonCode = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Signaler un résultat IA'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: reasons.entries
+                .map(
+                  (entry) => ListTile(
+                    leading: const Icon(Icons.flag_outlined),
+                    title: Text(entry.value),
+                    onTap: () =>
+                        Navigator.of(dialogContext).pop(entry.key),
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Annuler'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || reasonCode == null) return;
+
+    try {
+      final callable = prestoFirebaseFunctions.httpsCallable(
+        'reportAiGeneratedContent',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+      );
+      await callable.call<Map<String, dynamic>>(<String, dynamic>{
+        'source': 'other',
+        'reasonCode': reasonCode,
+      });
+      if (!mounted) return;
+      showSuccessSnackBar(
+        context,
+        'Merci. Le signalement IA a été transmis à notre équipe.',
+      );
+    } on FirebaseFunctionsException catch (error) {
+      if (!mounted) return;
+      showErrorSnackBar(
+        context,
+        error.message ?? 'Impossible de transmettre le signalement IA.',
+      );
+    } catch (_) {
+      if (!mounted) return;
+      showErrorSnackBar(
+        context,
+        'Impossible de transmettre le signalement IA. Réessayez plus tard.',
+      );
+    }
+  }
+
   /// Appelle la Cloud Function pour analyser la description avec OpenAI
   Future<void> _onTapAiAnalyze() async {
     _setPublishAiFlowStep(
@@ -4488,6 +4556,18 @@ class _PublishOfferPageState extends State<PublishOfferPage>
                                     ? _onTapAiAnalyze
                                     : null,
                               ),
+                              if (_publishAiFlowStep ==
+                                  PublishOfferAiFlowStep.completed) ...[
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton.icon(
+                                    onPressed: _reportAiGeneratedContent,
+                                    icon: const Icon(Icons.flag_outlined),
+                                    label: const Text('Signaler un résultat IA'),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
