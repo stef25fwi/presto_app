@@ -159,8 +159,6 @@ void main() {
     expect(find.text('Changer mon email'), findsOneWidget);
     expect(find.text('Changer mon mot de passe'), findsOneWidget);
 
-    // La liste dépasse le viewport de test : le dernier élément n'est construit
-    // qu'après défilement.
     await tester.scrollUntilVisible(
       find.text('Supprimer mon compte'),
       120,
@@ -300,18 +298,16 @@ void main() {
       isA<PhoneVerificationPage>(),
     );
 
-    // Cette vérification de navigation ne mocke pas Firestore. La page lancée
-    // attend donc son timeout d'hydratation de 8 s ; l'horloge virtuelle le fait
-    // expirer ici afin de ne laisser aucun Timer en attente à la fin du test.
     await tester.pump(const Duration(seconds: 8));
   });
 
-  testWidgets('ouvre la suppression du compte après contrôle', (tester) async {
+  testWidgets('ouvre la suppression même avec un email non vérifié',
+      (tester) async {
     final user = _SecurityUserPlatform(
       platform,
       uid: 'delete-security-user',
       email: 'delete@ilipresto.fr',
-      emailVerified: true,
+      emailVerified: false,
       providerId: 'password',
     );
     platform.user = user;
@@ -325,7 +321,7 @@ void main() {
     await tester.tap(find.text('Supprimer mon compte'));
     await tester.pump();
 
-    expect(user.reloadCalls, 1);
+    expect(user.reloadCalls, 0);
     expect(
       destinationOf(observer, tester.element(find.byType(AccountSecurityPage))),
       isA<DeleteAccountPage>(),
