@@ -18,6 +18,7 @@
  */
 
 const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 
 function requireEmulator(name) {
   const value = String(process.env[name] || '').trim();
@@ -64,7 +65,7 @@ async function main() {
 
   const auth = admin.auth();
   const bucket = admin.storage().bucket();
-  const suffix = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const suffix = `${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
   const uid = `account_delete_e2e_${suffix}`;
   const otherUid = `account_delete_peer_${suffix}`;
   const listingId = `listing_${suffix}`;
