@@ -1,0 +1,9 @@
+{
+  "name": "ilipresto-reviews-v2-e2e-functions",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  }
+}

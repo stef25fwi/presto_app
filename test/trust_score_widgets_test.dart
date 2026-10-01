@@ -102,6 +102,20 @@ class _FakeTrustScoreService implements TrustScoreService {
   }
 
   @override
+Future<List<Map<String, dynamic>>> getPendingReviewTasks() async =>
+    const <Map<String, dynamic>>[];
+
+@override
+Future<void> dismissPendingReviewTask({required String offerId}) async {}
+
+@override
+Future<String> reviseReview({
+  required String reviewId,
+  required String comment,
+}) async =>
+    'pending_peer_review';
+
+  @override
   Future<TrustScoreProfile> getUserTrustScore({required String userId}) {
     profileCalls++;
     return profileFuture;
