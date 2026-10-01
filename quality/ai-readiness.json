@@ -149,7 +149,7 @@
     {
       "id": "offensive-content-reporting",
       "label": "Signalement intégré des résultats IA offensants ou dangereux",
-      "status": "implemented",
+      "status": "in_progress",
       "evidence": [
         "functions/src/modules/ai/report_content.ts",
         "functions/src/modules/ai/report_content.test.ts",
