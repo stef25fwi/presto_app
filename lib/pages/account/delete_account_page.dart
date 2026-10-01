@@ -38,6 +38,9 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
   User? get _currentUser => FirebaseAuth.instance.currentUser;
 
   bool _hasProvider(String providerId) {
+    // Les tests injectés ne doivent pas initialiser Firebase pour sonder les
+    // fournisseurs du compte réel.
+    if (widget.usesPasswordProviderOverride != null) return false;
     return _currentUser?.providerData
             .any((provider) => provider.providerId == providerId) ==
         true;
