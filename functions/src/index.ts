@@ -35,6 +35,7 @@ export {
 } from "./modules/ai/callables";
 export { microIaProcessAudioV2 } from "./modules/ai/micro_ia_callable";
 export { adminGetAiMetrics } from "./modules/ai/ai_metrics";
+export { reportAiGeneratedContent } from "./modules/ai/report_content";
 export {
   purgeExpiredAiAudio,
   purgeExpiredAiOperationalData,
