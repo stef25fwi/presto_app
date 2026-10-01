@@ -20,6 +20,7 @@ import {
 import { verifyRecaptchaAssessment } from "../services/recaptcha";
 import { shouldRejectListingSubmissionForRecaptcha } from "../services/recaptcha";
 import { toHttpsError } from "../services/errors";
+import { assertCurrentLegalAcceptance } from "../../legal/legal_acceptance";
 import { extractRolesFromAuthToken } from "../services/roles";
 import { validateListingDraftPayload, validateListingMedia } from "../validators/listings";
 import type { ListingMedia } from "../models/firestore";
@@ -519,6 +520,8 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
   }
 
   try {
+    await assertCurrentLegalAcceptance(ownerId);
+
     const config = await loadModerationConfig();
     const draftSnap = await loadDraftSnapshot(draftId);
     const draftData = (draftSnap.data() ?? {}) as Record<string, unknown>;
