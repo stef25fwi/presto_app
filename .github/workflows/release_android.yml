@@ -1,9 +1,8 @@
 name: Release Android (AAB → Play Console)
 
 # Produit l'Android App Bundle signé exigé par le Play Store pour toute
-# nouvelle application (l'APK n'est plus accepté), puis l'envoie sur la piste
-# demandée. Le build APK historique (build_apk.yml) reste disponible pour les
-# installations manuelles et les tests sur appareil.
+# nouvelle application, certifie Android 16 / API 36 sur l'artefact final,
+# puis l'envoie sur la piste demandée.
 on:
   workflow_dispatch:
     inputs:
@@ -32,9 +31,14 @@ permissions:
   contents: read
   id-token: write
 
+env:
+  FLUTTER_VERSION: '3.44.6'
+  ANDROID_API_LEVEL: '36'
+  BUNDLETOOL_VERSION: '1.18.3'
+
 jobs:
   build-aab:
-    name: Build AAB signé
+    name: Build AAB signé + preuve API 36
     environment: recaptcha
     runs-on: ubuntu-latest
     steps:
@@ -43,15 +47,13 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
-          # Workload Identity Federation : aucune clé de service account
-          # stockée pour l'accès GCP (cf. deploy.yml).
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.44.6'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
 
@@ -60,6 +62,26 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+
+      - name: Capture Android release toolchain
+        run: |
+          set -euo pipefail
+          mkdir -p evidence/android-release
+          flutter --version | tee evidence/android-release/flutter-version.txt
+          flutter doctor -v | tee evidence/android-release/flutter-doctor.txt
+          java -version 2>&1 | tee evidence/android-release/java-version.txt
+          cat android/gradle/wrapper/gradle-wrapper.properties \
+            | tee evidence/android-release/gradle-wrapper-properties.txt
+          grep -E 'com.android.application.*version' android/settings.gradle.kts \
+            | tee evidence/android-release/android-gradle-plugin.txt
+          git rev-parse HEAD | tee evidence/android-release/git-sha.txt
+
+      - name: Ensure Android 16 / API 36 SDK
+        run: |
+          set -euo pipefail
+          bash tools/android/ensure_api36_sdk.sh platform
+          grep -Eq '^\s*compileSdk\s*=\s*36\s*$' android/app/build.gradle.kts
+          grep -Eq '^\s*targetSdk\s*=\s*36\s*$' android/app/build.gradle.kts
 
       - name: Install dependencies
         run: flutter pub get
@@ -79,13 +101,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ -z "${KEYSTORE_B64}" || -z "${KEYSTORE_PASSWORD}" || -z "${KEY_ALIAS}" ]]; then
-            echo "::error::Secrets de signature manquants (KEYSTORE_B64 / KEYSTORE_PASSWORD / KEY_ALIAS) dans l'environnement 'recaptcha'."
+          if [[ -z "${KEYSTORE_B64}" || -z "${KEYSTORE_PASSWORD}" || -z "${KEY_PASSWORD}" || -z "${KEY_ALIAS}" ]]; then
+            echo "::error::Secrets de signature manquants (KEYSTORE_B64 / KEYSTORE_PASSWORD / KEY_PASSWORD / KEY_ALIAS) dans l'environnement 'recaptcha'."
             exit 1
           fi
 
-          # Décodage du keystore, puis normalisation en JKS quel que soit le
-          # format source (même procédure éprouvée que build_apk.yml).
           printf "%s" "$KEYSTORE_B64" \
             | tr -d '\r\n[:space:]' \
             | base64 -d > "$RUNNER_TEMP/upload-keystore-raw.jks"
@@ -97,10 +117,10 @@ jobs:
           fi
 
           keytool -importkeystore \
-            -srckeystore  "$RUNNER_TEMP/upload-keystore-raw.jks" \
+            -srckeystore "$RUNNER_TEMP/upload-keystore-raw.jks" \
             -destkeystore "$RUNNER_TEMP/upload-keystore.jks" \
             -deststoretype JKS \
-            -srcstorepass  "${KEYSTORE_PASSWORD}" \
+            -srcstorepass "${KEYSTORE_PASSWORD}" \
             -deststorepass "${KEYSTORE_PASSWORD}" \
             -noprompt
 
@@ -124,9 +144,6 @@ jobs:
         run: |
           set -euo pipefail
           VERSION_NAME=$(grep -E '^version:' pubspec.yaml | head -n1 | sed -E 's/^version:[[:space:]]*//' | cut -d'+' -f1)
-          # Le versionCode doit croître strictement à chaque envoi Play : le
-          # numéro de run GitHub est monotone, contrairement au suffixe figé de
-          # pubspec.yaml.
           BUILD_NUMBER=${{ github.run_number }}
           echo "version_name=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
           echo "build_number=${BUILD_NUMBER}" >> "$GITHUB_OUTPUT"
@@ -140,6 +157,39 @@ jobs:
             --release \
             --build-number=${{ steps.version.outputs.build_number }}
 
+      - name: Certify final AAB targets Android 16 / API 36
+        run: |
+          set -euo pipefail
+          AAB='build/app/outputs/bundle/release/app-release.aab'
+          test -s "${AAB}"
+
+          BUNDLETOOL_JAR="$RUNNER_TEMP/bundletool-all-${BUNDLETOOL_VERSION}.jar"
+          curl -fsSL \
+            "https://github.com/google/bundletool/releases/download/${BUNDLETOOL_VERSION}/bundletool-all-${BUNDLETOOL_VERSION}.jar" \
+            -o "${BUNDLETOOL_JAR}"
+
+          java -jar "${BUNDLETOOL_JAR}" dump manifest \
+            --bundle="${AAB}" \
+            --module=base \
+            > evidence/android-release/aab-base-manifest.xml
+
+          TARGET_SDK="$(java -jar "${BUNDLETOOL_JAR}" dump manifest \
+            --bundle="${AAB}" \
+            --module=base \
+            --xpath='/manifest/uses-sdk/@android:targetSdkVersion' \
+            | tr -d '\r[:space:]')"
+
+          echo "targetSdkVersion=${TARGET_SDK}" \
+            | tee evidence/android-release/aab-target-sdk.txt
+          sha256sum "${AAB}" | tee evidence/android-release/app-release.aab.sha256
+
+          if [[ "${TARGET_SDK}" != "36" ]]; then
+            echo "::error::AAB final cible API ${TARGET_SDK}; API 36 exigée avant tout envoi Play."
+            exit 1
+          fi
+
+          echo "✅ AAB final certifié targetSdkVersion=36"
+
       - name: Name artifact
         id: artifact
         run: |
@@ -150,6 +200,15 @@ jobs:
           cp build/app/outputs/bundle/release/app-release.aab "dist/${NAME}.aab"
           echo "name=${NAME}" >> "$GITHUB_OUTPUT"
           ls -lh "dist/${NAME}.aab"
+
+      - name: Upload API 36 certification evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-api36-release-evidence-${{ github.sha }}
+          path: evidence/android-release/
+          retention-days: 90
+          if-no-files-found: warn
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v7
@@ -165,18 +224,14 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Échouer ici avec un message explicite plutôt que dans l'action
-          # d'envoi, dont l'erreur ne dit pas que le secret est simplement
-          # absent. Voir docs/deployment/mobile-release.md pour l'obtenir.
           if [[ -z "${PLAY_SERVICE_ACCOUNT_JSON:-}" ]]; then
-            echo "::error::Secret PLAY_SERVICE_ACCOUNT_JSON absent de l'environnement 'recaptcha'. Créer un compte de service Play Console, générer une clé JSON et la coller dans ce secret."
+            echo "::error::Secret PLAY_SERVICE_ACCOUNT_JSON absent de l'environnement 'recaptcha'."
             exit 1
           fi
 
-          # Ne jamais afficher le contenu : on ne contrôle que la forme.
           if ! printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" \
               | jq -e '.type == "service_account" and (.client_email | length > 0) and (.private_key | length > 0)' > /dev/null; then
-            echo "::error::PLAY_SERVICE_ACCOUNT_JSON n'est pas une clé de compte de service valide (champs type/client_email/private_key attendus)."
+            echo "::error::PLAY_SERVICE_ACCOUNT_JSON n'est pas une clé de compte de service valide."
             exit 1
           fi
 
@@ -186,8 +241,6 @@ jobs:
         if: ${{ inputs.upload }}
         uses: r0adkll/upload-google-play@v1
         with:
-          # Compte de service Play Console (JSON). Distinct de WIF : l'API Play
-          # Developer n'accepte pas la fédération d'identité GitHub.
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: fr.ilipresto.app
           releaseFiles: dist/${{ steps.artifact.outputs.name }}.aab
@@ -200,9 +253,16 @@ jobs:
           {
             echo "### Release Android"
             echo ""
+            echo "- Flutter : \`${FLUTTER_VERSION}\`"
+            echo "- cible Android : API \`${ANDROID_API_LEVEL}\`"
             echo "- version : \`${{ steps.version.outputs.version_name }}\`"
             echo "- versionCode : \`${{ steps.version.outputs.build_number }}\`"
             echo "- artefact : \`${{ steps.artifact.outputs.name }}.aab\`"
+            if [[ -f evidence/android-release/aab-target-sdk.txt ]]; then
+              echo "- preuve AAB : \`$(cat evidence/android-release/aab-target-sdk.txt)\`"
+            else
+              echo "- preuve AAB : **absente — release non certifiable**"
+            fi
             if [[ "${{ inputs.upload }}" == "true" ]]; then
               echo "- Play Console : envoyé sur \`${{ inputs.track }}\` (statut \`${{ inputs.status }}\`)"
             else
