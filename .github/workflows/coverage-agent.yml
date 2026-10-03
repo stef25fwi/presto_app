@@ -220,7 +220,8 @@ jobs:
           COUNT: ${{ steps.factory.outputs.count }}
           GLOBAL_PERCENT: ${{ steps.factory.outputs.global_percent }}
         run: |
-          gh issue comment 553 --repo "$GITHUB_REPOSITORY" --body "### Coverage Factory 5×2 — run $GITHUB_RUN_ID
+          set -euo pipefail
+          body="### Coverage Factory 5×2 — run $GITHUB_RUN_ID
 
           - Couverture globale : **${GLOBAL_PERCENT}%**
           - Nouveaux workers préparés : **${COUNT}**
@@ -228,6 +229,15 @@ jobs:
           - Validation : ciblée pendant l’écriture, complète avant fusion
 
           <!-- coverage-factory-main-sha:${MAIN_SHA} -->"
+          comment_id="$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/553/comments?per_page=100" \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("### Coverage Factory 5×2"))) | .id' | tail -n 1)"
+          if [ -n "$comment_id" ]; then
+            jq -n --arg body "$body" '{body: $body}' > /tmp/coverage-dashboard-comment.json
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" \
+              --input /tmp/coverage-dashboard-comment.json > /dev/null
+          else
+            gh issue comment 553 --repo "$GITHUB_REPOSITORY" --body "$body"
+          fi
 
       - name: Upload factory evidence
         if: always() && steps.dedupe.outputs.run == 'true'

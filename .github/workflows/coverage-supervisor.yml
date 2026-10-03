@@ -105,7 +105,8 @@ jobs:
           REACHED: ${{ steps.plan.outputs.reached }}
         run: |
           percent="$(cat quality_reports/coverage-supervisor/global-percent.txt)"
-          gh issue comment 553 --repo "$GITHUB_REPOSITORY" --body "### LCOV Supervisor 80 — run $GITHUB_RUN_ID
+          set -euo pipefail
+          body="### LCOV Supervisor 80 — run $GITHUB_RUN_ID
 
           - Couverture connue : **${percent}%**
           - Workers actifs utiles : **${HEALTHY}**
@@ -115,6 +116,15 @@ jobs:
           - Objectif 80 % atteint : **${REACHED}**
 
           Le superviseur ignore désormais les missions orphelines pour éviter le verrouillage permanent et relance la Coverage Factory dès qu’une capacité utile est disponible."
+          comment_id="$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/553/comments?per_page=100" \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("### LCOV Supervisor 80"))) | .id' | tail -n 1)"
+          if [ -n "$comment_id" ]; then
+            jq -n --arg body "$body" '{body: $body}' > /tmp/coverage-dashboard-comment.json
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" \
+              --input /tmp/coverage-dashboard-comment.json > /dev/null
+          else
+            gh issue comment 553 --repo "$GITHUB_REPOSITORY" --body "$body"
+          fi
 
       - name: Upload supervision evidence
         uses: actions/upload-artifact@v7
