@@ -40,7 +40,7 @@ jobs:
             --json number,title,body,headRefName,updatedAt \
             --jq '[.[] | select(.headRefName | startswith("coverage/w"))]' \
             > quality_reports/coverage-supervisor/prs.json
-          percent="$(gh issue view 553 --repo "$GITHUB_REPOSITORY" --comments \
+          percent="$(gh issue view 553 --repo "$GITHUB_REPOSITORY" \
             --json comments --jq '[.comments[].body | capture("Couverture globale : \\*\\*(?<p>[0-9.]+)%")?.p] | map(select(. != null)) | last // "0"')"
           echo "$percent" > quality_reports/coverage-supervisor/global-percent.txt
 
