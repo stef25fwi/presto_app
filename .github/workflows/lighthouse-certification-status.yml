@@ -31,7 +31,7 @@ jobs:
           path: lighthouse-evidence
 
       - name: Verify evidence and publish commit statuses
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           EVIDENCE_PATH: lighthouse-evidence
           LIGHTHOUSE_RUN_URL: ${{ github.event.workflow_run.html_url }}

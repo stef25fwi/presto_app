@@ -33,7 +33,7 @@ jobs:
 
       - name: Resolve reusable validation artifact
         id: source_run
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           MANUAL_RUN_ID: ${{ inputs.run_id }}
         with:
@@ -145,7 +145,7 @@ jobs:
           retention-days: 14
 
       - name: Refill free coverage lanes
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           PLAN_PATH: coverage/fastlane-plan.json
         with:
