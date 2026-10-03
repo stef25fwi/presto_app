@@ -122,6 +122,10 @@ jobs:
             -deststoretype JKS \
             -srcstorepass "${KEYSTORE_PASSWORD}" \
             -deststorepass "${KEYSTORE_PASSWORD}" \
+            -srcalias "${KEY_ALIAS}" \
+            -destalias "${KEY_ALIAS}" \
+            -srckeypass "${KEY_PASSWORD}" \
+            -destkeypass "${KEY_PASSWORD}" \
             -noprompt
 
           keytool -list \
@@ -189,6 +193,45 @@ jobs:
           fi
 
           echo "✅ AAB final certifié targetSdkVersion=36"
+
+      - name: Verify AAB signature and upload certificate
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          AAB='build/app/outputs/bundle/release/app-release.aab'
+          test -s "${AAB}"
+
+          jarsigner -verify -verbose -certs "${AAB}" \
+            > evidence/android-release/aab-jarsigner.txt 2>&1
+
+          UPLOAD_SHA256="$(keytool -list -v \
+            -keystore "$RUNNER_TEMP/upload-keystore.jks" \
+            -storepass "$KEYSTORE_PASSWORD" \
+            -alias "$KEY_ALIAS" \
+            | sed -n 's/^[[:space:]]*SHA256:[[:space:]]*//p' | head -n 1)"
+          BUNDLE_SHA256="$(keytool -printcert -jarfile "${AAB}" \
+            | sed -n 's/^[[:space:]]*SHA256:[[:space:]]*//p' | head -n 1)"
+
+          if [[ -z "${UPLOAD_SHA256}" || -z "${BUNDLE_SHA256}" ]]; then
+            echo "::error::Impossible de lire les empreintes SHA-256 de signature."
+            exit 1
+          fi
+          if [[ "${UPLOAD_SHA256}" != "${BUNDLE_SHA256}" ]]; then
+            echo "::error::Le AAB n'est pas signé avec la clé d'upload attendue."
+            echo "Upload SHA-256 : ${UPLOAD_SHA256}"
+            echo "Bundle SHA-256 : ${BUNDLE_SHA256}"
+            exit 1
+          fi
+
+          {
+            echo "uploadCertificateSha256=${UPLOAD_SHA256}"
+            echo "bundleCertificateSha256=${BUNDLE_SHA256}"
+            echo "signatureMatch=true"
+          } | tee evidence/android-release/aab-signature.txt
+
+          echo "✅ Signature du AAB vérifiée avec la clé d'upload attendue."
 
       - name: Name artifact
         id: artifact
