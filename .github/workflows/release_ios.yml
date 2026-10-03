@@ -37,7 +37,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          xcode_version="$(xcodebuild -version | awk '/^Xcode / {print $2; exit}')"
+          xcode_details="$(xcodebuild -version)"
+          xcode_version="$(printf '%s\n' "$xcode_details" | awk '/^Xcode / {print $2}')"
           sdk_version="$(xcrun --sdk iphoneos --show-sdk-version)"
           xcode_major="${xcode_version%%.*}"
           sdk_major="${sdk_version%%.*}"
