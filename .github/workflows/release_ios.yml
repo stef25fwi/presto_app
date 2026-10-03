@@ -22,6 +22,8 @@ jobs:
     name: Build IPA signé
     environment: recaptcha
     runs-on: macos-15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
@@ -37,7 +39,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          xcode_version="$(xcodebuild -version | awk '/^Xcode / {print $2; exit}')"
+          xcode_details="$(xcodebuild -version)"
+          xcode_version="$(printf '%s\n' "$xcode_details" | awk '/^Xcode / {print $2}')"
           sdk_version="$(xcrun --sdk iphoneos --show-sdk-version)"
           xcode_major="${xcode_version%%.*}"
           sdk_major="${sdk_version%%.*}"
@@ -58,15 +61,6 @@ jobs:
             exit 1
           fi
 
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Analyze Flutter
-        run: flutter analyze --fatal-infos
-
-      - name: Run tests
-        run: flutter test --reporter expanded
-
       - name: Check signing secrets
         env:
           CERT_B64: ${{ secrets.IOS_DIST_CERT_P12_B64 }}
@@ -85,6 +79,15 @@ jobs:
             echo "::error::Voir docs/deployment/mobile-release.md pour créer les secrets iOS."
             exit 1
           fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze Flutter
+        run: flutter analyze --fatal-infos
+
+      - name: Run tests
+        run: flutter test --reporter expanded
 
       - name: Import certificate and provisioning profile
         id: signing
