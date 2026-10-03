@@ -131,6 +131,10 @@ for (const marker of [
   'IOS_PROVISIONING_PROFILE_B64',
   'IOS_DIST_CERT_P12_B64',
   'IOS_DIST_CERT_PASSWORD',
+  'Preflight mobile signing prerequisites',
+  'status_state=pending',
+  'missing_ios_team_id_source',
+  "steps.preflight.outputs.ready == 'true'",
   'openssl smime -inform der -verify -noverify',
   "profile.get('TeamIdentifier')",
   'openssl pkcs12',
@@ -147,6 +151,14 @@ for (const marker of [
 assert.doesNotMatch(
   workflow,
   /for name in KEYSTORE_B64 KEYSTORE_PASSWORD KEY_ALIAS IOS_TEAM_ID/u,
+);
+assert.match(
+  workflow,
+  /report\.status === 'blocked' && report\.reason === 'missing_ios_team_id_source'/u,
+);
+assert.match(
+  workflow,
+  /steps\.verify\.outputs\.state \|\| steps\.preflight\.outputs\.status_state/u,
 );
 
 const registry = JSON.parse(
