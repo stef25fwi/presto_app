@@ -80,7 +80,7 @@ jobs:
         run: |
           set -euo pipefail
           main_sha="$(git rev-parse HEAD)"
-          previous_sha="$(gh issue view 553 --repo "$GITHUB_REPOSITORY" --comments \
+          previous_sha="$(gh issue view 553 --repo "$GITHUB_REPOSITORY" \
             --json comments --jq '[.comments[].body | capture("<!-- coverage-factory-main-sha:(?<sha>[0-9a-f]{40}) -->")?.sha] | map(select(. != null)) | last // ""')"
           run=true
           if [ "$AVAILABLE" = "0" ]; then
